@@ -54,9 +54,8 @@ export const SEASONS: Season[] = [
     name: "Comunidad",
     episodes: 0,
     external: true,
-    redirectUrl: "https://chat.whatsapp.com/SEU_GROUP_INVITE_CODE",
     videoBg: "https://cdn.SEU_DOMINIO.com/video5.mp4",
-    gradient: "linear-gradient(135deg, #0a0a0f 0%, #25d366 100%)",
+    gradient: "linear-gradient(135deg, #0a0a0f 0%, #2a2a3a 100%)",
     emoji: "💬",
   },
 ]

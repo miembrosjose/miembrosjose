@@ -1,11 +1,9 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Geist, Cinzel } from "next/font/google"
-import { GtmLoader } from "@/components/gtm-loader"
 import { GlobalAudioProvider } from "@/components/global-audio-provider"
 import { StorageMigrator } from "@/components/storage-migrator"
 import { ErrorTracker } from "@/components/error-tracker"
-import { getGeoData } from "@/lib/geo-server"
 import "./globals.css"
 
 // OTIMIZAÇÃO DE FONTES: 'display: "swap"' adicionado para garantir que o texto 
@@ -64,12 +62,11 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const geo = await getGeoData()
   return (
     // BLINDAGEM MÁXIMA: Fundo preto cravado na raiz e variáveis de fontes devidamente injetadas
     <html
@@ -98,7 +95,6 @@ export default async function RootLayout({
         </noscript>
         <StorageMigrator />
         <ErrorTracker />
-        <GtmLoader geoData={geo} />
         <GlobalAudioProvider>
           {children}
         </GlobalAudioProvider>

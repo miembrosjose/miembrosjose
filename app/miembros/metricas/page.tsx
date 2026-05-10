@@ -213,7 +213,7 @@ export default async function MetricasPage() {
               accent={m.queue_state.genuinely_stuck > 0 ? "#dc2626" : "#4ade80"}
               hint={m.queue_state.genuinely_stuck > 0 ? "Cron pode estar travado" : "Tudo OK"}
             />
-            <Metric label="Com erro (7d)" value={m.queue_state.with_error_7d} accent={m.queue_state.with_error_7d > 5 ? "#fbbf24" : "#a0a0b0"} hint="Z-API offline geralmente" />
+            <Metric label="Com erro (7d)" value={m.queue_state.with_error_7d} accent={m.queue_state.with_error_7d > 5 ? "#fbbf24" : "#a0a0b0"} hint="Erros recentes na fila" />
           </div>
         </section>
 
@@ -247,7 +247,7 @@ export default async function MetricasPage() {
           <section style={{ marginBottom: "2.5rem" }}>
             <h2 style={{ ...sectionTitle, color: "#dc2626" }}>🚨 Genuinamente Travadas</h2>
             <p style={{ fontSize: "0.85rem", color: "#a0a0b0", marginBottom: "1rem" }}>
-              Delay já passou mas o cron não enviou. Pode indicar cron travado ou Z-API offline.
+              Delay já passou mas o cron não enviou. Pode indicar cron travado.
             </p>
             <div style={{ overflowX: "auto" }}>
               <table style={tableStyle}>

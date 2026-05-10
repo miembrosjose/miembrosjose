@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { trackPageview } from "@/lib/tracker"
 import { appendParamsToUrl } from "@/lib/url-params"
 import { safeStorage } from "@/lib/safe-storage"
-import { getCheckoutUrl } from "@/lib/checkout-urls"
 import { Loader2, ArrowRight } from "lucide-react"
+
+const CHECKOUT_URL = "https://SEU_DOMINIO.com/checkout"
 
 export default function DirectSkipButton() {
   const [isLoading, setIsLoading] = useState(false)
@@ -14,21 +14,7 @@ export default function DirectSkipButton() {
     if (isLoading) return
     setIsLoading(true)
     safeStorage.set("_fskip", "1")
-    trackPageview("/skip-direct", { skip: "true" })
-
-    let countryCode = "UNKNOWN"
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000)
-      const res = await fetch("/api/geoip", { signal: controller.signal })
-      clearTimeout(timeoutId)
-      if (res.ok) {
-        const data = await res.json()
-        countryCode = data.countryCode ?? "UNKNOWN"
-      }
-    } catch { /* default to UNKNOWN */ }
-
-    window.location.href = appendParamsToUrl(getCheckoutUrl(countryCode))
+    window.location.href = appendParamsToUrl(CHECKOUT_URL)
   }
 
   return (

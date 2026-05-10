@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { captureAndStoreParams, getPathWithParams } from "@/lib/url-params"
-import { trackPageview } from "@/lib/tracker"
 import { useGlobalAudio } from "@/components/global-audio-provider"
 import { ArrowRight } from "lucide-react"
 import { VIDEO_HOME_TRANSITION as VIDEO_URL } from "@/lib/cdn-video"
@@ -17,8 +16,6 @@ export default function ExperienceButton() {
 
   useEffect(() => {
     captureAndStoreParams()
-    trackPageview("/")
-    // Prefetch da próxima rota com flag pra pular o vídeo intro (já tocou aqui).
     router.prefetch(getPathWithParams("/call"))
   }, [router])
 

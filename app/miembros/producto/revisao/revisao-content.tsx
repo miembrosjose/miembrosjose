@@ -1,8 +1,5 @@
 "use client"
 
-const WHATSAPP_URL =
-  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20soy%20miembro%20y%20ya%20tengo%20mi%20proyecto%20listo.%20Quiero%20enviar%20los%20materiales."
-
 export function RevisaoContent() {
   return (
     <main
@@ -44,27 +41,9 @@ export function RevisaoContent() {
         >
           Servicio Premium
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.65, maxWidth: 560, margin: "0 auto", marginBottom: "2rem" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.65, maxWidth: 560, margin: "0 auto" }}>
           Contenido pendiente — edita este componente con la propuesta del servicio.
         </p>
-        <a
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-block",
-            padding: "0.875rem 2rem",
-            background: "#7f1d1d",
-            color: "var(--text-primary)",
-            textDecoration: "none",
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.75rem",
-            letterSpacing: "0.3em",
-            textTransform: "uppercase",
-          }}
-        >
-          Enviar Materiales
-        </a>
       </header>
     </main>
   )

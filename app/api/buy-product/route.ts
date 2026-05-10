@@ -18,9 +18,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
-import { CHECKOUT_CONFIGS, OFF_SESSION_LOCAL_CURRENCY, type CheckoutRegion } from "@/lib/checkout-configs"
-import { applyBrTestPrice } from "@/lib/br-test-pricing"
-import { getExchangeRates, convertFromUsd, type SupportedCurrency } from "@/lib/exchange-rates"
+import { CHECKOUT_CONFIGS, type CheckoutRegion } from "@/lib/checkout-configs"
 
 export const dynamic = "force-dynamic"
 
@@ -114,17 +112,13 @@ export async function POST(req: NextRequest) {
   const VALID_REGIONS: ReadonlySet<string> = new Set(["DEFAULT", "USD", "EUR", "GBP", "CHF"])
   const rawRegion = (saleWithCustomer.region as string | null) || "DEFAULT"
   const region: CheckoutRegion = (VALID_REGIONS.has(rawRegion) ? rawRegion : "DEFAULT") as CheckoutRegion
-  const originalProductPriceUsd = getProductPriceUsd(region, productKey)
-  if (!originalProductPriceUsd) {
+  const productPriceUsd = getProductPriceUsd(region, productKey)
+  if (!productPriceUsd) {
     return NextResponse.json({ error: "product_not_in_region" }, { status: 400 })
   }
-  // 🧪 Override BR aplicado depois de detectar country (linhas abaixo).
-  // Setamos provisoriamente; valor final eh recalculado apos detection.
-  let productPriceUsd = originalProductPriceUsd
 
-  // 2) Acha payment_method default (precisamos do BIN do cartão pra detectar moeda real)
+  // 2) Acha payment_method default
   let paymentMethodId: string | null = null
-  let cardCountry: string | null = null
   try {
     const customer = await stripe.customers.retrieve(saleWithCustomer.stripe_customer_id)
     if (customer.deleted) {
@@ -142,14 +136,6 @@ export async function POST(req: NextRequest) {
       })
       paymentMethodId = pms.data[0]?.id || null
     }
-    if (paymentMethodId) {
-      // Pega country do cartão (BIN) — fonte de verdade pra moeda do off-session.
-      // sale.currency é a moeda do PI original (USD com Adaptive Pricing) e
-      // não bate com a moeda do cartão pra clientes LATAM. Sem isso, off-session
-      // em USD é rejeitado pelo cartão BRL com "Moeda não aceita".
-      const pm = await stripe.paymentMethods.retrieve(paymentMethodId)
-      cardCountry = pm.card?.country || null
-    }
   } catch (e) {
     console.error("[/api/buy-product] retrieve customer:", e)
     return NextResponse.json(
@@ -165,71 +151,10 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3) Determina moeda final — múltiplos fallbacks pra LATAM:
-  //    BIN do cartão > customer_country da sale > cf-ipcountry header > sale.currency
-  //    Cartões Stripe test podem ter card.country=null, então fallbacks são essenciais.
-  const saleCurrency = (saleWithCustomer.currency || "usd").toLowerCase()
-  const saleCountry = (saleWithCustomer.customer_country as string | null) || null
-  const cfCountry = req.headers.get("cf-ipcountry") || null
-
-  // Junta os candidatos a country e pega o primeiro válido em OFF_SESSION_LOCAL_CURRENCY.
-  // OFF_SESSION inclui BR→BRL (LATAM_LOCAL_CURRENCY não inclui BR porque o /checkout
-  // principal usa Adaptive Pricing — mas off-session precisa cobrar em BRL pro cartão BR
-  // aceitar). Sem isso, cartão brasileiro era cobrado em USD e rejeitado com "Moeda não aceita".
-  const countryCandidates = [cardCountry, saleCountry, cfCountry].filter(Boolean) as string[]
-  let detectedLocalCurrency: string | null = null
-  let detectedCountry: string | null = null
-  for (const c of countryCandidates) {
-    const candidate = OFF_SESSION_LOCAL_CURRENCY[c.toUpperCase()]?.toLowerCase()
-    if (candidate) {
-      detectedLocalCurrency = candidate
-      detectedCountry = c
-      break
-    }
-  }
-  if (!detectedCountry) detectedCountry = countryCandidates[0] || null
-
-  // 🧪 Override BR — aplica $0.20 USD se country=BR
-  productPriceUsd = applyBrTestPrice(originalProductPriceUsd, detectedCountry)
-
-  console.log("[buy-product] currency detection:", {
-    cardCountry,
-    saleCountry,
-    cfCountry,
-    saleCurrency,
-    detectedLocalCurrency,
-    detectedCountry,
-    region,
-    originalPrice: originalProductPriceUsd,
-    finalPrice: productPriceUsd,
-  })
-
-  let finalCurrency = saleCurrency
-  let finalAmount = productPriceUsd
-
-  if (region === "DEFAULT") {
-    const targetCurrency = detectedLocalCurrency || (saleCurrency !== "usd" ? saleCurrency : null)
-
-    if (targetCurrency && targetCurrency !== "usd") {
-      try {
-        const rates = await getExchangeRates()
-        const converted = convertFromUsd(productPriceUsd, targetCurrency as SupportedCurrency, rates)
-        if (converted && converted > 0) {
-          finalCurrency = targetCurrency
-          finalAmount = converted
-        } else {
-          finalCurrency = "usd"
-        }
-      } catch {
-        finalCurrency = "usd"
-      }
-    } else {
-      finalCurrency = "usd"
-    }
-  } else {
-    // USD/EUR/GBP/CHF — moeda nativa, sem conversão
-    finalCurrency = region.toLowerCase()
-  }
+  // 3) Cobra em USD (ou moeda da região USD/EUR/GBP/CHF)
+  const finalCurrency = region === "DEFAULT" ? "usd" : region.toLowerCase()
+  const finalAmount = productPriceUsd
+  const detectedCountry: string | null = (saleWithCustomer.customer_country as string | null) || null
 
   console.log("[buy-product] charging:", { amount: finalAmount, currency: finalCurrency })
 

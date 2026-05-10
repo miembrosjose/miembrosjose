@@ -26,10 +26,14 @@ import Stripe from "stripe"
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revokeAccessByTransaction, restoreAccessByTransaction } from "@/lib/access-revocation"
-import { cancelPendingMessages } from "@/lib/cancel-pending-messages"
-import { sendOrderToUtmify, buildUtmifyOrder } from "@/lib/utmify"
 import { createOrRefreshInvite } from "@/lib/account-invites"
 import { sendAccountInviteEmail, sendAccountExistsEmail } from "@/lib/email/account-invite"
+
+// Stubs no-op — integrações Utmify/WhatsApp removidas.
+// Cliente plugar tracking/messaging próprio aqui se quiser.
+async function cancelPendingMessages(_args: unknown): Promise<void> {}
+function buildUtmifyOrder(_args: unknown): null { return null }
+async function sendOrderToUtmify(_order: unknown): Promise<void> {}
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature")

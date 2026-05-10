@@ -1,8 +1,6 @@
 // Configs de checkout por região — fonte única de verdade.
 // Pricing aqui é placeholder e será substituído por Price IDs da Stripe quando o backend for plugado.
 
-import { ES_COUNTRIES, USA_COUNTRIES, GBP_COUNTRIES, CHF_COUNTRIES } from "./countries"
-
 export type CheckoutRegion = "DEFAULT" | "EUR" | "USD" | "GBP" | "CHF"
 
 const BUMP_CREATIVOS_IMG = "https://cdn.SEU_DOMINIO.com/bump-creativos.webp"
@@ -425,11 +423,7 @@ export function countryToFlagEmoji(countryCode: string): string {
   return String.fromCodePoint(...codePoints)
 }
 
-/** Resolve região a partir do código ISO do país */
-export function getCheckoutRegion(countryCode: string): CheckoutRegion {
-  if ((GBP_COUNTRIES as readonly string[]).includes(countryCode)) return "GBP"
-  if ((CHF_COUNTRIES as readonly string[]).includes(countryCode)) return "CHF"
-  if ((ES_COUNTRIES  as readonly string[]).includes(countryCode)) return "EUR"
-  if ((USA_COUNTRIES as readonly string[]).includes(countryCode)) return "USD"
+/** Resolve região a partir do código ISO do país. Stub — sempre retorna DEFAULT (cliente plugar lógica própria de geo). */
+export function getCheckoutRegion(_countryCode: string): CheckoutRegion {
   return "DEFAULT"
 }

@@ -8,9 +8,6 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
-const WHATSAPP_URL =
-  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20mi%20acceso%20vencio.%20Quiero%20renovar."
-
 async function getOwnedProductsForUser(userId: string): Promise<string[]> {
   const admin = getSupabaseAdmin()
   const { data } = await admin
@@ -75,17 +72,9 @@ export default async function AccesoVencidoPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative inline-flex items-center gap-3 border border-[#c9a961] bg-[#c9a961] px-8 py-4 text-[#0a0a0f] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7]"
-              >
-                <span className="text-xs font-semibold uppercase tracking-[0.3em] [font-family:var(--font-geist-sans)]">
-                  Renovar por WhatsApp
-                </span>
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#25D366] shadow-[0_0_8px_rgba(37,211,102,0.6)]" />
-              </a>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+                Contacta al equipo para renovar tu acceso
+              </p>
             </div>
           </div>
         </div>

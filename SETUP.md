@@ -75,34 +75,7 @@ Ou Vercel:
 npx vercel
 ```
 
-## 9. Cron de segurança (importante)
-
-A área de membros tem rede de segurança via cron que reenvia emails de invite
-caso o webhook falhe. Configure após Supabase + deploy:
-
-1. No Supabase Dashboard → **SQL Editor**
-2. Rode esse SQL:
-
-```sql
-SELECT cron.schedule(
-  'heal-invites-every-5min',
-  '*/5 * * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://seu-dominio.com/api/cron/heal-invites',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'X-Cron-Secret', 'SEU_WHATSAPP_CRON_SECRET'
-    ),
-    body := '{}'::jsonb
-  );
-  $$
-);
-```
-
-(Trocando `seu-dominio.com` e `SEU_WHATSAPP_CRON_SECRET` pelos valores reais.)
-
-## 10. Como liberar acesso pra cliente que comprou
+## 9. Como liberar acesso pra cliente que comprou
 
 Existem 2 caminhos:
 
@@ -113,20 +86,20 @@ Cliente recebe email de invite via Resend.
 **Manual (admin):** acessa `/miembros/admin` (só email em `OWNER_EMAIL` consegue).
 Tab "Liberar" → preenche email + escolhe produto.
 
-## 11. Pontos que você PROVAVELMENTE vai querer customizar
+## 10. Pontos que você PROVAVELMENTE vai querer customizar
 
-- `app/miembros/_lib/products.ts` — define os 5 produtos premium (nomes, preços, imagens)
+- `app/miembros/_lib/products.ts` — define os produtos premium (nomes, preços, imagens)
 - `app/miembros/_lib/episodes.ts` — episódios da plataforma (vídeos, descrições)
 - `app/miembros/_lib/seasons.ts` — estrutura de temporadas
-- `app/miembros/_lib/achievements.ts` — sistema de gamificação (badges, XP)
+- `lib/achievements.ts` — sistema de gamificação (badges, XP)
 - `app/api/stripe-webhook/route.ts` — lógica de processamento de venda
 
-## 12. O que NÃO veio nesse clone
+## 11. O que NÃO veio nesse clone
 
 - Salespage / página de venda (`app/checkout`, `app/(salespage)`) — você cria a sua
-- Integrações Hotmart, WhatsApp recovery, Z-API — não acompanham este pacote
-- Tracking via Adsmurai/Utmify — você pluga as suas
-- Standalone checkouts (`/minivsl`, `/revisao`) — opcional, customize se quiser
+- Integrações de WhatsApp / mensageria — não acompanham
+- Tracking de pixels (GTM, Meta Pixel, Utmify) — você pluga o seu se quiser
+- Geolocalização / pricing regional dinâmico — removidos; cobrança em USD/EUR/GBP/CHF fixo
 
 ## Suporte
 

@@ -8,8 +8,17 @@
 // Usa Web Crypto API (compatível com edge runtime) pra timing-safe equal.
 
 import { NextResponse } from "next/server"
-import { getClientIp } from "./get-client-ip"
 import { checkRateLimit } from "./rate-limit"
+
+function getClientIp(req: Request | { headers: Headers }): string {
+  const h = req.headers
+  return (
+    h.get("cf-connecting-ip") ||
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip") ||
+    "0.0.0.0"
+  )
+}
 
 const PWD = process.env.SLUG_PASSWORD ?? ""
 

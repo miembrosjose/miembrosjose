@@ -14,8 +14,6 @@ import { X } from "lucide-react"
 import { api } from "../_lib/api"
 
 const DISMISS_KEY = "app_front_expiring_dismissed_v1"
-const WHATSAPP_URL =
-  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20mi%20acceso%20esta%20por%20vencer.%20Quiero%20renovar."
 
 export function FrontExpiringBanner() {
   const [daysLeft, setDaysLeft] = useState<number | null>(null)
@@ -86,20 +84,8 @@ export function FrontExpiringBanner() {
           <span className="font-semibold" style={{ color: isUrgent ? "#fca5a5" : "#fde68a" }}>
             vence en {daysLeft} {daysLeft === 1 ? "día" : "días"}
           </span>
-          . Renueva con nuestro equipo pra continuar accediendo.
+          . Contacta al equipo para renovar tu acceso.
         </p>
-        <a
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden border px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-colors sm:inline-block [font-family:var(--font-mono)]"
-          style={{
-            borderColor: isUrgent ? "#dc2626" : "#c9a961",
-            color: isUrgent ? "#fca5a5" : "#fde68a",
-          }}
-        >
-          Renovar →
-        </a>
         <button
           type="button"
           onClick={dismiss}

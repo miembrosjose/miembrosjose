@@ -20,8 +20,6 @@ import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
 import { CHECKOUT_CONFIGS, type CheckoutRegion } from "@/lib/checkout-configs"
-import { getExchangeRates, convertFromUsd, type SupportedCurrency } from "@/lib/exchange-rates"
-import { applyBrTestPrice } from "@/lib/br-test-pricing"
 
 export const dynamic = "force-dynamic"
 
@@ -134,13 +132,10 @@ export async function POST(req: NextRequest) {
     userMeta.full_name || userMeta.name || saleWithCustomer?.customer_name || ""
   const customerPhone = userMeta.phone || saleWithCustomer?.customer_phone || ""
 
-  const originalPriceUsd = getProductPriceUsd(region, productKey)
-  if (!originalPriceUsd) {
+  const priceUsd = getProductPriceUsd(region, productKey)
+  if (!priceUsd) {
     return NextResponse.json({ error: "product_not_in_region" }, { status: 400 })
   }
-  // 🧪 Override BR: aplica $0.20 USD se country=BR
-  const detectedCountry = saleCountry || req.headers.get("cf-ipcountry") || null
-  const priceUsd = applyBrTestPrice(originalPriceUsd, detectedCountry)
 
   // Pra USD/EUR/GBP/CHF, currency precisa bater com região
   const nativeCurrency = NATIVE_CURRENCY_BY_REGION[region]
@@ -154,28 +149,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Calcula valor esperado
-  let expectedAmount: number
-  if (requestedCurrency === "usd") {
-    expectedAmount = priceUsd
-  } else {
-    try {
-      const rates = await getExchangeRates()
-      const converted = convertFromUsd(priceUsd, requestedCurrency as SupportedCurrency, rates)
-      if (!converted || converted <= 0) {
-        return NextResponse.json(
-          { error: "currency_not_supported" },
-          { status: 400 },
-        )
-      }
-      expectedAmount = converted
-    } catch {
-      return NextResponse.json(
-        { error: "currency_rate_unavailable" },
-        { status: 500 },
-      )
-    }
-  }
+  // Sem conversão — sempre USD ou moeda nativa da região
+  const expectedAmount = priceUsd
 
   // Valida amount (±5%)
   const diff = Math.abs(requestedAmount - expectedAmount) / expectedAmount

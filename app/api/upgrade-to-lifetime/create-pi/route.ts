@@ -20,8 +20,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
-import { getExchangeRates, convertFromUsd, type SupportedCurrency } from "@/lib/exchange-rates"
-import { applyBrTestPrice } from "@/lib/br-test-pricing"
 
 export const dynamic = "force-dynamic"
 
@@ -95,17 +93,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 2) Valida amount — calcula valor esperado server-side
+  // 2) Valida amount — calcula valor esperado server-side (sem conversão de moeda)
   const region = validAnnualSale.region || "DEFAULT"
-  // 🧪 Override BR: detecta country (customer_country da sale > cf-ipcountry)
-  const detectedCountry =
-    (validAnnualSale.customer_country as string | null) ||
-    req.headers.get("cf-ipcountry") ||
-    null
-  const baseUsd = applyBrTestPrice(
-    UPGRADE_BASE_USD[region] ?? UPGRADE_BASE_USD.DEFAULT,
-    detectedCountry,
-  )
+  const baseUsd = UPGRADE_BASE_USD[region] ?? UPGRADE_BASE_USD.DEFAULT
 
   // Pra USD/EUR/GBP/CHF, currency precisa bater com região
   const nativeCurrency = NATIVE_CURRENCY_BY_REGION[region]
@@ -119,40 +109,17 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Pra LATAM (DEFAULT), aceita USD ou moeda local válida
-  let expectedAmount: number
-  if (requestedCurrency === "usd") {
-    expectedAmount = baseUsd
-  } else {
-    // Moeda local LATAM — converte USD pra moeda solicitada e compara
-    try {
-      const rates = await getExchangeRates()
-      const converted = convertFromUsd(baseUsd, requestedCurrency as SupportedCurrency, rates)
-      if (!converted || converted <= 0) {
-        return NextResponse.json(
-          { error: "currency_not_supported", message: "Moneda no soportada." },
-          { status: 400 },
-        )
-      }
-      expectedAmount = converted
-    } catch {
-      return NextResponse.json(
-        { error: "currency_rate_unavailable", message: "No se pudo obtener cotización." },
-        { status: 500 },
-      )
-    }
+  // Pra LATAM (DEFAULT), aceita só USD (sem conversão de moeda local)
+  if (requestedCurrency !== "usd" && !nativeCurrency) {
+    return NextResponse.json(
+      { error: "currency_not_supported", message: "Moneda no soportada." },
+      { status: 400 },
+    )
   }
 
-  // Tolerância de ±5% pra absorver flutuação de câmbio entre client e server
-  const diff = Math.abs(requestedAmount - expectedAmount) / expectedAmount
+  // Tolerância de ±5%
+  const diff = Math.abs(requestedAmount - baseUsd) / baseUsd
   if (diff > AMOUNT_TOLERANCE_PCT) {
-    console.warn("[upgrade-to-lifetime/create-pi] amount mismatch:", {
-      user_id: user.id,
-      requested: requestedAmount,
-      expected: expectedAmount,
-      currency: requestedCurrency,
-      diff_pct: diff,
-    })
     return NextResponse.json(
       { error: "amount_mismatch", message: "Valor inválido. Recarga la página." },
       { status: 400 },

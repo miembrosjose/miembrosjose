@@ -24,9 +24,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
-import { getExchangeRates, convertFromUsd, type SupportedCurrency } from "@/lib/exchange-rates"
-import { OFF_SESSION_LOCAL_CURRENCY } from "@/lib/checkout-configs"
-import { applyBrTestPrice } from "@/lib/br-test-pricing"
 
 export const dynamic = "force-dynamic"
 
@@ -86,9 +83,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 2) Acha payment_method default do customer + país do cartão (BIN)
+  // 2) Acha payment_method default do customer
   let paymentMethodId: string | null = null
-  let cardCountry: string | null = null
   try {
     const customer = await stripe.customers.retrieve(validAnnualSale.stripe_customer_id)
     if (customer.deleted) {
@@ -110,13 +106,6 @@ export async function POST(req: NextRequest) {
       })
       paymentMethodId = pms.data[0]?.id || null
     }
-    if (paymentMethodId) {
-      // Pega country do cartão (BIN) — fonte de verdade da moeda. sale.currency
-      // é a moeda do PI original (USD com Adaptive Pricing) e não bate com a
-      // moeda real do cartão pra clientes LATAM.
-      const pm = await stripe.paymentMethods.retrieve(paymentMethodId)
-      cardCountry = pm.card?.country || null
-    }
   } catch (e) {
     console.error("[/api/upgrade-to-lifetime] retrieve customer:", e)
     return NextResponse.json(
@@ -135,56 +124,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3) Calcula amount baseado na região + moeda do cartão.
-  //
-  // CRÍTICO: cobra na MESMA moeda do sale anterior. Se cartão é BRL, cobra BRL;
-  // se cartão é USD, cobra USD. Stripe rejeita cobrança em moeda incompatível
-  // com o BIN do cartão (erro: "currency_not_supported").
-  //
-  // Pra LATAM (DEFAULT): valor base é 40 USD. Se sale anterior foi em BRL/MXN/ARS
-  // etc, converte 40 USD pra essa moeda usando câmbio atual.
-  // Pra USD/EUR/GBP/CHF: valor é 70 na moeda nativa daquela região.
+  // 3) Calcula amount baseado na região (sem conversão de moeda).
   const upgradeConfig =
     UPGRADE_AMOUNT_BY_REGION[validAnnualSale.region] || UPGRADE_AMOUNT_BY_REGION.DEFAULT
-
-  // 🧪 Override BR: detecta country (cardCountry > customer_country da sale > cf-ipcountry)
-  // e aplica $0.20 USD se for Brasil. Outros países pagam preço normal.
-  const detectedCountry =
-    cardCountry ||
-    (validAnnualSale.customer_country as string | null) ||
-    req.headers.get("cf-ipcountry") ||
-    null
-  const overrideAmount = applyBrTestPrice(upgradeConfig.amount, detectedCountry)
-
-  // Determina moeda final — prioriza país do cartão (BIN) pra LATAM, senão
-  // sale.currency, senão config region.
-  const saleCurrency = (validAnnualSale.currency || upgradeConfig.currency).toLowerCase()
-  let finalCurrency = upgradeConfig.currency
-  let finalAmount = overrideAmount
-
-  if (validAnnualSale.region === "DEFAULT") {
-    // OFF_SESSION_LOCAL_CURRENCY inclui BR→BRL. LATAM_LOCAL_CURRENCY exclui BR
-    // (porque /checkout principal usa Adaptive Pricing pra BR), mas off-session
-    // não tem Adaptive Pricing — precisa cobrar em BRL pro cartão BR aceitar.
-    const localFromCard = cardCountry
-      ? OFF_SESSION_LOCAL_CURRENCY[cardCountry.toUpperCase()]?.toLowerCase()
-      : null
-    const targetCurrency = localFromCard || (saleCurrency !== "usd" ? saleCurrency : null)
-
-    if (targetCurrency && targetCurrency !== "usd") {
-      try {
-        const rates = await getExchangeRates()
-        // Usa overrideAmount (já com BR test aplicado) pra converter
-        const converted = convertFromUsd(overrideAmount, targetCurrency as SupportedCurrency, rates)
-        if (converted && converted > 0) {
-          finalCurrency = targetCurrency
-          finalAmount = converted
-        }
-      } catch (e) {
-        console.error("[upgrade-to-lifetime] convert rate failed, falling back to USD:", e)
-      }
-    }
-  }
+  const finalCurrency = upgradeConfig.currency
+  const finalAmount = upgradeConfig.amount
 
   const amountCents = ZERO_DECIMAL_CURRENCIES.has(finalCurrency)
     ? Math.round(finalAmount)

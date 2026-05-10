@@ -18,9 +18,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { getExchangeRates, convertFromUsd, type SupportedCurrency } from "@/lib/exchange-rates"
-import { OFF_SESSION_LOCAL_CURRENCY, type CheckoutRegion } from "@/lib/checkout-configs"
-import { applyBrTestPrice } from "@/lib/br-test-pricing"
+import type { CheckoutRegion } from "@/lib/checkout-configs"
 
 export const dynamic = "force-dynamic"
 
@@ -71,12 +69,11 @@ export async function GET(req: NextRequest) {
 
   const admin = getSupabaseAdmin()
 
-  // 1) Detecta região via sale válida mais recente. Filtra regions que não
-  //    são keys oficiais (AUTO_BONO etc) pra não quebrar lookup.
+  // Detecta região via sale válida mais recente
   const VALID_REGIONS: ReadonlySet<string> = new Set(["DEFAULT", "USD", "EUR", "GBP", "CHF"])
   const { data: sales } = await admin
     .from("stripe_sales")
-    .select("region, currency, customer_country")
+    .select("region")
     .eq("user_id", user.id)
     .eq("status", "paid")
     .order("created_at", { ascending: false })
@@ -87,88 +84,22 @@ export async function GET(req: NextRequest) {
     return r && VALID_REGIONS.has(r)
   })
 
-  let region: CheckoutRegion = "DEFAULT"
-  let detectedCountry: string | null = null
-  if (validSale) {
-    region = (validSale.region as CheckoutRegion) || "DEFAULT"
-    detectedCountry = (validSale.customer_country as string | null) || null
-  }
+  const region: CheckoutRegion = validSale
+    ? ((validSale.region as CheckoutRegion) || "DEFAULT")
+    : "DEFAULT"
 
-  // Fallback: pega country via Cloudflare se sale não tinha
-  if (!detectedCountry) {
-    detectedCountry = req.headers.get("cf-ipcountry") || null
-  }
+  const baseUsd = UPGRADE_BASE_USD[region] ?? 40
+  const currency = region === "DEFAULT" ? "usd" : region.toLowerCase()
 
-  // 🧪 Override de teste: BR → $0.20 USD. Outros países pagam preço normal.
-  const baseUsd = applyBrTestPrice(UPGRADE_BASE_USD[region] ?? 40, detectedCountry)
-
-  // Detecta moeda local LATAM via geo — usado tanto pra display (always)
-  // quanto pra opção de cobrança (só se region=DEFAULT, pra não conflitar
-  // com o cobrança real em USD/EUR/GBP/CHF).
-  const previousLocalCurrency = sales?.[0]?.currency?.toLowerCase()
-  // OFF_SESSION_LOCAL_CURRENCY inclui BR→BRL — área de membros usa cobrança
-  // off-session sem Adaptive Pricing, então display deve refletir BRL pra BR.
-  const localFromCountry = detectedCountry
-    ? OFF_SESSION_LOCAL_CURRENCY[detectedCountry.toUpperCase()]?.toLowerCase()
-    : undefined
-  const localCurrency = previousLocalCurrency && previousLocalCurrency !== "usd"
-    ? previousLocalCurrency
-    : localFromCountry
-
-  // Calcula formatted local SEMPRE (pra display approx) — se conversão falhar fica null
-  let displayLocal: { currency: string; formatted: string; amount: number } | null = null
-  if (localCurrency && localCurrency !== "usd" && localCurrency !== region.toLowerCase()) {
-    try {
-      const rates = await getExchangeRates()
-      const converted = convertFromUsd(baseUsd, localCurrency as SupportedCurrency, rates)
-      if (converted && converted > 0) {
-        displayLocal = {
-          currency: localCurrency,
-          amount: Math.round(converted * 100) / 100,
-          formatted: formatCurrency(converted, localCurrency),
-        }
-      }
-    } catch {
-      // ignora
-    }
-  }
-
-  // 2) Pra USD/EUR/GBP/CHF: cobrança em moeda nativa, mas display_local
-  // mostra approx local se user tá num país LATAM (admin do BR testando, etc)
-  if (region !== "DEFAULT") {
-    const nativeCurrency = region.toLowerCase()
-    return NextResponse.json({
-      options: [
-        {
-          currency: nativeCurrency,
-          amount: baseUsd,
-          label: currencyLabel(nativeCurrency),
-          formatted: formatCurrency(baseUsd, nativeCurrency),
-        },
-      ],
-      display_local: displayLocal,
-    })
-  }
-
-  // 3) Pra LATAM: USD + moeda local (se detectada)
-  const options = [
-    {
-      currency: "usd",
-      amount: baseUsd,
-      label: "Pagar en USD",
-      formatted: formatCurrency(baseUsd, "usd"),
-    },
-  ]
-
-  if (displayLocal) {
-    options.push({
-      currency: displayLocal.currency,
-      amount: displayLocal.amount,
-      label: currencyLabel(displayLocal.currency),
-      formatted: displayLocal.formatted,
-    })
-  }
-
-  // display_local null pra LATAM — moeda local já está em options[1]
-  return NextResponse.json({ options, display_local: null })
+  return NextResponse.json({
+    options: [
+      {
+        currency,
+        amount: baseUsd,
+        label: currencyLabel(currency),
+        formatted: formatCurrency(baseUsd, currency),
+      },
+    ],
+    display_local: null,
+  })
 }

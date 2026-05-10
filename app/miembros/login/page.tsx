@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import LoginForm from "./login-form"
 
 export const metadata: Metadata = {
@@ -72,7 +73,9 @@ export default function LoginPage() {
           <div className="mb-10 h-[2px] w-16 bg-red-900" />
 
           {/* Form (client component) */}
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
 
           {/* Footnote — compradores futuros */}
           <p className="mt-12 max-w-sm text-xs leading-relaxed text-[oklch(0.45_0.01_30)] [font-family:var(--font-geist-sans)]">

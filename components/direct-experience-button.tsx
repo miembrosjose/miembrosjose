@@ -3,16 +3,11 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { captureAndStoreParams, getPathWithParams } from "@/lib/url-params"
-import { trackPageview, pushDataLayerEvent } from "@/lib/tracker"
-import type { GeoData } from "@/lib/geo-types"
 import { useGlobalAudio } from "@/components/global-audio-provider"
 import { ArrowRight } from "lucide-react"
-// Mesmo vídeo cinematográfico que a home usa (sem tocar na home).
-// Padrão idêntico ao ExperienceButton: overlay fullscreen + play() síncrono
-// no click (user gesture) + áudio cinematográfico + onEnded → /call.
 import { VIDEO_HOME_TRANSITION as VIDEO_URL } from "@/lib/cdn-video"
 
-export default function DirectExperienceButton({ geoData }: { geoData?: GeoData }) {
+export default function DirectExperienceButton() {
   const router = useRouter()
   const { playVibradAudio } = useGlobalAudio()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -21,10 +16,8 @@ export default function DirectExperienceButton({ geoData }: { geoData?: GeoData 
 
   useEffect(() => {
     captureAndStoreParams()
-    trackPageview("/direct")
-    pushDataLayerEvent("CustomizeProduct", undefined, { page_path: "/direct" }, geoData)
     router.prefetch(getPathWithParams("/call"))
-  }, [router, geoData])
+  }, [router])
 
   const navigateToCall = () => {
     if (navigatedRef.current) return
