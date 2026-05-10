@@ -245,7 +245,7 @@ export function BuyProductModal({
               padding: "0.95rem 1.25rem",
               border: "1px solid #c9a961",
               background: "#c9a961",
-              color: "#0a0a0f",
+              color: "#000000",
               fontFamily: "var(--font-mono)",
               fontSize: "0.7rem",
               fontWeight: 700,

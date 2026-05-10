@@ -101,7 +101,7 @@ export function RevokedAccess() {
             <div
               key={item.email}
               className={`border p-4 sm:p-5 ${
-                isFullRevoked ? "border-red-500/40 bg-red-500/5" : "border-[#1a1a24] bg-[#0a0a0f]/50"
+                isFullRevoked ? "border-red-500/40 bg-red-500/5" : "border-[#1a1a24] bg-[#000000]/50"
               }`}
             >
               <div className="flex items-start gap-4">
@@ -135,7 +135,7 @@ export function RevokedAccess() {
                   type="button"
                   onClick={() => restore(item.email, "all")}
                   disabled={busyKey?.startsWith(item.email + ":")}
-                  className="border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-green-400 transition-colors hover:bg-green-500 hover:text-[#0a0a0f] disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+                  className="border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-green-400 transition-colors hover:bg-green-500 hover:text-[#000000] disabled:opacity-50 [font-family:var(--font-geist-sans)]"
                 >
                   Restaurar tudo
                 </button>

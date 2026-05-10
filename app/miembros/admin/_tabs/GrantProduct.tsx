@@ -352,7 +352,7 @@ function GrantProductSection() {
                   className={`border px-4 py-3 text-left text-sm transition-colors [font-family:var(--font-geist-sans)] ${
                     selected
                       ? (isRevoke ? "border-red-500 bg-red-500/10 text-[#f5f5f7]" : "border-[#c9a961] bg-[#c9a961]/10 text-[#f5f5f7]")
-                      : "border-[#1a1a24] bg-[#0a0a0f]/50 text-[#a0a0b0] hover:border-[#2a2a35]"
+                      : "border-[#1a1a24] bg-[#000000]/50 text-[#a0a0b0] hover:border-[#2a2a35]"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -412,7 +412,7 @@ function GrantProductSection() {
           type="submit"
           disabled={isPending}
           className={isRevoke
-            ? "inline-flex items-center justify-center gap-2 border border-red-500 bg-red-500 px-6 py-3 text-[#0a0a0f] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:bg-red-600 hover:border-red-600 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
+            ? "inline-flex items-center justify-center gap-2 border border-red-500 bg-red-500 px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:bg-red-600 hover:border-red-600 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
             : btnCls
           }
         >

@@ -59,7 +59,7 @@ export function FollowsCountersAndModal({
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(null) }}
         >
-          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden border border-[#1a1a24] bg-[#0a0a0f]">
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden border border-[#1a1a24] bg-[#000000]">
             <div className="flex items-center justify-between border-b border-[#1a1a24] px-5 py-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
                 {open === "followers" ? "Seguidores" : "Siguiendo"}

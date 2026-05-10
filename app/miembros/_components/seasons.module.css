@@ -133,7 +133,7 @@
 
 .badge.starter {
   background: linear-gradient(135deg, var(--accent-gold) 0%, #e8c878 100%);
-  color: #0a0a0f;
+  color: #000000;
   font-weight: 800;
   font-size: 0.5rem;
   letter-spacing: 0.15em;

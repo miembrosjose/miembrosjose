@@ -360,11 +360,11 @@ export function ProfileForm({
     })
   }
 
-  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#0a0a0f] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
   const labelCls = "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
   const sectionCls = "border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8"
   const sectionTitleCls = "text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)] mb-6"
-  const btnCls = "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#0a0a0f] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#0a0a0f] [font-family:var(--font-geist-sans)]"
+  const btnCls = "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
 
   function StatusMsg({ s }: { s: State }) {
     if (s.type === "idle" || s.type === "saving") return null
@@ -726,7 +726,7 @@ function AvatarBadgeOverlay({ badgeId }: { badgeId: string | null }) {
       className={
         isExclusive
           ? "absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
-          : "absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#1a1a24] bg-[#0a0a0f] shadow-[0_0_12px_rgba(0,0,0,0.6)] [&_svg]:h-full [&_svg]:w-full"
+          : "absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#1a1a24] bg-[#000000] shadow-[0_0_12px_rgba(0,0,0,0.6)] [&_svg]:h-full [&_svg]:w-full"
       }
       style={{
         color: getTierColor(ach.tier),
@@ -833,7 +833,7 @@ function BadgeSection({
           type="button"
           onClick={() => onSelect(null)}
           disabled={disabled}
-          className={`group flex flex-col items-center justify-start gap-2 border bg-[#0a0a0f]/50 p-3 text-center transition-colors ${
+          className={`group flex flex-col items-center justify-start gap-2 border bg-[#000000]/50 p-3 text-center transition-colors ${
             selectedId === null
               ? "border-[#c9a961] bg-[#c9a961]/10"
               : "border-[#1a1a24] hover:border-[#2a2a35]"
@@ -861,7 +861,7 @@ function BadgeSection({
               type="button"
               onClick={() => unlocked && onSelect(ach.id)}
               disabled={disabled || !unlocked}
-              className={`group flex flex-col items-center justify-start gap-2 border bg-[#0a0a0f]/50 p-3 text-center transition-colors ${
+              className={`group flex flex-col items-center justify-start gap-2 border bg-[#000000]/50 p-3 text-center transition-colors ${
                 selected
                   ? "border-[#c9a961] bg-[#c9a961]/10"
                   : unlocked

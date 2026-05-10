@@ -86,7 +86,7 @@ export function MembersTracker() {
         </span>
       </div>
 
-      <div className="border border-[#1a1a24] bg-[#0a0a0f]/40 overflow-x-auto">
+      <div className="border border-[#1a1a24] bg-[#000000]/40 overflow-x-auto">
         <table className="w-full text-sm [font-family:var(--font-geist-sans)]">
           <thead className="border-b border-[#1a1a24]">
             <tr className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">
@@ -348,7 +348,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-[#1a1a24] bg-[#0a0a0f]">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-[#1a1a24] bg-[#000000]">
         <div className="flex items-center justify-between border-b border-[#1a1a24] px-5 py-4">
           <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
             Detalhe do membro

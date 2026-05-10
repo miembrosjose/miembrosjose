@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="fixed inset-0 overflow-hidden bg-[oklch(0.07_0.012_25)] text-[oklch(0.95_0.008_60)] selection:bg-red-900/40">
+    <main className="fixed inset-0 overflow-hidden bg-[#000000] text-[oklch(0.95_0.008_60)] selection:bg-red-900/40">
       {/* ── Vinheta radial cinematográfica ───────────────────── */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_100%)]" />
 

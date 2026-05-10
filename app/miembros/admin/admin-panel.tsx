@@ -256,7 +256,7 @@ export function AdminPanel() {
         )}
 
         {/* Container do tab ativo */}
-        <div className="border border-[#1a1a24] bg-[#0a0a0f]/40 p-4 sm:p-6">
+        <div className="border border-[#1a1a24] bg-[#000000]/40 p-4 sm:p-6">
           {tab === "grant" && <GrantProduct />}
           {tab === "members" && <MembersTracker />}
           {tab === "texts" && <TextsEditor />}

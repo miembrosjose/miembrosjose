@@ -156,7 +156,7 @@
   /* !important pelo mesmo motivo do .cardAvatarImg — minificacao em prod
    * quebra a regra [class*='avatar' i] do override global. */
   border-radius: 50% !important;
-  background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+  background: linear-gradient(135deg, #1a1a24, #000000);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;

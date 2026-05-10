@@ -132,7 +132,7 @@ export function Starfield({ startedAt, className }: Props) {
 
       // Limpa com leve trail (motion blur). Mais blur conforme warp aumenta.
       const fadeAlpha = 0.4 - warpAmount * 0.27
-      ctx.fillStyle = `rgba(0, 0, 5, ${fadeAlpha})`
+      ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`
       ctx.fillRect(0, 0, width, height)
 
       const cx = width / 2

@@ -37,7 +37,7 @@ export function CinematicShell({
   }, [])
 
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#0a0a0f] text-[#f5f5f7] selection:bg-red-900/40">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-[#000000] text-[#f5f5f7] selection:bg-red-900/40">
       {/* ── Vinheta radial cinematográfica ──────────────────── */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_100%)]" />
 

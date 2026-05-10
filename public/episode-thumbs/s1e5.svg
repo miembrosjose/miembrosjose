@@ -2,7 +2,7 @@
     <defs>
       <linearGradient id="bg-constructor-5" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#1a0a0a"/>
-        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="60%" stop-color="#000000"/>
         <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
       </linearGradient>
       <radialGradient id="spot-constructor-5" cx="30%" cy="50%" r="60%">
@@ -34,7 +34,7 @@
       <line x1="310" y1="80" x2="265" y2="200" stroke="#c9a961" stroke-width="2" stroke-linecap="round"/>
       <line x1="310" y1="80" x2="355" y2="200" stroke="#c9a961" stroke-width="2" stroke-linecap="round"/>
       <circle cx="310" cy="80" r="5" fill="#c9a961"/>
-      <circle cx="310" cy="80" r="2" fill="#0a0a0f"/>
+      <circle cx="310" cy="80" r="2" fill="#000000"/>
       <circle cx="265" cy="200" r="3" fill="#c9a961"/>
       <circle cx="355" cy="200" r="3" fill="#c9a961"/>
       <circle cx="310" cy="138" r="9" fill="none" stroke="#c9a961" stroke-width="1.5"/>

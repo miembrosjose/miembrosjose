@@ -154,7 +154,7 @@
       rgba(201, 169, 97, 0.22) 0%,
       transparent 60%
     ),
-    linear-gradient(135deg, #1a1a24 0%, #0a0a0f 60%, rgba(127, 29, 29, 0.55) 100%);
+    linear-gradient(135deg, #1a1a24 0%, #000000 60%, rgba(127, 29, 29, 0.55) 100%);
   border: 1px solid rgba(201, 169, 97, 0.4);
   outline: 1px solid rgba(0, 0, 0, 0.6);
   outline-offset: 3px;
@@ -297,7 +297,7 @@
 
 .ctaGold {
   background: linear-gradient(135deg, #d8b878 0%, #c9a961 50%, #b08c44 100%);
-  color: #0a0a0f;
+  color: #000000;
   border: 1px solid rgba(201, 169, 97, 0.7);
 }
 

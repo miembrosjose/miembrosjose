@@ -39,8 +39,8 @@ function renderRecoveryHtml(p: { firstName: string; link: string }): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tu pago no fue aprobado</title>
 </head>
-<body style="margin:0;padding:0;background:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e8e3d8;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0a0a0f;padding:48px 16px;">
+<body style="margin:0;padding:0;background:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e8e3d8;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#000000;padding:48px 16px;">
     <tr>
       <td align="center">
         <table role="presentation" width="540" cellspacing="0" cellpadding="0" border="0" style="max-width:540px;width:100%;background:#10101a;border:1px solid #1f1925;border-top:3px solid #7f1d1d;">
@@ -64,7 +64,7 @@ function renderRecoveryHtml(p: { firstName: string; link: string }): string {
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 32px;">
                 <tr>
                   <td style="background:#f4eedd;border:1px solid #f4eedd;">
-                    <a href="${link}" target="_blank" rel="noopener" style="display:inline-block;padding:18px 36px;font-size:14px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:#0a0a0f;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+                    <a href="${link}" target="_blank" rel="noopener" style="display:inline-block;padding:18px 36px;font-size:14px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:#000000;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
                       Probar otra opción →
                     </a>
                   </td>

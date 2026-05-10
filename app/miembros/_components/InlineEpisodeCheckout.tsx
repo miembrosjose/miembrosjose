@@ -141,7 +141,7 @@ export function InlineEpisodeCheckout({ product }: Props) {
 
 // Styles
 const containerStyle: React.CSSProperties = {
-  background: "#0a0a0f",
+  background: "#000000",
   border: "1px solid rgba(201,169,97,0.25)",
   borderRadius: 6,
   overflow: "hidden",
@@ -153,7 +153,7 @@ const heroStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   aspectRatio: "16 / 9",
-  backgroundColor: "#0a0a0f",
+  backgroundColor: "#000000",
   backgroundSize: "cover",
   backgroundPosition: "center",
 }
@@ -162,7 +162,7 @@ const heroOverlay: React.CSSProperties = {
   position: "absolute",
   inset: 0,
   background:
-    "linear-gradient(to top, #0a0a0f 0%, rgba(10,10,15,0.85) 25%, rgba(10,10,15,0.4) 55%, transparent 85%)",
+    "linear-gradient(to top, #000000 0%, rgba(10,10,15,0.85) 25%, rgba(10,10,15,0.4) 55%, transparent 85%)",
   pointerEvents: "none",
 }
 

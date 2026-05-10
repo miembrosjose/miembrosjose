@@ -152,7 +152,7 @@ export function TextsEditor() {
                       type="button"
                       onClick={() => saveKey(entry.key)}
                       disabled={isSaving || !dirty}
-                      className="border border-[#c9a961] bg-[#c9a961]/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] hover:bg-[#c9a961] hover:text-[#0a0a0f] disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+                      className="border border-[#c9a961] bg-[#c9a961]/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] hover:bg-[#c9a961] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
                     >
                       {isSaving ? "Salvando..." : "Salvar"}
                     </button>

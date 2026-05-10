@@ -126,7 +126,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="group relative mt-2 inline-flex w-full items-center justify-center gap-3 border border-[oklch(0.96_0.005_60)] bg-[oklch(0.96_0.005_60)] px-6 py-4 text-[oklch(0.07_0.012_25)] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[oklch(0.96_0.005_60)] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[oklch(0.96_0.005_60)] disabled:hover:text-[oklch(0.07_0.012_25)]"
+        className="group relative mt-2 inline-flex w-full items-center justify-center gap-3 border border-[oklch(0.96_0.005_60)] bg-[oklch(0.96_0.005_60)] px-6 py-4 text-[#000000] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[oklch(0.96_0.005_60)] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[oklch(0.96_0.005_60)] disabled:hover:text-[#000000]"
       >
         <span className="text-sm font-semibold uppercase tracking-[0.3em] [font-family:var(--font-geist-sans)]">
           {isPending ? "Iniciando sesión..." : "Iniciar Sesión"}

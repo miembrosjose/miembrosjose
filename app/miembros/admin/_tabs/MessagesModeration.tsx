@@ -214,7 +214,7 @@ function ThreadModal({ pair, onClose }: { pair: Pair; onClose: () => void }) {
           width: "100%",
           maxWidth: 720,
           maxHeight: "90vh",
-          background: "#0a0a0f",
+          background: "#000000",
           border: "1px solid #1a1a24",
           display: "flex",
           flexDirection: "column",

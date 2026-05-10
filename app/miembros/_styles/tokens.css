@@ -15,10 +15,10 @@
   color-scheme: dark;
 
   /* Paleta — alinhada com marca [BRAND_NAME] (red-900 oficial) */
-  --bg-deep:        #0a0a0f;
-  --bg-primary:     #0a0a0f;
-  --bg-surface:    #12121a;
-  --bg-elevated:   #1a1a24;
+  --bg-deep:        #000000;
+  --bg-primary:     #000000;
+  --bg-surface:    #0c0c14;
+  --bg-elevated:   #14141e;
   --accent-red:     #7f1d1d;
   --accent-red-hover:#991b1b;
   --accent-red-deep:#450a0a;
@@ -279,12 +279,10 @@
   display: block;
 }
 
-/* Sobrescreve o body { background: #000 !important } do globals.css QUANDO
- * estamos numa rota /miembros (shell renderizado). #0a0a0f é levemente quente
- * (não preto puro) — combina com a paleta vermelha/dourada da marca. */
+/* Body preto puro quando estamos numa rota /miembros (shell renderizado). */
 body:has(.miembros-shell),
 html:has(.miembros-shell) {
-  background-color: #0a0a0f !important;
+  background-color: #000000 !important;
 }
 
 /* Selects nativos: força fundo escuro + texto claro nas options. */

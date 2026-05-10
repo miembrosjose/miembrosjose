@@ -30,7 +30,7 @@ export const SEASONS: Season[] = [
     name: "Temporada 2",
     episodes: 0,
     videoBg: "https://cdn.SEU_DOMINIO.com/video2.mp4",
-    gradient: "linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)",
+    gradient: "linear-gradient(135deg, #000000 0%, #1a1a24 100%)",
     emoji: "🎞️",
   },
   {
@@ -46,7 +46,7 @@ export const SEASONS: Season[] = [
     name: "Temporada 4",
     episodes: 0,
     videoBg: "https://cdn.SEU_DOMINIO.com/video4.mp4",
-    gradient: "linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)",
+    gradient: "linear-gradient(135deg, #000000 0%, #1a1a24 100%)",
     emoji: "🎥",
   },
   {
@@ -55,7 +55,7 @@ export const SEASONS: Season[] = [
     episodes: 0,
     external: true,
     videoBg: "https://cdn.SEU_DOMINIO.com/video5.mp4",
-    gradient: "linear-gradient(135deg, #0a0a0f 0%, #2a2a3a 100%)",
+    gradient: "linear-gradient(135deg, #000000 0%, #2a2a3a 100%)",
     emoji: "💬",
   },
 ]

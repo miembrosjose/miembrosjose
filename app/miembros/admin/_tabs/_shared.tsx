@@ -13,13 +13,13 @@ export const PRODUCT_OPTIONS = [
 ] as const
 
 export const inputCls =
-  "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#0a0a0f] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+  "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
 
 export const labelCls =
   "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
 
 export const btnCls =
-  "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#0a0a0f] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#0a0a0f] [font-family:var(--font-geist-sans)]"
+  "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
 
 export function FilterBtn({
   children,
@@ -114,7 +114,7 @@ export function StatCard({
   }
   const c = colors[variant]
   return (
-    <div className={`relative overflow-hidden border ${c.border} bg-[#0a0a0f]/40 p-4`}>
+    <div className={`relative overflow-hidden border ${c.border} bg-[#000000]/40 p-4`}>
       <div className="flex items-start justify-between">
         <p className={`text-[9px] font-semibold uppercase tracking-[0.3em] ${c.accent} [font-family:var(--font-geist-sans)]`}>
           {label}
@@ -146,7 +146,7 @@ export function AdminEmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-[#2a2a36] bg-[#0a0a0f]/40 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-[#2a2a36] bg-[#000000]/40 px-6 py-12 text-center">
       {icon && <div className="text-[#6a6a7a]">{icon}</div>}
       <p className="text-sm font-semibold text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
         {title}

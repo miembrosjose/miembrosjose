@@ -2,7 +2,7 @@
     <defs>
       <linearGradient id="bg-video-edit-4" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#1a0a0a"/>
-        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="60%" stop-color="#000000"/>
         <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
       </linearGradient>
       <radialGradient id="spot-video-edit-4" cx="30%" cy="50%" r="60%">

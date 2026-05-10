@@ -173,7 +173,7 @@ export default async function MetricasPage() {
   const m = await loadMetrics()
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#f5f5f7", padding: "2rem 1.5rem", fontFamily: "var(--font-body)" }}>
+    <div style={{ minHeight: "100vh", background: "#000000", color: "#f5f5f7", padding: "2rem 1.5rem", fontFamily: "var(--font-body)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <header style={{ marginBottom: "2rem", borderBottom: "1px solid rgba(201,169,97,0.3)", paddingBottom: "1rem" }}>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.4em", textTransform: "uppercase", color: "#c9a961", margin: 0 }}>

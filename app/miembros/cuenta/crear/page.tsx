@@ -16,7 +16,7 @@ export default async function CrearCuentaPage({ searchParams }: { searchParams: 
   const invite = cleanToken ? await getInviteByToken(cleanToken) : null
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden bg-[oklch(0.07_0.012_25)] text-[oklch(0.95_0.008_60)] selection:bg-red-900/40">
+    <main className="relative min-h-[100dvh] overflow-hidden bg-[#000000] text-[oklch(0.95_0.008_60)] selection:bg-red-900/40">
       {/* Vinheta + spots */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_100%)]" />
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_500px_700px_at_85%_45%,rgba(201,169,97,0.08),transparent_70%)]" />
@@ -120,7 +120,7 @@ function InvalidTokenShell({ hasToken }: { hasToken: boolean }) {
       <div className="space-y-4">
         <a
           href="/login"
-          className="group inline-flex items-center gap-3 border border-[oklch(0.96_0.005_60)] bg-[oklch(0.96_0.005_60)] px-6 py-4 text-[oklch(0.07_0.012_25)] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[oklch(0.96_0.005_60)]"
+          className="group inline-flex items-center gap-3 border border-[oklch(0.96_0.005_60)] bg-[oklch(0.96_0.005_60)] px-6 py-4 text-[#000000] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[oklch(0.96_0.005_60)]"
         >
           <span className="text-sm font-semibold uppercase tracking-[0.3em] [font-family:var(--font-geist-sans)]">
             Ir al Inicio de Sesión

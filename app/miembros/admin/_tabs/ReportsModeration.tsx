@@ -107,7 +107,7 @@ export function ReportsModeration() {
           const snapText =
             (snap.title as string) || (snap.body as string) || (snap.text as string) || (snap.name as string) || (snap.url as string) || "(sem conteúdo)"
           return (
-            <div key={r.id} className="border border-[#1a1a24] bg-[#0a0a0f]/50 p-4 sm:p-5">
+            <div key={r.id} className="border border-[#1a1a24] bg-[#000000]/50 p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-red-400 [font-family:var(--font-geist-sans)]">
@@ -150,7 +150,7 @@ export function ReportsModeration() {
                     type="button"
                     onClick={() => act(r.id, "resolve")}
                     disabled={busyId === r.id}
-                    className="border border-green-500 bg-green-500/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-green-400 transition-colors hover:bg-green-500 hover:text-[#0a0a0f] disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+                    className="border border-green-500 bg-green-500/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-green-400 transition-colors hover:bg-green-500 hover:text-[#000000] disabled:opacity-50 [font-family:var(--font-geist-sans)]"
                   >
                     Resolver
                   </button>

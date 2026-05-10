@@ -15,7 +15,7 @@ export default function IntroPreviewPage() {
       className="miembros-shell"
       style={{
         minHeight: "100dvh",
-        background: "#0a0a0f",
+        background: "#000000",
         color: "#f5f5f7",
         fontFamily: "var(--font-mono)",
       }}
