@@ -36,7 +36,6 @@ const ProductPurchaseModal = dynamic(
   { ssr: false },
 )
 const AdminFeed = dynamic(() => import("./AdminFeed").then((m) => m.AdminFeed), { ssr: false })
-const Funnels = dynamic(() => import("./Funnels").then((m) => m.Funnels), { ssr: false })
 const ViewPerfil = dynamic(() => import("./ViewPerfil").then((m) => m.ViewPerfil), { ssr: false })
 const ViewAdmin = dynamic(() => import("./ViewAdmin").then((m) => m.ViewAdmin), { ssr: false })
 const ViewProducto = dynamic(
@@ -83,10 +82,6 @@ const OnlineMembers = dynamic(
 )
 const ViewMessages = dynamic(
   () => import("./ViewMessages").then((m) => m.ViewMessages),
-  { ssr: false },
-)
-const ViewLecciones = dynamic(
-  () => import("./ViewLecciones").then((m) => m.ViewLecciones),
   { ssr: false },
 )
 const ViewMiembrosLista = dynamic(
@@ -282,13 +277,11 @@ export function SpaHomeShell() {
             )}
             {view === "comunidad" && <ViewComunidad />}
             {view === "feed" && <ViewFeed />}
-            {view === "funnels" && <ViewFunnels />}
             {view === "perfil" && <ViewPerfil />}
             {view === "admin" && <ViewAdmin />}
             {view === "user" && <ViewUserProfile />}
             {view === "producto" && <ViewProducto />}
             {view === "messages" && <ViewMessages />}
-            {view === "lecciones" && <ViewLecciones />}
             {view === "miembros_lista" && <ViewMiembrosLista />}
           </div>
 
@@ -485,15 +478,3 @@ function ViewFeed() {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// VIEW: FUNNELS (grid)
-// ─────────────────────────────────────────────────────────────────────────
-
-function ViewFunnels() {
-  // Header próprio dentro do componente Funnels (estilo Lecciones).
-  return (
-    <div className={styles.view}>
-      <Funnels />
-    </div>
-  )
-}

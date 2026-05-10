@@ -10,11 +10,9 @@ import {
   Unlock,
   Users,
   FileText,
-  Workflow,
   Flag,
   ShieldOff,
   MessageSquare,
-  GraduationCap,
   Mail,
   ChevronRight,
 } from "lucide-react"
@@ -23,11 +21,9 @@ type Tab =
   | "grant"
   | "members"
   | "texts"
-  | "funnels"
   | "reports"
   | "access"
   | "messages"
-  | "lessons"
   | "emails"
 
 const GrantProduct = dynamic(
@@ -42,10 +38,6 @@ const TextsEditor = dynamic(
   () => import("./_tabs/TextsEditor").then((m) => m.TextsEditor),
   { ssr: false },
 )
-const FunnelsApproval = dynamic(
-  () => import("./_tabs/FunnelsApproval").then((m) => m.FunnelsApproval),
-  { ssr: false },
-)
 const ReportsModeration = dynamic(
   () => import("./_tabs/ReportsModeration").then((m) => m.ReportsModeration),
   { ssr: false },
@@ -56,10 +48,6 @@ const RevokedAccess = dynamic(
 )
 const MessagesModeration = dynamic(
   () => import("./_tabs/MessagesModeration").then((m) => m.MessagesModeration),
-  { ssr: false },
-)
-const LessonsApproval = dynamic(
-  () => import("./_tabs/LessonsApproval").then((m) => m.LessonsApproval),
   { ssr: false },
 )
 const EmailHealth = dynamic(
@@ -111,18 +99,6 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Membros",
         description: "Lista completa de membros com detalhes",
         icon: Users,
-      },
-      {
-        id: "funnels",
-        label: "Funnels",
-        description: "Aprovar funnels pendentes da comunidade",
-        icon: Workflow,
-      },
-      {
-        id: "lessons",
-        label: "Lições",
-        description: "Aprovar lições compartilhadas pelos membros",
-        icon: GraduationCap,
       },
       {
         id: "reports",
@@ -284,11 +260,9 @@ export function AdminPanel() {
           {tab === "grant" && <GrantProduct />}
           {tab === "members" && <MembersTracker />}
           {tab === "texts" && <TextsEditor />}
-          {tab === "funnels" && <FunnelsApproval />}
           {tab === "reports" && <ReportsModeration />}
           {tab === "access" && <RevokedAccess />}
           {tab === "messages" && <MessagesModeration />}
-          {tab === "lessons" && <LessonsApproval />}
           {tab === "emails" && <EmailHealth />}
         </div>
       </main>

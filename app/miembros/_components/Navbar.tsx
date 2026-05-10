@@ -26,10 +26,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Mis Productos", view: "inicio", anchor: "cursos" },
   { label: "Comunidad", view: "comunidad", anchor: null },
   { label: "Miembros", view: "miembros_lista", anchor: null },
-  { label: "Lecciones", view: "lecciones", anchor: null },
   { label: "Feed", view: "feed", anchor: null },
   { label: "Tienda", view: "inicio", anchor: "tienda" },
-  { label: "Funnels", view: "funnels", anchor: null },
 ]
 
 export function Navbar() {

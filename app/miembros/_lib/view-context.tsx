@@ -3,9 +3,6 @@
 // View router client-side — mantém qual "tela" está ativa sem reload.
 // Sincroniza com URL via pushState pra back button + share funcionarem.
 //
-// 8 views (todas dentro do mesmo SPA — sem rotas Next.js separadas):
-//   inicio, comunidad, feed, funnels, perfil, admin, user, producto
-//
 // Views com params (user, producto) carregam params do path:
 //   /miembros/u/<id>           → view=user, params.userId
 //   /miembros/producto/<slug>  → view=producto, params.slug
@@ -16,24 +13,20 @@ export type ViewKey =
   | "inicio"
   | "comunidad"
   | "feed"
-  | "funnels"
   | "perfil"
   | "admin"
   | "user"
   | "producto"
   | "messages"
-  | "lecciones"
   | "miembros_lista"
 
 const VALID_VIEWS: ViewKey[] = [
   "inicio",
   "comunidad",
   "feed",
-  "funnels",
   "perfil",
   "admin",
   "messages",
-  "lecciones",
   "miembros_lista",
 ]
 
@@ -77,7 +70,6 @@ function parsePath(pathname: string, hash: string): ParseResult {
   if (path === "/miembros/perfil") return { view: "perfil", anchor: null, params: {} }
   if (path === "/miembros/admin") return { view: "admin", anchor: null, params: {} }
   if (path === "/miembros/mensajes") return { view: "messages", anchor: null, params: {} }
-  if (path === "/miembros/lecciones") return { view: "lecciones", anchor: null, params: {} }
   if (path === "/miembros/personas") return { view: "miembros_lista", anchor: null, params: {} }
 
   const mensajesMatch = path.match(/^\/miembros\/mensajes\/([^/]+)$/)
@@ -110,9 +102,8 @@ function buildPath(view: ViewKey, anchor: Anchor, params: ViewParams): string {
   if (view === "producto" && params.slug) return `/miembros/producto/${params.slug}`
   if (view === "messages")
     return params.withUserId ? `/miembros/mensajes/${params.withUserId}` : "/miembros/mensajes"
-  if (view === "lecciones") return "/miembros/lecciones"
   if (view === "miembros_lista") return "/miembros/personas"
-  // Inicio/comunidad/feed/funnels → /miembros + hash
+  // Inicio/comunidad/feed → /miembros + hash
   if (anchor) return `/miembros#${anchor}`
   if (view === "inicio") return "/miembros"
   return `/miembros#${view}`
