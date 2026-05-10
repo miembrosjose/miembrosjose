@@ -29,6 +29,15 @@
   --border-subtle:  rgba(255,255,255,0.06);
   --border-medium:  rgba(255,255,255,0.12);
 
+  /* Border radius tokens — escala moderna */
+  --radius-xs:      4px;   /* tags, chips pequenos */
+  --radius-sm:      6px;   /* badges, inputs pequenos */
+  --radius-md:      10px;  /* botões, cards, inputs (DEFAULT) */
+  --radius-lg:      14px;  /* cards grandes, painéis */
+  --radius-xl:      20px;  /* modais, heros */
+  --radius-2xl:     28px;  /* containers especiais */
+  --radius-default: var(--radius-md);
+
   /* Tipografia (variáveis vêm de next/font/google no layout.tsx) */
   --font-display:   var(--font-cinzel, 'Cinzel'), serif;
   --font-impact:    var(--font-bebas, 'Bebas Neue'), sans-serif;
@@ -52,20 +61,30 @@
   box-sizing: border-box;
 }
 
-/* Geometria quadrada — branding [BRAND_NAME] é quadrado.
- * Override global pra anular qualquer border-radius interno (cards, modais,
- * botões, badges, etc). Exceção: fotos de perfil seguem redondas.
+/* Geometria moderna — radius padrão em todos os elementos.
+ * Override global pra padronizar border-radius (cards, modais, botões, inputs etc).
+ * Exceções específicas (avatar circular, badges pill, FABs, dots) abaixo.
  *
  * IMPORTANTE: :not(img):not(video) — em produção, CSS modules minificam
- * nome de classe e a regra [class*='avatar' i] perde efeito (avatar vira
- * hash). Solução: nunca aplicar reset em <img> ou <video> — esses elementos
- * recebem o border-radius que cada componente especifica (CSS module ou
- * inline style). */
-.miembros-shell,
-.miembros-shell *:not(img):not(video),
-.miembros-shell *::before,
-.miembros-shell *::after {
-  border-radius: 0 !important;
+ * nome de classe e a regra [class*='avatar' i] perde efeito. <img> e <video>
+ * recebem o border-radius que cada componente especifica. */
+.miembros-shell *:not(img):not(video) {
+  border-radius: var(--radius-default);
+}
+
+/* Containers grandes — cards de seção, painéis, hero — radius mais generoso */
+.miembros-shell [class*="card" i]:not([class*="cardImage" i]):not([class*="card-icon" i]),
+.miembros-shell [class*="hero" i],
+.miembros-shell [class*="panel" i],
+.miembros-shell [class*="container" i]:not([class*="mini" i]) {
+  border-radius: var(--radius-lg);
+}
+
+/* Modais e popups — radius mais ainda */
+.miembros-shell [class*="modal" i]:not([class*="overlay" i]),
+.miembros-shell [class*="popup" i],
+.miembros-shell [class*="dialog" i] {
+  border-radius: var(--radius-xl);
 }
 
 /* EXCEÇÃO: fotos de perfil seguem redondas (convenção de branding).
