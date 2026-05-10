@@ -55,10 +55,10 @@ BEGIN
       title, body, tags, pinned, pin_order
     )
     VALUES (
-      v_user_id, v_full_name, 'copyfilms', v_avatar,
+      v_user_id, v_full_name, 'admin', v_avatar,
       'admin_seal', true,
       '¡BIENVENIDO! 🎬 [EMPEZÁ ACÁ]',
-      E'¡Sea muy bienvenido(a) a la Comunidad Copy Film''s!\n\n¡Felicitaciones por tu decisión de entrar! Ahora vamos a poner manos a la obra y hacer que pase. 🔥\n\nPara empezar, vamos a conocernos y conectar mejor.\n\nDale un ❤️ a este post y escribí abajo en los comentarios:\n\n1) Tu nombre y de qué país sos\n2) Una breve descripción de tu negocio — qué hacés y qué vendés\n3) Cuáles son tus mayores especialidades/habilidades\n4) ¿Cuáles son tus mayores desafíos hoy?',
+      E'¡Sea muy bienvenido(a) a la Comunidad [BRAND_NAME]!\n\n¡Felicitaciones por tu decisión de entrar! Ahora vamos a poner manos a la obra y hacer que pase. 🔥\n\nPara empezar, vamos a conocernos y conectar mejor.\n\nDale un ❤️ a este post y escribí abajo en los comentarios:\n\n1) Tu nombre y de qué país sos\n2) Una breve descripción de tu negocio — qué hacés y qué vendés\n3) Cuáles son tus mayores especialidades/habilidades\n4) ¿Cuáles son tus mayores desafíos hoy?',
       ARRAY['NOVEDADES', 'ANUNCIOS', 'COMUNIDAD'],
       true, 1
     );
@@ -102,7 +102,7 @@ BEGIN
       title, body, tags, pinned, pin_order
     )
     VALUES (
-      v_user_id, v_full_name, 'copyfilms', v_avatar,
+      v_user_id, v_full_name, 'admin', v_avatar,
       'admin_seal', true,
       'Tu experiencia en el Entrenamiento vale un bono 🎁',
       E'Describí cómo está siendo tu experiencia acá en la Mentoría y desbloqueá un contenido bono (PACK CON 30 GANCHOS NEURONALES PARA CREATIVOS).\n\nCómo desbloquear el bono:\n\n1) Respondé este post contando cómo está siendo tu experiencia, qué te está pareciendo la Comunidad, cómo te está yendo implementar los métodos y estrategias, resultados obtenidos, etc.\n2) Tu bono será liberado en tu área de miembros en hasta 24h después de tu posteo.\n\n📌 Importante — leelo antes de responder:\n\nObs: si recién entraste a la Comunidad y todavía no tuviste oportunidad de aprender e implementar el contenido, NO comentes ''acabo de entrar y aún no vi nada'' solamente para ganar el bono. Primero, estudiá al menos el 50% del contenido como mínimo, interactuá con los demás miembros acá en la plataforma y en el grupo de WhatsApp. Sólo así vas a tener vivencia suficiente en el entrenamiento para compartir tu experiencia.\n\nLa idea no es dar el bono gratis — es recompensar a quien realmente está construyendo. 🚀',

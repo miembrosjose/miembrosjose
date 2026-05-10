@@ -206,7 +206,7 @@ function GrantMembership() {
           className="mt-0.5 accent-[#c9a961]"
         />
         <span>
-          Enviar email <strong className="text-[#f5f5f7]">&quot;Tu acceso a Copy Film&apos;s está listo&quot;</strong> (cliente cria senha via link único, válido 7 dias)
+          Enviar email <strong className="text-[#f5f5f7]">&quot;Tu acceso a [BRAND_NAME] está listo&quot;</strong> (cliente cria senha via link único, válido 7 dias)
         </span>
       </label>
 

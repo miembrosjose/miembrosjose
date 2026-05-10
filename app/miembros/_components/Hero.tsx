@@ -7,10 +7,10 @@
 //  - Quando user clica "Saltar Intro" no overlay, callback síncrono no shell
 //    aciona video.muted=false + video.play() — gesture válido permite áudio
 //  - Vídeo SEM loop: ao terminar, fica no último frame
-//  - sessionStorage 'copyfilms_hero_ended' rastreia quando terminou —
+//  - sessionStorage 'app_hero_ended' rastreia quando terminou —
 //    próxima remount (após navegar pra outra view e voltar) restaura último
 //    frame em vez de recomeçar
-//  - sessionStorage 'copyfilms_intro_seen' indica que intro já foi pulada;
+//  - sessionStorage 'app_intro_seen' indica que intro já foi pulada;
 //    se sim, vídeo inicia tocando muted (sem som — não tem gesture aqui)
 
 import { Play, Info } from "lucide-react"
@@ -18,8 +18,8 @@ import { forwardRef, useEffect, useRef } from "react"
 import styles from "./hero.module.css"
 
 const HERO_VIDEO_URL = "https://cdn.SEU_DOMINIO.com/bannermembros.mp4"
-const SESSION_KEY_INTRO = "copyfilms_intro_seen"
-const SESSION_KEY_ENDED = "copyfilms_hero_ended"
+const SESSION_KEY_INTRO = "app_intro_seen"
+const SESSION_KEY_ENDED = "app_hero_ended"
 
 type HeroProps = {
   badge?: string

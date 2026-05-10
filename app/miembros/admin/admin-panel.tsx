@@ -171,7 +171,7 @@ export function AdminPanel() {
           {/* Header do painel */}
           <div className="border border-[#2a2a36] bg-gradient-to-br from-[#12121a] via-[#0f0f17] to-[#12121a] p-4">
             <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
-              Copy Film&apos;s
+              [BRAND_NAME]
             </p>
             <h1 className="mt-1 text-lg font-bold tracking-tight text-[#f5f5f7] [font-family:var(--font-cinzel)]">
               Admin Panel

@@ -81,7 +81,7 @@ function recordVisit(page: string): string {
  * Formato: {campanha}_{tipo}_{sessionId}
  *
  * Exemplos:
- * - "copy-films-latam_funil_abc123" → campanha "copy-films-latam", veio pelo funil
+ * - "seu-projeto-latam_funil_abc123" → campanha "seu-projeto-latam", veio pelo funil
  * - "ig_direct_xyz789" → utm_source "ig", acesso direto
  * - "_direct_xyz789" → sem UTM nenhum, acesso direto
  *
@@ -89,7 +89,7 @@ function recordVisit(page: string): string {
  * enquanto ainda permite identificar se o usuário veio pelo funil ou direto.
  *
  * No dashboard, pode-se:
- * - Filtrar por campanha: WHERE source LIKE '%copy-films-latam%'
+ * - Filtrar por campanha: WHERE source LIKE '%seu-projeto-latam%'
  * - Filtrar por tipo: WHERE source LIKE '%_funil_%' ou '%_direct_%'
  * - Extrair session_id: split por "_" e pegar o último elemento
  */

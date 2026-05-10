@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useCallback, type ReactNode } from "react"
 
-const VIBRAD_URL = "https://cdn.copyfilms.online/vibracaoinicia.MP3"
+const VIBRAD_URL = "https://cdn.SEU_DOMINIO.com/vibracaoinicia.MP3"
 
 // Variável de módulo — persiste enquanto a aba estiver aberta, independente de remontagem
 let sharedAudio: HTMLAudioElement | null = null

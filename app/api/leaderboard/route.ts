@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     const appMeta = (u.app_metadata || {}) as AppMeta
     if (appMeta.is_admin === true) continue          // Filtra admins do ranking
     if (appMeta.access_revoked === true) continue    // Filtra users com acesso revogado (refund/dispute/manual)
-    if (appMeta.is_test_account === true) continue   // Filtra contas de teste (biel_gfk etc)
+    if (appMeta.is_test_account === true) continue   // Filtra contas de teste
     authUsersById.set(u.id, {
       id: u.id,
       meta: (u.user_metadata || {}) as UserMeta,

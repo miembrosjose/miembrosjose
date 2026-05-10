@@ -540,7 +540,7 @@ export function AndromedaContent() {
             <span className="pointer-events-none absolute bottom-0 left-0 h-2 w-2 border-b-2 border-l-2 border-[#c9a961]" />
             <span className="pointer-events-none absolute bottom-0 right-0 h-2 w-2 border-b-2 border-r-2 border-[#c9a961]" />
             <p className="text-[10px] uppercase tracking-[0.4em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
-              Andrómeda<span className="text-red-900">.ADS</span> · Copy Film&apos;s
+              Andrómeda<span className="text-red-900">.ADS</span> · [BRAND_NAME]
             </p>
             <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
               Estrategia validada en producción

@@ -91,7 +91,7 @@ export function PauseIntro({ onComplete, forceShow = false }: PauseIntroProps) {
               className="text-[9px] font-semibold uppercase tracking-[0.5em] leading-none text-neutral-400"
               style={{ fontFamily: "var(--font-cinzel)" }}
             >
-              Copy Film&apos;s
+              [BRAND_NAME]
             </span>
           </div>
         </div>

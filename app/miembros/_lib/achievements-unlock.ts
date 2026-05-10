@@ -2,7 +2,7 @@
 // Equivalente a unlockAchievement + isAchievementUnlocked + getUnlockedAchievements
 // do area-prototipo.html (linhas 9266-9290).
 //
-// Persistência: localStorage (chave "copyfilms_unlocked_achievements") espelha
+// Persistência: localStorage (chave "app_unlocked_achievements") espelha
 // a lógica original. Cada call:
 //   1. Checa se já tá desbloqueada — se sim, no-op (não despacha duas vezes)
 //   2. Salva no localStorage
@@ -17,7 +17,7 @@ import { getAchievementById } from "@/lib/achievements"
 import { getEpisodeProgress as readEpisodeProgress, SEASONS } from "./seasons"
 import type { OwnedProduct } from "./products"
 
-const STORAGE_KEY = "copyfilms_unlocked_achievements"
+const STORAGE_KEY = "app_unlocked_achievements"
 
 type UnlockedMap = Record<string, { unlockedAt: string }>
 

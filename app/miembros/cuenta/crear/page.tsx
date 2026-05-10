@@ -35,7 +35,7 @@ export default async function CrearCuentaPage({ searchParams }: { searchParams: 
       <div className="absolute left-5 top-6 z-30 flex items-center gap-3 sm:left-6">
         <span className="block h-4 w-px flex-shrink-0 bg-red-900/70" />
         <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.5em] text-neutral-400 [font-family:var(--font-geist-sans)]">
-          Copy Film&apos;s
+          [BRAND_NAME]
         </span>
       </div>
       <div className="absolute right-5 top-6 z-30 hidden items-center gap-3 sm:flex sm:right-6">
@@ -130,7 +130,7 @@ function InvalidTokenShell({ hasToken }: { hasToken: boolean }) {
           </svg>
         </a>
         <p className="max-w-sm text-xs leading-relaxed text-[oklch(0.45_0.01_30)] [font-family:var(--font-geist-sans)]">
-          ¿Necesitas un nuevo enlace? Responde al email que recibiste de Copy Film&apos;s y el equipo te enviará uno nuevo.
+          ¿Necesitas un nuevo enlace? Responde al email que recibiste de [BRAND_NAME] y el equipo te enviará uno nuevo.
         </p>
       </div>
     </>

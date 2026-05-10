@@ -33,7 +33,7 @@ export default function LoginPage() {
       <div className="absolute left-5 top-6 z-30 flex items-center gap-3 sm:left-6">
         <span className="block h-4 w-px flex-shrink-0 bg-red-900/70" />
         <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.5em] text-neutral-400 [font-family:var(--font-geist-sans)]">
-          Copy Film&apos;s
+          [BRAND_NAME]
         </span>
       </div>
 

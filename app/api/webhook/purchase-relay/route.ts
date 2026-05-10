@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getStripe } from "@/lib/stripe/server"
 import type Stripe from "stripe"
 
-const WEBHOOK_URL = "https://SEU_TRACKING_WEBHOOK.com/webhook/purchaseinsertcopyfilms"
+const WEBHOOK_URL = "https://SEU_TRACKING_WEBHOOK.com/webhook/purchaseinsert"
 
 type RequestBody = {
   payment_intent_id: string

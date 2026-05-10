@@ -146,7 +146,7 @@ export function appendParamsToUrl(baseUrl: string): string {
     // Suporta tanto URL absoluta (https://...) quanto relativa (/checkout/...).
     // Pra relativa, usa window.location.origin como base.
     const isRelative = baseUrl.startsWith("/")
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://copyfilms.online"
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://SEU_DOMINIO.com"
     const url = isRelative ? new URL(baseUrl, origin) : new URL(baseUrl)
 
     // Passa todos os params UTM/click diretamente
@@ -176,7 +176,7 @@ export function appendParamsToUrl(baseUrl: string): string {
       }
 
       // Tenta extrair a campanha do sck já salvo no sessionStorage
-      // Formato do sck: {campanha}_{tipo}_{sid} — ex: "copy-films-latam_funil_abc123"
+      // Formato do sck: {campanha}_{tipo}_{sid} — ex: "seu-projeto-latam_funil_abc123"
       let sckCampanha = ""
       try {
         if (typeof window !== "undefined") {

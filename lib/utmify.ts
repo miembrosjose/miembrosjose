@@ -7,12 +7,12 @@
 //  - paid           → venda confirmada (front à vista, 1ª parcela do parcelado, upsell, downsell)
 //  - refunded       → reembolso (charge.refunded) ou inadimplência (subscription.unpaid)
 //
-// platform: "CopyFilms" (hardcoded — identifica origem das vendas no dashboard Utmify)
+// platform: "SEU_PROJETO" (hardcoded — identifica origem das vendas no dashboard Utmify)
 // commission: gatewayFeeInCents=0 (não calculamos taxa Stripe pra não adicionar latência)
 //             userCommission = total (sem dedução de taxa)
 
 const UTMIFY_ENDPOINT = "https://api.utmify.com.br/api-credentials/orders"
-const PLATFORM_NAME = "CopyFilms"
+const PLATFORM_NAME = "SEU_PROJETO"
 
 type UtmifyStatus = "waiting_payment" | "paid" | "refused" | "refunded" | "chargedback"
 type UtmifyPaymentMethod = "credit_card" | "boleto" | "pix" | "paypal" | "free_price"

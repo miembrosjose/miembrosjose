@@ -5,11 +5,11 @@ import { ES_COUNTRIES, USA_COUNTRIES, GBP_COUNTRIES, CHF_COUNTRIES } from "./cou
 
 export type CheckoutRegion = "DEFAULT" | "EUR" | "USD" | "GBP" | "CHF"
 
-const BUMP_CREATIVOS_IMG = "https://cdn.copyfilms.online/michaelazo.webp"
-const BUMP_ANDROMEDA_IMG = "https://cdn.copyfilms.online/campanas.webp"
-const BUMP_ANALYTICS_IMG = "https://cdn.copyfilms.online/analytics.webp"
-const UPSELL_REVISAO_IMG = "https://cdn.copyfilms.online/revisao.webp"
-const UPSELL_MINIVSL_IMG = "https://cdn.copyfilms.online/minivsl.webp"
+const BUMP_CREATIVOS_IMG = "https://cdn.SEU_DOMINIO.com/bump-creativos.webp"
+const BUMP_ANDROMEDA_IMG = "https://cdn.SEU_DOMINIO.com/campanas.webp"
+const BUMP_ANALYTICS_IMG = "https://cdn.SEU_DOMINIO.com/analytics.webp"
+const UPSELL_REVISAO_IMG = "https://cdn.SEU_DOMINIO.com/revisao.webp"
+const UPSELL_MINIVSL_IMG = "https://cdn.SEU_DOMINIO.com/minivsl.webp"
 
 // Stripe Price IDs por região (criados via scripts/stripe-bootstrap-live.mjs em 2026-04-27 — LIVE MODE)
 // LATAM (DEFAULT) usa Price em USD + Adaptive Pricing pra converter pra moeda local (BRL, MXN, etc).
@@ -101,7 +101,7 @@ export type InstallmentPlan = {
 export type CheckoutConfig = {
   region: CheckoutRegion
   currency: Currency
-  /** Preço do produto principal (Copy Film's) — equivalente a 1x à vista (Acceso Vitalício) */
+  /** Preço do produto principal — equivalente a 1x à vista (Acceso Vitalício) */
   frontPrice: number
   /** Stripe Price ID do produto principal — preencher quando integrar */
   frontStripePriceId?: string
@@ -367,7 +367,7 @@ export const CHECKOUT_CONFIGS: Record<CheckoutRegion, CheckoutConfig> = {
  * Países que NÃO estão aqui usam só USD (sem seletor).
  * Equador (EC), El Salvador (SV) e Panamá (PA) usam USD nativo — não entram.
  */
-// BR removido: Copy Films NÃO vende pra Brasil — brasileiro vê apenas USD no seletor
+// BR removido: NÃO vende pra Brasil — brasileiro vê apenas USD no seletor
 // (Stripe Adaptive Pricing converte automaticamente USD→BRL no momento da cobrança).
 export const LATAM_LOCAL_CURRENCY: Record<string, "ARS" | "CLP" | "COP" | "CRC" | "DOP" | "MXN" | "PEN" | "PYG" | "UYU"> = {
   AR: "ARS",

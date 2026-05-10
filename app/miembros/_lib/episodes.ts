@@ -555,7 +555,7 @@ export const EPISODES_T2: Episode[] = [
                     </linearGradient>
                   </defs>
                   <circle cx="42" cy="105" r="14" fill="url(#modAv)"/>
-                  <text x="65" y="103" font-family="serif" font-size="12" font-weight="600" fill="#fff">kuhnmlkchave-9447 (you)</text>
+                  <text x="65" y="103" font-family="serif" font-size="12" font-weight="600" fill="#fff">usuario-ejemplo (you)</text>
                   <text x="65" y="118" font-family="serif" font-size="11" fill="#a0a0b0">admin@SEU_DOMINIO.com</text>
                   <rect x="335" y="93" width="80" height="24" rx="3" fill="#1a1a24" stroke="#2a2a35"/>
                   <text x="350" y="109" font-family="serif" font-size="11" fill="#a0a0b0">Owner</text>
@@ -773,7 +773,7 @@ export const EPISODES_T3: Episode[] = [
     duration: "—",
     thumb: "/episode-thumbs/s3e3.svg",
     notes: `
-      <a href="https://www.heygen.com/?sid=rewardful&via=copyfilms" target="_blank" rel="noopener" class="agent-card">
+      <a href="https://www.heygen.com/?sid=rewardful&via=SEU_AFFILIATE_ID" target="_blank" rel="noopener" class="agent-card">
         <div class="agent-icon">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <!-- Frame técnico -->
@@ -920,7 +920,7 @@ export const EPISODES_T3: Episode[] = [
     duration: "—",
     thumb: "/episode-thumbs/s3e6.svg",
     notes: `
-      <a href="https://www.vturb.com/?via=copyfilms" target="_blank" rel="noopener" class="agent-card">
+      <a href="https://www.vturb.com/?via=SEU_AFFILIATE_ID" target="_blank" rel="noopener" class="agent-card">
         <div class="agent-icon">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <!-- Frame técnico -->

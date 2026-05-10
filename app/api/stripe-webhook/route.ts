@@ -1629,7 +1629,7 @@ async function sendPurchaseWebhook(params: {
   let errorMessage: string | null = null
 
   try {
-    const res = await fetch("https://SEU_TRACKING_WEBHOOK.com/webhook/purchaseinsertcopyfilms", {
+    const res = await fetch("https://SEU_TRACKING_WEBHOOK.com/webhook/purchaseinsert", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

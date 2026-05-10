@@ -52,23 +52,19 @@ export const IMG_CALL_BACKGROUND = cdnImage(
 )
 
 /**
- * Avatar do Michael — usado em /call (foto de perfil em chamada, 140x140)
- * e /tiktok (circle 56x56). Width 540 cobre 3x retina dos dois casos.
- * Original: 500×500 = 11.7 KB.
- * Com resize 540w + AVIF: ~5-8 KB.
+ * Avatar do host (apresentador) — usado em /call e /tiktok.
+ * Width 540 cobre 3x retina dos dois casos.
  */
-export const IMG_MICHAEL_AVATAR = cdnImage(
-  "imgi_2_Design-sem-nome-2026-01-03T000026.459-MAaeHvZWK3i4mVOmcgOoVkQQxSCGgl.webp",
+export const IMG_HOST_AVATAR = cdnImage(
+  "host-avatar.webp",
   { width: 540, quality: 85 },
 )
 
 /**
- * Avatar Lise — usado em /pantalla (notification preview pequena) e
- * /whats (avatar 40x40 nas mensagens). Original era 2 MB!
- * Com resize 360w + AVIF: ~30 KB (-98%).
+ * Avatar de persona secundária — usado em /pantalla e /whats.
  */
-export const IMG_LISE_AVATAR = cdnImage(
-  "Gemini_Generated_Image_k41390k41390k413-_1_.webp",
+export const IMG_PERSONA_AVATAR = cdnImage(
+  "persona-avatar.webp",
   { width: 360, quality: 85 },
 )
 

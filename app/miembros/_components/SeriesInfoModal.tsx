@@ -142,9 +142,9 @@ export function SeriesInfoModal({
           />
           <div className={styles.heroOverlay} />
           <div className={styles.heroContent}>
-            <span className={styles.studioMark}>Copy Film&apos;s · Estudio</span>
+            <span className={styles.studioMark}>[BRAND_NAME] · Estudio</span>
             <h2 className={styles.title}>
-              Copy <em>Film&apos;s</em>
+              [BRAND_NAME]
               <br />
               Entrenamiento
             </h2>

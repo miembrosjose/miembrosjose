@@ -55,7 +55,7 @@ function renderRecoveryHtml(p: { firstName: string; link: string }): string {
               </h1>
               <div style="width:48px;height:2px;background:#7f1d1d;margin:0 0 24px;"></div>
               <p style="margin:0 0 16px;font-size:16px;line-height:1.65;color:#bdb39d;">
-                Vimos que tu pago en Copy Film&apos;s no fue aprobado.
+                Vimos que tu pago en [BRAND_NAME] no fue aprobado.
               </p>
               <p style="margin:0 0 32px;font-size:16px;line-height:1.65;color:#bdb39d;">
                 👉 Probá esta opción alternativa — procesa estos casos sin problema:
@@ -84,14 +84,14 @@ function renderRecoveryHtml(p: { firstName: string; link: string }): string {
                 Si necesitás ayuda, respondé directamente a este email.
               </p>
               <p style="margin:0 0 24px;font-size:11px;line-height:1.6;color:#6a6249;letter-spacing:0.05em;">
-                <strong style="color:#8a7a55;">— Equipo Copy Film&apos;s</strong>
+                <strong style="color:#8a7a55;">— Equipo [BRAND_NAME]</strong>
               </p>
             </td>
           </tr>
           <tr>
             <td style="background:#08080d;padding:20px 40px;border-top:1px solid #1f1925;">
               <p style="margin:0;font-size:10px;letter-spacing:0.4em;text-transform:uppercase;color:#5a523d;font-weight:600;">
-                Copy Film&apos;s · Embudo Gamificado
+                [BRAND_NAME] · Embudo Gamificado
               </p>
             </td>
           </tr>

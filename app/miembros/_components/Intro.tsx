@@ -10,7 +10,7 @@
 //   T+4.5s : tagline-show (typewriter)
 //   ∞      : permanece no último frame até user clicar Saltar
 //
-// sessionStorage 'copyfilms_intro_seen': se já viu nessa sessão, intro nem
+// sessionStorage 'app_intro_seen': se já viu nessa sessão, intro nem
 // renderiza (navegações pra /perfil e voltar não re-disparam).
 //
 // Áudio (drone + tick) será adicionado na Fase 4 com sons. Fase 2 é só visual.
@@ -19,9 +19,9 @@ import { ArrowRight } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import styles from "./intro.module.css"
 
-const LOGO_TEXT = "COPY FILM'S"
-const TAGLINE = "DONDE LAS HISTORIAS SE CONVIERTEN EN VENTAS"
-const SESSION_KEY = "copyfilms_intro_seen"
+const LOGO_TEXT = "[BRAND_NAME]"
+const TAGLINE = "[BRAND_TAGLINE]"
+const SESSION_KEY = "app_intro_seen"
 
 type IntroProps = {
   onComplete?: () => void
@@ -130,7 +130,7 @@ export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
       <div className={styles.lensFlare} />
       <div className={styles.smoke} />
 
-      <div className={styles.studioMark}>A FILM BY MICHAEL · COPY FILM&apos;S</div>
+      <div className={styles.studioMark}>[BRAND_NAME]</div>
       <div className={styles.frameCounter}>CH 01 · BIENVENIDO · 24FPS</div>
 
       <button type="button" className={styles.skip} onClick={handleSkip}>

@@ -96,12 +96,12 @@ export type ProductLink = {
 // External = link em nova aba (agentes GPT). Internal = view interna do SPA.
 export const PRODUCT_LINK_BY_NAME: Record<string, ProductLink> = {
   "Creativos.AI": {
-    url: "https://chatgpt.com/g/g-6934ca6ecba48191bacff2f2764d741a-michaelazo-ads",
+    url: "https://chatgpt.com/g/SEU_GPT_CREATIVOS_ID",
     external: true,
     cta: "Abrir Agente",
   },
   "Agente Copy Mini VSL's": {
-    url: "https://chatgpt.com/g/g-6947aa47dbb48191ae659d1c5be34b9d-estructurador-vsl",
+    url: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID",
     external: true,
     cta: "Abrir Agente",
   },

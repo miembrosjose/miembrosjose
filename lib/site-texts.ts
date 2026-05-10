@@ -23,12 +23,12 @@ export type SiteTextEntry = {
 export const SITE_TEXTS: SiteTextEntry[] = [
   // ── HERO PRINCIPAL ──
   { key: "hero.badge", default: "EN DESTACADO", label: "Hero — Etiqueta superior", group: "Hero" },
-  { key: "hero.title", default: "Copy Film's Entrenamiento", label: "Hero — Título", group: "Hero" },
+  { key: "hero.title", default: "[BRAND_NAME] Entrenamiento", label: "Hero — Título", group: "Hero" },
   { key: "hero.description", default: "El método cinematográfico para crear embudos que convierten. Continúa donde lo dejaste y avanza hacia el siguiente capítulo.", label: "Hero — Descripción", group: "Hero", multiline: true },
 
   // ── SEÇÕES ──
   { key: "section.seasons.subtitle", default: "Mi Biblioteca", label: "Sección Temporadas — Subtítulo", group: "Secciones" },
-  { key: "section.seasons.title", default: "Copy Film's — Temporadas", label: "Sección Temporadas — Título", group: "Secciones" },
+  { key: "section.seasons.title", default: "[BRAND_NAME] — Temporadas", label: "Sección Temporadas — Título", group: "Secciones" },
 
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },
   { key: "section.owned.title", default: "Otros Productos", label: "Sección Otros Productos — Título", group: "Secciones" },
@@ -66,7 +66,7 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   { key: "season.2.name", default: "Construyendo Tu Estructura", label: "Temporada 2 — Nombre", group: "Temporadas" },
   { key: "season.3.name", default: "Creación Audiovisual", label: "Temporada 3 — Nombre", group: "Temporadas" },
   { key: "season.4.name", default: "Implementación de la Estructura", label: "Temporada 4 — Nombre", group: "Temporadas" },
-  { key: "season.5.name", default: "Comunidad Copy Film's", label: "Temporada 5 — Nombre", group: "Temporadas" },
+  { key: "season.5.name", default: "Comunidad [BRAND_NAME]", label: "Temporada 5 — Nombre", group: "Temporadas" },
 ]
 
 export function getSiteTextDefault(key: string): string {

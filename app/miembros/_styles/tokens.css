@@ -1,5 +1,5 @@
 /*
- * Design tokens da área de membros — extraídos do area-prototipo.html (paleta Copy Films).
+ * Design tokens da área de membros — extraídos do area-prototipo.html (paleta [BRAND_NAME]).
  *
  * Por que .miembros-shell e não :root?
  *   Outras rotas do projeto (/checkout, /direct, /salespage) podem ter outra
@@ -14,7 +14,7 @@
 .miembros-shell {
   color-scheme: dark;
 
-  /* Paleta — alinhada com marca Copy Films (red-900 oficial) */
+  /* Paleta — alinhada com marca [BRAND_NAME] (red-900 oficial) */
   --bg-deep:        #0a0a0f;
   --bg-primary:     #0a0a0f;
   --bg-surface:    #12121a;
@@ -52,7 +52,7 @@
   box-sizing: border-box;
 }
 
-/* Geometria quadrada — branding Copy Films é quadrado.
+/* Geometria quadrada — branding [BRAND_NAME] é quadrado.
  * Override global pra anular qualquer border-radius interno (cards, modais,
  * botões, badges, etc). Exceção: fotos de perfil seguem redondas.
  *

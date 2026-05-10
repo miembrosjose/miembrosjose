@@ -15,7 +15,7 @@ export function ProductLockedView({
   tagline: string
   description: string
 }) {
-  const checkoutHref = checkoutSlug ? `https://copyfilms.online/checkout/${checkoutSlug}` : null
+  const checkoutHref = checkoutSlug ? `https://SEU_DOMINIO.com/checkout/${checkoutSlug}` : null
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-20 text-center sm:py-32">

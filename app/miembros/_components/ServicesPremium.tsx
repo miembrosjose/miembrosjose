@@ -69,7 +69,7 @@ export function ServicesPremium() {
           <img src={EMBUDO_THUMB} alt="Embudo [BRAND_NAME]" loading="lazy" />
         </div>
         <div className={styles.info}>
-          <h4 className={styles.title}>Embudo gamificado Copy Film&apos;s</h4>
+          <h4 className={styles.title}>Embudo gamificado [BRAND_NAME]</h4>
           <span className={styles.cta}>
             Ver Embudo <ArrowUpRight size={14} />
           </span>

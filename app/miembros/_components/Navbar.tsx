@@ -103,7 +103,7 @@ export function Navbar() {
       </button>
 
       <div className={styles.logo}>
-        Copy Film&apos;s
+        [BRAND_NAME]
         <span className={styles.beta}>BETA</span>
       </div>
 

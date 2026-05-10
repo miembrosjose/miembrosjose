@@ -3,7 +3,6 @@ const nextConfig = {
   async redirects() {
     return [
       { source: "/dashapp",       destination: "/analytics",  permanent: true },
-      { source: "/michaelazo",    destination: "/creativos",  permanent: true },
       { source: "/campanas",      destination: "/andromeda",  permanent: true },
       { source: "/salespagees",   destination: "/salespage",  permanent: true },
       { source: "/salespageusa",  destination: "/salespage",  permanent: true },

@@ -254,7 +254,7 @@ function AnalyticsContent() {
 
       <section style={{ display: "grid", gap: "1.25rem", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
         <a
-          href="/downloads/copyfilms-dashboard-template.tsx"
+          href="/downloads/dashboard-template.tsx"
           download
           style={{
             display: "flex",
@@ -306,7 +306,7 @@ function AnalyticsContent() {
         </a>
 
         <a
-          href="https://www.notion.so/Prompts-Copy-Film-s-Dashboard-321cfb37fa4a80d4bd4bc6b6a65e712c"
+          href="https://www.notion.so/SEU_NOTION_ID"
           target="_blank"
           rel="noopener noreferrer"
           style={{

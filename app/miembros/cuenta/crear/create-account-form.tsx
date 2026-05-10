@@ -147,7 +147,7 @@ export default function CreateAccountForm({ token, email }: { token: string; ema
       </button>
 
       <p className="pt-2 text-xs leading-relaxed text-[oklch(0.45_0.01_30)] [font-family:var(--font-geist-sans)]">
-        Al crear tu cuenta, aceptas los términos del programa Copy Film&apos;s.
+        Al crear tu cuenta, aceptas los términos del programa [BRAND_NAME].
       </p>
     </form>
   )

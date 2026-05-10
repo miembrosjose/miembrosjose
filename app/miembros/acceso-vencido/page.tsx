@@ -137,8 +137,8 @@ export default async function AccesoVencidoPage() {
 }
 
 const PRODUCT_LINKS: Record<string, { name: string; url: string; cta: string; external: boolean }> = {
-  creativos: { name: "Creativos.AI", url: "https://chatgpt.com/g/g-6934ca6ecba48191bacff2f2764d741a-michaelazo-ads", cta: "Abrir GPT", external: true },
-  minivsl: { name: "Agente Mini VSL's", url: "https://chatgpt.com/g/g-6947aa47dbb48191ae659d1c5be34b9d-estructurador-vsl", cta: "Abrir GPT", external: true },
+  creativos: { name: "Creativos.AI", url: "https://chatgpt.com/g/SEU_GPT_CREATIVOS_ID", cta: "Abrir GPT", external: true },
+  minivsl: { name: "Agente Mini VSL's", url: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID", cta: "Abrir GPT", external: true },
   andromeda: { name: "Andrómeda.ADS", url: "/miembros/producto/andromeda", cta: "Acceder", external: false },
   analytics: { name: "Analytics.KPI", url: "/miembros/producto/analytics", cta: "Acceder", external: false },
   revisao: { name: "Revisión de Embudo", url: "/miembros/producto/revisao", cta: "Acceder", external: false },

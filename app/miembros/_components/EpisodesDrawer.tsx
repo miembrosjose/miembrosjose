@@ -160,7 +160,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 )}
                 <div className={styles.heroOverlay} />
                 <div className={styles.heroContent}>
-                  <div className={styles.studioMark}>COPY FILM&apos;S · TEMPORADA {season.num}</div>
+                  <div className={styles.studioMark}>[BRAND_NAME] · TEMPORADA {season.num}</div>
                   <h1 className={styles.heroTitle}>{season.name}</h1>
                   <div className={styles.heroMetaLine}>
                     {total > 0 && (

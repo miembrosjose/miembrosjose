@@ -1,11 +1,11 @@
 // URLs de checkout — fonte única de verdade.
-// Tudo aponta pro checkout custom em copyfilms.online/checkout.
+// Tudo aponta pro checkout custom em SEU_DOMINIO.com/checkout.
 // O checkout detecta região automaticamente via geolocation/IP.
 // Mantemos `CHECKOUT_URLS[region]` por compat com código existente que mapeia por região.
 
 import { GBP_COUNTRIES, CHF_COUNTRIES, ES_COUNTRIES, USA_COUNTRIES } from "./countries"
 
-const CHECKOUT_BASE = "https://copyfilms.online/checkout"
+const CHECKOUT_BASE = "https://SEU_DOMINIO.com/checkout"
 
 export const CHECKOUT_URLS = {
   GBP:     CHECKOUT_BASE,

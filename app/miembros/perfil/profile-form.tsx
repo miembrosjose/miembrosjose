@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useEffect } from "react"
 import { ACHIEVEMENTS, getAchievementById, getTierColor, type Achievement } from "@/lib/achievements"
 import { useAuth } from "../_lib/auth-context"
 
-const STORAGE_KEY_ACHIEVEMENTS = "copyfilms_unlocked_achievements"
+const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
 
 // Le localStorage do prototipo (mesmo subdomínio miembros.SEU_DOMINIO.com)
 // pra saber quais insignias o user já desbloqueou.

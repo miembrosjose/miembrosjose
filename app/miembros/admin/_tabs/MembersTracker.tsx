@@ -546,7 +546,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                   {hasTopo ? (
                     <>Este membro JÁ tem a insígnia EL TOPO. Conceder de novo não faz nada.</>
                   ) : (
-                    <>Conceder quando a Copy Film&apos;s construiu o embudo do cliente. Notifica toda a comunidade.</>
+                    <>Conceder quando a [BRAND_NAME] construiu o embudo do cliente. Notifica toda a comunidade.</>
                   )}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">

@@ -102,7 +102,7 @@ export function RevisaoContent() {
             </span>
             <span className="h-px flex-1 max-w-24 bg-[#1a1a24]" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#c9a961] [font-family:var(--font-mono)]">
-              Copy Film&apos;s
+              [BRAND_NAME]
             </span>
           </div>
 
