@@ -1,6 +1,6 @@
 // Wrapper centralizado pra fetch de endpoints /api/* da área de membros.
 //
-// Substitui o padrão repetido no proyecto base:
+// Substitui o padrão repetido no código original:
 //   fetch('/api/foo', { credentials: 'include' })
 //   if (!res.ok) ...
 //   const data = await res.json()

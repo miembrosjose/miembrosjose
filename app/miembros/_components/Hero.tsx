@@ -2,7 +2,7 @@
 
 // Hero da home com vídeo de fundo cinematográfico.
 //
-// Comportamento (paridade com proyecto base):
+// Comportamento (paridade com código original):
 //  - Vídeo começa MUTED + PAUSED (autoplay com som não funciona sem gesture)
 //  - Quando user clica "Saltar Intro" no overlay, callback síncrono no shell
 //    aciona video.muted=false + video.play() — gesture válido permite áudio

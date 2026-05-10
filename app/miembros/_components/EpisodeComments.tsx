@@ -1,8 +1,8 @@
 "use client"
 
 // Comentários por episódio (renderizado dentro do EpisodesDrawer abaixo do player).
-// Equivalente a fetchEpisodeComments + renderEpisodeComments do proyecto base
-// (linhas 12345-12545). Suporta replies (1 nível), like/dislike e delete admin.
+// Equivalente a fetchEpisodeComments + renderEpisodeComments.
+//. Suporta replies (1 nível), like/dislike e delete admin.
 
 import { useEffect, useState, useCallback } from "react"
 import { ThumbsUp, ThumbsDown, MessageCircle, AlertTriangle, Trash2 } from "lucide-react"

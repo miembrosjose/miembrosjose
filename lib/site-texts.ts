@@ -23,12 +23,12 @@ export type SiteTextEntry = {
 export const SITE_TEXTS: SiteTextEntry[] = [
   // ── HERO PRINCIPAL ──
   { key: "hero.badge", default: "EN DESTACADO", label: "Hero — Etiqueta superior", group: "Hero" },
-  { key: "hero.title", default: "[BRAND_NAME] Entrenamiento", label: "Hero — Título", group: "Hero" },
-  { key: "hero.description", default: "El método cinematográfico para crear embudos que convierten. Continúa donde lo dejaste y avanza hacia el siguiente capítulo.", label: "Hero — Descripción", group: "Hero", multiline: true },
+  { key: "hero.title", default: "Entrenamiento", label: "Hero — Título", group: "Hero" },
+  { key: "hero.description", default: "Continúa donde lo dejaste y avanza hacia el siguiente capítulo.", label: "Hero — Descripción", group: "Hero", multiline: true },
 
   // ── SEÇÕES ──
   { key: "section.seasons.subtitle", default: "Mi Biblioteca", label: "Sección Temporadas — Subtítulo", group: "Secciones" },
-  { key: "section.seasons.title", default: "[BRAND_NAME] — Temporadas", label: "Sección Temporadas — Título", group: "Secciones" },
+  { key: "section.seasons.title", default: "Temporadas", label: "Sección Temporadas — Título", group: "Secciones" },
 
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },
   { key: "section.owned.title", default: "Otros Productos", label: "Sección Otros Productos — Título", group: "Secciones" },
@@ -46,27 +46,27 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   { key: "section.achievements.title", default: "Insignias", label: "Sección Insignias — Título", group: "Secciones" },
 
   // ── PRODUTOS (Tienda Premium) ──
-  { key: "product.creativos.name", default: "Creativos.AI", label: "Creativos.AI — Nombre", group: "Productos" },
-  { key: "product.creativos.desc", default: "Genera creativos publicitarios en minutos con IA entrenada para conversión.", label: "Creativos.AI — Descripción", group: "Productos", multiline: true },
+  { key: "product.creativos.name", default: "Producto 1", label: "Producto 1 — Nombre", group: "Productos" },
+  { key: "product.creativos.desc", default: "Descripción del Producto 1.", label: "Producto 1 — Descripción", group: "Productos", multiline: true },
 
-  { key: "product.andromeda.name", default: "Andrómeda.ADS", label: "Andrómeda.ADS — Nombre", group: "Productos" },
-  { key: "product.andromeda.desc", default: "Estrategias avanzadas para Meta Ads que maximizan tu ROAS.", label: "Andrómeda.ADS — Descripción", group: "Productos", multiline: true },
+  { key: "product.andromeda.name", default: "Producto 2", label: "Producto 2 — Nombre", group: "Productos" },
+  { key: "product.andromeda.desc", default: "Descripción del Producto 2.", label: "Producto 2 — Descripción", group: "Productos", multiline: true },
 
-  { key: "product.analytics.name", default: "Analytics.KPI", label: "Analytics.KPI — Nombre", group: "Productos" },
-  { key: "product.analytics.desc", default: "Domina las métricas que importan. Análisis profundo de KPIs y dashboards prácticos.", label: "Analytics.KPI — Descripción", group: "Productos", multiline: true },
+  { key: "product.analytics.name", default: "Producto 3", label: "Producto 3 — Nombre", group: "Productos" },
+  { key: "product.analytics.desc", default: "Descripción del Producto 3.", label: "Producto 3 — Descripción", group: "Productos", multiline: true },
 
-  { key: "product.minivsl.name", default: "Agente Copy Mini VSL's", label: "Mini VSL — Nombre", group: "Productos" },
-  { key: "product.minivsl.desc", default: "Agente de IA entrenado para generar guiones de mini VSLs en menos de 5 minutos.", label: "Mini VSL — Descripción", group: "Productos", multiline: true },
+  { key: "product.minivsl.name", default: "Upsell 1", label: "Upsell 1 — Nombre", group: "Productos" },
+  { key: "product.minivsl.desc", default: "Descripción del Upsell 1.", label: "Upsell 1 — Descripción", group: "Productos", multiline: true },
 
-  { key: "product.revisao.name", default: "Revisión de Tu Embudo", label: "Revisión — Nombre", group: "Productos" },
-  { key: "product.revisao.desc", default: "Una revisión personalizada de tu embudo actual con recomendaciones cinematográficas.", label: "Revisión — Descripción", group: "Productos", multiline: true },
+  { key: "product.revisao.name", default: "Servicio Premium", label: "Servicio Premium — Nombre", group: "Productos" },
+  { key: "product.revisao.desc", default: "Descripción del Servicio Premium.", label: "Servicio Premium — Descripción", group: "Productos", multiline: true },
 
   // ── TEMPORADAS ──
-  { key: "season.1.name", default: "Agentes GPT's", label: "Temporada 1 — Nombre", group: "Temporadas" },
-  { key: "season.2.name", default: "Construyendo Tu Estructura", label: "Temporada 2 — Nombre", group: "Temporadas" },
-  { key: "season.3.name", default: "Creación Audiovisual", label: "Temporada 3 — Nombre", group: "Temporadas" },
-  { key: "season.4.name", default: "Implementación de la Estructura", label: "Temporada 4 — Nombre", group: "Temporadas" },
-  { key: "season.5.name", default: "Comunidad [BRAND_NAME]", label: "Temporada 5 — Nombre", group: "Temporadas" },
+  { key: "season.1.name", default: "Temporada 1", label: "Temporada 1 — Nombre", group: "Temporadas" },
+  { key: "season.2.name", default: "Temporada 2", label: "Temporada 2 — Nombre", group: "Temporadas" },
+  { key: "season.3.name", default: "Temporada 3", label: "Temporada 3 — Nombre", group: "Temporadas" },
+  { key: "season.4.name", default: "Temporada 4", label: "Temporada 4 — Nombre", group: "Temporadas" },
+  { key: "season.5.name", default: "Comunidad", label: "Temporada 5 — Nombre", group: "Temporadas" },
 ]
 
 export function getSiteTextDefault(key: string): string {

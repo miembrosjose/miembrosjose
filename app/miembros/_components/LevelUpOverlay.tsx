@@ -1,7 +1,7 @@
 "use client"
 
 // Animação cinematográfica de level-up. Equivalente a triggerLevelUpAnimation
-// + processLevelUpQueue do proyecto base (linhas 11820-11863).
+// + processLevelUpQueue.
 //
 // Escuta o evento custom "app:level-up" (despachado pelo XpBadge quando detecta
 // xp.level > previous.level) e enfileira animações 1 por vez. Cada animação:

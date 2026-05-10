@@ -157,7 +157,7 @@ export const sounds = {
   },
 
   // Insignia desbloqueada do user atual — 2 ticks ascendentes + chime dourado
-  // Equivalente a playUnlock do proyecto base (linha 13186).
+  // Equivalente a playUnlock.
   unlock: () => {
     const c = getCtx()
     if (!c || isMuted()) return

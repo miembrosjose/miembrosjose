@@ -1,4 +1,4 @@
-/* Modal base reutilizável — extraído do padrão repetido no proyecto base
+/* Modal base reutilizável — extraído do padrão repetido no código original
  * (notif-prefs-overlay, search-modal, series-info-modal etc).
  *
  * Uso: <Modal open={...} onClose={...} title="..."> children </Modal>

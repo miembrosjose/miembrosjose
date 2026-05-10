@@ -1,7 +1,7 @@
 "use client"
 
 // Toast de insignia desbloqueada. Equivalente a showAchievementToast do
-// proyecto base (linha 9292). Escuta evento custom "app:achievement-unlock"
+// código original. Escuta evento custom "app:achievement-unlock"
 // despachado por unlockAchievement (em _lib/achievements-unlock.ts).
 //
 // Slide-in da direita (transform translateX), 5s visível, slide-out 0.6s,

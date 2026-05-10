@@ -1,6 +1,6 @@
 "use client"
 
-// Servicios Premium — 2 cards estáticos do proyecto base linhas 6591-6636.
+// Servicios Premium — 2 cards estáticos.
 //
 // Card 1 (gold): "¿Quieres un área de miembros igual a esta?" → wa.me link
 // Card 2 (image): "Embudo gamificado [BRAND_NAME]" → /producto/embudo (view interna)

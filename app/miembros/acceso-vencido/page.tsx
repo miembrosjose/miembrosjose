@@ -1,7 +1,6 @@
 // Tela mostrada quando user logado tem acesso ao treinamento expirado.
 // Bloqueia área de membros principal (Lecciones, Comunidad, Funnels, etc)
-// mas mantém acesso aos produtos premium comprados (Andrómeda, Analytics,
-// Mini VSL, Creativos, Revisión, Bonus) — esses não vencem.
+// mas mantém acesso aos produtos premium comprados — esses não vencem.
 
 import Link from "next/link"
 import { requireMiembrosAuth } from "../_lib/auth-server"
@@ -137,9 +136,9 @@ export default async function AccesoVencidoPage() {
 }
 
 const PRODUCT_LINKS: Record<string, { name: string; url: string; cta: string; external: boolean }> = {
-  creativos: { name: "Creativos.AI", url: "https://chatgpt.com/g/SEU_GPT_CREATIVOS_ID", cta: "Abrir GPT", external: true },
-  minivsl: { name: "Agente Mini VSL's", url: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID", cta: "Abrir GPT", external: true },
-  andromeda: { name: "Andrómeda.ADS", url: "/miembros/producto/andromeda", cta: "Acceder", external: false },
-  analytics: { name: "Analytics.KPI", url: "/miembros/producto/analytics", cta: "Acceder", external: false },
-  revisao: { name: "Revisión de Embudo", url: "/miembros/producto/revisao", cta: "Acceder", external: false },
+  creativos: { name: "Producto 1", url: "https://chatgpt.com/g/SEU_GPT_CREATIVOS_ID", cta: "Abrir GPT", external: true },
+  minivsl: { name: "Upsell 1", url: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID", cta: "Abrir GPT", external: true },
+  andromeda: { name: "Producto 2", url: "/miembros/producto/andromeda", cta: "Acceder", external: false },
+  analytics: { name: "Producto 3", url: "/miembros/producto/analytics", cta: "Acceder", external: false },
+  revisao: { name: "Servicio Premium", url: "/miembros/producto/revisao", cta: "Acceder", external: false },
 }

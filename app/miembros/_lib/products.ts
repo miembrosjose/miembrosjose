@@ -23,12 +23,12 @@ export type OwnedProduct = {
 }
 
 export const KEY_TO_PRODUCT_NAME: Record<string, string> = {
-  creativos: "Creativos.AI",
-  andromeda: "Andrómeda.ADS",
-  analytics: "Analytics.KPI",
-  revisao: "Revisión de Tu Embudo",
-  minivsl: "Agente Copy Mini VSL's",
-  "bonus-ganchos": "Pack de Ganchos Neuronales™",
+  creativos: "Producto 1",
+  andromeda: "Producto 2",
+  analytics: "Producto 3",
+  revisao: "Servicio Premium",
+  minivsl: "Upsell 1",
+  "bonus-ganchos": "Bonus 1",
 }
 
 export const ALL_PREMIUM_PRODUCTS: PremiumProduct[] = [
@@ -36,51 +36,51 @@ export const ALL_PREMIUM_PRODUCTS: PremiumProduct[] = [
   // /api/profile/product-pricing retorna o valor real por região +
   // priceFrom riscado + conversão pra moeda local.
   {
-    name: "Creativos.AI",
+    name: "Producto 1",
     type: "Bump",
     price: "US$ 16.90",
-    img: cdnImage("creativosai.webp", { width: 540 }),
+    img: cdnImage("producto-1.webp", { width: 540 }),
     salesPagePath: "/creativos",
     offer: false,
-    desc: "Genera creativos publicitarios en minutos con IA entrenada para conversión.",
+    desc: "Descripción del Producto 1 — edita en site-texts y aquí.",
   },
   {
-    name: "Andrómeda.ADS",
+    name: "Producto 2",
     type: "Bump",
     price: "US$ 12.90",
-    img: cdnImage("andromedaads.webp", { width: 540 }),
+    img: cdnImage("producto-2.webp", { width: 540 }),
     salesPagePath: "/andromeda",
     offer: false,
-    desc: "Estrategias avanzadas para Meta Ads que maximizan tu ROAS.",
+    desc: "Descripción del Producto 2 — edita en site-texts y aquí.",
   },
   {
-    name: "Analytics.KPI",
+    name: "Producto 3",
     type: "Bump",
     price: "US$ 12.90",
-    img: cdnImage("analyticskpi.png", { width: 540 }),
+    img: cdnImage("producto-3.webp", { width: 540 }),
     salesPagePath: "/analytics",
     offer: false,
-    desc: "Domina las métricas que importan. Análisis profundo de KPIs y dashboards prácticos.",
+    desc: "Descripción del Producto 3 — edita en site-texts y aquí.",
   },
   {
-    name: "Agente Copy Mini VSL's",
+    name: "Upsell 1",
     type: "Upsell",
     price: "US$ 24.90",
-    img: cdnImage("minivsl.webp", { width: 540 }),
+    img: cdnImage("upsell-1.webp", { width: 540 }),
     salesPagePath: null,
     inlineCheckoutPath: "/minivsl",
     offer: false,
-    desc: "Inserta un Mini VSL con el copy de este Agente GPT en medio de tu embudo gamificado y aumenta la percepción de valor de tu producto, especialmente en productos que necesitan más tiempo para convencer al lead.",
+    desc: "Descripción del Upsell 1 — edita en site-texts y aquí.",
   },
   {
-    name: "Revisión de Tu Embudo",
+    name: "Servicio Premium",
     type: "Upsell",
     price: "US$ 99.90",
-    img: cdnImage("revisao.webp", { width: 540 }),
+    img: cdnImage("servicio-premium.webp", { width: 540 }),
     salesPagePath: null,
     inlineCheckoutPath: "/revisao",
     offer: true,
-    desc: "Yo, desarrollador oficial de esta metodología, realizaré un análisis completo de tu embudo para eliminar posibles puntos de fuga de tus leads, aplicar ajustes estratégicos y maximizar el rendimiento de tu embudo.",
+    desc: "Descripción del Servicio Premium — edita en site-texts y aquí.",
   },
 ]
 
@@ -95,35 +95,35 @@ export type ProductLink = {
 // Entregável de cada produto comprado (Otros Productos).
 // External = link em nova aba (agentes GPT). Internal = view interna do SPA.
 export const PRODUCT_LINK_BY_NAME: Record<string, ProductLink> = {
-  "Creativos.AI": {
+  "Producto 1": {
     url: "https://chatgpt.com/g/SEU_GPT_CREATIVOS_ID",
     external: true,
     cta: "Abrir Agente",
   },
-  "Agente Copy Mini VSL's": {
+  "Upsell 1": {
     url: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID",
     external: true,
     cta: "Abrir Agente",
   },
-  "Andrómeda.ADS": {
+  "Producto 2": {
     url: "/miembros/producto/andromeda",
     external: false,
     cta: "Acceder",
     internalSlug: "andromeda",
   },
-  "Analytics.KPI": {
+  "Producto 3": {
     url: "/miembros/producto/analytics",
     external: false,
     cta: "Acceder",
     internalSlug: "analytics",
   },
-  "Revisión de Tu Embudo": {
+  "Servicio Premium": {
     url: "/miembros/producto/revisao",
     external: false,
     cta: "Enviar Materiales",
     internalSlug: "revisao",
   },
-  "Pack de Ganchos Neuronales™": {
+  "Bonus 1": {
     url: "/miembros/producto/bonus-ganchos",
     external: false,
     cta: "Ver Bonus",
@@ -140,10 +140,10 @@ export type BonusProduct = {
 
 export const ALL_BONUSES: BonusProduct[] = [
   {
-    name: "Pack de Ganchos Neuronales™",
+    name: "Bonus 1",
     slug: "bonus-ganchos",
-    img: "https://cdn.SEU_DOMINIO.com/Bonus.webp",
-    desc: "30+ Hooks estratégicos categorizados por nivel de conciencia para Reels, Headlines, Carruseles, UGC y Stories.",
+    img: "https://cdn.SEU_DOMINIO.com/bonus-1.webp",
+    desc: "Descripción del Bonus 1 — edita en site-texts y aquí.",
   },
 ]
 

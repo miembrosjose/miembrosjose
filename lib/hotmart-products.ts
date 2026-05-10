@@ -26,9 +26,9 @@ export type HotmartProductInfo = {
 export const HOTMART_PRODUCT_ID_MAP: Record<number, HotmartProductInfo> = {
   // Exemplos — substituir pelos IDs reais:
   // 12345678: { itemKeys: ["front"], isFront: true },        // [BRAND_NAME]
-  // 23456789: { itemKeys: ["creativos"], isFront: false },   // Creativos.AI
-  // 34567890: { itemKeys: ["andromeda"], isFront: false },   // Andrómeda.ADS
-  // 45678901: { itemKeys: ["analytics"], isFront: false },   // Analytics.KPI
+  // 23456789: { itemKeys: ["creativos"], isFront: false },   // Producto 1
+  // 34567890: { itemKeys: ["andromeda"], isFront: false },   // Producto 2
+  // 45678901: { itemKeys: ["analytics"], isFront: false },   // Producto 3
   // 56789012: { itemKeys: ["creativos", "andromeda", "analytics"], isFront: false }, // Combo 3 en 1
 }
 

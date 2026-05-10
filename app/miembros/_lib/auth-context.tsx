@@ -2,7 +2,7 @@
 
 // Context client-side de autenticação pra área de membros.
 //
-// Por que existir? No proyecto base antigo, a sessão era checada via
+// Por que existir? No código original antigo, a sessão era checada via
 // chamadas a /api/profile/role e /api/profile/owned-products, salvando em
 // variáveis globais (window.CURRENT_USER, etc). Com Next.js SPA, queremos
 // um único provider que mantém user + session + isAdmin em sincronia

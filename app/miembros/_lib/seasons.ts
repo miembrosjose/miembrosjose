@@ -18,40 +18,40 @@ export type Season = {
 export const SEASONS: Season[] = [
   {
     num: 1,
-    name: "Agentes GPT's",
-    episodes: 5,
+    name: "Temporada 1",
+    episodes: 0,
     starter: true,
     videoBg: "https://cdn.SEU_DOMINIO.com/video1.mp4",
     gradient: "linear-gradient(135deg, #1a1a24 0%, #7f1d1d 100%)",
-    emoji: "🤖",
-  },
-  {
-    num: 2,
-    name: "Construyendo Tu Estructura",
-    episodes: 2,
-    videoBg: "https://cdn.SEU_DOMINIO.com/video2.mp4",
-    gradient: "linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)",
-    emoji: "🏗️",
-  },
-  {
-    num: 3,
-    name: "Creación Audiovisual",
-    episodes: 6,
-    videoBg: "https://cdn.SEU_DOMINIO.com/video3.mp4",
-    gradient: "linear-gradient(135deg, #1a1a24 0%, #450a0a 100%)",
     emoji: "🎬",
   },
   {
+    num: 2,
+    name: "Temporada 2",
+    episodes: 0,
+    videoBg: "https://cdn.SEU_DOMINIO.com/video2.mp4",
+    gradient: "linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)",
+    emoji: "🎞️",
+  },
+  {
+    num: 3,
+    name: "Temporada 3",
+    episodes: 0,
+    videoBg: "https://cdn.SEU_DOMINIO.com/video3.mp4",
+    gradient: "linear-gradient(135deg, #1a1a24 0%, #450a0a 100%)",
+    emoji: "📽️",
+  },
+  {
     num: 4,
-    name: "Implementación de la Estructura",
-    episodes: 4,
+    name: "Temporada 4",
+    episodes: 0,
     videoBg: "https://cdn.SEU_DOMINIO.com/video4.mp4",
     gradient: "linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)",
-    emoji: "⚙️",
+    emoji: "🎥",
   },
   {
     num: 5,
-    name: "Comunidad [BRAND_NAME]",
+    name: "Comunidad",
     episodes: 0,
     external: true,
     redirectUrl: "https://chat.whatsapp.com/SEU_GROUP_INVITE_CODE",
@@ -64,7 +64,7 @@ export const SEASONS: Season[] = [
 // Progresso de episódios — chave: 's<num>_e<num>', valor: { watched_at }.
 // Persiste em localStorage. Migrar pra Supabase server-side na Fase 5b
 // (junto com videoplayer) é a evolução natural — por enquanto mantemos
-// paridade com o behavior do proyecto base.
+// paridade com o behavior.
 
 const PROGRESS_KEY = "app_episode_progress_v1"
 

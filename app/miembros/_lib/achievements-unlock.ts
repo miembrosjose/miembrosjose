@@ -1,6 +1,6 @@
 // Helpers de desbloqueio de insignias client-side.
 // Equivalente a unlockAchievement + isAchievementUnlocked + getUnlockedAchievements
-// do proyecto base (linhas 9266-9290).
+//.
 //
 // Persistência: localStorage (chave "app_unlocked_achievements") espelha
 // a lógica original. Cada call:
@@ -201,12 +201,12 @@ export function checkTrainingComplete() {
 
 // Insignias de produto: chamado depois que owned-products é carregado
 const PRODUCT_KEY_TO_ACHIEVEMENT: Record<string, string> = {
-  "Creativos.AI": "product_creativos",
-  "Andrómeda.ADS": "product_andromeda",
-  "Analytics.KPI": "product_analytics",
-  "Revisión de Tu Embudo": "product_revisao",
-  "Agente Copy para Mini VSL's": "product_minivsl",
-  "Pack de Ganchos Neuronales™": "product_bonus_ganchos",
+  "Producto 1": "product_creativos",
+  "Producto 2": "product_andromeda",
+  "Producto 3": "product_analytics",
+  "Servicio Premium": "product_revisao",
+  "Upsell 1": "product_minivsl",
+  "Bonus 1": "product_bonus_ganchos",
 }
 
 export async function checkProductAchievements(owned: OwnedProduct[]) {

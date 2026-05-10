@@ -1,7 +1,7 @@
 "use client"
 
 // Modal pra editar conteúdo (forum_post, forum_reply, episode_comment).
-// Substitui o editContentOverlay do proyecto base.
+// Substitui o editContentOverlay.
 //
 // Endpoints:
 //   PUT /api/forum/posts/[id]

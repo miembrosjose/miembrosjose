@@ -1,7 +1,7 @@
 "use client"
 
 // Card de post do fórum + replies expandíveis inline.
-// Equivalente ao bloco renderForum() do proyecto base (linhas 10243-10311).
+// Equivalente ao bloco renderForum().
 
 import { Heart, ThumbsDown, MessageCircle, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import { useState, useEffect, memo } from "react"

@@ -209,7 +209,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
   }
 
   async function grantTopo() {
-    if (!confirm("Conceder a insígnia EL TOPO a este membro? Será notificada toda a comunidade.")) return
+    if (!confirm("Conceder a insígnia Servicio Premium B a este membro? Será notificada toda a comunidade.")) return
     setTopoBusy(true)
     setTopoMsg(null)
     try {
@@ -221,7 +221,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Erro desconhecido")
-      setTopoMsg({ kind: "ok", text: json.already_had ? "Já tinha EL TOPO" : "EL TOPO concedida ✓" })
+      setTopoMsg({ kind: "ok", text: json.already_had ? "Já tinha Servicio Premium B" : "Servicio Premium B concedida ✓" })
       reload()
     } catch (e) {
       setTopoMsg({ kind: "err", text: e instanceof Error ? e.message : "Erro" })
@@ -231,7 +231,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
   }
 
   async function revokeTopo() {
-    if (!confirm("Tirar a insígnia EL TOPO? Esta ação é reversível (pode conceder de novo).")) return
+    if (!confirm("Tirar a insígnia Servicio Premium B? Esta ação é reversível (pode conceder de novo).")) return
     setTopoBusy(true)
     setTopoMsg(null)
     try {
@@ -243,7 +243,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Erro desconhecido")
-      setTopoMsg({ kind: "ok", text: "EL TOPO revogada ✓" })
+      setTopoMsg({ kind: "ok", text: "Servicio Premium B revogada ✓" })
       reload()
     } catch (e) {
       setTopoMsg({ kind: "err", text: e instanceof Error ? e.message : "Erro" })
@@ -536,15 +536,15 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                 </div>
               </section>
 
-              {/* INSIGNIA EXCLUSIVA EL TOPO — concedida manualmente pra clientes
+              {/* INSIGNIA EXCLUSIVA Servicio Premium B — concedida manualmente pra clientes
                 * pra quem a [BRAND_NAME] construiu o embudo (serviço premium via Wise). */}
               <section className="border-t border-[#1a1a24] pt-4">
                 <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#7f1d1d] [font-family:var(--font-geist-sans)]">
-                  Insígnia exclusiva — El Topo
+                  Insígnia exclusiva — Servicio Premium B
                 </h3>
                 <p className="mb-3 text-[11px] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
                   {hasTopo ? (
-                    <>Este membro JÁ tem a insígnia EL TOPO. Conceder de novo não faz nada.</>
+                    <>Este membro JÁ tem a insígnia Servicio Premium B. Conceder de novo não faz nada.</>
                   ) : (
                     <>Conceder quando a [BRAND_NAME] construiu o embudo do cliente. Notifica toda a comunidade.</>
                   )}
@@ -556,7 +556,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                     disabled={topoBusy || hasTopo}
                     className="border border-[#7f1d1d] bg-[#7f1d1d]/15 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#fca5a5] hover:bg-[#7f1d1d]/30 disabled:opacity-40 disabled:cursor-not-allowed [font-family:var(--font-geist-sans)]"
                   >
-                    {topoBusy ? "..." : "Conceder EL TOPO"}
+                    {topoBusy ? "..." : "Conceder Servicio Premium B"}
                   </button>
                   {hasTopo && (
                     <button
@@ -565,7 +565,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                       disabled={topoBusy}
                       className="border border-[#1a1a24] bg-[#12121a]/40 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] hover:border-red-500/60 hover:text-red-400 disabled:opacity-40 [font-family:var(--font-geist-sans)]"
                     >
-                      {topoBusy ? "..." : "Tirar EL TOPO"}
+                      {topoBusy ? "..." : "Tirar Servicio Premium B"}
                     </button>
                   )}
                   {topoMsg && (

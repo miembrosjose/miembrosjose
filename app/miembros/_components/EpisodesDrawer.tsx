@@ -1,7 +1,7 @@
 "use client"
 
 // Drawer Netflix-style com hero + lista de episódios + player modal embutido.
-// Equivalente a renderEpisodes + openVideoPlayer do proyecto base.
+// Equivalente a renderEpisodes + openVideoPlayer.
 
 import { useEffect, useRef, useState } from "react"
 import { X, Play, Lock, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from "lucide-react"

@@ -1,7 +1,7 @@
 "use client"
 
 // Provider + hook da fila de broadcasts (popups overlay deslizantes).
-// Equivalente ao bloco BROADCAST_QUEUE do proyecto base (11104-11219).
+// Equivalente ao bloco BROADCAST_QUEUE. (11104-11219).
 //
 // Anti-replay:
 //  - localStorage 'app_broadcast_shown_ids_v1' (max 500 IDs, FIFO)

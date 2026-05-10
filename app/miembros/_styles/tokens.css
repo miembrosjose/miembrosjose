@@ -1,5 +1,5 @@
 /*
- * Design tokens da área de membros — extraídos do proyecto base (paleta [BRAND_NAME]).
+ * Design tokens da área de membros — extraídos. (paleta [BRAND_NAME]).
  *
  * Por que .miembros-shell e não :root?
  *   Outras rotas do projeto (/checkout, /direct, /salespage) podem ter outra
@@ -35,7 +35,7 @@
   --font-body:      var(--font-dm-sans, 'DM Sans'), sans-serif;
   --font-mono:      var(--font-jetbrains, 'JetBrains Mono'), monospace;
 
-  /* Base do shell (equivalente ao body do proyecto base) */
+  /* Base do shell (equivalente ao body.) */
   background: var(--bg-deep);
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -215,7 +215,7 @@
   }
 }
 
-/* Glow animado pra insignia EL TOPO (vermelho da marca, intenso).
+/* Glow animado pra insignias topo-tier (vermelho da marca, intenso).
  * Aplicado no <svg> dentro do .avatar-badge[data-badge-id="el_topo"].
  * 3 camadas de drop-shadow: red-700 → red-900 → red-950 pra dar profundidade. */
 @keyframes topoBadgeGlow {
@@ -230,7 +230,7 @@
   }
 }
 
-/* Glow animado pra Embudo Revisado (dourado da marca, intenso).
+/* Glow animado pra Servicio Premium (dourado da marca, intenso).
  * Mesmo padrão de admin/topo mas em tons de gold (#c9a961 / #fde68a). */
 @keyframes revisaoBadgeGlow {
   0%, 100% {

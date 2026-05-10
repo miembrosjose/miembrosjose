@@ -1,6 +1,6 @@
 // Helpers de formatação reutilizados em todos os components que renderizam
 // posts/replies/comments. Equivalentes às funções timeAgoEs e renderRichBody
-// do proyecto base.
+//.
 
 const RICH_BODY_RULES: Array<[RegExp, string]> = [
   // Markdown básico — ordem importa (links primeiro, depois inline)

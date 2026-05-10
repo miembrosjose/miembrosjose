@@ -74,7 +74,7 @@ SELECT
   NULL,
   'manual',
   'AUTO_BONO',
-  '[{"key":"bonus-ganchos","name":"Pack de Ganchos Neuronales™","price":0,"qty":1}]'::jsonb,
+  '[{"key":"bonus-ganchos","name":"Bonus 1","price":0,"qty":1}]'::jsonb,
   0,
   'usd',
   LOWER(u.email),

@@ -1,7 +1,7 @@
 "use client"
 
 // Badge de XP/Level do user atual — aparece na Navbar entre nav links e avatar.
-// Equivalente ao .nav-xp-badge do proyecto base.
+// Equivalente ao .nav-xp-badge.
 //
 // Polling 30s pra detectar level-up: se xp.level > previous.level, despacha
 // evento "app:level-up" pra cada nível subido (LevelUpOverlay enfileira e

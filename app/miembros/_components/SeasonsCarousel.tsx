@@ -1,7 +1,7 @@
 "use client"
 
 // Carrossel horizontal de temporadas estilo Netflix.
-// Migra renderSeasons do proyecto base (linhas 9467-9531).
+// Migra renderSeasons.
 //
 // Click em temporada destravada → callback (Fase 5b vai abrir drawer).
 // Click em externa (T5 Comunidad VIP) → window.open WhatsApp.

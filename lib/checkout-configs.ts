@@ -14,7 +14,7 @@ const UPSELL_MINIVSL_IMG = "https://cdn.SEU_DOMINIO.com/minivsl.webp"
 // Stripe Price IDs por região — CRIAR no Stripe Dashboard antes de subir prod.
 // LATAM (DEFAULT) usa Price em USD + Adaptive Pricing pra converter pra moeda local (BRL, MXN, etc).
 // USD/EUR/GBP/CHF usam Price na própria moeda — sem conversão.
-// Mini VSL é único USD usado em todas as regiões.
+// Upsell 1 é único USD usado em todas as regiões.
 export const STRIPE_PRICE_IDS = {
   front: {
     DEFAULT: "price_TODO_FRONT_DEFAULT",
@@ -54,7 +54,7 @@ export const STRIPE_PRICE_IDS = {
     GBP:     "price_TODO_REVISAO_GBP",
     CHF:     "price_TODO_REVISAO_CHF",
   },
-  // Mini VSL: USD único pra todas regiões
+  // Upsell 1: USD único pra todas regiões
   minivsl: "price_TODO_MINIVSL",
 } as const
 
@@ -146,8 +146,8 @@ type UpsellPrices = {
 const buildUpsells = (region: CheckoutRegion, p: UpsellPrices): UpsellConfig[] => [
   {
     key: "revisao",
-    title: "Revisión de Tu Embudo",
-    description: "Yo, desarrollador oficial de esta metodología, realizaré un análisis completo de tu embudo para eliminar posibles puntos de fuga de tus leads, aplicar ajustes estratégicos y maximizar el rendimiento de tu embudo.",
+    title: "Servicio Premium",
+    description: "Descripción del Servicio Premium — edita aquí.",
     priceFrom: p.revisaoFrom,
     price: p.revisao,
     image: UPSELL_REVISAO_IMG,
@@ -155,8 +155,8 @@ const buildUpsells = (region: CheckoutRegion, p: UpsellPrices): UpsellConfig[] =
   },
   {
     key: "minivsl",
-    title: "Agente Copy para Mini VSL's",
-    description: "Inserta un Mini VSL con el copy de este Agente GPT en medio de tu embudo gamificado y aumenta la percepción de valor de tu producto, especialmente en productos que necesitan más tiempo para convencer al lead.",
+    title: "Upsell 1",
+    description: "Descripción del Upsell 1 — edita aquí.",
     priceFrom: p.miniVslFrom,
     price: p.miniVsl,
     image: UPSELL_MINIVSL_IMG,
@@ -167,9 +167,9 @@ const buildUpsells = (region: CheckoutRegion, p: UpsellPrices): UpsellConfig[] =
 const buildBumps = (region: CheckoutRegion, p: BumpPrices): BumpConfig[] => [
   {
     key: "creativos",
-    emoji: "🤖",
-    title: "[OFERTA ÚNICA] Creativos.AI",
-    description: "Pega el copy de tu embudo en este Agente GPT y deja que de ahora en adelante él escriba tus mejores creativos.",
+    emoji: "🎯",
+    title: "[OFERTA ÚNICA] Producto 1",
+    description: "Descripción del Producto 1 — edita aquí.",
     priceFrom: p.creativosFrom,
     price: p.creativos,
     image: BUMP_CREATIVOS_IMG,
@@ -178,8 +178,8 @@ const buildBumps = (region: CheckoutRegion, p: BumpPrices): BumpConfig[] => [
   {
     key: "andromeda",
     emoji: "⚡",
-    title: "[OFERTA ÚNICA] Andromeda.ADS",
-    description: "Copia la estructura de campañas que yo y los mejores del mercado usamos para escalar en Meta Ads.",
+    title: "[OFERTA ÚNICA] Producto 2",
+    description: "Descripción del Producto 2 — edita aquí.",
     priceFrom: p.andromedaFrom,
     price: p.andromeda,
     image: BUMP_ANDROMEDA_IMG,
@@ -188,8 +188,8 @@ const buildBumps = (region: CheckoutRegion, p: BumpPrices): BumpConfig[] => [
   {
     key: "analytics",
     emoji: "📊",
-    title: "[OFERTA ÚNICA] Analytics.KPI",
-    description: "Rastrea los leads en tu embudo, identifica tus mejores campañas, tus creativos ganadores y monitorea KPIs.",
+    title: "[OFERTA ÚNICA] Producto 3",
+    description: "Descripción del Producto 3 — edita aquí.",
     priceFrom: p.analyticsFrom,
     price: p.analytics,
     image: BUMP_ANALYTICS_IMG,

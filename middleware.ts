@@ -121,7 +121,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // ── / : cai no rewrite normal pra /miembros (SPA Next.js oficial) ──
-    // (área de membros oficial migrou de proyecto base → SPA Next.js
+    // (área de membros oficial migrou de código original → SPA Next.js
     // no commit e5c7afe, 02/05/2026). O HTML legacy foi removido em
     // 2026-05-02 após validação da SPA em prod.
 

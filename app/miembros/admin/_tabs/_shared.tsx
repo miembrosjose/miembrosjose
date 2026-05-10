@@ -4,12 +4,12 @@
 import { type ReactNode } from "react"
 
 export const PRODUCT_OPTIONS = [
-  { key: "creativos", name: "Creativos.AI" },
-  { key: "andromeda", name: "Andrómeda.ADS" },
-  { key: "analytics", name: "Analytics.KPI" },
-  { key: "minivsl", name: "Agente Copy Mini VSL's" },
-  { key: "revisao", name: "Revisión de Tu Embudo" },
-  { key: "bonus-ganchos", name: "Pack de Ganchos Neuronales™" },
+  { key: "creativos", name: "Producto 1" },
+  { key: "andromeda", name: "Producto 2" },
+  { key: "analytics", name: "Producto 3" },
+  { key: "minivsl", name: "Upsell 1" },
+  { key: "revisao", name: "Servicio Premium" },
+  { key: "bonus-ganchos", name: "Bonus 1" },
 ] as const
 
 export const inputCls =

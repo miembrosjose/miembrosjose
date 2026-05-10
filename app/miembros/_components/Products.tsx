@@ -1,7 +1,7 @@
 "use client"
 
 // Tu Biblioteca - Otros Productos + Tienda Premium
-// Migra renderOwnedProducts + renderLockedProducts do proyecto base.
+// Migra renderOwnedProducts + renderLockedProducts.
 // Click em locked → abre /producto/<slug> (futura ViewProductSalespage interna)
 // Click em owned interno → setView("producto", slug)
 // Click em owned external → window.open

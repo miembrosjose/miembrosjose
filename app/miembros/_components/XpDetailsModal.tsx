@@ -1,7 +1,7 @@
 "use client"
 
 // Modal com breakdown de XP por evento. Migra openXpDetailsModal do
-// proyecto base (linhas 11717-11808).
+// código original.
 //
 // Comportamento:
 //   - Ao abrir: fetch /api/xp/me + /api/xp/breakdown

@@ -41,11 +41,11 @@ function getClientIp(req: NextRequest): string | null {
 
 function nameForKey(key: string): string {
   if (key === "front") return "[BRAND_NAME]"
-  if (key === "creativos") return "Creativos.AI"
-  if (key === "andromeda") return "Andrómeda.ADS"
-  if (key === "analytics") return "Analytics.KPI"
-  if (key === "revisao") return "Revisión de Tu Embudo"
-  if (key === "minivsl") return "Agente Copy para Mini VSL's"
+  if (key === "creativos") return "Producto 1"
+  if (key === "andromeda") return "Producto 2"
+  if (key === "analytics") return "Producto 3"
+  if (key === "revisao") return "Servicio Premium"
+  if (key === "minivsl") return "Upsell 1"
   return key
 }
 

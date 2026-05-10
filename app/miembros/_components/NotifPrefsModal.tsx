@@ -1,8 +1,8 @@
 "use client"
 
 // Modal de configuração de notificações. Equivalente a #notifPrefsOverlay
-// + openNotifPrefsModal/saveNotifPrefsFromModal do proyecto base
-// (linhas 6311-6444 + 11279-11328).
+// + openNotifPrefsModal/saveNotifPrefsFromModal.
+//.
 //
 // Toggles granulares:
 //  - sound (master) → silencia TODOS os sons via window.NOTIF_PREFS.sound

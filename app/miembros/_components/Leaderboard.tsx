@@ -1,7 +1,7 @@
 "use client"
 
 // Leaderboard sidebar (TOP 100 ranking).
-// Equivalente ao bloco renderLeaderboard do proyecto base (linhas
+// Equivalente ao bloco renderLeaderboard. (linhas
 // 12976-13062). Pódio top 3 (gold/silver/bronze com stats expandidas)
 // + lista 4-100.
 

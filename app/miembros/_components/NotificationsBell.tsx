@@ -2,7 +2,7 @@
 
 // Bell de notificações na navbar com badge de não-lidas + dropdown.
 // Equivalente ao bloco fetchNotifications/renderNotificationsDropdown do
-// proyecto base (linhas 11337-11477).
+// código original.
 //
 // Comportamento:
 //  - Polling a cada 30s (refresh badge silencioso)
