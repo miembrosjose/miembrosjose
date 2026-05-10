@@ -1,0 +1,68 @@
+<svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="bg-editing-2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1a0a0a"/>
+        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
+      </linearGradient>
+      <radialGradient id="spot-editing-2" cx="30%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#c9a961" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#c9a961" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="vig-editing-2" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="black" stop-opacity="0"/>
+        <stop offset="100%" stop-color="black" stop-opacity="0.85"/>
+      </radialGradient>
+      <filter id="grain-editing-2">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/>
+        <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+      </filter>
+    </defs>
+    <!-- Background -->
+    <rect width="400" height="250" fill="url(#bg-editing-2)"/>
+    <rect width="400" height="250" fill="url(#spot-editing-2)"/>
+    <!-- Frame brackets nos cantos (corner marks de filme) -->
+    <path d="M 12 12 L 12 28 M 12 12 L 28 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 12 L 388 28 M 388 12 L 372 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 12 238 L 12 222 M 12 238 L 28 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 238 L 388 222 M 388 238 L 372 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <!-- Frame counter top-left -->
+    <text x="22" y="35" font-family="monospace" font-size="10" fill="#c9a961" letter-spacing="3" opacity="0.75">EP · TEMPORADA 2</text>
+    <!-- Símbolo temático à direita -->
+    
+      <!-- Lápis editando wireframe (Editando el Embudo) -->
+      <!-- Wireframe base -->
+      <rect x="246" y="100" width="120" height="100" fill="none" stroke="#c9a961" stroke-width="1.5" opacity="0.6"/>
+      <!-- Linhas de conteúdo wireframe -->
+      <rect x="258" y="112" width="60" height="6" fill="#c9a961" opacity="0.45"/>
+      <rect x="258" y="124" width="96" height="3" fill="#c9a961" opacity="0.3"/>
+      <rect x="258" y="132" width="80" height="3" fill="#c9a961" opacity="0.3"/>
+      <rect x="258" y="140" width="90" height="3" fill="#c9a961" opacity="0.3"/>
+      <rect x="258" y="155" width="40" height="14" fill="none" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+      <rect x="304" y="155" width="40" height="14" fill="#c9a961" opacity="0.5"/>
+      <rect x="258" y="178" width="60" height="3" fill="#c9a961" opacity="0.3"/>
+      <rect x="258" y="186" width="50" height="3" fill="#c9a961" opacity="0.3"/>
+      <!-- Lápis diagonal (editando) -->
+      <path d="M 350 60 L 380 30 L 388 38 L 358 68 Z" fill="none" stroke="#c9a961" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="354" y1="64" x2="384" y2="34" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+      <!-- Ponta (lápis cortando o papel) -->
+      <polygon points="346,72 354,64 360,70 352,78" fill="#c9a961" opacity="0.85"/>
+      <!-- Linha tracejada (cursor de edição) -->
+      <line x1="320" y1="78" x2="350" y2="68" stroke="#c9a961" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+      <!-- Marcas de edição (X riscado) -->
+      <line x1="284" y1="120" x2="316" y2="120" stroke="#c9a961" stroke-width="1.2" opacity="0.7"/>
+      <!-- Sparkle -->
+      <path d="M 376 18 L 378 14 L 380 18 L 384 20 L 380 22 L 378 26 L 376 22 L 372 20 Z" fill="#c9a961" opacity="0.7"/>
+    
+    <!-- Número gigante à esquerda -->
+    <text x="40" y="180" font-family="serif" font-weight="700" font-size="160" fill="#c9a961" opacity="0.92" style="letter-spacing:-0.04em">02</text>
+    <!-- Label do episódio (subtítulo) -->
+    <text x="40" y="215" font-family="serif" font-size="13" fill="#c9a961" opacity="0.65" letter-spacing="6" style="text-transform:uppercase">Editando</text>
+    <!-- Vinheta -->
+    <rect width="400" height="250" fill="url(#vig-editing-2)"/>
+    <!-- Linha bottom decorativa -->
+    <line x1="40" y1="225" x2="200" y2="225" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="248" x2="400" y2="248" stroke="#c9a961" stroke-width="2" opacity="0.7"/>
+    <!-- Grain overlay -->
+    <rect width="400" height="250" filter="url(#grain-editing-2)" opacity="0.6"/>
+  </svg>

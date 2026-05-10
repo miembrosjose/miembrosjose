@@ -1,0 +1,281 @@
+/*
+ * Design tokens da área de membros — extraídos do area-prototipo.html (paleta Copy Films).
+ *
+ * Por que .miembros-shell e não :root?
+ *   Outras rotas do projeto (/checkout, /direct, /salespage) podem ter outra
+ *   paleta. Escopar evita vazamento de tokens.
+ *
+ * Aplicamos background/color/font-family aqui agora que TODAS as rotas /miembros
+ * (perfil, admin, u/[id], producto/[slug]) viraram views internas do SpaHomeShell.
+ * Antes do commit b13da41, eram páginas Next.js separadas com Tailwind próprio
+ * — escopar evitava regressão visual nessas rotas.
+ */
+
+.miembros-shell {
+  color-scheme: dark;
+
+  /* Paleta — alinhada com marca Copy Films (red-900 oficial) */
+  --bg-deep:        #0a0a0f;
+  --bg-primary:     #0a0a0f;
+  --bg-surface:    #12121a;
+  --bg-elevated:   #1a1a24;
+  --accent-red:     #7f1d1d;
+  --accent-red-hover:#991b1b;
+  --accent-red-deep:#450a0a;
+  --accent-gold:    #c9a961;
+  --text-primary:   #f5f5f7;
+  --text-secondary:#a0a0b0;
+  --text-muted:     #6a6a7a;
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-medium:  rgba(255,255,255,0.12);
+
+  /* Tipografia (variáveis vêm de next/font/google no layout.tsx) */
+  --font-display:   var(--font-cinzel, 'Cinzel'), serif;
+  --font-impact:    var(--font-bebas, 'Bebas Neue'), sans-serif;
+  --font-body:      var(--font-dm-sans, 'DM Sans'), sans-serif;
+  --font-mono:      var(--font-jetbrains, 'JetBrains Mono'), monospace;
+
+  /* Base do shell (equivalente ao body do area-prototipo.html) */
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Reset universal dentro do shell (margin/padding/box-sizing) */
+.miembros-shell *,
+.miembros-shell *::before,
+.miembros-shell *::after {
+  box-sizing: border-box;
+}
+
+/* Geometria quadrada — branding Copy Films é quadrado.
+ * Override global pra anular qualquer border-radius interno (cards, modais,
+ * botões, badges, etc). Exceção: fotos de perfil seguem redondas.
+ *
+ * IMPORTANTE: :not(img):not(video) — em produção, CSS modules minificam
+ * nome de classe e a regra [class*='avatar' i] perde efeito (avatar vira
+ * hash). Solução: nunca aplicar reset em <img> ou <video> — esses elementos
+ * recebem o border-radius que cada componente especifica (CSS module ou
+ * inline style). */
+.miembros-shell,
+.miembros-shell *:not(img):not(video),
+.miembros-shell *::before,
+.miembros-shell *::after {
+  border-radius: 0 !important;
+}
+
+/* EXCEÇÃO: fotos de perfil seguem redondas (convenção de branding).
+ * Casa qualquer classe que contenha "avatar" ou "Avatar" (case-insensitive)
+ * — pega CSS modules hashed (Navbar_avatar__abc, Leaderboard_podiumAvatar__xyz, etc) */
+.miembros-shell [class*="avatar" i],
+.miembros-shell [class*="avatar" i] img {
+  border-radius: 50% !important;
+}
+
+/* Avatares devem ter overflow visível pra a insignia (.avatar-badge)
+ * absolute bottom: -3px right: -3px não ser cortada. A <img> filha já
+ * tem border-radius: 50% próprio via regra acima — não precisa do
+ * overflow: hidden do parent pra ficar circular. */
+.miembros-shell [class*="avatar" i] {
+  overflow: visible !important;
+}
+
+/* EXCEÇÃO: spinners de loading seguem redondos (impossível animar quadrado).
+ * Casa qualquer classe contendo "spinner" (case-insensitive). */
+.miembros-shell [class*="spinner" i] {
+  border-radius: 50% !important;
+}
+
+/* EXCEÇÃO: Tailwind .rounded-full (foto de perfil em /perfil, etc).
+ * Mantém círculos do componente ao invés do override quadrado global. */
+.miembros-shell .rounded-full,
+.miembros-shell .rounded-full img {
+  border-radius: 50% !important;
+}
+
+/* EXCEÇÃO: badges/contadores arredondados (notif counter, XP LV badge,
+ * medals do ranking). Casa qualquer classe contendo "badge", "medal" ou
+ * "counter" (case-insensitive). */
+.miembros-shell [class*="badge" i],
+.miembros-shell [class*="medal" i],
+.miembros-shell [class*="counter" i] {
+  border-radius: 999px !important;
+}
+
+/* EXCEÇÃO: botões circulares estilo Netflix (SeriesInfoModal — like, mute, etc).
+ * Casa qualquer classe contendo "btnRound" (case-insensitive). */
+.miembros-shell [class*="btnRound" i] {
+  border-radius: 999px !important;
+}
+
+/* EXCEÇÃO: FAB (Floating Action Button) circulares — MessengerWidget no canto
+ * inferior esquerdo. Casa classes contendo "fab" (case-insensitive). */
+.miembros-shell [class*="fab" i] {
+  border-radius: 50% !important;
+}
+
+/* EXCEÇÃO: dots/bolinhas circulares (online presence dot, unread dot,
+ * recording dot, audio waveform dots). Casa classes contendo "Dot" ou "dot". */
+.miembros-shell [class*="Dot" i] {
+  border-radius: 50% !important;
+}
+
+/* EXCEÇÃO universal: classe global 'cf-circle' (nao e CSS module, nao
+ * sofre minificacao em prod). Adiciona em qualquer elemento que precisa
+ * ser circular OU em qualquer img que precisa ser circular. Resolve o
+ * problema de avatares quadrados em prod quando o reset global vencia
+ * a regra do module por specificity igual. */
+.miembros-shell .cf-circle,
+.miembros-shell .cf-circle > img,
+.miembros-shell .cf-circle > * > img,
+.miembros-shell img.cf-circle {
+  border-radius: 50% !important;
+}
+
+/* Reforço: clip-path circular nas <img> de avatar — vence QUALQUER override
+ * de border-radius (CSS modules minificados em prod, Tailwind classes,
+ * estilos inline). border-radius pode ser sobrescrito; clip-path SEMPRE
+ * recorta a img em forma de círculo independente do contexto.
+ *
+ * Aplicado tanto em .cf-circle quanto em [class*='avatar' i] pra cobrir
+ * todos os componentes (Avatar.tsx, ViewMiembrosLista.tsx, Leaderboard.tsx,
+ * NavbarUserMenu, posts/replies, etc). */
+.miembros-shell .cf-circle > img,
+.miembros-shell .cf-circle > * > img,
+.miembros-shell img.cf-circle,
+.miembros-shell [class*="avatar" i] > img,
+.miembros-shell [class*="avatar" i] > * > img {
+  clip-path: circle(50%) !important;
+  -webkit-clip-path: circle(50%) !important;
+}
+
+/* Badge da insignia destacada — sobreposta no canto inferior direito do avatar.
+ * Sem fundo/borda/sombra — só o SVG da insignia (mais limpo, evita o
+ * círculo "vazio" atrás de escudos pequenos como welcome/aulas). */
+.miembros-shell .avatar-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 36%;
+  height: 36%;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 28px;
+  max-height: 28px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.miembros-shell .avatar-badge svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Slot ESTRELLA — top-right do avatar. Sem fundo (estrela é o ponto focal). */
+.miembros-shell .avatar-badge[data-slot="star"] {
+  top: -3px;
+  right: -3px;
+  bottom: auto;
+  left: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Slot LLAMA — top-left do avatar. Sem fundo. */
+.miembros-shell .avatar-badge[data-slot="flame"] {
+  top: -3px;
+  left: -3px;
+  right: auto;
+  bottom: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Glow animado pra insignia ADM (diamante exclusivo do admin) */
+@keyframes admBadgeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(185, 242, 255, 0.6))
+      drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(185, 242, 255, 0.95))
+      drop-shadow(0 0 16px rgba(255, 255, 255, 0.55))
+      drop-shadow(0 0 24px rgba(201, 169, 97, 0.6));
+  }
+}
+
+/* Glow animado pra insignia EL TOPO (vermelho da marca, intenso).
+ * Aplicado no <svg> dentro do .avatar-badge[data-badge-id="el_topo"].
+ * 3 camadas de drop-shadow: red-700 → red-900 → red-950 pra dar profundidade. */
+@keyframes topoBadgeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.65))
+      drop-shadow(0 0 10px rgba(127, 29, 29, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(220, 38, 38, 1))
+      drop-shadow(0 0 18px rgba(127, 29, 29, 0.75))
+      drop-shadow(0 0 28px rgba(69, 10, 10, 0.5));
+  }
+}
+
+/* Glow animado pra Embudo Revisado (dourado da marca, intenso).
+ * Mesmo padrão de admin/topo mas em tons de gold (#c9a961 / #fde68a). */
+@keyframes revisaoBadgeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(253, 230, 138, 0.65))
+      drop-shadow(0 0 10px rgba(201, 169, 97, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(253, 230, 138, 1))
+      drop-shadow(0 0 18px rgba(201, 169, 97, 0.75))
+      drop-shadow(0 0 28px rgba(138, 114, 54, 0.5));
+  }
+}
+
+/* Reset de button em :where() pra reduzir especificidade pra 0,1,0 — assim
+ * NÃO vence styles de classe (.btnPrimary etc) que eram zerados pelo reset
+ * antes (sintoma: bg vermelho só aparecia on hover por +1 de especificidade). */
+.miembros-shell :where(button) {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+.miembros-shell img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Sobrescreve o body { background: #000 !important } do globals.css QUANDO
+ * estamos numa rota /miembros (shell renderizado). #0a0a0f é levemente quente
+ * (não preto puro) — combina com a paleta vermelha/dourada da marca. */
+body:has(.miembros-shell),
+html:has(.miembros-shell) {
+  background-color: #0a0a0f !important;
+}
+
+/* Selects nativos: força fundo escuro + texto claro nas options. */
+.miembros-shell select { color-scheme: dark; }
+.miembros-shell select option {
+  background-color: #12121a;
+  color: #f5f5f7;
+}
+.miembros-shell select option:checked,
+.miembros-shell select option:hover {
+  background-color: #1a1a24;
+  color: #c9a961;
+}

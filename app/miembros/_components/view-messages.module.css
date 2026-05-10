@@ -1,0 +1,434 @@
+/* ViewMessages — split layout: sidebar de threads + conversa selecionada.
+ * Mobile: stack (sidebar full-width, depois thread fullscreen). */
+
+/* Navbar e fixed top:0 com ~80px de altura. Wrap precisa comecar abaixo dele
+ * pra nao ter overlap do thread header com o navbar. */
+.wrap {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100dvh - 80px);
+  margin-top: 80px;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid var(--border-subtle);
+  background: rgba(10, 10, 15, 0.6);
+}
+
+.sidebar {
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+  background: rgba(18, 18, 26, 0.4);
+}
+
+.sidebarHeader {
+  padding: 1.25rem 1.25rem 0.875rem;
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  background: rgba(18, 18, 26, 0.95);
+  backdrop-filter: blur(12px);
+  z-index: 1;
+}
+
+.sidebarTitle {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+}
+
+.threadList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.threadItem {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.threadBtn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.threadBtn:hover { background: rgba(255, 255, 255, 0.03); }
+.threadBtn.active { background: rgba(127, 29, 29, 0.15); border-left: 2px solid var(--accent-red); padding-left: calc(1.25rem - 2px); }
+
+.threadAvatarWrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.threadAvatarImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50% !important;
+  object-fit: cover;
+}
+
+.threadAvatarInitials {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-family: var(--font-display);
+}
+
+.threadInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.threadName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadPreview {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadPreviewMine { color: var(--text-muted); font-style: italic; }
+
+.threadMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.threadTime {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.unreadDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* THREAD (conversation pane) */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.threadHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(18, 18, 26, 0.95);
+  backdrop-filter: blur(12px);
+  flex: 0 0 auto;
+}
+
+.backBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.headerInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.headerName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+.headerSub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.iconBtn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bubbleRow { display: flex; }
+.bubbleRowMine { justify-content: flex-end; }
+.bubbleRowOther { justify-content: flex-start; }
+
+.bubble {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.bubbleMine { background: var(--accent-red); color: white; border-bottom-right-radius: 2px; }
+.bubbleOther { background: rgba(255, 255, 255, 0.06); color: var(--text-primary); border-bottom-left-radius: 2px; }
+
+.bubbleTime {
+  font-size: 0.6rem;
+  opacity: 0.65;
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+  display: block;
+  text-align: right;
+}
+
+.bubbleImg {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+}
+
+/* Audio player wrap — garante largura confortavel dentro do bubble.
+ * Native <audio controls> precisa de pelo menos 240px pra mostrar todos
+ * os controles (play, scrubber, time, volume). */
+.audioPlayer {
+  display: block;
+  width: 100%;
+  min-width: 260px;
+}
+
+.audioPlayer audio {
+  display: block;
+  width: 100%;
+  height: 40px;
+  border-radius: 24px;
+}
+
+/* Quando bubble contem audio, evita truncar o player */
+.bubble:has(.audioPlayer) {
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.composer {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-end;
+  background: rgba(10, 10, 15, 0.6);
+}
+
+.composerInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.625rem 0.875rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.composerInput:focus { border-color: var(--accent-red); }
+
+.composerActions {
+  display: flex;
+  gap: 0.375rem;
+  flex: 0 0 auto;
+}
+
+.composerBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.composerBtn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+.composerBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sendBtn {
+  background: var(--accent-red);
+  border: 1px solid var(--accent-red);
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-mono);
+  transition: all 0.2s;
+}
+
+.sendBtn:hover { background: #991b1b; }
+.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.recordingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(127, 29, 29, 0.15);
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.recordingDot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent-red);
+  border-radius: 50%;
+  animation: recordPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.threadPlaceholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  text-align: center;
+  padding: 2rem;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: zoom-out;
+}
+
+.lightboxImg {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    grid-template-columns: 1fr;
+    height: calc(100dvh - 64px);
+    margin-top: 64px;
+    border: none;
+  }
+  .sidebar { display: block; }
+  .sidebar.hidden { display: none; }
+  .thread { display: none; }
+  .thread.active { display: flex; }
+  .backBtn { display: flex; }
+  .bubble { max-width: 85%; }
+}

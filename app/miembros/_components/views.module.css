@@ -1,0 +1,81 @@
+/* Views client-side — fade entre telas, sem reload.
+ * Toda view ocupa a tela inteira, só uma visível por vez. */
+
+.viewWrap {
+  position: relative;
+  min-height: 100dvh;
+}
+
+.view {
+  animation: viewFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section {
+  padding: 5rem 2.5rem;
+  position: relative;
+}
+
+.sectionHeader {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sectionKicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.sectionTitleAccent {
+  color: var(--accent-red);
+  font-style: italic;
+}
+
+.sectionDivider {
+  display: inline-flex;
+  width: 32px;
+  height: 1px;
+  background: var(--accent-red);
+  margin-right: 0.875rem;
+  vertical-align: middle;
+}
+
+/* Layout especial pra Comunidad — 2 colunas (sidebar + main) */
+.comunidadGrid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 968px) {
+  .comunidadGrid {
+    grid-template-columns: 1fr;
+  }
+}

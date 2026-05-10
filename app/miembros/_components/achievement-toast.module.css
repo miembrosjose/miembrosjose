@@ -1,0 +1,177 @@
+/* Toast de insignia desbloqueada — extraído do area-prototipo.html
+ * (linhas 4522-4617). Slide-in da direita, frame com gradient red→gold,
+ * cantos decorativos, drop-shadow no ícone. Auto-fecha em 5s. */
+
+.toast {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 99999;
+  width: 360px;
+  max-width: calc(100vw - 2rem);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(120%);
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 15, 0.97) 0%,
+    rgba(20, 15, 15, 0.97) 100%
+  );
+  border: 1px solid;
+  border-image: linear-gradient(
+      135deg,
+      var(--accent-red) 0%,
+      var(--accent-gold) 100%
+    )
+    1;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 0 1px rgba(201, 169, 97, 0.2),
+    0 12px 48px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(201, 169, 97, 0.15);
+}
+
+.frame::before,
+.frame::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--accent-gold);
+}
+
+.frame::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.frame::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+.icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  color: var(--accent-gold);
+  filter: drop-shadow(0 0 12px rgba(201, 169, 97, 0.5));
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tierBronze .icon {
+  color: #b08456;
+}
+.tierSilver .icon {
+  color: #c0c0c0;
+}
+.tierGold .icon {
+  color: #c9a961;
+}
+.tierPlatinum .icon {
+  color: #e5e4e2;
+}
+.tierDiamond .icon {
+  color: #b9f2ff;
+}
+.tierTopo .icon {
+  color: #7f1d1d;
+  filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.7))
+    drop-shadow(0 0 24px rgba(127, 29, 29, 0.5));
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent-red);
+  margin-bottom: 0.25rem;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f4eedd;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+}
+
+.desc {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.tier {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.tierBronze .tier {
+  color: #b08456;
+}
+.tierSilver .tier {
+  color: #c0c0c0;
+}
+.tierGold .tier {
+  color: #c9a961;
+}
+.tierPlatinum .tier {
+  color: #e5e4e2;
+}
+.tierDiamond .tier {
+  color: #b9f2ff;
+}
+.tierTopo .tier {
+  color: #dc2626;
+  text-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+}
+
+@media (max-width: 640px) {
+  .toast {
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+}

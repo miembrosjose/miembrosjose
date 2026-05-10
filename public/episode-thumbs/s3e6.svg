@@ -1,0 +1,61 @@
+<svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="bg-video-integration-6" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1a0a0a"/>
+        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
+      </linearGradient>
+      <radialGradient id="spot-video-integration-6" cx="30%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#c9a961" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#c9a961" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="vig-video-integration-6" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="black" stop-opacity="0"/>
+        <stop offset="100%" stop-color="black" stop-opacity="0.85"/>
+      </radialGradient>
+      <filter id="grain-video-integration-6">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/>
+        <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+      </filter>
+    </defs>
+    <!-- Background -->
+    <rect width="400" height="250" fill="url(#bg-video-integration-6)"/>
+    <rect width="400" height="250" fill="url(#spot-video-integration-6)"/>
+    <!-- Frame brackets nos cantos (corner marks de filme) -->
+    <path d="M 12 12 L 12 28 M 12 12 L 28 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 12 L 388 28 M 388 12 L 372 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 12 238 L 12 222 M 12 238 L 28 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 238 L 388 222 M 388 238 L 372 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <!-- Frame counter top-left -->
+    <text x="22" y="35" font-family="monospace" font-size="10" fill="#c9a961" letter-spacing="3" opacity="0.75">EP · TEMPORADA 3</text>
+    <!-- Símbolo temático à direita -->
+    
+      <!-- Integração de vídeo no V0 (player + code brackets) -->
+      <!-- Player frame -->
+      <rect x="246" y="80" width="128" height="80" rx="3" fill="none" stroke="#c9a961" stroke-width="2"/>
+      <!-- Play button central -->
+      <polygon points="298,108 298,132 326,120" fill="#c9a961" opacity="0.85"/>
+      <!-- Progress bar -->
+      <line x1="252" y1="152" x2="368" y2="152" stroke="#c9a961" stroke-width="1" opacity="0.4"/>
+      <line x1="252" y1="152" x2="305" y2="152" stroke="#c9a961" stroke-width="2" opacity="0.9"/>
+      <circle cx="305" cy="152" r="2.5" fill="#c9a961"/>
+      <!-- Code brackets ao redor (V0 integration) -->
+      <text x="232" y="125" font-family="monospace" font-size="32" fill="#c9a961" font-weight="700" opacity="0.7">&lt;</text>
+      <text x="378" y="125" font-family="monospace" font-size="32" fill="#c9a961" font-weight="700" opacity="0.7">/&gt;</text>
+      <!-- Linha de código abaixo -->
+      <text x="244" y="195" font-family="monospace" font-size="9" fill="#c9a961" opacity="0.5" letter-spacing="1">&lt;video src="..." /&gt;</text>
+      <!-- Sparkle V0 -->
+      <path d="M 360 60 L 362 56 L 364 60 L 368 62 L 364 64 L 362 68 L 360 64 L 356 62 Z" fill="#c9a961" opacity="0.85"/>
+    
+    <!-- Número gigante à esquerda -->
+    <text x="40" y="180" font-family="serif" font-weight="700" font-size="160" fill="#c9a961" opacity="0.92" style="letter-spacing:-0.04em">06</text>
+    <!-- Label do episódio (subtítulo) -->
+    <text x="40" y="215" font-family="serif" font-size="13" fill="#c9a961" opacity="0.65" letter-spacing="6" style="text-transform:uppercase">V0 Integration</text>
+    <!-- Vinheta -->
+    <rect width="400" height="250" fill="url(#vig-video-integration-6)"/>
+    <!-- Linha bottom decorativa -->
+    <line x1="40" y1="225" x2="200" y2="225" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="248" x2="400" y2="248" stroke="#c9a961" stroke-width="2" opacity="0.7"/>
+    <!-- Grain overlay -->
+    <rect width="400" height="250" filter="url(#grain-video-integration-6)" opacity="0.6"/>
+  </svg>

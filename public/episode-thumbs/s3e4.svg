@@ -1,0 +1,68 @@
+<svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="bg-video-edit-4" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1a0a0a"/>
+        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
+      </linearGradient>
+      <radialGradient id="spot-video-edit-4" cx="30%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#c9a961" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#c9a961" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="vig-video-edit-4" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="black" stop-opacity="0"/>
+        <stop offset="100%" stop-color="black" stop-opacity="0.85"/>
+      </radialGradient>
+      <filter id="grain-video-edit-4">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/>
+        <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+      </filter>
+    </defs>
+    <!-- Background -->
+    <rect width="400" height="250" fill="url(#bg-video-edit-4)"/>
+    <rect width="400" height="250" fill="url(#spot-video-edit-4)"/>
+    <!-- Frame brackets nos cantos (corner marks de filme) -->
+    <path d="M 12 12 L 12 28 M 12 12 L 28 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 12 L 388 28 M 388 12 L 372 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 12 238 L 12 222 M 12 238 L 28 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 238 L 388 222 M 388 238 L 372 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <!-- Frame counter top-left -->
+    <text x="22" y="35" font-family="monospace" font-size="10" fill="#c9a961" letter-spacing="3" opacity="0.75">EP · TEMPORADA 3</text>
+    <!-- Símbolo temático à direita -->
+    
+      <!-- Edição de vídeo (timeline + clips + scissors) -->
+      <!-- Preview frame top -->
+      <rect x="240" y="60" width="140" height="70" fill="none" stroke="#c9a961" stroke-width="2"/>
+      <polygon points="298,82 298,108 322,95" fill="#c9a961" opacity="0.7"/>
+      <!-- Timeline tracks -->
+      <line x1="240" y1="150" x2="380" y2="150" stroke="#c9a961" stroke-width="0.5" opacity="0.4"/>
+      <line x1="240" y1="170" x2="380" y2="170" stroke="#c9a961" stroke-width="0.5" opacity="0.4"/>
+      <line x1="240" y1="190" x2="380" y2="190" stroke="#c9a961" stroke-width="0.5" opacity="0.4"/>
+      <!-- Clips em cada track -->
+      <rect x="246" y="142" width="50" height="14" fill="#c9a961" opacity="0.7"/>
+      <rect x="306" y="142" width="68" height="14" fill="#c9a961" opacity="0.5"/>
+      <rect x="246" y="162" width="38" height="14" fill="#c9a961" opacity="0.5"/>
+      <rect x="294" y="162" width="80" height="14" fill="#c9a961" opacity="0.7"/>
+      <rect x="246" y="182" width="64" height="14" fill="#c9a961" opacity="0.6"/>
+      <rect x="320" y="182" width="54" height="14" fill="#c9a961" opacity="0.5"/>
+      <!-- Playhead vertical -->
+      <line x1="290" y1="138" x2="290" y2="200" stroke="#c9a961" stroke-width="1.8" opacity="0.9"/>
+      <polygon points="285,138 295,138 290,144" fill="#c9a961"/>
+      <!-- Tesoura no canto -->
+      <circle cx="372" cy="40" r="4" fill="none" stroke="#c9a961" stroke-width="1.5"/>
+      <circle cx="372" cy="50" r="4" fill="none" stroke="#c9a961" stroke-width="1.5"/>
+      <line x1="370" y1="42" x2="380" y2="55" stroke="#c9a961" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="370" y1="48" x2="380" y2="35" stroke="#c9a961" stroke-width="1.5" stroke-linecap="round"/>
+    
+    <!-- Número gigante à esquerda -->
+    <text x="40" y="180" font-family="serif" font-weight="700" font-size="160" fill="#c9a961" opacity="0.92" style="letter-spacing:-0.04em">04</text>
+    <!-- Label do episódio (subtítulo) -->
+    <text x="40" y="215" font-family="serif" font-size="13" fill="#c9a961" opacity="0.65" letter-spacing="6" style="text-transform:uppercase">Edit Video</text>
+    <!-- Vinheta -->
+    <rect width="400" height="250" fill="url(#vig-video-edit-4)"/>
+    <!-- Linha bottom decorativa -->
+    <line x1="40" y1="225" x2="200" y2="225" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="248" x2="400" y2="248" stroke="#c9a961" stroke-width="2" opacity="0.7"/>
+    <!-- Grain overlay -->
+    <rect width="400" height="250" filter="url(#grain-video-edit-4)" opacity="0.6"/>
+  </svg>

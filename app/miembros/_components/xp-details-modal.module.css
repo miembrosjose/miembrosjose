@@ -1,0 +1,319 @@
+/* Modal de breakdown de XP — equivalente a #xpDetailsModal do prototipo
+ * (linhas 6190 + openXpDetailsModal). Família visual canônica:
+ *  - frame escuro com border-image red→gold (igual AchievementToast)
+ *  - cantos decorativos em L gold
+ *  - eyebrow mono uppercase
+ *  - lista de eventos com counter + reward
+ *  - sumário do level + barra de progresso */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  overflow-y: auto;
+  animation: xpModalFade 0.25s ease;
+}
+
+@keyframes xpModalFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  width: 100%;
+  max-width: 540px;
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 15, 0.98) 0%,
+    rgba(20, 15, 15, 0.98) 100%
+  );
+  border: 1px solid;
+  border-image: linear-gradient(
+      135deg,
+      var(--accent-red) 0%,
+      var(--accent-gold) 100%
+    )
+    1;
+  box-shadow:
+    0 0 0 1px rgba(201, 169, 97, 0.15),
+    0 24px 80px rgba(0, 0, 0, 0.7);
+  margin: auto;
+  animation: xpModalScale 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes xpModalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Cantos decorativos — mesma família AchievementToast */
+.modal::before,
+.modal::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--accent-gold);
+  pointer-events: none;
+}
+
+.modal::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.modal::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.5rem 0.9rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.headerTitle {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+/* Sumário do level + barra de progresso */
+.levelSummary {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.levelBig {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(180deg, #f5e8b8 0%, #c9a961 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.levelInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-red), var(--accent-gold));
+  transition: width 0.4s ease;
+}
+
+.progressLabel {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+/* Total cards row */
+.totals {
+  display: flex;
+  gap: 2rem;
+  padding: 0.95rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.totalLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.totalValue {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.totalValuePrimary {
+  color: var(--accent-gold);
+}
+
+.totalValueSecondary {
+  color: var(--text-primary);
+}
+
+/* Lista de eventos */
+.list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s ease;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowIcon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.rowMeta {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.15rem;
+}
+
+.rowEarned {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  margin-top: 0.1rem;
+}
+
+.rowReward {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Estados */
+.loading,
+.error,
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.error {
+  color: #ef4444;
+}
+
+@media (max-width: 540px) {
+  .levelSummary {
+    gap: 0.85rem;
+    padding: 1rem 1.15rem 0.85rem;
+  }
+  .levelBig {
+    font-size: 2rem;
+  }
+  .totals {
+    padding: 0.85rem 1.15rem;
+    gap: 1.25rem;
+  }
+  .header,
+  .row {
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+  .totalValue {
+    font-size: 1.2rem;
+  }
+}

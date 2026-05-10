@@ -1,0 +1,83 @@
+/* Toast discreto: 'Fulano se conectó'. Slide-in canto inferior esquerdo,
+ * 3s visível, slide-out. Sem som por default (pra não ser spam quando
+ * vários users entram em sequência). */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem 0.625rem 0.625rem;
+  background: rgba(15, 18, 22, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 197, 94, 0.15);
+  min-width: 200px;
+  max-width: 320px;
+  transform: translateX(-110%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s;
+  pointer-events: none;
+}
+
+.toast.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatarImg { width: 100%; height: 100%; border-radius: 50% !important; object-fit: cover; }
+
+.avatarInitials {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-family: var(--font-display);
+}
+
+.text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+
+.name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #22c55e;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 600px) {
+  .toast {
+    bottom: 80px; /* dá espaço pro botão flutuante de mensagens */
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    min-width: 0;
+  }
+}

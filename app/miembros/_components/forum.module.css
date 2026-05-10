@@ -1,0 +1,561 @@
+/* CSS extraído de area-prototipo.html — fórum (linhas 3382-3618) +
+ * report-btn (linha 1066). Adaptado pra CSS Modules. */
+
+.post {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+}
+
+.post:hover {
+  border-color: var(--border-medium);
+  transform: translateX(2px);
+}
+
+.post.pinned {
+  border-color: rgba(201, 169, 97, 0.4);
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(201, 169, 97, 0.04) 100%);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-red), var(--accent-red-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.authorInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.authorName {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.authorName:hover {
+  text-decoration: underline;
+}
+
+.time {
+  color: var(--text-muted);
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+
+.pinnedBadge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  background: rgba(201, 169, 97, 0.12);
+  border: 1px solid rgba(201, 169, 97, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.editedTag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-left: 0.4rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+  color: var(--text-primary);
+}
+
+.body {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 0.625rem;
+}
+
+.body p {
+  margin: 0;
+}
+.body p + p {
+  margin-top: 0.75rem;
+}
+.body strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.body em {
+  font-style: italic;
+  color: var(--text-primary);
+}
+.body code {
+  color: var(--accent-gold);
+}
+
+.tags {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(127, 29, 29, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(127, 29, 29, 0.3);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.media {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.625rem 0;
+  border: 1px solid var(--border-subtle);
+}
+
+.video {
+  background: #000;
+  max-height: 600px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.likeBtn,
+.dislikeBtn,
+.replyBtn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.likeBtn:hover,
+.dislikeBtn:hover,
+.replyBtn:hover {
+  color: var(--text-primary);
+}
+
+.likeBtn.liked {
+  color: var(--accent-red);
+}
+
+.dislikeBtn.disliked {
+  color: var(--accent-gold);
+}
+
+.hot {
+  color: var(--accent-red);
+  animation: forumPulse 2s ease infinite;
+}
+
+@keyframes forumPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+.reportBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.reportBtn:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+.editBtn,
+.deleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.editBtn:hover {
+  opacity: 1;
+  color: var(--accent-gold);
+}
+
+.deleteBtn:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+.deleteBtn {
+  margin-left: auto;
+}
+
+.post:hover .deleteBtn,
+.post:hover .editBtn {
+  opacity: 1;
+}
+
+/* Replies — sem linhas divisórias (espaçamento via padding/margin) */
+.replies {
+  margin-top: 0.875rem;
+  padding-top: 0.5rem;
+}
+
+.reply {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+}
+
+.reply + .reply {
+  margin-top: 0.25rem;
+}
+
+.replyAvatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  text-decoration: none;
+  position: relative;
+}
+
+.replyAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.replyMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.replyBody {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.replyBody p { margin: 0; }
+.replyBody p + p { margin-top: 0.5rem; }
+
+.replyFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.replyForm {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.replyForm textarea {
+  flex: 1;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  resize: vertical;
+  min-height: 40px;
+  outline: none;
+}
+
+.replyForm textarea:focus {
+  border-color: var(--accent-gold);
+}
+
+.replyForm button {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0 1rem;
+  cursor: pointer;
+  align-self: flex-end;
+  height: 36px;
+}
+
+.replyForm button:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+.replyForm button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 6px;
+}
+
+.emptyKicker {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.emptyMsg {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+/* Composer */
+.composer {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-elevated);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.composer input[type="text"],
+.composer textarea {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  outline: none;
+  width: 100%;
+}
+
+.composer input[type="text"]:focus,
+.composer textarea:focus {
+  border-color: var(--accent-gold);
+}
+
+.composer textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.composerActions {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: flex-end;
+}
+
+.btnGhost,
+.btnConfirm {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  height: 36px;
+  border-radius: 0;
+}
+
+.btnGhost {
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+}
+.btnGhost:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.btnConfirm {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+}
+.btnConfirm:hover {
+  background: var(--accent-red);
+  color: white;
+}
+.btnConfirm:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.openComposer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border: none;
+  margin-bottom: 1.5rem;
+}
+.openComposer:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+/* ─── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .post {
+    grid-template-columns: 40px 1fr;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+  }
+  .title {
+    font-size: 0.95rem;
+  }
+  .body {
+    font-size: 0.825rem;
+  }
+  .footer {
+    gap: 0.875rem;
+    flex-wrap: wrap;
+  }
+  .reply {
+    grid-template-columns: 28px 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+  }
+  .replyAvatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.65rem;
+  }
+  .replyBody {
+    font-size: 0.8rem;
+  }
+  .composer {
+    padding: 1rem;
+  }
+  .composerActions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  .composerActions .btnGhost,
+  .composerActions .btnConfirm {
+    width: 100%;
+  }
+  .replyForm {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .replyForm button {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 400px) {
+  .post {
+    padding: 0.85rem;
+  }
+  .footer {
+    gap: 0.75rem;
+    font-size: 0.7rem;
+  }
+  .deleteBtn {
+    margin-left: 0;
+  }
+}

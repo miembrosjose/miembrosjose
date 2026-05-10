@@ -1,0 +1,239 @@
+/* Lista de miembros — grid de cards estilo rede social.
+ * Busca no topo + filtros (Todos / Online / Top XP / Recientes). */
+
+.wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5rem 2.5rem 4rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.titleAccent { color: var(--accent-red); font-style: italic; }
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+  max-width: 540px;
+}
+
+/* Search bar */
+.searchBar {
+  position: relative;
+  margin: 1.5rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.searchInputWrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.7rem 2.5rem 0.7rem 2.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus { border-color: var(--accent-red); }
+
+.searchInput::placeholder { color: var(--text-muted); }
+
+.searchClear {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+}
+
+.searchClear:hover { color: var(--text-primary); }
+
+.totalCount {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* Filtros */
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.5rem 0.875rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterBtn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+.filterBtn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
+/* Grid de members */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: rgba(15, 18, 22, 0.6);
+  border: 1px solid var(--border-subtle);
+  padding: 1.25rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  background: rgba(20, 22, 28, 0.7);
+}
+
+.cardAvatar {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  /* !important pelo mesmo motivo do .cardAvatarImg — minificacao em prod
+   * quebra a regra [class*='avatar' i] do override global. */
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.cardAvatarImg {
+  width: 100%;
+  height: 100%;
+  /* !important porque o override global tokens.css forca border-radius:0
+   * em tudo dentro de .miembros-shell. A excecao [class*='avatar' i] nao
+   * pega quando o CSS module e minificado em producao (nome vira hash). */
+  border-radius: 50% !important;
+  object-fit: cover;
+}
+
+.cardAvatarInitials {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-family: var(--font-display);
+}
+
+.cardName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.cardUsername {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin: 0;
+}
+
+.cardLevel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.625rem;
+  background: rgba(201, 169, 97, 0.1);
+  border: 1px solid rgba(201, 169, 97, 0.3);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .wrap { padding: 4rem 1rem 2rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+  .card { padding: 1rem 0.75rem; }
+  .cardAvatar { width: 64px; height: 64px; }
+  .searchBar { flex-direction: column; align-items: stretch; }
+  .totalCount { text-align: right; }
+}

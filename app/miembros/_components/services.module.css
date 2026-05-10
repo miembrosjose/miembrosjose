@@ -1,0 +1,345 @@
+/* Servicios Premium — 2 cards. Família visual canônica (border-image
+ * red→gold + cantos decorativos em L + frame inset + eyebrow mono).
+ * Casa com AchievementToast / XpDetailsModal / NotifPrefsModal. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* ─── Card ─ frame cinematográfico red→gold ───────────────── */
+.card {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1.25rem 1.5rem;
+  align-items: center;
+  position: relative;
+  isolation: isolate;
+  padding: 1.75rem 1.85rem;
+  background:
+    /* Light leak gold top-right */
+    radial-gradient(
+      ellipse 70% 50% at 100% 0%,
+      rgba(201, 169, 97, 0.14) 0%,
+      transparent 55%
+    ),
+    /* Light leak red bottom-left */
+    radial-gradient(
+      ellipse 60% 50% at 0% 100%,
+      rgba(127, 29, 29, 0.18) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(10, 10, 15, 0.97) 0%,
+      rgba(20, 15, 18, 0.97) 50%,
+      rgba(10, 10, 15, 0.97) 100%
+    );
+  border: 1px solid;
+  border-image: linear-gradient(
+      135deg,
+      var(--accent-red) 0%,
+      var(--accent-gold) 50%,
+      var(--accent-red) 100%
+    )
+    1;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 50px rgba(201, 169, 97, 0.08);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 70px rgba(0, 0, 0, 0.65),
+    0 0 80px rgba(201, 169, 97, 0.18);
+}
+
+/* Inner frame inset gold sutil */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(201, 169, 97, 0.18);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Shimmer sweep diagonal no hover */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(201, 169, 97, 0.12) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%) skewX(-18deg);
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card:hover::after {
+  transform: translateX(220%) skewX(-18deg);
+}
+
+.card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Cantos decorativos em L (família canônica) */
+.cornerTL,
+.cornerTR,
+.cornerBL,
+.cornerBR {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--accent-gold);
+  pointer-events: none;
+  z-index: 3;
+  filter: drop-shadow(0 0 4px rgba(201, 169, 97, 0.55));
+}
+.cornerTL {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+.cornerTR {
+  top: -1px;
+  right: -1px;
+  border-left: none;
+  border-bottom: none;
+}
+.cornerBL {
+  bottom: -1px;
+  left: -1px;
+  border-right: none;
+  border-top: none;
+}
+.cornerBR {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* ─── Ícone ─ frame escuro com double-border ──────────────── */
+.icon {
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgba(201, 169, 97, 0.22) 0%,
+      transparent 60%
+    ),
+    linear-gradient(135deg, #1a1a24 0%, #0a0a0f 60%, rgba(127, 29, 29, 0.55) 100%);
+  border: 1px solid rgba(201, 169, 97, 0.4);
+  outline: 1px solid rgba(0, 0, 0, 0.6);
+  outline-offset: 3px;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .icon {
+  transform: scale(1.04);
+}
+
+.icon svg {
+  width: 70%;
+  height: 70%;
+  position: relative;
+  z-index: 2;
+  transition: filter 0.3s ease;
+  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.35));
+}
+
+.card:hover .icon svg {
+  filter: drop-shadow(0 0 16px rgba(201, 169, 97, 0.85));
+}
+
+.iconImage {
+  padding: 0;
+}
+
+.iconImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardImage:hover .iconImage img {
+  transform: scale(1.08);
+  filter: brightness(1.08);
+}
+
+/* ─── Info bloco ──────────────────────────────────────────── */
+.info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.type {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-shadow: 0 0 12px rgba(201, 169, 97, 0.3);
+}
+
+.type::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--accent-gold);
+  box-shadow: 0 0 6px rgba(201, 169, 97, 0.7);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin: 0 0 0.65rem;
+  letter-spacing: 0.005em;
+  line-height: 1.25;
+  text-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(201, 169, 97, 0.12);
+}
+
+.desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── CTA ─ inline ao lado do icone, embaixo do titulo ─────── */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--accent-red);
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  border: 1px solid var(--accent-red-deep);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sweep brilhante interno no hover */
+.cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+  transition: left 0.7s ease;
+}
+
+.cta:hover {
+  background: var(--accent-red-hover);
+  box-shadow: 0 10px 40px rgba(127, 29, 29, 0.55);
+  letter-spacing: 0.32em;
+}
+
+.cta:hover::before {
+  left: 100%;
+}
+
+.ctaGold {
+  background: linear-gradient(135deg, #d8b878 0%, #c9a961 50%, #b08c44 100%);
+  color: #0a0a0f;
+  border: 1px solid rgba(201, 169, 97, 0.7);
+}
+
+.ctaGold:hover {
+  background: linear-gradient(135deg, #f0d68b 0%, #d8b878 50%, #c9a961 100%);
+  box-shadow: 0 10px 40px rgba(201, 169, 97, 0.55);
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+    padding: 1.4rem 1.25rem;
+    text-align: center;
+  }
+  .icon {
+    margin: 0 auto;
+    width: 76px;
+    height: 76px;
+  }
+  .type {
+    justify-content: center;
+  }
+  .title {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .card {
+    padding: 1.15rem 1rem;
+  }
+  .icon {
+    width: 64px;
+    height: 64px;
+  }
+  .cta {
+    padding: 0.75rem 1rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+  }
+}

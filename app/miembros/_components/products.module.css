@@ -1,0 +1,217 @@
+/* CSS extraído de area-prototipo.html linhas 2780-2936.
+ * Grid de produtos + product-card (owned + locked). */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 42vw, 200px), 1fr));
+  gap: 1rem;
+}
+
+/* Mobile: vira carrossel horizontal estilo Netflix.
+ * Cards um ao lado do outro com scroll horizontal + scroll-snap.
+ * Padding/margin negativos pra alinhar com edge da tela mas não cortar
+ * box-shadow do hover. */
+@media (max-width: 768px) {
+  .grid {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 0.5rem 1rem 1.25rem;
+    margin: -0.5rem -1rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-red) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .grid::-webkit-scrollbar {
+    height: 4px;
+  }
+  .grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .grid::-webkit-scrollbar-thumb {
+    background: var(--accent-red);
+    border-radius: 2px;
+  }
+  .card {
+    flex: 0 0 min(55vw, 200px);
+    scroll-snap-align: start;
+  }
+}
+
+.card {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-red);
+  box-shadow: 0 12px 40px rgba(127, 29, 29, 0.2);
+}
+
+.thumb {
+  aspect-ratio: 9 / 16;
+  background-color: var(--bg-elevated);
+  position: relative;
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, var(--bg-deep) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.body {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-bottom: auto;
+  padding-bottom: 0.875rem;
+  text-align: left;
+}
+
+.progress {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.875rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent-red);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.progressText {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.access {
+  color: var(--accent-red);
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Locked card (Tienda Premium) — mesmo tratamento das temporadas bloqueadas:
+ * imagem em preto e branco + escurecida + opacity reduzida. Filter aplicado
+ * só na <img> pra cadeado (.lockIcon) ficar com cor original gold. */
+.cardLocked .thumb img {
+  filter: grayscale(1) brightness(0.85);
+  opacity: 0.7;
+}
+
+.cardLocked .thumb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+.lockIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+  transition: transform 0.3s;
+}
+
+.cardLocked:hover .lockIcon {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.offerBadge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  background: var(--accent-red);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  padding: 0.25rem 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  animation: blinkBadge 2s ease infinite;
+  color: white;
+}
+
+@keyframes blinkBadge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.bonusBadge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  background: var(--accent-gold, #c9a961);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.cardLocked .access {
+  color: var(--accent-gold);
+}
+
+.footerLocked {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.625rem;
+}

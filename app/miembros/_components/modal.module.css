@@ -1,0 +1,117 @@
+/* Modal base reutilizável — extraído do padrão repetido no area-prototipo.html
+ * (notif-prefs-overlay, search-modal, series-info-modal etc).
+ *
+ * Uso: <Modal open={...} onClose={...} title="..."> children </Modal>
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.container {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(12px);
+  transition: transform 0.3s ease;
+}
+
+.overlay.open .container {
+  transform: translateY(0);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-deep);
+}
+
+@media (max-width: 480px) {
+  .overlay {
+    padding: 0.5rem;
+  }
+  .container {
+    max-height: 95dvh;
+    max-width: 100%;
+  }
+  .header {
+    padding: 1rem 1.15rem;
+  }
+  .body {
+    padding: 1rem 1.15rem;
+  }
+  .footer {
+    padding: 0.85rem 1.15rem;
+    flex-direction: column-reverse;
+  }
+  .footer > * {
+    width: 100%;
+  }
+}

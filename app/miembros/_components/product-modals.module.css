@@ -1,0 +1,637 @@
+/* Modais de produto premium — Netflix style.
+ *  - salespageModal: fullscreen com iframe da landing completa + footer sticky com 1-click
+ *  - checkoutModal: card compacto (hero + copy + BuyButton) pra produtos sem salespage
+ */
+
+@keyframes nfxFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes nfxScale {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes nfxSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SALESPAGE MODAL — fullscreen com iframe completa + footer sticky
+═══════════════════════════════════════════════════════════ */
+
+.salespageModal {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.92);
+  /* backdrop-filter removido — custava 200ms+ de paint na primeira interação,
+   * fazendo o scroll inicial travar. Background opaco já cobre visualmente. */
+  padding: 2rem;
+  animation: nfxFade 0.18s ease;
+  /* Bloqueia scroll-chaining: rolada que atinge o fim do modal não vaza pro body */
+  overscroll-behavior: contain;
+}
+
+.salespageContent {
+  width: 100%;
+  max-width: 1100px;
+  background: #0a0a0f;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.85);
+  /* Animação só de opacidade — transform/scale animado fazia iOS Safari
+   * descartar o primeiro touch porque a camada de scroll do iframe interno
+   * ainda não estava estável. Fade puro resolve sem perder polimento. */
+  animation: nfxFade 0.2s ease;
+  overscroll-behavior: contain;
+}
+
+.salespageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem;
+  background: rgba(10, 10, 15, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.salespageEyebrow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.salespageEyebrowKicker {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #e50914;
+  font-weight: 700;
+}
+
+.salespageEyebrowTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.005em;
+}
+
+.salespageClose {
+  background: rgba(10, 10, 15, 0.85);
+  border: none;
+  color: #f5f5f7;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.salespageClose:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.salespageIframeWrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0f;
+  min-height: 0;
+  /* touch-action explícito garante que iOS Safari roteie o primeiro toque
+   * direto pro iframe interno em vez de tentar resolver no parent */
+  touch-action: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FALLBACK MODE — quando 1-click falha, substitui iframe inteiro
+   pelo Stripe Elements deferred cobrindo todo o body do modal.
+═══════════════════════════════════════════════════════════ */
+
+.fallbackBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0f;
+  overflow-y: auto;
+  padding: 1.5rem 2rem 2rem;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+/* Card do produto no topo do fallback — imagem + nome + preço,
+ * estilo similar ao StandaloneCheckoutTemplate da salespage. */
+.fallbackSummary {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(201, 169, 97, 0.08) 0%, rgba(15, 15, 23, 0.6) 100%);
+  border: 1px solid rgba(201, 169, 97, 0.25);
+  border-radius: 4px;
+}
+
+.fallbackSummaryImg {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #12121a;
+  border: 1px solid rgba(201, 169, 97, 0.3);
+}
+
+.fallbackSummaryImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fallbackSummaryInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.fallbackSummaryLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #c9a961;
+  font-weight: 700;
+}
+
+.fallbackSummaryName {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.fallbackSummaryPrice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
+}
+
+.fallbackInlineWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.fallbackLoading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+}
+
+.fallbackErrorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 2rem 1.5rem;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 4px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.fallbackErrorBox strong {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fca5a5;
+}
+
+.fallbackErrorBox span {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: rgba(252, 165, 165, 0.85);
+  max-width: 360px;
+}
+
+.fallbackRetryBtn {
+  margin-top: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  border-radius: 3px;
+  color: #fca5a5;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fallbackRetryBtn:hover {
+  background: rgba(220, 38, 38, 0.25);
+  border-color: #dc2626;
+  color: #fef2f2;
+}
+
+@media (max-width: 600px) {
+  .fallbackBody {
+    padding: 1rem;
+    gap: 0.85rem;
+  }
+  .fallbackSummary {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+  .fallbackSummaryImg {
+    width: 68px;
+    height: 68px;
+  }
+  .fallbackSummaryName {
+    font-size: 1.05rem;
+  }
+}
+
+.salespageIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  /* Esconde scrollbar do PARENT no Firefox/IE — não afeta conteúdo cross-origin
+   * mas aplica em iframes same-origin. Scrollbar dentro da salespage é tratada
+   * via ?member=1 no <html> da própria página. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.salespageIframe::-webkit-scrollbar {
+  display: none;
+}
+
+/* Esconde TODAS scrollbars dentro do modal (modal externo + content scroll) —
+ * cosmético, mantém a funcionalidade de scroll via roda/touch. */
+.salespageModal,
+.salespageModal *,
+.salespageContent,
+.salespageContent * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.salespageModal::-webkit-scrollbar,
+.salespageContent::-webkit-scrollbar,
+.salespageIframeWrapper::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.salespageLoading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  background: #0a0a0f;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.salespageLoading.hidden {
+  opacity: 0;
+}
+
+.salespageLoadingSpinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(229, 9, 20, 0.15);
+  border-top-color: #e50914;
+  border-radius: 50%;
+  animation: nfxSpin 0.9s linear infinite;
+}
+
+.salespageLoadingText {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Footer sticky com BuyButton — fora do iframe, member auth roda no parent */
+.salespageFooter {
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(10, 10, 15, 0.98) 0%, #0a0a0f 50%);
+  border-top: 1px solid rgba(201, 169, 97, 0.3);
+  padding: 1rem 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.salespageFooterPrice {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.salespageFooterPriceLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.salespageFooterPriceValue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.priceLine {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priceFrom {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.priceUsd {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #c9a961;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.priceLocal {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(201, 169, 97, 0.65);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.salespageFooterCta {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .salespageModal {
+    padding: 0;
+  }
+  .salespageContent {
+    border-radius: 0;
+    max-width: none;
+  }
+  .salespageHeader {
+    padding: 0.85rem 1rem;
+  }
+  .salespageEyebrowKicker {
+    font-size: 0.55rem;
+  }
+  .salespageEyebrowTitle {
+    font-size: 1rem;
+  }
+  .salespageClose {
+    width: 32px;
+    height: 32px;
+  }
+  .salespageFooter {
+    padding: 0.85rem 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .salespageFooterPrice {
+    flex: 1 1 auto;
+  }
+  .priceUsd {
+    font-size: 1.15rem;
+  }
+  .priceLocal {
+    font-size: 0.65rem;
+  }
+  .salespageFooterCta {
+    flex: 1 1 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHECKOUT MODAL — card compacto pra Mini VSL / Revisão (sem salespage)
+═══════════════════════════════════════════════════════════ */
+
+.checkoutOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+  background: rgba(0, 0, 0, 0.88);
+  /* backdrop-filter removido — custava 200ms+ paint, travando scroll inicial */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: nfxFade 0.18s ease;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.checkoutModal {
+  width: 100%;
+  max-width: 850px;
+  background: #0a0a0f;
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Animação só de opacidade — transform animado bloqueava o primeiro
+   * scroll porque o browser não estabilizava a camada antes do touch. */
+  animation: nfxFade 0.2s ease;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.85);
+  max-height: 92vh;
+}
+
+.checkoutCloseBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  background: rgba(10, 10, 15, 0.85);
+  border-radius: 50%;
+  color: #f5f5f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.checkoutCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.checkoutHero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #0a0a0f;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.checkoutHero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    #0a0a0f 0%,
+    rgba(10, 10, 15, 0.85) 25%,
+    rgba(10, 10, 15, 0.4) 55%,
+    transparent 85%
+  );
+  pointer-events: none;
+}
+
+.checkoutHeroContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 2.5rem 1.75rem;
+  z-index: 1;
+}
+
+.checkoutTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(229, 9, 20, 0.15);
+  border: 1px solid rgba(229, 9, 20, 0.4);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #e50914;
+  margin-bottom: 0.875rem;
+}
+
+.checkoutTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  letter-spacing: -0.02em;
+  color: #f5f5f7;
+  line-height: 1.05;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+  margin: 0 0 0.75rem;
+}
+
+.checkoutDesc {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.92);
+  margin: 0;
+  max-width: 640px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+@media (max-width: 600px) {
+  .checkoutOverlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  .checkoutModal {
+    max-width: none;
+    max-height: none;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+  .checkoutHero {
+    aspect-ratio: auto;
+    min-height: 200px;
+    max-height: 32dvh;
+  }
+  .checkoutHeroContent {
+    padding: 1.25rem 1.25rem 1rem;
+  }
+  .checkoutTitle {
+    font-size: clamp(1.4rem, 6vw, 1.85rem);
+    margin-bottom: 0.4rem;
+  }
+  .checkoutDesc {
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+  .checkoutCloseBtn {
+    width: 2rem;
+    height: 2rem;
+    top: 0.65rem;
+    right: 0.65rem;
+  }
+}

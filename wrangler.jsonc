@@ -1,0 +1,70 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "copyfilms-az",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-23",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "run_worker_first": ["/area-prototipo.html"]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "AVATARS_BUCKET",
+      "bucket_name": "copyfilms-avatars"
+    }
+  ],
+  "env": {
+    "staging": {
+      "name": "copyfilms-az-staging",
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS",
+        "html_handling": "none",
+        "run_worker_first": ["/area-prototipo.html"]
+      },
+      "observability": {
+        "enabled": true
+      },
+      "r2_buckets": [
+        {
+          "binding": "AVATARS_BUCKET",
+          "bucket_name": "copyfilms-avatars-staging"
+        }
+      ]
+    }
+  }
+  // Env vars / secrets vão ser configurados via Dashboard ou wrangler secret put.
+  // Lista completa pra migrar do Pages atual:
+  //  - STRIPE_SECRET_KEY (secret)
+  //  - STRIPE_WEBHOOK_SECRET (secret)
+  //  - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (var)
+  //  - SUPABASE_SERVICE_ROLE_KEY (secret)
+  //  - NEXT_PUBLIC_SUPABASE_URL (var)
+  //  - NEXT_PUBLIC_SUPABASE_ANON_KEY (var)
+  //  - UPSTASH_REDIS_REST_URL (var)
+  //  - UPSTASH_REDIS_REST_TOKEN (secret)
+  //  - ZAPI_INSTANCE_ID (secret)
+  //  - ZAPI_TOKEN (secret)
+  //  - ZAPI_CLIENT_TOKEN (secret)
+  //  - ELEVENLABS_API_KEY (secret)
+  //  - GROQ_API_KEY (secret)
+  //  - DASHBOARD_PASSWORD (secret)
+  //  - META_PIXEL_ID (var)
+  //  - META_CAPI_TOKEN (secret)
+  //
+  // ESTRATÉGIA STAGING:
+  //  - Branch `staging` deploya pro Worker `copyfilms-az-staging`
+  //  - URL automática: copyfilms-az-staging.workers.dev
+  //  - Secrets/vars precisam ser configurados separadamente no Worker staging
+  //    (via Dashboard ou: wrangler secret put NOME --env staging)
+  //  - Deploy via .github/workflows/deploy-workers-staging.yml
+}

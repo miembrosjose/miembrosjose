@@ -1,0 +1,70 @@
+<svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="bg-hosting-3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1a0a0a"/>
+        <stop offset="60%" stop-color="#0a0a0f"/>
+        <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.5"/>
+      </linearGradient>
+      <radialGradient id="spot-hosting-3" cx="30%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#c9a961" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#c9a961" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="vig-hosting-3" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="black" stop-opacity="0"/>
+        <stop offset="100%" stop-color="black" stop-opacity="0.85"/>
+      </radialGradient>
+      <filter id="grain-hosting-3">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/>
+        <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+      </filter>
+    </defs>
+    <!-- Background -->
+    <rect width="400" height="250" fill="url(#bg-hosting-3)"/>
+    <rect width="400" height="250" fill="url(#spot-hosting-3)"/>
+    <!-- Frame brackets nos cantos (corner marks de filme) -->
+    <path d="M 12 12 L 12 28 M 12 12 L 28 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 12 L 388 28 M 388 12 L 372 12" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 12 238 L 12 222 M 12 238 L 28 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 388 238 L 388 222 M 388 238 L 372 238" stroke="#c9a961" stroke-width="1.2" opacity="0.5"/>
+    <!-- Frame counter top-left -->
+    <text x="22" y="35" font-family="monospace" font-size="10" fill="#c9a961" letter-spacing="3" opacity="0.75">EP · TEMPORADA 4</text>
+    <!-- Símbolo temático à direita -->
+    
+      <!-- Hostinger — server racks + globo (web hosting + dominio) -->
+      <!-- Server rack 1 -->
+      <rect x="252" y="80" width="80" height="22" rx="2" fill="none" stroke="#c9a961" stroke-width="1.8"/>
+      <circle cx="262" cy="91" r="2" fill="#c9a961"/>
+      <line x1="272" y1="91" x2="322" y2="91" stroke="#c9a961" stroke-width="0.7" opacity="0.5"/>
+      <!-- Server rack 2 -->
+      <rect x="252" y="108" width="80" height="22" rx="2" fill="none" stroke="#c9a961" stroke-width="1.8"/>
+      <circle cx="262" cy="119" r="2" fill="#c9a961" opacity="0.7"/>
+      <line x1="272" y1="119" x2="322" y2="119" stroke="#c9a961" stroke-width="0.7" opacity="0.5"/>
+      <!-- Server rack 3 -->
+      <rect x="252" y="136" width="80" height="22" rx="2" fill="none" stroke="#c9a961" stroke-width="1.8"/>
+      <circle cx="262" cy="147" r="2" fill="#c9a961" opacity="0.4"/>
+      <line x1="272" y1="147" x2="322" y2="147" stroke="#c9a961" stroke-width="0.7" opacity="0.5"/>
+      <!-- Server rack 4 -->
+      <rect x="252" y="164" width="80" height="22" rx="2" fill="none" stroke="#c9a961" stroke-width="1.8"/>
+      <circle cx="262" cy="175" r="2" fill="#c9a961" opacity="0.85"/>
+      <line x1="272" y1="175" x2="322" y2="175" stroke="#c9a961" stroke-width="0.7" opacity="0.5"/>
+      <!-- Globo (web hosting + dominio) -->
+      <circle cx="362" cy="125" r="22" fill="none" stroke="#c9a961" stroke-width="2"/>
+      <ellipse cx="362" cy="125" rx="9" ry="22" fill="none" stroke="#c9a961" stroke-width="1" opacity="0.7"/>
+      <ellipse cx="362" cy="125" rx="22" ry="9" fill="none" stroke="#c9a961" stroke-width="1" opacity="0.7"/>
+      <line x1="340" y1="125" x2="384" y2="125" stroke="#c9a961" stroke-width="1" opacity="0.7"/>
+      <line x1="362" y1="103" x2="362" y2="147" stroke="#c9a961" stroke-width="1" opacity="0.7"/>
+      <!-- Linha de conexão server → globo -->
+      <line x1="332" y1="125" x2="340" y2="125" stroke="#c9a961" stroke-width="1.2" opacity="0.6" stroke-dasharray="3,2"/>
+    
+    <!-- Número gigante à esquerda -->
+    <text x="40" y="180" font-family="serif" font-weight="700" font-size="160" fill="#c9a961" opacity="0.92" style="letter-spacing:-0.04em">03</text>
+    <!-- Label do episódio (subtítulo) -->
+    <text x="40" y="215" font-family="serif" font-size="13" fill="#c9a961" opacity="0.65" letter-spacing="6" style="text-transform:uppercase">Hosting</text>
+    <!-- Vinheta -->
+    <rect width="400" height="250" fill="url(#vig-hosting-3)"/>
+    <!-- Linha bottom decorativa -->
+    <line x1="40" y1="225" x2="200" y2="225" stroke="#c9a961" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="248" x2="400" y2="248" stroke="#c9a961" stroke-width="2" opacity="0.7"/>
+    <!-- Grain overlay -->
+    <rect width="400" height="250" filter="url(#grain-hosting-3)" opacity="0.6"/>
+  </svg>

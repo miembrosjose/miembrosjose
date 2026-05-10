@@ -1,0 +1,396 @@
+/* Messenger flutuante — botão fixo no canto inferior esquerdo + popover.
+ * Estilo Facebook Messenger: bolinha → click abre janelinha compacta
+ * por cima da página, sem trocar de view. */
+
+/* ─── BOTÃO FLUTUANTE ────────────────────────────────────────────────── */
+
+.fab {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 95;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 24px rgba(127, 29, 29, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 32px rgba(127, 29, 29, 0.5);
+}
+
+.fab:active { transform: scale(0.95); }
+
+.fabBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: white;
+  color: var(--accent-red);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  border: 2px solid var(--accent-red);
+}
+
+/* ─── POPOVER (janela do chat) ──────────────────────────────────────── */
+
+.popover {
+  position: fixed;
+  left: 24px;
+  bottom: 96px;
+  z-index: 95;
+  width: 360px;
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: rgba(10, 10, 15, 0.96);
+  border: 1px solid var(--border-medium);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: bottom left;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+}
+
+.popover.open {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.header {
+  flex: 0 0 auto;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(18, 18, 26, 0.5);
+}
+
+.headerBack {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerBack:hover { color: var(--text-primary); }
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.headerTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+}
+
+.headerName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerSub {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-mono);
+}
+
+.headerOpen {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-family: var(--font-mono);
+  transition: all 0.2s;
+}
+
+.headerOpen:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+
+.headerClose {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerClose:hover { color: var(--text-primary); }
+
+/* ─── LISTA DE THREADS (mode list) ──────────────────────────────────── */
+
+.threadList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.threadItem { border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+
+.threadBtn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.threadBtn:hover { background: rgba(255, 255, 255, 0.03); }
+
+.threadAvatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  /* !important pelo mesmo motivo: minificacao em prod quebra regra global. */
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.threadAvatarImg { width: 100%; height: 100%; border-radius: 50% !important; object-fit: cover; }
+
+.threadAvatarInitials {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-family: var(--font-display);
+}
+
+.threadInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.threadName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadPreview {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+
+.threadTime {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.unreadDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+}
+
+.empty {
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+
+/* ─── CONVERSA (mode thread) ────────────────────────────────────────── */
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bubbleRow { display: flex; }
+.bubbleRowMine { justify-content: flex-end; }
+.bubbleRowOther { justify-content: flex-start; }
+
+.bubble {
+  max-width: 75%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.825rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.bubbleMine { background: var(--accent-red); color: white; border-bottom-right-radius: 2px; }
+.bubbleOther { background: rgba(255, 255, 255, 0.06); color: var(--text-primary); border-bottom-left-radius: 2px; }
+
+.bubbleTime {
+  font-size: 0.55rem;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+  display: block;
+  text-align: right;
+}
+
+.bubbleImg {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.composer {
+  flex: 0 0 auto;
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-end;
+  background: rgba(10, 10, 15, 0.6);
+}
+
+.composerInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.5rem 0.625rem;
+  font-family: inherit;
+  font-size: 0.825rem;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.composerInput:focus { border-color: var(--accent-red); }
+
+.composerBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.composerBtn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+.composerBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sendBtn {
+  background: var(--accent-red);
+  border: 1px solid var(--accent-red);
+  color: white;
+  cursor: pointer;
+  padding: 0.4rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sendBtn:hover { background: #991b1b; }
+.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .fab { left: 12px; bottom: 12px; width: 50px; height: 50px; }
+  .popover {
+    left: 8px;
+    right: 8px;
+    bottom: 72px;
+    width: auto;
+    height: 70vh;
+    max-height: calc(100vh - 100px);
+  }
+}

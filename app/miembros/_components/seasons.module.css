@@ -1,0 +1,231 @@
+/* CSS extraído de area-prototipo.html (linhas 2044-2218).
+ * Adaptado pra CSS Modules — carrossel + cards de temporada Netflix-style. */
+
+.carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* padding nos 4 lados pra box-shadow do hover não ser cortada pelo
+   * overflow-y/x (forçados pra hidden quando overflow-x é auto/scroll) */
+  padding: 1rem 1rem 2rem;
+  margin: -1rem -1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-red) transparent;
+}
+
+.carousel::-webkit-scrollbar {
+  height: 4px;
+}
+.carousel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.carousel::-webkit-scrollbar-thumb {
+  background: var(--accent-red);
+  border-radius: 2px;
+}
+
+.card {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  background: var(--bg-deep);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-red);
+  box-shadow: 0 12px 40px rgba(127, 29, 29, 0.2);
+}
+
+.card.locked {
+  cursor: not-allowed;
+}
+
+/* Cards locked: glow vermelho do hover bem mais sutil (não tem CTA pra
+ * destravar, então não precisa do mesmo destaque dos cards destravados) */
+.card.locked:hover {
+  border-color: var(--border-medium);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Efeito preto e branco + opacidade reduzida sobre o vídeo dos bloqueados.
+ * Aplicado SÓ no video/emoji — não no thumb (gradient ::after preserva cor) */
+.card.locked .video,
+.card.locked .thumbEmoji {
+  filter: grayscale(1) brightness(0.85);
+  opacity: 0.7;
+}
+
+.card.locked:hover {
+  transform: none;
+}
+
+.thumb {
+  aspect-ratio: 16/10;
+  background-size: cover;
+  background-position: center 35%;
+  position: relative;
+  background-color: var(--bg-deep);
+}
+
+.thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 -2px 0;
+  background: linear-gradient(180deg, transparent 50%, var(--bg-deep) 100%);
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Locked: sobrescreve o inline season.gradient (T2/T4 terminam em dourado
+ * #c9a961) pra var(--bg-deep). Sem amarelo aparecendo atrás do vídeo. */
+.card.locked .thumb {
+  background: var(--bg-deep) !important;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.thumbEmoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  z-index: 1;
+  opacity: 0.5;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
+
+.badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.15em;
+  padding: 0.25rem 0.5rem;
+  text-transform: uppercase;
+  background: var(--accent-red);
+  color: white;
+}
+
+.badge.starter {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #e8c878 100%);
+  color: #0a0a0f;
+  font-weight: 800;
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  padding: 0.18rem 0.4rem;
+  box-shadow: 0 0 14px rgba(201, 169, 97, 0.45),
+    0 0 32px rgba(201, 169, 97, 0.18);
+  animation: starterPulse 2.4s ease-in-out infinite;
+  border: 1px solid rgba(255, 230, 170, 0.45);
+}
+
+@keyframes starterPulse {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(201, 169, 97, 0.45),
+      0 0 32px rgba(201, 169, 97, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(201, 169, 97, 0.7),
+      0 0 50px rgba(201, 169, 97, 0.35);
+  }
+}
+
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  color: var(--accent-gold);
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+}
+
+/* Cadeado precisa ficar acima do .thumb::after (z-index 6) */
+.lockOverlay > * {
+  position: relative;
+  z-index: 7;
+}
+
+.info {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.epNum {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  margin: 0 0 auto;
+  padding-bottom: 0.875rem;
+  color: var(--text-primary);
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.625rem;
+  margin-top: 0.625rem;
+  font-family: var(--font-mono);
+}
+
+.progress {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent-red);
+  transition: width 0.6s ease;
+}
+
+/* Mobile — cards menores pra mostrar 1.2 cards e dar hint de swipe horizontal */
+@media (max-width: 480px) {
+  .card {
+    flex: 0 0 min(82vw, 240px);
+  }
+}
