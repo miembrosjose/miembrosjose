@@ -13,7 +13,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import styles from "./intro.module.css"
-import { Starfield, type StarfieldPhase } from "./Starfield"
+import { Starfield } from "./Starfield"
 
 const LOGO_TEXT = "[BRAND_NAME]"
 const TAGLINE = "[BRAND_TAGLINE]"
@@ -33,22 +33,11 @@ type IntroProps = {
   skip?: boolean
 }
 
-// Mapeia phase da Intro pra phase do Starfield
-function starfieldPhaseFor(p: Phase): StarfieldPhase {
-  switch (p) {
-    case "drift":      return "drift"
-    case "accelerate": return "accelerate"
-    case "warp":       return "warp"
-    case "flash":      return "decelerate"
-    case "reveal":
-    case "complete":   return "idle"
-  }
-}
-
 export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
   const [mounted, setMounted] = useState(false)
   const [phase, setPhase] = useState<Phase>("drift")
   const [fadeOut, setFadeOut] = useState(false)
+  const [startedAt, setStartedAt] = useState<number | null>(null)
 
   const completedRef = useRef(false)
 
@@ -69,6 +58,7 @@ export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
       // sessionStorage pode falhar em modo privado — segue mostrando
     }
     setMounted(true)
+    setStartedAt(performance.now())
   }, [skip, onComplete])
 
   // Timeline de fases
@@ -114,7 +104,7 @@ export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
       <div className={styles.nebula} aria-hidden />
 
       {/* Camada 2: starfield Canvas 3D */}
-      <Starfield phase={starfieldPhaseFor(phase)} className={styles.canvas} />
+      <Starfield startedAt={startedAt} className={styles.canvas} />
 
       {/* Camada 3: vinheta pra dar profundidade */}
       <div className={styles.vignette} aria-hidden />

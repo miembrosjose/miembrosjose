@@ -1,16 +1,56 @@
 "use client"
 
 // Canvas starfield com 3 camadas de profundidade + warp jump.
-// Fases: drift → accelerate → warp → decelerate → idle.
+// Velocidade calculada como curva contínua em função do tempo (sem saltos).
 // Sem deps externas. ~600 estrelas, 60fps.
 
 import { useEffect, useRef } from "react"
 
-export type StarfieldPhase = "drift" | "accelerate" | "warp" | "decelerate" | "idle"
-
 type Props = {
-  phase: StarfieldPhase
+  /** Timestamp (performance.now()) de quando a intro começou. null = não iniciada. */
+  startedAt: number | null
   className?: string
+}
+
+/**
+ * Curva contínua de velocidade — fluida do começo ao fim.
+ *
+ * T+0     → 800ms    drift constante (suave, calmo)
+ * T+800   → 3500ms   ease-in-quad: drift → warp peak (aceleração progressiva)
+ * T+3500  → 3700ms   warp peak hold (breve)
+ * T+3700  → 5000ms   ease-out-cubic: warp peak → idle (desacelera longo)
+ * T+5000+            idle constante
+ */
+function speedAt(t: number): number {
+  const DRIFT = 0.0008
+  const PEAK = 0.075
+
+  if (t < 800) return DRIFT
+  if (t < 3500) {
+    const p = (t - 800) / (3500 - 800)
+    // ease-in-quad — começa devagar, acelera progressivamente
+    const eased = p * p
+    return DRIFT + eased * (PEAK - DRIFT)
+  }
+  if (t < 3700) return PEAK
+  if (t < 5000) {
+    const p = (t - 3700) / (5000 - 3700)
+    // ease-out-cubic — desacelera suave
+    const eased = 1 - Math.pow(1 - p, 3)
+    return PEAK - eased * (PEAK - DRIFT)
+  }
+  return DRIFT
+}
+
+/** Trail amount derivado da velocidade — começa quando speed > threshold, satura no peak. */
+function warpFromSpeed(speed: number): number {
+  const MIN = 0.006
+  const MAX = 0.075
+  if (speed <= MIN) return 0
+  if (speed >= MAX) return 1
+  const linear = (speed - MIN) / (MAX - MIN)
+  // ease-in-quad também no trail pra não aparecer abrupto
+  return linear * linear
 }
 
 type Star = {
@@ -42,13 +82,13 @@ function randStar(): Star {
   }
 }
 
-export function Starfield({ phase, className }: Props) {
+export function Starfield({ startedAt, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const phaseRef = useRef<StarfieldPhase>(phase)
+  const startedAtRef = useRef<number | null>(startedAt)
 
   useEffect(() => {
-    phaseRef.current = phase
-  }, [phase])
+    startedAtRef.current = startedAt
+  }, [startedAt])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -79,43 +119,19 @@ export function Starfield({ phase, className }: Props) {
 
     let raf = 0
     let running = true
-    // velocidade interpolada (suaviza transições entre phases)
-    let speed = 0.0006
-    let warpAmount = 0  // 0 = sem trail, 1 = trail máximo
-
-    function targetSpeed(p: StarfieldPhase): number {
-      switch (p) {
-        case "drift":      return 0.0008
-        case "accelerate": return 0.012
-        case "warp":       return 0.06
-        case "decelerate": return 0.004
-        case "idle":       return 0.0008
-      }
-    }
-
-    function targetWarp(p: StarfieldPhase): number {
-      switch (p) {
-        case "drift":      return 0
-        case "accelerate": return 0.25
-        case "warp":       return 1
-        case "decelerate": return 0.4
-        case "idle":       return 0
-      }
-    }
 
     function frame() {
       if (!running || !ctx) return
-      const p = phaseRef.current
-      const tSpeed = targetSpeed(p)
-      const tWarp = targetWarp(p)
 
-      // Lerp suave (mais lento em transições pra fora do warp)
-      const lerpSpeed = p === "warp" ? 0.08 : 0.04
-      speed += (tSpeed - speed) * lerpSpeed
-      warpAmount += (tWarp - warpAmount) * 0.06
+      // Calcula velocidade direto da curva contínua de tempo — sem lerp,
+      // sem saltos entre phases. Aceleração e desaceleração suaves.
+      const start = startedAtRef.current
+      const elapsed = start === null ? 0 : performance.now() - start
+      const speed = speedAt(elapsed)
+      const warpAmount = warpFromSpeed(speed)
 
-      // Limpa com leve trail pra dar sensação de motion blur
-      const fadeAlpha = warpAmount > 0.5 ? 0.15 : 0.4
+      // Limpa com leve trail (motion blur). Mais blur conforme warp aumenta.
+      const fadeAlpha = 0.4 - warpAmount * 0.27
       ctx.fillStyle = `rgba(0, 0, 5, ${fadeAlpha})`
       ctx.fillRect(0, 0, width, height)
 
