@@ -13,9 +13,9 @@ import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { api } from "../_lib/api"
 
-const DISMISS_KEY = "cf_front_expiring_dismissed_v1"
+const DISMISS_KEY = "app_front_expiring_dismissed_v1"
 const WHATSAPP_URL =
-  "https://wa.me/5547996812781?text=Hola,%20mi%20acceso%20al%20treinamento%20de%20Copy%20Films%20esta%20por%20vencer.%20Quiero%20renovar."
+  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20mi%20acceso%20esta%20por%20vencer.%20Quiero%20renovar."
 
 export function FrontExpiringBanner() {
   const [daysLeft, setDaysLeft] = useState<number | null>(null)

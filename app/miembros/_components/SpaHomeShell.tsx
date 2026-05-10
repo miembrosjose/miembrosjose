@@ -318,28 +318,28 @@ export function SpaHomeShell() {
             onClose={() => setSalespageProduct(null)}
           />
 
-          {/* Level-up animation overlay — escuta eventos "cf:level-up" do XpBadge
+          {/* Level-up animation overlay — escuta eventos "app:level-up" do XpBadge
               e anima sequencialmente (flash + card + partículas + som). */}
           <LevelUpOverlay />
 
           {/* EL TOPO conquistado — fullscreen igual level up mas tema vermelho.
-              Escuta evento "cf:topo-conquista" disparado pelo BroadcastProvider
+              Escuta evento "app:topo-conquista" disparado pelo BroadcastProvider
               quando notif type=public_insignia_self do EL TOPO chega. */}
           <TopoOverlay />
 
           {/* EL ESTUDIO conquistado — espelho do TopoOverlay com paleta red+gold
-              (premium cinematográfico). Escuta "cf:estudio-conquista". */}
+              (premium cinematográfico). Escuta "app:estudio-conquista". */}
           <EstudioOverlay />
 
           {/* ETERNO conquistado (90 días únicos) — fullscreen com música antiga
-              Shahiera. Escuta "cf:eterno-conquista". */}
+              Shahiera. Escuta "app:eterno-conquista". */}
           <EternoOverlay />
 
           {/* LEYENDA conquistado (500+ posts) — fullscreen com música antiga
-              Shahiera. Escuta "cf:leyenda-conquista". */}
+              Shahiera. Escuta "app:leyenda-conquista". */}
           <LeyendaOverlay />
 
-          {/* Toast de insignia desbloqueada — escuta "cf:achievement-unlock"
+          {/* Toast de insignia desbloqueada — escuta "app:achievement-unlock"
               despachado por unlockAchievement (em _lib/achievements-unlock.ts). */}
           <AchievementToast />
         </>
@@ -380,7 +380,7 @@ function ViewInicio({
             <p className={styles.sectionKicker}>Mi Biblioteca</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              Copy <span className={styles.sectionTitleAccent}>Film&apos;s</span> — Temporadas
+              <span className={styles.sectionTitleAccent}>[BRAND_NAME]</span> — Temporadas
             </h2>
           </div>
         </header>

@@ -306,7 +306,7 @@ function generateUuid(): string {
 function getOrCreateExternalId(): string {
   if (typeof window === "undefined") return "";
   try {
-    const KEY = "_cf_external_id";
+    const KEY = "_app_external_id";
     let id = localStorage.getItem(KEY);
     if (!id) {
       id = generateUuid();

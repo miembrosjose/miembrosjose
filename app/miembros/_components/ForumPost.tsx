@@ -1,7 +1,7 @@
 "use client"
 
 // Card de post do fórum + replies expandíveis inline.
-// Equivalente ao bloco renderForum() do area-prototipo.html (linhas 10243-10311).
+// Equivalente ao bloco renderForum() do proyecto base (linhas 10243-10311).
 
 import { Heart, ThumbsDown, MessageCircle, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import { useState, useEffect, memo } from "react"
@@ -143,7 +143,7 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
       // checkProductAchievements → unlockAchievement('product_bonus_ganchos')
       // → AchievementToast aparece (notificação privada).
       if (data.bono_granted) {
-        window.dispatchEvent(new CustomEvent("cf:owned-products-refresh"))
+        window.dispatchEvent(new CustomEvent("app:owned-products-refresh"))
       }
     } catch (e) {
       console.error("[ForumPost] erro ao criar reply:", e)

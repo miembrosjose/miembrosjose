@@ -63,7 +63,7 @@ Acessa em `http://localhost:3000/miembros`.
 
 ## 8. Deploy
 
-Recomendado: Cloudflare Pages (mesma stack que o projeto original).
+Recomendado: Cloudflare Pages.
 
 ```bash
 npx wrangler pages deploy
@@ -124,11 +124,11 @@ Tab "Liberar" → preenche email + escolhe produto.
 ## 12. O que NÃO veio nesse clone
 
 - Salespage / página de venda (`app/checkout`, `app/(salespage)`) — você cria a sua
-- Integrações Hotmart, WhatsApp recovery, Z-API — específicas do projeto original
+- Integrações Hotmart, WhatsApp recovery, Z-API — não acompanham este pacote
 - Tracking via Adsmurai/Utmify — você pluga as suas
 - Standalone checkouts (`/minivsl`, `/revisao`) — opcional, customize se quiser
 
 ## Suporte
 
-Esse é um clone sanitizado. Pra dúvidas estruturais sobre como cada peça
-funciona, consulte o projeto-mãe ou documentação interna.
+Pra dúvidas estruturais sobre como cada peça funciona, consulte a
+documentação interna ou suporte técnico contratado.

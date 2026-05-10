@@ -1,6 +1,6 @@
 "use client"
 
-// Toast quando um membro fica online. Escuta evento custom "cf:user-online"
+// Toast quando um membro fica online. Escuta evento custom "app:user-online"
 // disparado em _lib/online-presence.tsx (sync detecta user_id que não estava
 // na lista anterior).
 //
@@ -52,8 +52,8 @@ export function OnlineToast() {
       if (!processingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:user-online", onUserOnline)
-    return () => window.removeEventListener("cf:user-online", onUserOnline)
+    window.addEventListener("app:user-online", onUserOnline)
+    return () => window.removeEventListener("app:user-online", onUserOnline)
   }, [])
 
   if (!current) return null

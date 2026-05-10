@@ -61,7 +61,7 @@ export default function MiembrosLayout({
           <UnreadDMProvider>
             <ViewProvider>
               <BroadcastProvider>{children}</BroadcastProvider>
-              {/* Toast 'fulano se conectó' — escuta cf:user-online */}
+              {/* Toast 'fulano se conectó' — escuta app:user-online */}
               <OnlineToast />
               {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
               <MessengerWidget />

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 const WHATSAPP_URL =
-  "https://wa.me/5547996812781?text=Hola,%20soy%20miembro%20de%20la%20comunidad%20y%20quiero%20delegar%20la%20creaci%C3%B3n%20de%20mi%20embudo%20gamificado%20al%20equipo%20de%20Copy%20Films.%20%C2%BFPodemos%20hablar%20sobre%20c%C3%B3mo%20funciona?"
+  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20soy%20miembro%20de%20la%20comunidad%20y%20quiero%20delegar%20la%20creaci%C3%B3n%20de%20mi%20embudo%20gamificado%20al%20equipo.%20%C2%BFPodemos%20hablar%20sobre%20c%C3%B3mo%20funciona?"
 
 const DELIVERABLES = [
   {

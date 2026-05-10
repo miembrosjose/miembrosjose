@@ -160,7 +160,7 @@ export function OnlinePresenceProvider({ children }: { children: React.ReactNode
               if (m.user_id === user.id) continue // não toast pra self
               if (!previous.has(m.user_id)) {
                 window.dispatchEvent(
-                  new CustomEvent("cf:user-online", { detail: m }),
+                  new CustomEvent("app:user-online", { detail: m }),
                 )
               }
             }

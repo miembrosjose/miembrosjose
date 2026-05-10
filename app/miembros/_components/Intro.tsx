@@ -1,7 +1,7 @@
 "use client"
 
 // Intro cinematográfica que abre a área de membros.
-// Sequência (extraída do area-prototipo.html startIntroSequence):
+// Sequência (extraída do proyecto base startIntroSequence):
 //   T+0.0s : initial render (escuro, letterbox fechado)
 //   T+0.3s : bars-open (letterbox slide pra fora)
 //   T+0.8s : lights-on + studio-show + skip button visível

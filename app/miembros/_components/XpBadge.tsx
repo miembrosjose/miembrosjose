@@ -1,10 +1,10 @@
 "use client"
 
 // Badge de XP/Level do user atual — aparece na Navbar entre nav links e avatar.
-// Equivalente ao .nav-xp-badge do area-prototipo.html.
+// Equivalente ao .nav-xp-badge do proyecto base.
 //
 // Polling 30s pra detectar level-up: se xp.level > previous.level, despacha
-// evento "cf:level-up" pra cada nível subido (LevelUpOverlay enfileira e
+// evento "app:level-up" pra cada nível subido (LevelUpOverlay enfileira e
 // anima 1 por vez). Re-fetch também on visibility/focus pra capturar mudanças
 // que rolaram com a aba em background.
 //
@@ -41,7 +41,7 @@ export function XpBadge({ onClick }: XpBadgeProps) {
         if (detectLevelUp && previous !== null && data.level > previous) {
           for (let lv = previous + 1; lv <= data.level; lv++) {
             window.dispatchEvent(
-              new CustomEvent("cf:level-up", { detail: { level: lv } })
+              new CustomEvent("app:level-up", { detail: { level: lv } })
             )
           }
         }
@@ -79,14 +79,14 @@ export function XpBadge({ onClick }: XpBadgeProps) {
     }
     document.addEventListener("visibilitychange", onVisibilityChange)
     window.addEventListener("focus", onFocus)
-    window.addEventListener("cf:xp-force-sync", onForceSync)
+    window.addEventListener("app:xp-force-sync", onForceSync)
 
     return () => {
       alive = false
       window.clearInterval(interval)
       document.removeEventListener("visibilitychange", onVisibilityChange)
       window.removeEventListener("focus", onFocus)
-      window.removeEventListener("cf:xp-force-sync", onForceSync)
+      window.removeEventListener("app:xp-force-sync", onForceSync)
     }
   }, [])
 

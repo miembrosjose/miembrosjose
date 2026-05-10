@@ -4,7 +4,7 @@
 // Tier topo "comunitário" — espelho do TopoOverlay mas com música antiga
 // (sounds.topoConquista — Shahiera) e tagline própria.
 //
-// Escuta evento "cf:eterno-conquista" com detail { userName, isSelf }.
+// Escuta evento "app:eterno-conquista" com detail { userName, isSelf }.
 // Despachado pelo BroadcastProvider quando notif do achievement time_eterno
 // chega.
 
@@ -101,9 +101,9 @@ export function EternoOverlay() {
       if (!playingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:eterno-conquista", onEternoConquista as EventListener)
+    window.addEventListener("app:eterno-conquista", onEternoConquista as EventListener)
     return () => {
-      window.removeEventListener("cf:eterno-conquista", onEternoConquista as EventListener)
+      window.removeEventListener("app:eterno-conquista", onEternoConquista as EventListener)
     }
   }, [])
 

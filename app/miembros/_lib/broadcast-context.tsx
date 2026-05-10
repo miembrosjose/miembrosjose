@@ -1,10 +1,10 @@
 "use client"
 
 // Provider + hook da fila de broadcasts (popups overlay deslizantes).
-// Equivalente ao bloco BROADCAST_QUEUE do area-prototipo.html (11104-11219).
+// Equivalente ao bloco BROADCAST_QUEUE do proyecto base (11104-11219).
 //
 // Anti-replay:
-//  - localStorage 'cf_broadcast_shown_ids_v1' (max 500 IDs, FIFO)
+//  - localStorage 'app_broadcast_shown_ids_v1' (max 500 IDs, FIFO)
 //  - notif.read_at já preenchido (já vista cross-device) → skip
 //  - notif criada há mais de 5min → skip (fresh window)
 //  - notifPrefAllowed (Fase 4 — toggle por tipo) → next iteration
@@ -44,7 +44,7 @@ export const BROADCAST_VARIANTS: Record<string, BroadcastVariant> = {
   rank_up_self:           { icon: "⚔️", accent: "#c9a961", label: "ASCENDISTE EN LA COMUNIDAD",    soundKey: "levelUp" },
 }
 
-const BROADCAST_LS_KEY = "cf_broadcast_shown_ids_v1"
+const BROADCAST_LS_KEY = "app_broadcast_shown_ids_v1"
 const BROADCAST_FRESH_WINDOW_MS = 5 * 60 * 1000
 const POPUP_DURATION_MS = 3500
 const POPUP_EXIT_MS = 400
@@ -153,10 +153,10 @@ export function BroadcastProvider({ children }: { children: React.ReactNode }) {
     //   public_insignia       → outros    ("Fulano conquistó...")
     //
     // Cada uma tem seu overlay próprio + CustomEvent dedicado:
-    //   EL TOPO     → cf:topo-conquista     → trumpet victory
-    //   EL ESTUDIO  → cf:estudio-conquista  → trumpet victory
-    //   ETERNO      → cf:eterno-conquista   → level up shahiera (música antiga)
-    //   LEYENDA     → cf:leyenda-conquista  → level up shahiera (música antiga)
+    //   EL TOPO     → app:topo-conquista     → trumpet victory
+    //   EL ESTUDIO  → app:estudio-conquista  → trumpet victory
+    //   ETERNO      → app:eterno-conquista   → level up shahiera (música antiga)
+    //   LEYENDA     → app:leyenda-conquista  → level up shahiera (música antiga)
     const isPremiumInsignia =
       notif.type === "public_insignia_self" || notif.type === "public_insignia"
     const titleUpper = notif.title?.toUpperCase() || ""
@@ -170,12 +170,12 @@ export function BroadcastProvider({ children }: { children: React.ReactNode }) {
       const isSelf = notif.type === "public_insignia_self"
       const userName = notif.source_user_name || "Miembro"
       const eventName = isTopoNotif
-        ? "cf:topo-conquista"
+        ? "app:topo-conquista"
         : isEstudioNotif
-        ? "cf:estudio-conquista"
+        ? "app:estudio-conquista"
         : isEternoNotif
-        ? "cf:eterno-conquista"
-        : "cf:leyenda-conquista"
+        ? "app:eterno-conquista"
+        : "app:leyenda-conquista"
       window.dispatchEvent(
         new CustomEvent(eventName, {
           detail: { userName, isSelf },

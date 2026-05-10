@@ -2,7 +2,7 @@
 
 // Hero da home com vídeo de fundo cinematográfico.
 //
-// Comportamento (paridade com area-prototipo.html):
+// Comportamento (paridade com proyecto base):
 //  - Vídeo começa MUTED + PAUSED (autoplay com som não funciona sem gesture)
 //  - Quando user clica "Saltar Intro" no overlay, callback síncrono no shell
 //    aciona video.muted=false + video.play() — gesture válido permite áudio
@@ -17,7 +17,7 @@ import { Play, Info } from "lucide-react"
 import { forwardRef, useEffect, useRef } from "react"
 import styles from "./hero.module.css"
 
-const HERO_VIDEO_URL = "https://cdn.SEU_DOMINIO.com/bannermembros.mp4"
+const HERO_VIDEO_URL = "https://cdn.SEU_DOMINIO.com/hero-video.mp4"
 const SESSION_KEY_INTRO = "app_intro_seen"
 const SESSION_KEY_ENDED = "app_hero_ended"
 
@@ -164,7 +164,7 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
             <>{title}</>
           ) : (
             <>
-              Copy <em>Film&apos;s</em>
+              [BRAND_NAME]
               <br />
               Entrenamiento
             </>

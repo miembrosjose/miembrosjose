@@ -4,7 +4,7 @@
 // Aparece pro recipient E pros outros users — visual igual,
 // só muda o label (recipient: "Conquistaste"; outros: "Fulano conquistó").
 //
-// Escuta evento "cf:topo-conquista" com detail { userName, isSelf }.
+// Escuta evento "app:topo-conquista" com detail { userName, isSelf }.
 // Despachado pelo BroadcastProvider quando notif type=public_insignia_self
 // (recipient) ou type=public_insignia (outros) chega com EL TOPO no title.
 
@@ -107,9 +107,9 @@ export function TopoOverlay() {
       if (!playingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:topo-conquista", onTopoConquista as EventListener)
+    window.addEventListener("app:topo-conquista", onTopoConquista as EventListener)
     return () => {
-      window.removeEventListener("cf:topo-conquista", onTopoConquista as EventListener)
+      window.removeEventListener("app:topo-conquista", onTopoConquista as EventListener)
     }
   }, [])
 

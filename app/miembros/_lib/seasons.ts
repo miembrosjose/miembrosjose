@@ -54,7 +54,7 @@ export const SEASONS: Season[] = [
     name: "Comunidad [BRAND_NAME]",
     episodes: 0,
     external: true,
-    redirectUrl: "https://chat.whatsapp.com/LeF9LWp5UVSFbCQTu7G3iH",
+    redirectUrl: "https://chat.whatsapp.com/SEU_GROUP_INVITE_CODE",
     videoBg: "https://cdn.SEU_DOMINIO.com/video5.mp4",
     gradient: "linear-gradient(135deg, #0a0a0f 0%, #25d366 100%)",
     emoji: "💬",
@@ -64,9 +64,9 @@ export const SEASONS: Season[] = [
 // Progresso de episódios — chave: 's<num>_e<num>', valor: { watched_at }.
 // Persiste em localStorage. Migrar pra Supabase server-side na Fase 5b
 // (junto com videoplayer) é a evolução natural — por enquanto mantemos
-// paridade com o behavior do area-prototipo.html.
+// paridade com o behavior do proyecto base.
 
-const PROGRESS_KEY = "cf_episode_progress_v1"
+const PROGRESS_KEY = "app_episode_progress_v1"
 
 export type EpisodeProgress = Record<string, { watched_at: string }>
 
@@ -83,7 +83,7 @@ export function getEpisodeProgress(): EpisodeProgress {
 /** Event name disparado em window quando o progresso de episódio muda.
  *  Permite que componentes irmãos (SeasonsCarousel, Hero, etc) re-leiam
  *  o localStorage sem precisar de refresh da página. */
-export const PROGRESS_CHANGED_EVENT = "cf:episode-progress-changed"
+export const PROGRESS_CHANGED_EVENT = "app:episode-progress-changed"
 
 export function markEpisodeWatched(seasonNum: number, episodeNum: number): EpisodeProgress {
   const progress = getEpisodeProgress()

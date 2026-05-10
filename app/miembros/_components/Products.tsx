@@ -1,7 +1,7 @@
 "use client"
 
 // Tu Biblioteca - Otros Productos + Tienda Premium
-// Migra renderOwnedProducts + renderLockedProducts do area-prototipo.html.
+// Migra renderOwnedProducts + renderLockedProducts do proyecto base.
 // Click em locked → abre /producto/<slug> (futura ViewProductSalespage interna)
 // Click em owned interno → setView("producto", slug)
 // Click em owned external → window.open
@@ -66,13 +66,13 @@ export function useOwnedProducts() {
     }
     document.addEventListener("visibilitychange", onVisibilityChange)
     window.addEventListener("focus", refetch)
-    window.addEventListener("cf:owned-products-refresh", onOwnedRefresh)
+    window.addEventListener("app:owned-products-refresh", onOwnedRefresh)
 
     return () => {
       cancelled = true
       document.removeEventListener("visibilitychange", onVisibilityChange)
       window.removeEventListener("focus", refetch)
-      window.removeEventListener("cf:owned-products-refresh", onOwnedRefresh)
+      window.removeEventListener("app:owned-products-refresh", onOwnedRefresh)
     }
   }, [])
 

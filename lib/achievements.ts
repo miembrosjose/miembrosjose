@@ -1,4 +1,4 @@
-// Sistema de insignias (achievements) — extraído do public/area-prototipo.html
+// Sistema de insignias (achievements) — extraído do public/proyecto base
 // pra ser compartilhado entre prototipo (via JS injetado) e React (perfil/comments).
 //
 // Cada insignia tem:
@@ -12,7 +12,7 @@
 //   productKey  — só pra category=products: nome do produto pra match com OWNED_PRODUCTS
 //
 // IMPORTANT: ao adicionar/editar insignias aqui, replicar no
-// public/area-prototipo.html (array ACHIEVEMENTS) ou vice-versa.
+// public/proyecto base (array ACHIEVEMENTS) ou vice-versa.
 // (TODO refactor: prototipo importar dessa lib via build step.)
 
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum" | "diamond" | "topo"

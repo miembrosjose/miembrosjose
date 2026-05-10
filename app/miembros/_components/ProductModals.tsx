@@ -318,7 +318,7 @@ export function ProductSalespageModal({ product, onClose }: SalespageModalProps)
                   customerEmail={user?.email}
                   onSuccess={() => {
                     // Refresh sem reload — preserva notifications/toasts/broadcast
-                    window.dispatchEvent(new CustomEvent("cf:owned-products-refresh"))
+                    window.dispatchEvent(new CustomEvent("app:owned-products-refresh"))
                     setTimeout(() => onClose(), 1500)
                   }}
                 />
@@ -480,7 +480,7 @@ export function ProductCheckoutModal({ product, onClose }: CheckoutModalProps) {
                   customerEmail={user?.email}
                   onSuccess={() => {
                     // Refresh sem reload — preserva notifications/toasts/broadcast
-                    window.dispatchEvent(new CustomEvent("cf:owned-products-refresh"))
+                    window.dispatchEvent(new CustomEvent("app:owned-products-refresh"))
                     setTimeout(() => onClose(), 1500)
                   }}
                 />

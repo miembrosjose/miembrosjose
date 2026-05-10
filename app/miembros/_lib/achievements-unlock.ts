@@ -1,12 +1,12 @@
 // Helpers de desbloqueio de insignias client-side.
 // Equivalente a unlockAchievement + isAchievementUnlocked + getUnlockedAchievements
-// do area-prototipo.html (linhas 9266-9290).
+// do proyecto base (linhas 9266-9290).
 //
 // Persistência: localStorage (chave "app_unlocked_achievements") espelha
 // a lógica original. Cada call:
 //   1. Checa se já tá desbloqueada — se sim, no-op (não despacha duas vezes)
 //   2. Salva no localStorage
-//   3. Despacha evento "cf:achievement-unlock" — AchievementToast escuta
+//   3. Despacha evento "app:achievement-unlock" — AchievementToast escuta
 //   4. Hit /api/profile/insignia-unlocked em background pra conceder XP
 //      server-side (dedup garantido por xp_events na server-side)
 //
@@ -121,7 +121,7 @@ export function unlockAchievement(id: string): boolean {
 
   // Despacha pra UI mostrar toast
   window.dispatchEvent(
-    new CustomEvent("cf:achievement-unlock", { detail: { id } })
+    new CustomEvent("app:achievement-unlock", { detail: { id } })
   )
 
   // Server-side: concede XP (dedup garantido por xp_events)
@@ -235,8 +235,8 @@ export async function checkProductAchievements(owned: OwnedProduct[]) {
       const { levels_granted } = (await res.json()) as { levels_granted: number }
       if (levels_granted > 0 || anyNewUnlock) {
         // Força XpBadge a re-consultar o servidor agora — vai detectar o delta
-        // de level e disparar cf:level-up → LevelUpOverlay mostra a animação.
-        window.dispatchEvent(new CustomEvent("cf:xp-force-sync"))
+        // de level e disparar app:level-up → LevelUpOverlay mostra a animação.
+        window.dispatchEvent(new CustomEvent("app:xp-force-sync"))
       }
     }
   } catch {

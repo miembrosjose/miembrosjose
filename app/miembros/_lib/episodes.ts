@@ -1,7 +1,7 @@
 // Episódios das 4 temporadas — gerado automaticamente por scripts/extract-episodes.mjs
-// a partir de public/area-prototipo.html (linhas 7631-8800).
+// a partir de public/proyecto base (linhas 7631-8800).
 //
-// NÃO EDITAR MANUALMENTE. Pra atualizar, edite o area-prototipo.html e
+// NÃO EDITAR MANUALMENTE. Pra atualizar, edite o proyecto base e
 // re-execute: node scripts/extract-episodes.mjs
 
 export const CONVERTEAI_ACCOUNT = "681d0d14-0219-402e-8e87-ba5f85c047b6"
@@ -27,7 +27,7 @@ export type Episode = {
 export const EPISODES_T1: Episode[] = [
   {
     num: 1,
-    videoId: "698a662a1738e7f6ba03b6c3",
+    videoId: "VIDEO_ID_TODO",
     title: "Introducción",
     desc: "Antes de empezar, dos consejos que cambian todo en cómo absorbes este contenido.",
     duration: "—",
@@ -86,13 +86,13 @@ export const EPISODES_T1: Episode[] = [
   },
   {
     num: 2,
-    videoId: "698a62676e05f1df885a9242",
+    videoId: "VIDEO_ID_TODO",
     title: "Agente Estratega",
     desc: "El agente Estratega te ayuda a diseñar la arquitectura de tu funnel.",
     duration: "—",
     thumb: "/episode-thumbs/s1e2.svg",
     notes: `
-      <a href="https://chatgpt.com/g/g-694772a7401081918f14a62f620465a5" target="_blank" rel="noopener" class="agent-card">
+      <a href="https://chatgpt.com/g/SEU_GPT_ESTRATEGA_ID" target="_blank" rel="noopener" class="agent-card">
         <div class="agent-icon">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <!-- Coroa estratega (3 picos com gemas) -->
@@ -123,13 +123,13 @@ export const EPISODES_T1: Episode[] = [
   },
   {
     num: 3,
-    videoId: "698aadaf27b4e43f0071f765",
+    videoId: "VIDEO_ID_TODO",
     title: "Agente Copywriter para Mini VSL's",
     desc: "Producto opcional para insertar Mini VSLs dentro de tu embudo.",
     duration: "—",
     thumb: "/episode-thumbs/s1e3.svg",
     inlineCheckoutKey: "minivsl",
-    agentUrl: "https://chatgpt.com/g/g-6947aa47dbb48191ae659d1c5be34b9d-estructurador-vsl",
+    agentUrl: "https://chatgpt.com/g/SEU_GPT_MINIVSL_ID",
     agentProductName: "Agente Copy Mini VSL's",
     notes: `
       <div class="attention-block">
@@ -153,13 +153,13 @@ export const EPISODES_T1: Episode[] = [
   },
   {
     num: 4,
-    videoId: "698a9fb86e05f1df885b1b9c",
+    videoId: "VIDEO_ID_TODO",
     title: "Agente Copywriter",
     desc: "El agente que transforma ideas en copy que vende.",
     duration: "—",
     thumb: "/episode-thumbs/s1e4.svg",
     notes: `
-      <a href="https://chatgpt.com/g/g-6947735c86b481919a2712269aaca4d7-copywriter" target="_blank" rel="noopener" class="agent-card">
+      <a href="https://chatgpt.com/g/SEU_GPT_COPYWRITER_ID" target="_blank" rel="noopener" class="agent-card">
         <div class="agent-icon">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <!-- Pena estilizada (quill) -->
@@ -192,13 +192,13 @@ export const EPISODES_T1: Episode[] = [
   },
   {
     num: 5,
-    videoId: "69ab15f5f9af0697ab12dc17",
+    videoId: "VIDEO_ID_TODO",
     title: "Agente Constructor",
     desc: "El agente que ensambla tu embudo en un sistema funcional.",
     duration: "—",
     thumb: "/episode-thumbs/s1e5.svg",
     notes: `
-      <a href="https://chatgpt.com/g/g-6947741b8a2c81918eb8c2137dc245da-constructor" target="_blank" rel="noopener" class="agent-card">
+      <a href="https://chatgpt.com/g/SEU_GPT_CONSTRUCTOR_ID" target="_blank" rel="noopener" class="agent-card">
         <div class="agent-icon">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <!-- Compasso de arquiteto -->
@@ -243,7 +243,7 @@ export const EPISODES_T1: Episode[] = [
 export const EPISODES_T2: Episode[] = [
   {
     num: 1,
-    videoId: "69b488ad46625199476a2988",
+    videoId: "VIDEO_ID_TODO",
     title: "Creando el Embudo",
     desc: "Continuación del entrenamiento — Temporada 2.",
     duration: "—",
@@ -312,7 +312,7 @@ export const EPISODES_T2: Episode[] = [
   },
   {
     num: 2,
-    videoId: "69b8d884a10d9a398ac65dfa",
+    videoId: "VIDEO_ID_TODO",
     title: "Editando el Embudo",
     desc: "Continuación del entrenamiento — Temporada 2.",
     duration: "—",
@@ -639,7 +639,7 @@ export const EPISODES_T2: Episode[] = [
 export const EPISODES_T3: Episode[] = [
   {
     num: 1,
-    videoId: "6947b15725bdf7820c04b169",
+    videoId: "VIDEO_ID_TODO",
     title: "Generando Voces Emocionales con IA",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -732,7 +732,7 @@ export const EPISODES_T3: Episode[] = [
   },
   {
     num: 2,
-    videoId: "6947afa725bdf7820c04b05d",
+    videoId: "VIDEO_ID_TODO",
     title: "Creando un Avatar Ficticio",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -767,7 +767,7 @@ export const EPISODES_T3: Episode[] = [
   },
   {
     num: 3,
-    videoId: "6947b060e498d3ef975a7270",
+    videoId: "VIDEO_ID_TODO",
     title: "Creando un Avatar Ultrarealista",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -804,7 +804,7 @@ export const EPISODES_T3: Episode[] = [
   },
   {
     num: 4,
-    videoId: "6947c3e7798d3e9d452ca3a4",
+    videoId: "VIDEO_ID_TODO",
     title: "Editando el Video del Avatar",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -849,7 +849,7 @@ export const EPISODES_T3: Episode[] = [
   },
   {
     num: 5,
-    videoId: "6947bf6c2329c8edaeac00a3",
+    videoId: "VIDEO_ID_TODO",
     title: "Editando el Audio del Avatar",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -914,7 +914,7 @@ export const EPISODES_T3: Episode[] = [
   },
   {
     num: 6,
-    videoId: "6947b11925bdf7820c04b126",
+    videoId: "VIDEO_ID_TODO",
     title: "Incorporando Video en V0",
     desc: "Continuación del entrenamiento — Temporada 3.",
     duration: "—",
@@ -961,7 +961,7 @@ export const EPISODES_T3: Episode[] = [
 export const EPISODES_T4: Episode[] = [
   {
     num: 1,
-    videoId: "6961b8d62e6d8eb8b76e4ecb",
+    videoId: "VIDEO_ID_TODO",
     title: "Agregando el Píxel de Facebook al Proyecto",
     desc: "Continuación del entrenamiento — Temporada 4.",
     duration: "—",
@@ -1006,7 +1006,7 @@ export const EPISODES_T4: Episode[] = [
   },
   {
     num: 2,
-    videoId: "6961ca9c2e6d8eb8b76e631d",
+    videoId: "VIDEO_ID_TODO",
     title: "Agregando Microsoft Clarity al Proyecto",
     desc: "Continuación del entrenamiento — Temporada 4.",
     duration: "—",
@@ -1063,7 +1063,7 @@ export const EPISODES_T4: Episode[] = [
   },
   {
     num: 3,
-    videoId: "6961b1428990e4119b4f0969",
+    videoId: "VIDEO_ID_TODO",
     title: "Creando un hosting web",
     desc: "Continuación del entrenamiento — Temporada 4.",
     duration: "—",
@@ -1104,7 +1104,7 @@ export const EPISODES_T4: Episode[] = [
   },
   {
     num: 4,
-    videoId: "6961b1490d8ded7c540819e1",
+    videoId: "VIDEO_ID_TODO",
     title: "Publicar sitio web",
     desc: "Continuación del entrenamiento — Temporada 4.",
     duration: "—",

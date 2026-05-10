@@ -1,7 +1,7 @@
 "use client"
 
 // Drawer Netflix-style com hero + lista de episódios + player modal embutido.
-// Equivalente a renderEpisodes + openVideoPlayer do area-prototipo.html.
+// Equivalente a renderEpisodes + openVideoPlayer do proyecto base.
 
 import { useEffect, useRef, useState } from "react"
 import { X, Play, Lock, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from "lucide-react"
@@ -365,7 +365,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 {/* Agent card — visual identico ao Estratega/Copywriter, mas com
                  * 2 estados: UNLOCKED (clickable, abre agente) ou LOCKED
                  * (icone cadeado + "Bloqueado", muda automatico via
-                 * cf:owned-products-refresh quando user compra o produto). */}
+                 * app:owned-products-refresh quando user compra o produto). */}
                 {playingEp.agentUrl && playingEp.agentProductName && (() => {
                   const isOwned = ownedProductNames?.includes(playingEp.agentProductName) ?? false
                   const agentDesc = playingEp.desc || "Tu copiloto especializado para esta etapa."

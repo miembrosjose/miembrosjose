@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react"
 import { CheckCircle2 } from "lucide-react"
 
 const WHATSAPP_URL =
-  "https://wa.me/5547996812781?text=Hola,%20soy%20miembro%20y%20ya%20tengo%20mi%20proyecto%20listo.%20Quiero%20enviar%20los%20materiales%20para%20la%20Revisi%C3%B3n%20de%20Embudo."
+  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20soy%20miembro%20y%20ya%20tengo%20mi%20proyecto%20listo.%20Quiero%20enviar%20los%20materiales%20para%20la%20Revisi%C3%B3n%20de%20Embudo."
 
 const REQUIRED_ITEMS = [
   {

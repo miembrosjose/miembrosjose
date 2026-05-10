@@ -1,9 +1,9 @@
 "use client"
 
 // Animação cinematográfica de level-up. Equivalente a triggerLevelUpAnimation
-// + processLevelUpQueue do area-prototipo.html (linhas 11820-11863).
+// + processLevelUpQueue do proyecto base (linhas 11820-11863).
 //
-// Escuta o evento custom "cf:level-up" (despachado pelo XpBadge quando detecta
+// Escuta o evento custom "app:level-up" (despachado pelo XpBadge quando detecta
 // xp.level > previous.level) e enfileira animações 1 por vez. Cada animação:
 //   - Flash branco fullscreen (0.8s)
 //   - Card central com tagline + LV X grande + partículas douradas
@@ -96,9 +96,9 @@ export function LevelUpOverlay() {
       if (!playingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:level-up", onLevelUp as EventListener)
+    window.addEventListener("app:level-up", onLevelUp as EventListener)
     return () => {
-      window.removeEventListener("cf:level-up", onLevelUp as EventListener)
+      window.removeEventListener("app:level-up", onLevelUp as EventListener)
     }
   }, [])
 

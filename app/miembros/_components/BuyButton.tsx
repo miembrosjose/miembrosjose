@@ -77,7 +77,7 @@ export function BuyButton({
     // Dispara refresh dos owned-products SEM reload — notificações (toast XP,
     // achievements, broadcast queue) continuam tocando sem corte. A pagina inteira
     // re-pesquisa /api/profile/owned-products via listener em Products.tsx.
-    window.dispatchEvent(new CustomEvent("cf:owned-products-refresh"))
+    window.dispatchEvent(new CustomEvent("app:owned-products-refresh"))
     if (onSuccess) {
       setTimeout(onSuccess, 1500)
     }

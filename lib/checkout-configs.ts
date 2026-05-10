@@ -11,51 +11,51 @@ const BUMP_ANALYTICS_IMG = "https://cdn.SEU_DOMINIO.com/analytics.webp"
 const UPSELL_REVISAO_IMG = "https://cdn.SEU_DOMINIO.com/revisao.webp"
 const UPSELL_MINIVSL_IMG = "https://cdn.SEU_DOMINIO.com/minivsl.webp"
 
-// Stripe Price IDs por região (criados via scripts/stripe-bootstrap-live.mjs em 2026-04-27 — LIVE MODE)
+// Stripe Price IDs por região — CRIAR no Stripe Dashboard antes de subir prod.
 // LATAM (DEFAULT) usa Price em USD + Adaptive Pricing pra converter pra moeda local (BRL, MXN, etc).
 // USD/EUR/GBP/CHF usam Price na própria moeda — sem conversão.
-// Mini VSL é único USD ($24.90) usado em todas as regiões.
+// Mini VSL é único USD usado em todas as regiões.
 export const STRIPE_PRICE_IDS = {
   front: {
-    DEFAULT: "price_1TQhMy3ZNcaJuoiZid39WbFE", // USD 57
-    USD:     "price_1TQhMz3ZNcaJuoiZE3uj87fr", // USD 197
-    EUR:     "price_1TQhMz3ZNcaJuoiZTuOLlIh6", // EUR 197
-    GBP:     "price_1TQhMz3ZNcaJuoiZKYe0gBUu", // GBP 197
-    CHF:     "price_1TQhN03ZNcaJuoiZM3bxhiuw", // CHF 197
+    DEFAULT: "price_TODO_FRONT_DEFAULT",
+    USD:     "price_TODO_FRONT_USD",
+    EUR:     "price_TODO_FRONT_EUR",
+    GBP:     "price_TODO_FRONT_GBP",
+    CHF:     "price_TODO_FRONT_CHF",
   },
   // Acceso Anual NÃO precisa de Price IDs novos — usa unit_amount inline
   // (mesmo padrão do front à vista). frontAnnualPrice vive no CheckoutConfig
   // de cada região. Differenciação no Stripe Dashboard via metadata.product_variant.
   creativos: {
-    DEFAULT: "price_1TQhN03ZNcaJuoiZXbZUihPB", // USD 9.90
-    USD:     "price_1TQhN03ZNcaJuoiZXMAOzFrk", // USD 34.90
-    EUR:     "price_1TQhN13ZNcaJuoiZ4kymhEHR", // EUR 34.90
-    GBP:     "price_1TQhN13ZNcaJuoiZ31Aswwcf", // GBP 34.90
-    CHF:     "price_1TQhN13ZNcaJuoiZrnV0HgMb", // CHF 34.90
+    DEFAULT: "price_TODO_CREATIVOS_DEFAULT",
+    USD:     "price_TODO_CREATIVOS_USD",
+    EUR:     "price_TODO_CREATIVOS_EUR",
+    GBP:     "price_TODO_CREATIVOS_GBP",
+    CHF:     "price_TODO_CREATIVOS_CHF",
   },
   andromeda: {
-    DEFAULT: "price_1TQhN23ZNcaJuoiZETvzzwr4", // USD 7.90
-    USD:     "price_1TQhN23ZNcaJuoiZmyLHqqPj", // USD 27.90
-    EUR:     "price_1TQhN33ZNcaJuoiZZUB1emID", // EUR 27.90
-    GBP:     "price_1TQhN33ZNcaJuoiZDTzYgTov", // GBP 27.90
-    CHF:     "price_1TQhN33ZNcaJuoiZyvLCXfhg", // CHF 27.90
+    DEFAULT: "price_TODO_ANDROMEDA_DEFAULT",
+    USD:     "price_TODO_ANDROMEDA_USD",
+    EUR:     "price_TODO_ANDROMEDA_EUR",
+    GBP:     "price_TODO_ANDROMEDA_GBP",
+    CHF:     "price_TODO_ANDROMEDA_CHF",
   },
   analytics: {
-    DEFAULT: "price_1TQhN43ZNcaJuoiZ9mBPlrcx", // USD 7.90
-    USD:     "price_1TQhN43ZNcaJuoiZ8zDwm3sz", // USD 27.90
-    EUR:     "price_1TQhN43ZNcaJuoiZfk5bxNlV", // EUR 27.90
-    GBP:     "price_1TQhN53ZNcaJuoiZNim0i4fb", // GBP 27.90
-    CHF:     "price_1TQhN53ZNcaJuoiZ4nLqJhJv", // CHF 27.90
+    DEFAULT: "price_TODO_ANALYTICS_DEFAULT",
+    USD:     "price_TODO_ANALYTICS_USD",
+    EUR:     "price_TODO_ANALYTICS_EUR",
+    GBP:     "price_TODO_ANALYTICS_GBP",
+    CHF:     "price_TODO_ANALYTICS_CHF",
   },
   revisao: {
-    DEFAULT: "price_1TQhN63ZNcaJuoiZFYBtjrxv", // USD 49.90
-    USD:     "price_1TQhN63ZNcaJuoiZgpOEtStd", // USD 99.90
-    EUR:     "price_1TQhN63ZNcaJuoiZ2i2DgfpC", // EUR 99.90
-    GBP:     "price_1TQhN73ZNcaJuoiZzZ1jA24Q", // GBP 99.90
-    CHF:     "price_1TQhN73ZNcaJuoiZe89Sgjtb", // CHF 99.90
+    DEFAULT: "price_TODO_REVISAO_DEFAULT",
+    USD:     "price_TODO_REVISAO_USD",
+    EUR:     "price_TODO_REVISAO_EUR",
+    GBP:     "price_TODO_REVISAO_GBP",
+    CHF:     "price_TODO_REVISAO_CHF",
   },
-  // Mini VSL: USD único pra todas regiões (cliente paga $24.90 USD em qualquer país)
-  minivsl: "price_1TQhN73ZNcaJuoiZqd4L6c7z",
+  // Mini VSL: USD único pra todas regiões
+  minivsl: "price_TODO_MINIVSL",
 } as const
 
 export type BumpConfig = {

@@ -2,7 +2,7 @@
 
 // Funnels — grid de funnels da comunidade + popup com detalhes/feedbacks +
 // composer pra criar novo. Equivalente a fetchUserFunnels/openFunnelPopup do
-// area-prototipo.html (linhas 9806-10200).
+// proyecto base (linhas 9806-10200).
 //
 // Versão Fase 5d: composer aceita URL de imagem direta (em vez de upload).
 // Upload de arquivo + conversão webp ficam pra Fase 6 polish (reusa

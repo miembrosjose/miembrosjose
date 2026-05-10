@@ -1,5 +1,5 @@
 /* CSS das classes que aparecem dentro do `intro` e `notes` HTML dos episódios.
- * Migrado integralmente de public/area-prototipo.html (linhas 4712-5910).
+ * Migrado integralmente de public/proyecto base (linhas 4712-5910).
  *
  * Aplicado via dangerouslySetInnerHTML em EpisodesDrawer — o HTML cru tem
  * class= (não className=) e estilo via classes globais.

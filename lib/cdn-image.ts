@@ -6,8 +6,8 @@
 //  - Cacheia transformações no edge (1ª vez é miss, demais hit)
 //
 // Uso:
-//   cdnImage("imgi_hero.webp", { width: 1080, quality: 85 })
-//   → "https://cdn.SEU_DOMINIO.com/cdn-cgi/image/width=1080,quality=85,format=auto/imgi_hero.webp"
+//   cdnImage("hero.webp", { width: 1080, quality: 85 })
+//   → "https://cdn.SEU_DOMINIO.com/cdn-cgi/image/width=1080,quality=85,format=auto/hero.webp"
 
 const CDN_BASE = "https://cdn.SEU_DOMINIO.com"
 
@@ -36,7 +36,7 @@ export function cdnImage(filename: string, opts: ImageOptions = {}): string {
  * e fica suave o suficiente em desktop FullHD com gradient overlay.
  */
 export const HERO_IMAGE = cdnImage(
-  "imgi_1_Design-sem-nome-2026-01-10T050158.703-BQv1e79x4ZCrXhGM34GHEklrJxwP7v.webp",
+  "hero-cinematica.webp",
   { width: 1080, quality: 85 },
 )
 
@@ -47,7 +47,7 @@ export const HERO_IMAGE = cdnImage(
  * Com resize 1080w + AVIF: ~50-80 KB (-95%).
  */
 export const IMG_CALL_BACKGROUND = cdnImage(
-  "imgi_1_Design-sem-nome-2026-02-10T222909.844.webp-BwKYyodXUJVdXyVZtrXzLO173PUyNS.webp",
+  "call-background.webp",
   { width: 1080, quality: 85 },
 )
 
@@ -73,7 +73,7 @@ export const IMG_PERSONA_AVATAR = cdnImage(
  * Original: 662 KB. Com resize 1080w + AVIF: ~80 KB (-88%).
  */
 export const IMG_WHATS_BACKGROUND = cdnImage(
-  "imgi_6_photo-1573339607881-208e75e4b267-ldXMwfVQVYM7GWmvhy9CKhssB4deGt.webp",
+  "whats-background.webp",
   { width: 1080, quality: 85 },
 )
 
@@ -82,7 +82,7 @@ export const IMG_WHATS_BACKGROUND = cdnImage(
  * Original: 327 KB. Com resize 1080w + AVIF: ~50 KB (-85%).
  */
 export const IMG_AUDIO_BACKGROUND = cdnImage(
-  "Design-sem-nome-2026-04-04T213426.929-_1_.webp",
+  "audio-background.webp",
   { width: 1080, quality: 85 },
 )
 
@@ -91,7 +91,7 @@ export const IMG_AUDIO_BACKGROUND = cdnImage(
  * Original: 664 KB. Com resize 720w + AVIF: ~50 KB (-92%).
  */
 export const IMG_PROOF_RESULTS = cdnImage(
-  "Design-sem-nome-2026-04-09T225813.719.webp",
+  "proof-results.webp",
   { width: 720, quality: 85 },
 )
 

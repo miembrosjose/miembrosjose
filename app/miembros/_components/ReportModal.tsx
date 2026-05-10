@@ -1,7 +1,7 @@
 "use client"
 
 // Modal de denúncia de conteúdo (post/reply/comment).
-// Substitui o reportModalOverlay do area-prototipo.html.
+// Substitui o reportModalOverlay do proyecto base.
 // POST /api/reports com { target_type, target_id, reason_category, message }.
 
 import { useState, useEffect } from "react"

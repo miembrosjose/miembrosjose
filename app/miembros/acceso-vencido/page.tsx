@@ -10,7 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 export const dynamic = "force-dynamic"
 
 const WHATSAPP_URL =
-  "https://wa.me/5547996812781?text=Hola,%20mi%20acceso%20al%20treinamento%20de%20Copy%20Films%20vencio.%20Quiero%20renovar."
+  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20mi%20acceso%20vencio.%20Quiero%20renovar."
 
 async function getOwnedProductsForUser(userId: string): Promise<string[]> {
   const admin = getSupabaseAdmin()

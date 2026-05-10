@@ -210,7 +210,7 @@ export function SeriesInfoModal({
           <aside className={styles.infoAside}>
             <div className={styles.asideGroup}>
               <span className={styles.asideLabel}>Elenco: </span>
-              <span className={styles.asideValue}>Michael</span>
+              <span className={styles.asideValue}>[BRAND_NAME]</span>
             </div>
             <div className={styles.asideGroup}>
               <span className={styles.asideLabel}>Géneros: </span>

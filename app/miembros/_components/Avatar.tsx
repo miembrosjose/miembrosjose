@@ -2,7 +2,7 @@
 
 // Avatar reutilizável (post/reply/comment) — abre perfil via setView() sem reload.
 // Renderiza badge da insignia destacada como overlay no canto inferior direito
-// (igual area-prototipo.html — avatarBadgeOverlayHtml).
+// (igual proyecto base — avatarBadgeOverlayHtml).
 
 import { useView } from "../_lib/view-context"
 import { useIsOnline, ONLINE_BOX_SHADOW } from "../_lib/online-presence"

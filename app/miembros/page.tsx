@@ -1,9 +1,9 @@
 // Home oficial da área de membros (SPA Next.js).
-// Substituiu o redirect histórico pro /area-prototipo.html após a Fase 6
+// Substituiu o redirect histórico pro /proyecto base após a Fase 6
 // da migração (branch spa-migration).
 //
 // IMPORTANTE: validar visualmente em dev antes de pushar pra workers-migration.
-// Pra rollback rápido: voltar este arquivo pra `redirect("/area-prototipo.html")`.
+// Pra rollback rápido: voltar este arquivo pra `redirect("/proyecto base")`.
 
 import type { Metadata } from "next"
 import { requireFrontAccess } from "./_lib/auth-server"

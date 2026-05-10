@@ -30,12 +30,12 @@ const CDN = "https://cdn.SEU_DOMINIO.com"
 
 // Assets compartilhados / chave
 const AUDIO_CALL = `${CDN}/audio-call.mp3`
-const IMG_AUDIO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/Design-sem-nome-2026-04-04T213426.929-_1_.webp`
-const IMG_PANTALLA_HERO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/imgi_1_CRIE-UM-FUNIL-GAMIFICADO-IGUAL-AO-QUE-VOC%C3%8A-VIU-EM-POUCOS-MINUTOS-_40_-mbrj9oNiW1Cjm1y6dfPLbcvfe0yMYJ%20(1).webp`
-const IMG_GEMINI = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=360/Gemini_Generated_Image_k41390k41390k413-_1_.webp`
-const IMG_WHATS = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/imgi_6_photo-1573339607881-208e75e4b267-ldXMwfVQVYM7GWmvhy9CKhssB4deGt.webp`
-const IMG_TIKTOK = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=540/imgi_2_Design-sem-nome-2026-01-03T000026.459-MAaeHvZWK3i4mVOmcgOoVkQQxSCGgl.webp`
-const IMG_SALESPAGE_HERO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/imgi_1_Design-sem-nome-2026-01-10T050158.703-BQv1e79x4ZCrXhGM34GHEklrJxwP7v.webp`
+const IMG_AUDIO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/audio-background.webp`
+const IMG_PANTALLA_HERO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/pantalla-hero.webp`
+const IMG_GEMINI = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=360/persona-avatar.webp`
+const IMG_WHATS = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/whats-background.webp`
+const IMG_TIKTOK = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=540/tiktok-avatar.webp`
+const IMG_SALESPAGE_HERO = `${CDN}/cdn-cgi/image/format=auto,quality=85,width=1080/salespage-hero.webp`
 
 export const FUNNEL_PREFETCH: Record<string, FunnelStageConfig> = {
   // / → /call

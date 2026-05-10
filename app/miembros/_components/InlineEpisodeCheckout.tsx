@@ -130,7 +130,7 @@ export function InlineEpisodeCheckout({ product }: Props) {
               bodyExtras={inlineBodyExtras}
               customerEmail={user?.email}
               onSuccess={() => {
-                window.dispatchEvent(new CustomEvent("cf:owned-products-refresh"))
+                window.dispatchEvent(new CustomEvent("app:owned-products-refresh"))
               }}
             />
           </div>

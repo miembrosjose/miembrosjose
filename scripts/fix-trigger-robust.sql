@@ -6,9 +6,9 @@
 -- auth.users também falha (porque trigger é AFTER INSERT no MESMO transaction).
 -- Resultado: criação de conta quebra inteira.
 --
--- Bug observado em prod (07/05/2026):
--- Cliente Mauricio (morti.mkt@gmail.com) acabou de comprar e não conseguiu
--- criar conta. Tela mostra "Algo salió mal".
+-- Bug observado em prod:
+-- Cliente acabou de comprar e não conseguiu criar conta — tela mostra "Algo salió mal"
+-- por causa de constraint que falhava silenciosamente no trigger.
 --
 -- Fix: envolve toda lógica em BEGIN/EXCEPTION pra que QUALQUER erro do trigger
 -- seja loggado mas NÃO impeça a criação do user em auth.users. Auth tem que

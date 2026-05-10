@@ -1,6 +1,6 @@
 "use client"
 
-// Servicios Premium — 2 cards estáticos do area-prototipo.html linhas 6591-6636.
+// Servicios Premium — 2 cards estáticos do proyecto base linhas 6591-6636.
 //
 // Card 1 (gold): "¿Quieres un área de miembros igual a esta?" → wa.me link
 // Card 2 (image): "Embudo gamificado [BRAND_NAME]" → /producto/embudo (view interna)
@@ -11,11 +11,11 @@ import { cdnImage } from "@/lib/cdn-image"
 import styles from "./services.module.css"
 
 const WA_PRESUPUESTO_URL =
-  "https://wa.me/5547996812781?text=Hola,%20soy%20miembro%20de%20la%20comunidad%20y%20quiero%20un%20presupuesto%20de%20un%20%C3%A1rea%20de%20miembros%20cinematogr%C3%A1fica%20y%20gamificada"
+  "https://wa.me/SEU_WHATSAPP_NUMBER?text=Hola,%20soy%20miembro%20de%20la%20comunidad%20y%20quiero%20un%20presupuesto%20de%20un%20%C3%A1rea%20de%20miembros%20cinematogr%C3%A1fica%20y%20gamificada"
 
 // Original PNG: 1.5 MB (resolução muito alta pra um thumb).
 // Com Cloudflare Image Resizing 540w + AVIF: ~18 KB (-99%).
-const EMBUDO_THUMB = cdnImage("Design sem nome - 2026-03-28T015000.882.png", { width: 540 })
+const EMBUDO_THUMB = cdnImage("embudo-thumb.png", { width: 540 })
 
 export function ServicesPremium() {
   const { setView } = useView()

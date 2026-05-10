@@ -2,7 +2,7 @@
 
 // Modal base reutilizável pra área de membros.
 //
-// Substitui o padrão repetido no area-prototipo.html onde cada modal era
+// Substitui o padrão repetido no proyecto base onde cada modal era
 // um <div> com display:none/block + onclick handler manual.
 //
 // Uso:

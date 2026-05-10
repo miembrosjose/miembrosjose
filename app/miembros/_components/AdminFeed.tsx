@@ -1,7 +1,7 @@
 "use client"
 
 // Feed do Estudio (admin) — posts publicados pelo creador (não confundir com fórum).
-// Equivalente ao bloco fetchFeedPosts/renderFeed/admin composer do area-prototipo.html
+// Equivalente ao bloco fetchFeedPosts/renderFeed/admin composer do proyecto base
 // (linhas 11939-12092). Sem replies — só leitura, com reactions inline.
 //
 // Admin: pode criar/deletar via composer. Não-admin: só lê.

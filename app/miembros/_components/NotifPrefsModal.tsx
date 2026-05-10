@@ -1,7 +1,7 @@
 "use client"
 
 // Modal de configuração de notificações. Equivalente a #notifPrefsOverlay
-// + openNotifPrefsModal/saveNotifPrefsFromModal do area-prototipo.html
+// + openNotifPrefsModal/saveNotifPrefsFromModal do proyecto base
 // (linhas 6311-6444 + 11279-11328).
 //
 // Toggles granulares:

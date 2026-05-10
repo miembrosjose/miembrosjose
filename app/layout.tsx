@@ -16,7 +16,7 @@ const geist = Geist({
   variable: "--font-geist-sans",
 })
 
-// MANTIDO: Todos os pesos da Cinzel preservados para garantir 100% de fidelidade ao seu design original.
+// MANTIDO: Todos os pesos da Cinzel preservados para garantir fidelidade ao design.
 const cinzel = Cinzel({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "900"],

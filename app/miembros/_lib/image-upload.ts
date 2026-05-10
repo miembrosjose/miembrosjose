@@ -1,5 +1,5 @@
 // Helper de conversão e upload de imagem/vídeo pra área de membros.
-// Equivalente a convertForumImageToWebp do area-prototipo.html.
+// Equivalente a convertForumImageToWebp do proyecto base.
 // Usa /api/forum/upload-image que já existe (aceita webp/jpg/png/gif/mp4/webm/mov).
 
 import { api } from "./api"

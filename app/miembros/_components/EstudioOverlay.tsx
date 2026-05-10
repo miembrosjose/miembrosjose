@@ -4,7 +4,7 @@
 // Espelho do TopoOverlay — mesma estrutura, paleta diferente (red+gold pra
 // reforçar "premium cinematográfico"). Aparece pro recipient E pros outros.
 //
-// Escuta evento "cf:estudio-conquista" com detail { userName, isSelf }.
+// Escuta evento "app:estudio-conquista" com detail { userName, isSelf }.
 // Despachado pelo BroadcastProvider quando notif type=public_insignia_self
 // (recipient) ou type=public_insignia (outros) chega com EL ESTUDIO no title.
 
@@ -101,9 +101,9 @@ export function EstudioOverlay() {
       if (!playingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:estudio-conquista", onEstudioConquista as EventListener)
+    window.addEventListener("app:estudio-conquista", onEstudioConquista as EventListener)
     return () => {
-      window.removeEventListener("cf:estudio-conquista", onEstudioConquista as EventListener)
+      window.removeEventListener("app:estudio-conquista", onEstudioConquista as EventListener)
     }
   }, [])
 

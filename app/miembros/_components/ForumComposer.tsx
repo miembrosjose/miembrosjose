@@ -1,7 +1,7 @@
 "use client"
 
 // Composer pra criar post novo no fórum.
-// Equivalente ao bloco openForumComposer/submitForumPost do area-prototipo.html.
+// Equivalente ao bloco openForumComposer/submitForumPost do proyecto base.
 
 import { useState } from "react"
 import { Plus } from "lucide-react"

@@ -10,8 +10,7 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
-    "html_handling": "none",
-    "run_worker_first": ["/area-prototipo.html"]
+    "html_handling": "none"
   },
   "observability": {
     "enabled": true
@@ -28,8 +27,7 @@
       "assets": {
         "directory": ".open-next/assets",
         "binding": "ASSETS",
-        "html_handling": "none",
-        "run_worker_first": ["/area-prototipo.html"]
+        "html_handling": "none"
       },
       "observability": {
         "enabled": true

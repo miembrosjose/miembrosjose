@@ -2,7 +2,7 @@
 
 // Feed do fórum — lista paginada de posts + composer no topo + modais
 // (edit, report). Substitui o conjunto fetchForumPosts/renderForum/
-// openEditModal/openReportModal do area-prototipo.html.
+// openEditModal/openReportModal do proyecto base.
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { api } from "../_lib/api"

@@ -1,5 +1,5 @@
 /*
- * Design tokens da área de membros — extraídos do area-prototipo.html (paleta [BRAND_NAME]).
+ * Design tokens da área de membros — extraídos do proyecto base (paleta [BRAND_NAME]).
  *
  * Por que .miembros-shell e não :root?
  *   Outras rotas do projeto (/checkout, /direct, /salespage) podem ter outra
@@ -35,7 +35,7 @@
   --font-body:      var(--font-dm-sans, 'DM Sans'), sans-serif;
   --font-mono:      var(--font-jetbrains, 'JetBrains Mono'), monospace;
 
-  /* Base do shell (equivalente ao body do area-prototipo.html) */
+  /* Base do shell (equivalente ao body do proyecto base) */
   background: var(--bg-deep);
   color: var(--text-primary);
   font-family: var(--font-body);

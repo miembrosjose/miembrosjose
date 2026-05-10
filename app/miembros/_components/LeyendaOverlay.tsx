@@ -4,7 +4,7 @@
 // Tier topo "comunitário" — espelho do EternoOverlay, mesma estrutura,
 // música compartilhada (sounds.topoConquista — Shahiera).
 //
-// Escuta evento "cf:leyenda-conquista" com detail { userName, isSelf }.
+// Escuta evento "app:leyenda-conquista" com detail { userName, isSelf }.
 
 import { useEffect, useRef, useState } from "react"
 import { sounds } from "../_lib/sounds"
@@ -97,9 +97,9 @@ export function LeyendaOverlay() {
       if (!playingRef.current) processQueue()
     }
 
-    window.addEventListener("cf:leyenda-conquista", onLeyendaConquista as EventListener)
+    window.addEventListener("app:leyenda-conquista", onLeyendaConquista as EventListener)
     return () => {
-      window.removeEventListener("cf:leyenda-conquista", onLeyendaConquista as EventListener)
+      window.removeEventListener("app:leyenda-conquista", onLeyendaConquista as EventListener)
     }
   }, [])
 

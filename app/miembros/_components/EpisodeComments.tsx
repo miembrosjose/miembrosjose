@@ -1,7 +1,7 @@
 "use client"
 
 // Comentários por episódio (renderizado dentro do EpisodesDrawer abaixo do player).
-// Equivalente a fetchEpisodeComments + renderEpisodeComments do area-prototipo.html
+// Equivalente a fetchEpisodeComments + renderEpisodeComments do proyecto base
 // (linhas 12345-12545). Suporta replies (1 nível), like/dislike e delete admin.
 
 import { useEffect, useState, useCallback } from "react"
