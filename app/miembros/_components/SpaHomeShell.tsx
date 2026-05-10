@@ -6,7 +6,6 @@
 import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "./Navbar"
-import { FrontExpiringBanner } from "./FrontExpiringBanner"
 import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
@@ -272,10 +271,6 @@ export function SpaHomeShell() {
       {introDone && (
         <>
           <Navbar />
-
-          {/* Banner aviso de expiração — aparece quando front <= 30 dias.
-              Acima de 30 dias ou permanente: não renderiza nada. */}
-          <FrontExpiringBanner />
 
           <div className={styles.viewWrap}>
             {view === "inicio" && (

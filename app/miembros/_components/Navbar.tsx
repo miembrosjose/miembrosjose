@@ -13,7 +13,6 @@ import { XpBadge } from "./XpBadge"
 import { XpDetailsModal } from "./XpDetailsModal"
 import { NotificationsBell } from "./NotificationsBell"
 import { AvatarBadge, AvatarFlameSmall, AvatarStarSmall } from "./Avatar"
-import { AccessTimeBadge } from "./AccessTimeBadge"
 import styles from "./navbar.module.css"
 
 type NavItem = {
@@ -172,7 +171,6 @@ export function Navbar() {
           )}
         </a>
         <NotificationsBell />
-        <AccessTimeBadge className={styles.accessTimeBadge} />
         <XpBadge onClick={() => setXpModalOpen(true)} />
         {isAdmin && (
           <a

@@ -38,7 +38,6 @@ const PRODUCT_KEYS = new Set([
 
 type SaleRow = {
   items: Array<{ key: string; name?: string; price?: number; qty?: number }> | null
-  expires_at: string | null
 }
 
 export async function GET() {
@@ -48,15 +47,11 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
 
-  // stripe_sales tem RLS desabilitado mas grants pro role authenticated podem
-  // não estar setados — usa admin client (service_role) e filtra por user_id.
-  // Service role é privado server-side (nunca chega no browser).
-  // revoked_products continua filtrando por email (não tem user_id)
   const admin = getSupabaseAdmin()
   const email = user.email.toLowerCase()
 
   const [{ data, error }, { data: revoked }] = await Promise.all([
-    admin.from("stripe_sales").select("items, expires_at").eq("user_id", user.id).eq("status", "paid"),
+    admin.from("stripe_sales").select("items").eq("user_id", user.id).eq("status", "paid"),
     admin.from("revoked_products").select("product_key").eq("customer_email", email),
   ])
 
@@ -65,43 +60,25 @@ export async function GET() {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
 
-  // Set de keys revogadas (manual + refund automático Stripe/Hotmart)
   const revokedKeys = new Set<string>((revoked || []).map((r) => (r as { product_key: string }).product_key))
 
   const ownedKeys = new Set<string>()
   let hasFront = false
-  let frontExpiresAt: string | null = null
-  const now = Date.now()
 
   for (const row of (data || []) as SaleRow[]) {
-    // Determina se esse sale tem o front. Se sim, valida expires_at.
-    // Pra outros produtos (bumps/upsells), expires_at é ignorado — permanente.
     const saleHasFront = (row.items || []).some(
       (it) => it?.key && it.key.replace(/__downsell$/, "") === "front",
     )
 
-    if (saleHasFront) {
-      // Sale do front válido = expires_at NULL (permanente, ex: pré-migration)
-      // OU expires_at no futuro
-      const expiresAtMs = row.expires_at ? new Date(row.expires_at).getTime() : null
-      const isValid = expiresAtMs === null || expiresAtMs > now
-      if (isValid && !revokedKeys.has("front")) {
-        hasFront = true
-        // Guarda a expiração mais distante (caso o user tenha múltiplos sales,
-        // ex: comprou + admin liberou de novo) — vale a maior.
-        if (row.expires_at) {
-          if (!frontExpiresAt || new Date(row.expires_at).getTime() > new Date(frontExpiresAt).getTime()) {
-            frontExpiresAt = row.expires_at
-          }
-        }
-      }
+    if (saleHasFront && !revokedKeys.has("front")) {
+      hasFront = true
     }
 
     for (const it of row.items || []) {
       if (!it?.key) continue
       const cleanKey = it.key.replace(/__downsell$/, "")
-      if (revokedKeys.has(cleanKey)) continue   // Pula keys revogadas
-      if (cleanKey === "front") continue        // Já tratado acima com expires_at
+      if (revokedKeys.has(cleanKey)) continue
+      if (cleanKey === "front") continue
       if (PRODUCT_KEYS.has(cleanKey)) ownedKeys.add(cleanKey)
     }
   }
@@ -109,6 +86,5 @@ export async function GET() {
   return NextResponse.json({
     product_keys: Array.from(ownedKeys),
     front: hasFront,
-    front_expires_at: frontExpiresAt,
   })
 }

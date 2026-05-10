@@ -5,45 +5,30 @@
 //
 // Lógica:
 //   1. Auth via cookie Supabase
-//   2. Lê preço do produto na config da região do user
-//   3. Acha stripe_customer_id mais recente (cliente Hotmart NÃO tem)
+//   2. Lê preço do produto na config (USD único)
+//   3. Acha stripe_customer_id mais recente
 //   4. Tenta cobrar off-session com cartão salvo
 //   5. Sucesso → cria stripe_sale + retorna sucesso
 //   6. Falha → retorna erro pro frontend abrir fallback inline (Elements)
-//
-// Webhook stripe-webhook detecta sale_type='upsell' + metadata.product_key
-// e atualiza tudo (XP, insignias, etc).
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
-import { CHECKOUT_CONFIGS, type CheckoutRegion } from "@/lib/checkout-configs"
+import { CHECKOUT_CONFIG } from "@/lib/checkout-configs"
 
 export const dynamic = "force-dynamic"
 
 const VALID_KEYS = new Set(["creativos", "andromeda", "analytics", "minivsl", "revisao"])
 
-const ZERO_DECIMAL_CURRENCIES = new Set([
-  "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga",
-  "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf",
-])
-
-/** Encontra preço do produto na config da região */
-function getProductPriceUsd(region: CheckoutRegion, productKey: string): number | null {
-  const config = CHECKOUT_CONFIGS[region]
-  if (!config) return null
-
-  const bump = config.bumps.find((b) => b.key === productKey)
+function getProductPriceUsd(productKey: string): number | null {
+  const bump = CHECKOUT_CONFIG.bumps.find((b) => b.key === productKey)
   if (bump) return bump.price
-
-  const upsell = config.upsells.find((u) => u.key === productKey)
+  const upsell = CHECKOUT_CONFIG.upsells.find((u) => u.key === productKey)
   if (upsell) return upsell.price
-
   return null
 }
 
-/** Nome do produto pra metadata + items[] */
 function getProductName(productKey: string): string {
   const NAMES: Record<string, string> = {
     creativos: "Producto 1",
@@ -77,10 +62,10 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe()
   const admin = getSupabaseAdmin()
 
-  // 1) Acha sale mais recente do user (pra pegar customer_id + region + currency)
+  // 1) Acha sale mais recente do user (pra pegar customer_id)
   const { data: sales } = await admin
     .from("stripe_sales")
-    .select("region, currency, stripe_customer_id, customer_country")
+    .select("stripe_customer_id")
     .eq("user_id", user.id)
     .eq("status", "paid")
     .order("created_at", { ascending: false })
@@ -93,11 +78,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Pega o sale com stripe_customer_id (pode pular sales Hotmart sem customer)
   const saleWithCustomer = sales.find((s) => s.stripe_customer_id)
 
   if (!saleWithCustomer || !saleWithCustomer.stripe_customer_id) {
-    // Cliente Hotmart ou manual — não tem cartão Stripe. Frontend abre Elements.
     return NextResponse.json(
       {
         error: "no_customer",
@@ -107,14 +90,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Filtra region inválida (AUTO_BONO etc) — defaulta pra DEFAULT senão
-  // getProductPriceUsd retorna null e API quebra com 400.
-  const VALID_REGIONS: ReadonlySet<string> = new Set(["DEFAULT", "USD", "EUR", "GBP", "CHF"])
-  const rawRegion = (saleWithCustomer.region as string | null) || "DEFAULT"
-  const region: CheckoutRegion = (VALID_REGIONS.has(rawRegion) ? rawRegion : "DEFAULT") as CheckoutRegion
-  const productPriceUsd = getProductPriceUsd(region, productKey)
+  const productPriceUsd = getProductPriceUsd(productKey)
   if (!productPriceUsd) {
-    return NextResponse.json({ error: "product_not_in_region" }, { status: 400 })
+    return NextResponse.json({ error: "product_not_found" }, { status: 400 })
   }
 
   // 2) Acha payment_method default
@@ -151,23 +129,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3) Cobra em USD (ou moeda da região USD/EUR/GBP/CHF)
-  const finalCurrency = region === "DEFAULT" ? "usd" : region.toLowerCase()
-  const finalAmount = productPriceUsd
-  const detectedCountry: string | null = (saleWithCustomer.customer_country as string | null) || null
+  // 3) Cobra em USD fixo
+  const amountCents = Math.round(productPriceUsd * 100)
 
-  console.log("[buy-product] charging:", { amount: finalAmount, currency: finalCurrency })
-
-  const amountCents = ZERO_DECIMAL_CURRENCIES.has(finalCurrency)
-    ? Math.round(finalAmount)
-    : Math.round(finalAmount * 100)
-
-  // 4) Cobra off-session (1-click)
   try {
     const productName = getProductName(productKey)
     const pi = await stripe.paymentIntents.create({
       amount: amountCents,
-      currency: finalCurrency,
+      currency: "usd",
       customer: saleWithCustomer.stripe_customer_id,
       payment_method: paymentMethodId,
       off_session: true,
@@ -175,12 +144,9 @@ export async function POST(req: NextRequest) {
       description: `Compra premium: ${productName}`,
       metadata: {
         sale_type: "upsell",
-        // upsells (csv) — formato esperado pelo webhook handlePaymentIntentSucceeded
         upsells: productKey,
         product_key: productKey,
         upsell_user_id: user.id,
-        region,
-        // items JSON — fallback pro caso de processamento alternativo
         items: JSON.stringify([{ key: productKey, price: productPriceUsd }]),
         customer_email: user.email || "",
         total_usd_cents: String(Math.round(productPriceUsd * 100)),
@@ -188,14 +154,6 @@ export async function POST(req: NextRequest) {
     })
 
     if (pi.status === "succeeded") {
-      // GRAVA SALE IMEDIATAMENTE — sem esperar webhook async do Stripe.
-      // O webhook ainda vai rodar depois (assíncrono, 1-3s), mas usa upsert com
-      // onConflict=stripe_payment_intent_id, então é idempotente: se nós já
-      // gravamos aqui, ele só atualiza; se ele chegar primeiro, idem.
-      //
-      // Isso elimina a race condition: frontend chama owned-products IMEDIATAMENTE
-      // após PI succeeded e a sale já está no banco → produto aparece desbloqueado
-      // sem precisar reload nem aguardar webhook.
       try {
         await admin.from("stripe_sales").upsert(
           {
@@ -203,30 +161,26 @@ export async function POST(req: NextRequest) {
             stripe_payment_intent_id: pi.id,
             stripe_customer_id: saleWithCustomer.stripe_customer_id,
             sale_type: "upsell",
-            plan: null,
-            region,
-            items: [{ key: productKey, name: getProductName(productKey), price: productPriceUsd, qty: 1 }],
+            items: [{ key: productKey, name: productName, price: productPriceUsd, qty: 1 }],
             amount_total: amountCents,
-            currency: finalCurrency,
+            currency: "usd",
             customer_email: user.email || null,
             customer_name: null,
             customer_phone: null,
-            customer_country: detectedCountry,
             user_id: user.id,
             status: "paid",
           },
           { onConflict: "stripe_payment_intent_id" },
         )
       } catch (e) {
-        // Não bloqueia a resposta — webhook arruma depois se falhar aqui.
-        console.warn("[buy-product] gravacao imediata falhou (webhook ainda vai gravar):", e instanceof Error ? e.message : e)
+        console.warn("[buy-product] gravacao imediata falhou:", e instanceof Error ? e.message : e)
       }
 
       return NextResponse.json({
         success: true,
         payment_intent_id: pi.id,
         amount: amountCents,
-        currency: finalCurrency,
+        currency: "usd",
       })
     }
 
@@ -246,9 +200,6 @@ export async function POST(req: NextRequest) {
     const stripeErr = e as { message?: string; code?: string; decline_code?: string }
     console.error("[/api/buy-product]", stripeErr.message, stripeErr.code, stripeErr.decline_code)
 
-    // Erros recuperáveis via fallback Stripe Elements (digitar cartão novo).
-    // Inclui: cartão recusado, expirado, moeda incompatível, autenticação 3DS,
-    // payment method inválido, etc. Front-end abre StripeInlinePayment.
     const FALLBACK_CODES = new Set([
       "card_declined",
       "expired_card",
