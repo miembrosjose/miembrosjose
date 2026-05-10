@@ -16,6 +16,7 @@ import { Clock, X } from "lucide-react"
 import { api } from "../_lib/api"
 import { useAuth } from "../_lib/auth-context"
 import { StripeInlinePayment, type CurrencyOption } from "./StripeInlinePayment"
+import { getUpgradePricingOptions } from "@/lib/client-pricing"
 
 type Props = {
   className?: string
@@ -155,19 +156,8 @@ function AccessInfoModal({
   const [hadStripeCustomer, setHadStripeCustomer] = useState(false)
 
   useEffect(() => {
-    // Carrega pricing logo na abertura do modal — só pra exibir; não bloqueia 1-click.
-    let cancelled = false
-    fetch("/api/profile/upgrade-pricing", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled) return
-        if (data?.options) setPricingOptions(data.options)
-        if (data?.display_local) setDisplayLocal(data.display_local)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
+    // Carrega pricing fixo do helper local (sem fetch a API).
+    setPricingOptions(getUpgradePricingOptions())
   }, [])
 
   async function handleUpgrade() {
@@ -216,22 +206,8 @@ function AccessInfoModal({
     }
   }
 
-  async function loadPricingOptions() {
-    try {
-      const res = await fetch("/api/profile/upgrade-pricing", { credentials: "include" })
-      if (!res.ok) {
-        setPricingOptions([
-          { currency: "usd", amount: 40, label: "Pagar en USD", formatted: "US$ 40,00" },
-        ])
-        return
-      }
-      const data = await res.json()
-      setPricingOptions(data.options || [])
-    } catch {
-      setPricingOptions([
-        { currency: "usd", amount: 40, label: "Pagar en USD", formatted: "US$ 40,00" },
-      ])
-    }
+  function loadPricingOptions() {
+    setPricingOptions(getUpgradePricingOptions())
   }
 
   // bodyExtras estável pra StripeInlinePayment (anti remount loop)

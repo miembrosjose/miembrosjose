@@ -12,6 +12,7 @@ import type { PremiumProduct } from "../_lib/products"
 import { useAuth } from "../_lib/auth-context"
 import { BuyButton } from "./BuyButton"
 import { StripeInlinePayment, type CurrencyOption } from "./StripeInlinePayment"
+import { getProductPricingOptions } from "@/lib/client-pricing"
 import styles from "./product-modals.module.css"
 
 type ProductKey = "creativos" | "andromeda" | "analytics" | "minivsl" | "revisao"
@@ -63,38 +64,14 @@ function usePricing(productKey: ProductKey | null): PricingState {
 
   useEffect(() => {
     if (!productKey) return
-    let cancelled = false
-    setLoading(true)
+    setLoading(false)
     setError(null)
-    fetch(`/api/profile/product-pricing?product_key=${encodeURIComponent(productKey)}`, {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then(async (r) => {
-        const text = await r.text()
-        let data: { options?: PricingOption[]; error?: string } = {}
-        try { data = JSON.parse(text) } catch {}
-        console.log("[usePricing]", productKey, "status:", r.status, "data:", data)
-        if (!r.ok) {
-          throw new Error(`HTTP ${r.status} ${data.error || text.slice(0, 100)}`)
-        }
-        if (cancelled) return
-        if (Array.isArray(data?.options) && data.options.length > 0) {
-          setOptions(data.options)
-        } else {
-          throw new Error("empty_options")
-        }
-      })
-      .catch((e) => {
-        if (cancelled) return
-        const msg = e instanceof Error ? e.message : "Error"
-        console.error("[usePricing]", productKey, "FAILED:", msg)
-        setError(msg)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => { cancelled = true }
+    const opts = getProductPricingOptions(productKey)
+    if (opts.length > 0) {
+      setOptions(opts)
+    } else {
+      setError("empty_options")
+    }
   }, [productKey, attempt])
 
   return {

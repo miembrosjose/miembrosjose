@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { StripeInlinePayment, type CurrencyOption } from "./StripeInlinePayment"
+import { getProductPricingOptions } from "@/lib/client-pricing"
 
 type ProductKey = "creativos" | "andromeda" | "analytics" | "minivsl" | "revisao"
 
@@ -87,21 +88,8 @@ export function BuyProductModal({
     }
   }
 
-  async function loadPricingOptions() {
-    try {
-      const res = await fetch(
-        `/api/profile/product-pricing?product_key=${encodeURIComponent(productKey)}`,
-        { credentials: "include" },
-      )
-      if (!res.ok) {
-        setPricingOptions([])
-        return
-      }
-      const data = await res.json()
-      setPricingOptions(data.options || [])
-    } catch {
-      setPricingOptions([])
-    }
+  function loadPricingOptions() {
+    setPricingOptions(getProductPricingOptions(productKey))
   }
 
   // Carrega pricing automaticamente pra cliente Hotmart (sem stripe_customer_id):

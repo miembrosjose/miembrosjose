@@ -14,6 +14,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { StripeInlinePayment, type CurrencyOption } from "./StripeInlinePayment"
+import { getProductPricingOptions } from "@/lib/client-pricing"
 
 type ProductKey = "creativos" | "andromeda" | "analytics" | "minivsl" | "revisao"
 
@@ -145,21 +146,8 @@ export function BuyButton({
     }
   }
 
-  async function loadPricingOptions() {
-    try {
-      const res = await fetch(
-        `/api/profile/product-pricing?product_key=${encodeURIComponent(productKey)}`,
-        { credentials: "include" },
-      )
-      if (!res.ok) {
-        setPricingOptions([])
-        return
-      }
-      const data = await res.json()
-      setPricingOptions(data.options || [])
-    } catch {
-      setPricingOptions([])
-    }
+  function loadPricingOptions() {
+    setPricingOptions(getProductPricingOptions(productKey))
   }
 
   return (

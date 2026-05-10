@@ -16,6 +16,7 @@ import { useAuth } from "../_lib/auth-context"
 import { BuyButton } from "./BuyButton"
 import { StripeInlinePayment, type CurrencyOption } from "./StripeInlinePayment"
 import type { PremiumProduct } from "../_lib/products"
+import { getProductPricingOptions } from "@/lib/client-pricing"
 
 type ProductKey = "creativos" | "andromeda" | "analytics" | "minivsl" | "revisao"
 
@@ -40,22 +41,7 @@ function usePricing(productKey: ProductKey | null) {
 
   useEffect(() => {
     if (!productKey) return
-    let cancelled = false
-    fetch(`/api/profile/product-pricing?product_key=${encodeURIComponent(productKey)}`, {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (Array.isArray(data?.options) && data.options.length > 0) {
-          setOptions(data.options)
-        }
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
+    setOptions(getProductPricingOptions(productKey))
   }, [productKey])
 
   return options
