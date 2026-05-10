@@ -166,7 +166,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           stripe_customer_id: null,
           sale_type: "manual",
           region: "AUTO_BONO",
-          items: [{ key: "bonus-ganchos", name: "Pack de Ganchos Neuronales™", price: 0, qty: 1 }],
+          items: [{ key: "bonus-ganchos", name: "Bonus 1", price: 0, qty: 1 }],
           amount_total: 0,
           currency: "usd",
           customer_email: userEmailLower,

@@ -111,8 +111,8 @@ export function EstudioOverlay() {
 
   const ach = getAchievementById("el_estudio")
   const label = current.isSelf
-    ? "¡Conquistaste el Estudio!"
-    : `${current.userName} conquistó el Estudio`
+    ? "¡Conquistaste el Servicio Premium A!"
+    : `${current.userName} conquistó el Servicio Premium A`
 
   return (
     <>

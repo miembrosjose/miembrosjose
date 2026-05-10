@@ -117,8 +117,8 @@ export function TopoOverlay() {
 
   const ach = getAchievementById("el_topo")
   const label = current.isSelf
-    ? "¡Conquistaste el Topo!"
-    : `${current.userName} conquistó el Topo`
+    ? "¡Conquistaste el Servicio Premium B!"
+    : `${current.userName} conquistó el Servicio Premium B`
 
   return (
     <>

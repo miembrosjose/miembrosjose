@@ -26,16 +26,16 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   other: {
-    "facebook-domain-verification": "ufr4cun3s3y8oatdi94ooppacbcokn",
+    "facebook-domain-verification": "SEU_FB_DOMAIN_VERIFICATION_TOKEN",
     "format-detection": "telephone=no",
   },
   title: "[BRAND_NAME]",
-  description: "Embudo Gamificado Cinematográfico",
+  description: "[BRAND_DESCRIPTION]",
   keywords: ["copywriting", "anuncios", "marketing digital", "ventas", "conversiones"],
   authors: [{ name: "[BRAND_NAME]" }],
   openGraph: {
     title: "[BRAND_NAME]",
-    description: "Embudo Gamificado Cinematográfico",
+    description: "[BRAND_DESCRIPTION]",
     type: "website",
     locale: "es_LA",
     siteName: "[BRAND_NAME]",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "[BRAND_NAME]",
-    description: "Embudo Gamificado Cinematográfico",
+    description: "[BRAND_DESCRIPTION]",
   },
   icons: {
     icon: "/favicon.png",

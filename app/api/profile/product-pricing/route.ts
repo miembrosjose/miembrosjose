@@ -53,11 +53,11 @@ function getProductPriceUsd(
 
 function getProductName(productKey: string): string {
   const NAMES: Record<string, string> = {
-    creativos: "Creativos.AI",
-    andromeda: "Andrómeda.ADS",
-    analytics: "Analytics.KPI",
+    creativos: "Producto 1",
+    andromeda: "Producto 2",
+    analytics: "Producto 3",
     minivsl: "Agente Mini VSL",
-    revisao: "Revisión de Embudo",
+    revisao: "Servicio Premium",
   }
   return NAMES[productKey] || productKey
 }

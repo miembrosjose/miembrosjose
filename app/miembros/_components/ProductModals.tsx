@@ -17,11 +17,11 @@ import styles from "./product-modals.module.css"
 type ProductKey = "creativos" | "andromeda" | "analytics" | "minivsl" | "revisao"
 
 const PRODUCT_KEY_BY_NAME: Record<string, ProductKey> = {
-  "Creativos.AI": "creativos",
-  "Andrómeda.ADS": "andromeda",
-  "Analytics.KPI": "analytics",
-  "Agente Copy Mini VSL's": "minivsl",
-  "Revisión de Tu Embudo": "revisao",
+  "Producto 1": "creativos",
+  "Producto 2": "andromeda",
+  "Producto 3": "analytics",
+  "Upsell 1": "minivsl",
+  "Servicio Premium": "revisao",
 }
 
 function getProductKey(product: PremiumProduct): ProductKey | null {

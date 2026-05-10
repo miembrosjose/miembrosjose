@@ -405,7 +405,7 @@ export function ProfileOnboardingModal({
               marginTop: "0.5rem",
             }}
           >
-            {isPending ? "Guardando..." : "Continuar al Estudio"}
+            {isPending ? "Guardando..." : "Continuar"}
           </button>
         </form>
       </div>

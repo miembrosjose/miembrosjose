@@ -68,12 +68,12 @@ const OWN_ROWS: OwnRow[] = [
   { key: "forum_replies", title: "Respuestas a tus discusiones", desc: "Alguien respondió un post o comentario tuyo" },
   { key: "forum_likes",   title: "Likes recibidos",          desc: "Alguien le dio like a tu contenido" },
   { key: "follows",       title: "Nuevos seguidores",        desc: "Alguien empezó a seguirte" },
-  { key: "feed_posts",    title: "Posts del feed",           desc: "Avisos del Estudio en el feed" },
+  { key: "feed_posts",    title: "Posts del feed",           desc: "Avisos en el feed" },
   { key: "funnel_xp",     title: "Tu funnel ganó XP",        desc: "Cuando tu funnel atinge el quórum de likes" },
 ]
 
 const OTHERS_ROWS: OtherRow[] = [
-  { key: "welcome",     title: "Nuevos miembros",            desc: "Pop-up cuando alguien entra al Estudio" },
+  { key: "welcome",     title: "Nuevos miembros",            desc: "Pop-up cuando alguien entra a la plataforma" },
   { key: "level_up",    title: "Subidas de nivel ajenas",    desc: "Cuando otros llegan a LV 10+" },
   { key: "insignia",    title: "Insignias raras",            desc: "Cuando otros desbloquean insignia silver/gold/platinum" },
   { key: "streak",      title: "Streaks (30/90/365 días)",   desc: "Cuando otros completan marcas de constancia" },

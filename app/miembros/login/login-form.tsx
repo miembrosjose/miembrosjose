@@ -22,7 +22,7 @@ export default function LoginForm() {
       // Faz signOut pra limpar cookie e mostrar mensagem
       const supabase = getSupabaseBrowser()
       supabase.auth.signOut().catch(() => {})
-      setError("Tu acceso al Estudio fue revocado. Si crees que es un error, contactá soporte por WhatsApp.")
+      setError("Tu acceso fue revocado. Si crees que es un error, contactá soporte por WhatsApp.")
     }
   }, [searchParams])
 

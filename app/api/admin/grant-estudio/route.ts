@@ -97,8 +97,8 @@ export async function POST(req: NextRequest) {
       source_user_id: targetUserId,
       source_user_name: targetName,
       source_user_avatar_url: targetAvatar,
-      title: "¡Conquistaste EL ESTUDIO! 🎬",
-      preview: "Insignia exclusiva — Tu propio Estudio (servicio premium [BRAND_NAME])",
+      title: "¡Conquistaste el Servicio Premium A!",
+      preview: "Insignia exclusiva — Servicio Premium A",
     })
 
     // Broadcast pros outros users
@@ -114,8 +114,8 @@ export async function POST(req: NextRequest) {
         source_user_id: targetUserId,
         source_user_name: targetName,
         source_user_avatar_url: targetAvatar,
-        title: `${targetName} entró en EL ESTUDIO 🎬`,
-        preview: "Insignia exclusiva — Tu propio Estudio (servicio premium [BRAND_NAME])",
+        title: `${targetName} entró en Servicio Premium A`,
+        preview: "Insignia exclusiva — Servicio Premium A",
       }))
       for (let i = 0; i < rows.length; i += 100) {
         await admin.from("notifications").insert(rows.slice(i, i + 100))

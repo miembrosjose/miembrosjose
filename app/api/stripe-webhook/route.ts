@@ -510,7 +510,7 @@ async function handlePaymentIntentSucceeded(stripe: Stripe, pi: Stripe.PaymentIn
     items = upsellKeys.map((key) => ({
       key: isDownsell ? `${key}__downsell` : key, // marca downsell pra reports
       name:
-        (key === "revisao" ? "Revisión de Tu Embudo" : key === "minivsl" ? "Agente Copy para Mini VSL's" : key) +
+        (key === "revisao" ? "Servicio Premium" : key === "minivsl" ? "Upsell 1" : key) +
         (isDownsell ? " (downsell)" : ""),
       // Preço em moeda local rateado por produto (Supabase salva como histórico em moeda da cobrança).
       // OBS: pro Utmify, vamos enviar 1 produto único representando o combo (ver utmifyItems abaixo).
@@ -1552,11 +1552,11 @@ async function handleChargeDisputeCreated(stripe: Stripe, dispute: Stripe.Disput
 function nameForProductKey(key: string): string {
   const clean = key.replace(/__downsell$/, "")
   if (clean === "front") return "[BRAND_NAME]"
-  if (clean === "creativos") return "Creativos.AI"
-  if (clean === "andromeda") return "Andrómeda.ADS"
-  if (clean === "analytics") return "Analytics.KPI"
-  if (clean === "revisao") return "Revisión de Tu Embudo"
-  if (clean === "minivsl") return "Agente Copy para Mini VSL's"
+  if (clean === "creativos") return "Producto 1"
+  if (clean === "andromeda") return "Producto 2"
+  if (clean === "analytics") return "Producto 3"
+  if (clean === "revisao") return "Servicio Premium"
+  if (clean === "minivsl") return "Upsell 1"
   return clean
 }
 

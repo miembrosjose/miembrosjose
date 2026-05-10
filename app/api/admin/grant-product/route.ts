@@ -20,12 +20,12 @@ export const dynamic = "force-dynamic"
 const VALID_KEYS = new Set(["creativos", "andromeda", "analytics", "revisao", "minivsl", "bonus-ganchos"])
 
 const KEY_NAMES: Record<string, string> = {
-  creativos: "Creativos.AI",
-  andromeda: "Andrómeda.ADS",
-  analytics: "Analytics.KPI",
-  revisao: "Revisión de Tu Embudo",
-  minivsl: "Agente Copy para Mini VSL's",
-  "bonus-ganchos": "Pack de Ganchos Neuronales™",
+  creativos: "Producto 1",
+  andromeda: "Producto 2",
+  analytics: "Producto 3",
+  revisao: "Servicio Premium",
+  minivsl: "Upsell 1",
+  "bonus-ganchos": "Bonus 1",
 }
 
 export async function POST(req: NextRequest) {

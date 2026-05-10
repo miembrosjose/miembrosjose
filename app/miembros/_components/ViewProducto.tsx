@@ -4,7 +4,7 @@
 // Reusa Content components existentes (já client-side) e ProductLockedView.
 
 import { useEffect, useState } from "react"
-import { Download, ArrowUpRight, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useAuth } from "../_lib/auth-context"
 import { useView } from "../_lib/view-context"
 import { api } from "../_lib/api"
@@ -115,31 +115,31 @@ export function ViewProducto() {
         <CloseButton onClose={() => setView("inicio")} />
         {slug === "andromeda" ? (
           <ProductLockedView
-            productName="Andrómeda.ADS"
+            productName="Producto 2"
             checkoutSlug="andromeda"
-            tagline="El método completo para escalar Meta Ads en la era de la IA"
-            description="Estrategia validada de probar / validar / escalar com criterio matemático: ABO vs CBO, Público Advantage+, Marketing de Raíz, regla 1-1-X y aislamiento inteligente."
+            tagline="Tagline del Producto 2"
+            description="Descripción del Producto 2 — edita aquí."
           />
         ) : slug === "bonus-ganchos" ? (
           <ProductLockedView
-            productName="Pack de Ganchos Neuronales™"
+            productName="Bonus 1"
             checkoutSlug={null}
-            tagline="30+ Hooks estratégicos por nivel de conciencia"
+            tagline="Tagline del Bonus 1"
             description="Este bonus aún no está disponible para ti. Consulta con el equipo para obtener acceso."
           />
         ) : slug === "revisao" ? (
           <ProductLockedView
-            productName="Revisión de Tu Embudo"
+            productName="Servicio Premium"
             checkoutSlug="revisao"
-            tagline="Análisis riguroso y profundo de toda la estructura"
-            description="Estrategia, narrativa, lógica de conversión y puntos de fuga del embudo. Recibe orientaciones claras, ajustes precisos y recomendaciones estratégicas."
+            tagline="Tagline del Servicio Premium"
+            description="Descripción del Servicio Premium — edita aquí."
           />
         ) : (
           <ProductLockedView
-            productName="Analytics"
+            productName="Producto 3"
             checkoutSlug="analytics"
-            tagline="Dashboard cinematográfico para tu propio embudo"
-            description="Template completo Next.js + integración con Facebook Ads + prompts Notion para construir tu propio panel."
+            tagline="Tagline del Producto 3"
+            description="Descripción del Producto 3 — edita aquí."
           />
         )}
       </div>
@@ -200,164 +200,21 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Conteúdo Analytics (extraído de app/miembros/producto/analytics/page.tsx — server component)
+// Conteúdo do produto Analytics — placeholder, edita aqui.
 function AnalyticsContent() {
   return (
-    <main
-      style={{
-        margin: "0 auto",
-        width: "100%",
-        maxWidth: 960,
-        padding: "4rem 1.5rem",
-      }}
-    >
+    <main style={{ margin: "0 auto", width: "100%", maxWidth: 960, padding: "4rem 1.5rem" }}>
       <header style={{ marginBottom: "3rem", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "2.5rem" }}>
-        <p
-          style={{
-            fontSize: "0.65rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.4em",
-            color: "var(--accent-gold)",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          Producto · Dashboard
+        <p style={{ fontSize: "0.65rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4em", color: "var(--accent-gold)", fontFamily: "var(--font-mono)" }}>
+          Producto Premium
         </p>
-        <h1
-          style={{
-            marginTop: "0.75rem",
-            fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
-            fontWeight: 700,
-            lineHeight: 1.1,
-            letterSpacing: "-0.02em",
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-display)",
-          }}
-        >
-          Analytics
+        <h1 style={{ marginTop: "0.75rem", fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
+          Producto 3
         </h1>
-        <p
-          style={{
-            marginTop: "1rem",
-            maxWidth: 540,
-            fontSize: "1rem",
-            lineHeight: 1.6,
-            color: "var(--text-secondary)",
-          }}
-        >
-          Template completo de Dashboard para tu propio embudo: 4 abas (Funil, Analytics, Campañas,
-          Criativos), integración con Facebook Ads via Marketing API, métricas en tiempo real y
-          prompts listos para usar.
+        <p style={{ marginTop: "1rem", maxWidth: 540, fontSize: "1rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+          Contenido pendiente — edita este componente con el material del producto.
         </p>
       </header>
-
-      <section style={{ display: "grid", gap: "1.25rem", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-        <a
-          href="/downloads/dashboard-template.tsx"
-          download
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            border: "1px solid rgba(201, 169, 97, 0.4)",
-            background: "linear-gradient(135deg, rgba(201, 169, 97, 0.1), transparent)",
-            padding: "1.5rem",
-            transition: "all 0.3s",
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "0.65rem",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.3em",
-                color: "var(--accent-gold)",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Descargar
-            </span>
-            <Download size={20} color="var(--accent-gold)" />
-          </div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
-            Template <span style={{ color: "var(--accent-gold)" }}>.tsx</span>
-          </h2>
-          <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
-            Esqueleto del Dashboard listo para implementar. Solo descargá el archivo y seguí al
-            Notion — ahí están todas las instrucciones paso a paso.
-          </p>
-          <span
-            style={{
-              marginTop: "0.5rem",
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.2em",
-              color: "var(--accent-gold)",
-              fontFamily: "var(--font-mono)",
-            }}
-          >
-            page.tsx <span style={{ color: "var(--text-muted)" }}>→</span>
-          </span>
-        </a>
-
-        <a
-          href="https://www.notion.so/SEU_NOTION_ID"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            border: "1px solid var(--border-subtle)",
-            background: "rgba(18, 18, 26, 0.4)",
-            padding: "1.5rem",
-            transition: "all 0.3s",
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "0.65rem",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.3em",
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Notion · Prompts
-            </span>
-            <ArrowUpRight size={20} color="var(--text-secondary)" />
-          </div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
-            Prompts completos
-          </h2>
-          <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "var(--text-secondary)" }}>
-            Acceso a la página Notion con todos los prompts listos para usar. Copia, pega y
-            construye cada aba (Funil, Analytics, Campañas, Criativos).
-          </p>
-          <span
-            style={{
-              marginTop: "0.5rem",
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.2em",
-              color: "var(--text-secondary)",
-              fontFamily: "var(--font-mono)",
-            }}
-          >
-            Abrir Notion <span style={{ color: "var(--text-muted)" }}>↗</span>
-          </span>
-        </a>
-      </section>
     </main>
   )
 }
