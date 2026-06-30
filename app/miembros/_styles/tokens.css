@@ -330,6 +330,13 @@ html:has(.miembros-shell) {
     min-height: 100%;
     overflow-x: clip;
   }
+  /* CRÍTICO: o navbar (position:fixed) vive DENTRO de .miembros-shell. Com
+   * overflow-x:hidden, .miembros-shell vira container de scroll e o iOS rola
+   * o fixed junto (some ao descer). overflow-x:clip recorta igual o horizontal
+   * mas NÃO cria container de scroll → o fixed volta a grudar no topo. */
+  .miembros-shell {
+    overflow-x: clip;
+  }
 }
 
 /* Selects nativos: força fundo escuro + texto claro nas options. */
