@@ -29,6 +29,12 @@ jobs:
 
       - name: Build (OpenNext → Cloudflare)
         run: npx opennextjs-cloudflare build
+        env:
+          # NEXT_PUBLIC_* são inlined no bundle do navegador em tempo de build.
+          # Precisam estar presentes AQUI (não bastam as vars de runtime do Worker).
+          # Valores públicos (mesmos do wrangler.jsonc).
+          NEXT_PUBLIC_SUPABASE_URL: https://kjozrcugsywykpuvuqzu.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqb3pyY3Vnc3l3eWtwdXZ1cXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTcwNTMsImV4cCI6MjA5NjE3MzA1M30.bp8_Une8jnLU8kMXjPBOGb04h1LgyFEZBLickodyajs
 
       - name: Deploy (Wrangler)
         run: npx wrangler deploy
