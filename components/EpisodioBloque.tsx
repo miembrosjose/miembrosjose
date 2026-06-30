@@ -17,7 +17,7 @@ interface EpisodioBloqueProps {
   equation?: Equation | null;
   decodeItems?: DecodeItem[];
   sergelQuote?: string | null;
-  /** 'full' = José + (video) + Sergel · 'jose' = solo José (arriba del video) · 'sergel' = solo Sergel (abajo). */
+  /** 'full' = encabezado + José + (video) + Sergel · 'jose' = encabezado + José (arriba del video) · 'sergel' = solo Sergel (abajo). */
   part?: 'full' | 'jose' | 'sergel';
 }
 
@@ -49,7 +49,8 @@ function Reveal({ children, className = '' }: { children: ReactNode; className?:
 }
 
 export default function EpisodioBloque({
-  kicker, title,
+  kicker = 'EPISODIO · 144 · 000',
+  title = 'Frecuencia y Responsabilidad',
   joseParagraphs = DEFAULT_JOSE,
   videoEmbed,
   sergelIntro = 'Detrás de cada número hay una arquitectura. Esta es la que sostiene a 144.000.',
@@ -88,13 +89,19 @@ export default function EpisodioBloque({
       </div>
 
       <div className="ep-content">
-        {part !== 'sergel' && (
+        {part !== 'sergel' && (<>
+        <Reveal className="ep-header">
+          <p className="ep-kicker">{kicker}</p>
+          <h2 className="ep-title">{title}</h2>
+          <div className="ep-rule" />
+        </Reveal>
+
         <Reveal className="ep-block ep-block--jose">
           <span className="corner-tr" /><span className="corner-bl" />
           <p className="block-eyebrow">José <span className="voice">— Antes de la transmisión</span></p>
           {joseParagraphs.map((p, i) => <p key={i}>{p}</p>)}
         </Reveal>
-        )}
+        </>)}
 
         {part === 'full' && videoEmbed && <Reveal className="ep-video">{videoEmbed}</Reveal>}
 
@@ -156,58 +163,78 @@ export default function EpisodioBloque({
           transition: opacity 0.9s ease, transform 0.9s ease;
         }
         :global(.reveal.is-visible) { opacity: 1; transform: translateY(0); }
-        .ep-block {
+
+        /* Encabezado */
+        :global(.ep-header) { text-align: center; margin-bottom: 3.5rem; }
+        :global(.ep-header .ep-kicker) {
+          font-family: var(--ep-space-mono), 'Courier New', monospace;
+          font-size: 0.8rem; letter-spacing: 0.35em; color: #c9a227; margin: 0 0 1rem;
+        }
+        :global(.ep-header .ep-title) {
+          font-family: var(--ep-marcellus), Georgia, serif;
+          font-weight: 400; font-size: clamp(1.7rem, 5vw, 2.6rem);
+          letter-spacing: 0.04em; line-height: 1.25; margin: 0 0 1.4rem; color: #e8e3d5;
+        }
+        :global(.ep-header .ep-rule) {
+          width: 120px; height: 1px; margin: 0 auto;
+          background: linear-gradient(90deg, transparent, #c9a227, transparent);
+        }
+
+        /* Bloque (José / Sergel) — :global porque la clase va sobre <Reveal> */
+        :global(.ep-block) {
           position: relative; background: #0e0f18; border: 1px solid #1b1c2a;
           padding: 2.2rem 1.8rem; margin-bottom: 3rem;
           font-family: var(--ep-eb-garamond), Georgia, serif;
           color: #e8e3d5;
         }
-        .ep-block :global(p) { font-size: 1.08rem; line-height: 1.75; margin: 0 0 1rem; }
-        .ep-block :global(p:last-child) { margin-bottom: 0; }
-        .ep-block :global(.corner-tr),
-        .ep-block :global(.corner-bl) {
+        :global(.ep-block p) { font-size: 1.08rem; line-height: 1.75; margin: 0 0 1rem; }
+        :global(.ep-block p:last-child) { margin-bottom: 0; }
+        :global(.ep-block .corner-tr),
+        :global(.ep-block .corner-bl) {
           position: absolute; width: 14px; height: 14px; border: 1px solid #6e5c1c;
         }
-        .ep-block :global(.corner-tr) { top:-1px; right:-1px; border-left:none; border-bottom:none; }
-        .ep-block :global(.corner-bl) { bottom:-1px; left:-1px; border-right:none; border-top:none; }
-        .ep-block :global(.block-eyebrow) {
+        :global(.ep-block .corner-tr) { top:-1px; right:-1px; border-left:none; border-bottom:none; }
+        :global(.ep-block .corner-bl) { bottom:-1px; left:-1px; border-right:none; border-top:none; }
+        :global(.ep-block .block-eyebrow) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
           color: #c9a227; margin: 0 0 1.1rem;
         }
-        .ep-block :global(.voice) { color: #7c8088; letter-spacing: 0.2em; }
-        .ep-video { margin-bottom: 3rem; }
-        .ep-video :global(iframe), .ep-video :global(video) {
+        :global(.ep-block .voice) { color: #7c8088; letter-spacing: 0.2em; }
+
+        :global(.ep-video) { margin-bottom: 3rem; }
+        :global(.ep-video iframe), :global(.ep-video video) {
           width: 100%; aspect-ratio: 16/9; display: block; border: none;
         }
-        .equation-panel {
+
+        :global(.ep-block .equation-panel) {
           margin: 1.6rem 0; padding: 1.6rem 1rem; background: #07070a;
           border-top: 1px solid #6e5c1c; border-bottom: 1px solid #6e5c1c; text-align: center;
         }
-        .equation {
+        :global(.ep-block .equation) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-weight: 700; font-size: clamp(1.1rem, 4.2vw, 1.6rem);
           letter-spacing: 0.04em; color: #c9a227;
         }
-        .equation :global(.op) { color: #7c8088; margin: 0 0.35em; }
-        .equation-caption {
+        :global(.ep-block .equation .op) { color: #7c8088; margin: 0 0.35em; }
+        :global(.ep-block .equation-caption) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.68rem; letter-spacing: 0.2em; color: #7c8088;
           margin-top: 0.8rem; text-transform: uppercase;
         }
-        .decode { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid #1b1c2a; }
-        .decode-row { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; margin-bottom: 0.55rem; }
-        .decode-row :global(dt) {
+        :global(.ep-block .decode) { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid #1b1c2a; }
+        :global(.ep-block .decode-row) { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; margin-bottom: 0.55rem; }
+        :global(.ep-block .decode-row dt) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.9rem; color: #c9a227; white-space: nowrap;
         }
-        .decode-row :global(dd) { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #e8e3d5; }
-        .voice-signature {
+        :global(.ep-block .decode-row dd) { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #e8e3d5; }
+        :global(.ep-block .voice-signature) {
           margin-top: 1.8rem; font-style: italic; font-size: 0.98rem;
           font-family: var(--ep-eb-garamond), Georgia, serif;
           color: #7c8088; text-align: right;
         }
-        .voice-signature :global(span) {
+        :global(.ep-block .voice-signature span) {
           display: block;
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-style: normal; font-size: 0.68rem; letter-spacing: 0.2em;
