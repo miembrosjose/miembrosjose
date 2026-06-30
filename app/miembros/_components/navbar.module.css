@@ -206,6 +206,13 @@
     border-bottom: 1px solid var(--border-subtle);
   }
 
+  /* Smart header: ao rolar pra baixo recolhe (suave); ao rolar pra cima ou no
+   * topo reaparece. A transição em .navbar (transition: all .3s) faz o
+   * movimento gradual. Só mobile. */
+  .navbar.navHidden {
+    transform: translateY(-100%);
+  }
+
   /* Mostra hamburger em mobile */
   .hamburger {
     display: inline-flex;
