@@ -1,0 +1,37 @@
+name: Deploy to Cloudflare Workers
+
+# Publica automaticamente no Cloudflare a cada push na main.
+# O build roda em Linux (ubuntu) — evita a incompatibilidade do OpenNext com Windows.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (OpenNext → Cloudflare)
+        run: npx opennextjs-cloudflare build
+
+      - name: Deploy (Wrangler)
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 9eb16354b4057b7506df99d12e3463e7
