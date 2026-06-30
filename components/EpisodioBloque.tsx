@@ -10,7 +10,6 @@ const spaceMono  = Space_Mono({ subsets: ['latin'], weight: ['400','700'], varia
 interface DecodeItem { term: string; description: string; }
 interface Equation { freq: string; unit: string; multiplier: string; result: string; caption?: string; }
 interface EpisodioBloqueProps {
-  kicker?: string; title?: string;
   joseParagraphs?: string[];
   videoEmbed?: ReactNode;
   sergelIntro?: string;
@@ -49,8 +48,6 @@ function Reveal({ children, className = '' }: { children: ReactNode; className?:
 }
 
 export default function EpisodioBloque({
-  kicker = 'EPISODIO · 144 · 000',
-  title = 'Frecuencia y Responsabilidad',
   joseParagraphs = DEFAULT_JOSE,
   videoEmbed,
   sergelIntro = 'Detrás de cada número hay una arquitectura. Esta es la que sostiene a 144.000.',
@@ -89,19 +86,13 @@ export default function EpisodioBloque({
       </div>
 
       <div className="ep-content">
-        {part !== 'sergel' && (<>
-        <Reveal className="ep-header">
-          <p className="ep-kicker">{kicker}</p>
-          <h2 className="ep-title">{title}</h2>
-          <div className="ep-rule" />
-        </Reveal>
-
+        {part !== 'sergel' && (
         <Reveal className="ep-block ep-block--jose">
           <span className="corner-tr" /><span className="corner-bl" />
           <p className="block-eyebrow">José <span className="voice">— Antes de la transmisión</span></p>
           {joseParagraphs.map((p, i) => <p key={i}>{p}</p>)}
         </Reveal>
-        </>)}
+        )}
 
         {part === 'full' && videoEmbed && <Reveal className="ep-video">{videoEmbed}</Reveal>}
 
@@ -164,22 +155,6 @@ export default function EpisodioBloque({
         }
         :global(.reveal.is-visible) { opacity: 1; transform: translateY(0); }
 
-        /* Encabezado */
-        :global(.ep-header) { text-align: center; margin-bottom: 3.5rem; }
-        :global(.ep-header .ep-kicker) {
-          font-family: var(--ep-space-mono), 'Courier New', monospace;
-          font-size: 0.8rem; letter-spacing: 0.35em; color: #c9a227; margin: 0 0 1rem;
-        }
-        :global(.ep-header .ep-title) {
-          font-family: var(--ep-marcellus), Georgia, serif;
-          font-weight: 400; font-size: clamp(1.7rem, 5vw, 2.6rem);
-          letter-spacing: 0.04em; line-height: 1.25; margin: 0 0 1.4rem; color: #e8e3d5;
-        }
-        :global(.ep-header .ep-rule) {
-          width: 120px; height: 1px; margin: 0 auto;
-          background: linear-gradient(90deg, transparent, #c9a227, transparent);
-        }
-
         /* Bloque (José / Sergel) — :global porque la clase va sobre <Reveal> */
         :global(.ep-block) {
           position: relative; background: #0e0f18; border: 1px solid #1b1c2a;
@@ -189,6 +164,9 @@ export default function EpisodioBloque({
         }
         :global(.ep-block p) { font-size: 1.08rem; line-height: 1.75; margin: 0 0 1rem; }
         :global(.ep-block p:last-child) { margin-bottom: 0; }
+        /* Último bloque del stage sin margen inferior: así el espacio
+           bloque→video queda igual al de video→bloque (solo el padding del stage). */
+        :global(.ep-content > .ep-block:last-child) { margin-bottom: 0; }
         :global(.ep-block .corner-tr),
         :global(.ep-block .corner-bl) {
           position: absolute; width: 14px; height: 14px; border: 1px solid #6e5c1c;
