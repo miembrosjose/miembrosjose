@@ -10,6 +10,17 @@
   overflow: hidden;
 }
 
+/* MOBILE: isola o contexto de empilhamento do Hero. Sem isto, o conteúdo
+ * interno do hero (z-index:2) "vaza" pro contexto raiz e fica POR CIMA do
+ * navbar/menu (position:fixed) — no mobile o drawer do menu aparecia atrás do
+ * hero. Com isolation:isolate o hero vira uma camada própria (z auto = abaixo
+ * do navbar z-index:100). Não muda nada visual no hero. Desktop intacto. */
+@media (max-width: 968px) {
+  .hero {
+    isolation: isolate;
+  }
+}
+
 .bg {
   position: absolute;
   inset: 0;
