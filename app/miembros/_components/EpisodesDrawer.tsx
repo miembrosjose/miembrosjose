@@ -314,11 +314,6 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   />
                 )}
 
-                {/* Bloque José (texto antes del video) — solo Temporada 1 · Episodio 2 */}
-                {season?.num === 1 && playingEp.num === 2 && (
-                  <EpisodioBloque part="jose" />
-                )}
-
                 <LazyVideo className={styles.playerVideoWrap}>
                   {(() => {
                     const raw = playingEp.videoId
@@ -377,9 +372,9 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   })()}
                 </LazyVideo>
 
-                {/* Bloque Sergel (texto + ecuación después del video) — solo Temporada 1 · Episodio 2 */}
+                {/* Bloques José + Sergel DESPUÉS del video — solo Temporada 1 · Episodio 2 */}
                 {season?.num === 1 && playingEp.num === 2 && (
-                  <EpisodioBloque part="sergel" />
+                  <EpisodioBloque />
                 )}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
