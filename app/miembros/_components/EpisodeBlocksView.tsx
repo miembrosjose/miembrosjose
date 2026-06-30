@@ -11,9 +11,19 @@ type Props = {
   position: BlockPosition
 }
 
+// Considera vacío un bloque sin texto ni media (ej. el "<p></p>" que deja el
+// editor TipTap al guardar un bloque en blanco). Evita dibujar un recuadro vacío.
+function isEmptyBlock(html: string): boolean {
+  if (!html) return true
+  if (/<(img|iframe|video|hr|svg)\b/i.test(html)) return false
+  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim().length === 0
+}
+
 export function EpisodeBlocksView({ episodeId, position }: Props) {
   const { aboveVideo, belowVideo } = useEpisodeBlocks(episodeId)
-  const blocks = position === "above_video" ? aboveVideo : belowVideo
+  const blocks = (position === "above_video" ? aboveVideo : belowVideo).filter(
+    (b) => !isEmptyBlock(b.content),
+  )
 
   if (blocks.length === 0) return null
 
