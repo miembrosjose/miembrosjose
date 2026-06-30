@@ -10,9 +10,7 @@ import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
-import { SeasonsManagerModal } from "./SeasonsManagerModal"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { ProductsManagerModal } from "./ProductsManagerModal"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
@@ -76,6 +74,14 @@ const AchievementToast = dynamic(
 )
 const ProfileOnboardingModal = dynamic(
   () => import("./ProfileOnboardingModal").then((m) => m.ProfileOnboardingModal),
+  { ssr: false },
+)
+const SeasonsManagerModal = dynamic(
+  () => import("./SeasonsManagerModal").then((m) => m.SeasonsManagerModal),
+  { ssr: false },
+)
+const ProductsManagerModal = dynamic(
+  () => import("./ProductsManagerModal").then((m) => m.ProductsManagerModal),
   { ssr: false },
 )
 // OnlineMembers usa Supabase Realtime Presence — só faz sentido client-side e
