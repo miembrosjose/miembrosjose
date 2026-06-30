@@ -21,6 +21,7 @@ import {
 } from "../_lib/seasons"
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
+import EpisodioBloque from "@/components/EpisodioBloque"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
 import { EpisodeComments } from "./EpisodeComments"
 import { ReportModal, type ReportTarget } from "./ReportModal"
@@ -313,6 +314,11 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   />
                 )}
 
+                {/* Bloque José (texto antes del video) — solo Temporada 1 · Episodio 2 */}
+                {season?.num === 1 && playingEp.num === 2 && (
+                  <EpisodioBloque part="jose" />
+                )}
+
                 <div className={styles.playerVideoWrap}>
                   {(() => {
                     const raw = playingEp.videoId
@@ -370,6 +376,11 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                     )
                   })()}
                 </div>
+
+                {/* Bloque Sergel (texto + ecuación después del video) — solo Temporada 1 · Episodio 2 */}
+                {season?.num === 1 && playingEp.num === 2 && (
+                  <EpisodioBloque part="sergel" />
+                )}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
                 {playingEp.id && (
