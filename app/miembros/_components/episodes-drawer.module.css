@@ -538,6 +538,9 @@
   position: relative;
   margin-top: 1rem;
   background: transparent;
+  /* Reserva el box 16:9 aunque el iframe aún no esté montado (carga al scroll),
+     para que el layout no salte. */
+  aspect-ratio: 16 / 9;
 }
 
 .playerVideoWrap iframe {

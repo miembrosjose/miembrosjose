@@ -3,7 +3,7 @@
 // Drawer Netflix-style com hero + lista de episódios + player modal embutido.
 // Equivalente a renderEpisodes + openVideoPlayer.
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { X, Play, Lock, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from "lucide-react"
 import {
   buildConverteaiEmbedUrl,
@@ -319,7 +319,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   <EpisodioBloque part="jose" />
                 )}
 
-                <div className={styles.playerVideoWrap}>
+                <LazyVideo className={styles.playerVideoWrap}>
                   {(() => {
                     const raw = playingEp.videoId
                     // 1. Snippet completo do ConverteAI/VTurb (HTML+script) →
@@ -375,7 +375,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                       />
                     )
                   })()}
-                </div>
+                </LazyVideo>
 
                 {/* Bloque Sergel (texto + ecuación después del video) — solo Temporada 1 · Episodio 2 */}
                 {season?.num === 1 && playingEp.num === 2 && (
@@ -560,6 +560,38 @@ function dbEpToEpisode(db: DbEpisode): Episode {
     duration: "",
     thumb: db.thumb_url || undefined,
   }
+}
+
+// Monta el player SOLO cuando entra en viewport (IntersectionObserver). Con el
+// autoplay del vturb activado, el video arranca al deslizar hasta él. El espacio
+// se reserva con aspect-ratio en .playerVideoWrap para que el layout no salte.
+function LazyVideo({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+    if (typeof IntersectionObserver === "undefined") {
+      setShow(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShow(true)
+          io.disconnect()
+        }
+      },
+      { threshold: 0.35 },
+    )
+    io.observe(node)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <div ref={ref} className={className}>
+      {show ? children : null}
+    </div>
+  )
 }
 
 function isDirectVideoUrl(s: string): boolean {
