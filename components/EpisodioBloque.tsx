@@ -46,8 +46,6 @@ interface Equation {
 }
 
 interface EpisodioBloqueProps {
-  kicker?: string;
-  title?: string;
   joseParagraphs?: string[];
   videoEmbed?: ReactNode;
   sergelIntro?: string;
@@ -112,8 +110,6 @@ function Reveal({ children, className = '' }: { children: ReactNode; className?:
 }
 
 export default function EpisodioBloque({
-  kicker = 'EPISODIO · 144 · 000',
-  title = 'Frecuencia y Responsabilidad',
   joseParagraphs = DEFAULT_JOSE,
   videoEmbed,
   sergelIntro = 'Detrás de cada número hay una arquitectura. Esta es la que sostiene a 144.000.',
@@ -163,13 +159,7 @@ export default function EpisodioBloque({
       </div>
 
       <div className="ep-content">
-        {part !== 'sergel' && (<>
-        <Reveal className="ep-header">
-          <p className="ep-kicker">{kicker}</p>
-          <h2 className="ep-title">{title}</h2>
-          <div className="ep-rule" />
-        </Reveal>
-
+        {part !== 'sergel' && (
         <Reveal className="ep-block ep-block--jose">
           <span className="corner-tr" />
           <span className="corner-bl" />
@@ -180,7 +170,7 @@ export default function EpisodioBloque({
             <p key={i}>{p}</p>
           ))}
         </Reveal>
-        </>)}
+        )}
 
         {part === 'full' && videoEmbed && <Reveal className="ep-video">{videoEmbed}</Reveal>}
 
@@ -275,7 +265,7 @@ export default function EpisodioBloque({
           margin-bottom: 3.5rem;
         }
         .ep-kicker {
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.8rem;
           letter-spacing: 0.35em;
           color: #c9a227;
@@ -302,7 +292,7 @@ export default function EpisodioBloque({
           border: 1px solid #1b1c2a;
           padding: 2.2rem 1.8rem;
           margin-bottom: 3rem;
-          font-family: var(--font-eb-garamond), serif;
+          font-family: var(--font-eb-garamond, Georgia), serif;
           color: #e8e3d5;
         }
         .ep-block :global(p) {
@@ -333,7 +323,7 @@ export default function EpisodioBloque({
           border-top: none;
         }
         .ep-block :global(.block-eyebrow) {
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.72rem;
           letter-spacing: 0.25em;
           text-transform: uppercase;
@@ -363,7 +353,7 @@ export default function EpisodioBloque({
           text-align: center;
         }
         .equation {
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-weight: 700;
           font-size: clamp(1.1rem, 4.2vw, 1.6rem);
           letter-spacing: 0.04em;
@@ -374,7 +364,7 @@ export default function EpisodioBloque({
           margin: 0 0.35em;
         }
         .equation-caption {
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.68rem;
           letter-spacing: 0.2em;
           color: #7c8088;
@@ -393,7 +383,7 @@ export default function EpisodioBloque({
           margin-bottom: 0.55rem;
         }
         .decode-row :global(dt) {
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.9rem;
           color: #c9a227;
           white-space: nowrap;
@@ -406,7 +396,7 @@ export default function EpisodioBloque({
         }
         .voice-signature {
           margin-top: 1.8rem;
-          font-family: var(--font-eb-garamond), serif;
+          font-family: var(--font-eb-garamond, Georgia), serif;
           font-style: italic;
           font-size: 0.98rem;
           color: #7c8088;
@@ -414,7 +404,7 @@ export default function EpisodioBloque({
         }
         .voice-signature :global(span) {
           display: block;
-          font-family: var(--font-space-mono), monospace;
+          font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-style: normal;
           font-size: 0.68rem;
           letter-spacing: 0.2em;
