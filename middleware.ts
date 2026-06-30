@@ -26,9 +26,9 @@ const EMBEDDABLE_IN_MIEMBROS = ["/creativos", "/andromeda", "/analytics", "/embu
 // usa script-src-elem como diretiva mais especifica pra <script> tags; sem ela,
 // fallback pra script-src gera warning "violates script-src" mesmo quando o
 // dominio esta listado. Setando explicito = warning some.
-const SCRIPT_SOURCES = "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://scripts.converteai.net https://cdn.converteai.net https://*.cloudflareinsights.com https://*.clarity.ms https://www.clarity.ms https://connect.facebook.net https://cdn-st.adsmurai.com https://client.crisp.chat"
+const SCRIPT_SOURCES = "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://scripts.converteai.net https://cdn.converteai.net https://*.cloudflareinsights.com https://*.clarity.ms https://www.clarity.ms https://connect.facebook.net https://cdn-st.adsmurai.com"
 
-const STYLE_SOURCES = "'self' 'unsafe-inline' https://fonts.googleapis.com https://client.crisp.chat"
+const STYLE_SOURCES = "'self' 'unsafe-inline' https://fonts.googleapis.com"
 
 const buildCSP = (frameAncestors: string) => [
   "default-src 'self'",
@@ -37,8 +37,8 @@ const buildCSP = (frameAncestors: string) => [
   `style-src ${STYLE_SOURCES}`,
   `style-src-elem ${STYLE_SOURCES}`,
   "img-src 'self' data: blob: https:",
-  "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat",
-  "connect-src 'self' https://SEU_DOMINIO.com https://www.SEU_DOMINIO.com https://api.stripe.com https://*.stripe.com https://m.stripe.network https://*.supabase.co wss://*.supabase.co https://open.er-api.com https://www.googletagmanager.com https://www.google-analytics.com https://*.cloudflareinsights.com https://api.vturb.com.br https://*.vturb.net https://*.converteai.net https://*.b-cdn.net https://*.sentry.io https://pay.google.com https://*.applepay.cdn-apple.com https://www.clarity.ms https://*.clarity.ms https://www.facebook.com https://connect.facebook.net https://SEU_TRACKING_WEBHOOK.com https://cdn-st.adsmurai.com https://client.crisp.chat wss://client.relay.crisp.chat https://image.crisp.chat https://storage.crisp.chat",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://SEU_DOMINIO.com https://www.SEU_DOMINIO.com https://api.stripe.com https://*.stripe.com https://m.stripe.network https://*.supabase.co wss://*.supabase.co https://open.er-api.com https://www.googletagmanager.com https://www.google-analytics.com https://*.cloudflareinsights.com https://api.vturb.com.br https://*.vturb.net https://*.converteai.net https://*.b-cdn.net https://*.sentry.io https://pay.google.com https://*.applepay.cdn-apple.com https://www.clarity.ms https://*.clarity.ms https://www.facebook.com https://connect.facebook.net https://SEU_TRACKING_WEBHOOK.com https://cdn-st.adsmurai.com",
   "frame-src 'self' https://SEU_DOMINIO.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://www.googletagmanager.com https://pay.google.com https://*.converteai.net https://scripts.converteai.net https://cdn.converteai.net",
   "media-src 'self' blob: https:",
   "worker-src 'self' blob:",
