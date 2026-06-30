@@ -35,7 +35,6 @@ export function Navbar() {
   const { view, anchor, setView } = useView()
   const { count: unreadDM } = useUnreadDM()
   const [scrolled, setScrolled] = useState(false)
-  const [hidden, setHidden] = useState(false)
   const [xpModalOpen, setXpModalOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -57,34 +56,6 @@ export function Navbar() {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50)
     onScroll()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
-
-  // Smart header (SÓ mobile via CSS): esconde ao rolar pra baixo, mostra ao
-  // rolar pra cima ou no topo. Resolve o header que "sumia" no celular (o body
-  // é o container de scroll neste layout, o que bagunça position:fixed no iOS).
-  // Lê a posição de scroll de forma robusta (window OU documentElement OU body).
-  // Desktop NÃO é afetado: o translateY só existe na media query <=968px.
-  useEffect(() => {
-    const getY = () =>
-      window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
-    let lastY = getY()
-    let ticking = false
-    const update = () => {
-      const y = getY()
-      if (y <= 8) setHidden(false)
-      else if (y > lastY + 6) setHidden(true)
-      else if (y < lastY - 6) setHidden(false)
-      lastY = y
-      ticking = false
-    }
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true
-        requestAnimationFrame(update)
-      }
-    }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
@@ -116,7 +87,7 @@ export function Navbar() {
   }
 
   return (
-    <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ""} ${hidden && !mobileMenuOpen ? styles.navHidden : ""}`}>
+    <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ""}`}>
       {/* Hamburger — só aparece em mobile via media query no CSS */}
       <button
         type="button"

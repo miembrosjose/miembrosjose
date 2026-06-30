@@ -317,6 +317,21 @@ html:has(.miembros-shell) {
   background-color: #050510 !important;
 }
 
+/* MOBILE: faz a JANELA rolar (não o body). No desktop, body com height:100%
+ * + overflow-x:hidden vira container de scroll e funciona ok; mas no iOS
+ * Safari isso quebra position:fixed (a navbar "sumia" ao rolar e só voltava
+ * no topo). Com height:auto + overflow-x:clip o body deixa de ser o scroller,
+ * a janela rola e a navbar fixed volta a ficar fixa.
+ * Escopado à área de membros (:has) e só <=968px — desktop 100% intacto. */
+@media (max-width: 968px) {
+  html:has(.miembros-shell),
+  body:has(.miembros-shell) {
+    height: auto;
+    min-height: 100%;
+    overflow-x: clip;
+  }
+}
+
 /* Selects nativos: força fundo escuro + texto claro nas options. */
 .miembros-shell select { color-scheme: dark; }
 .miembros-shell select option {
