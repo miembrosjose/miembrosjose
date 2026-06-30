@@ -1,5 +1,5 @@
 /*
- * Design tokens da área de membros — extraídos. (paleta [BRAND_NAME]).
+ * Design tokens da área de membros — extraídos. (paleta Los 144000).
  *
  * Por que .miembros-shell e não :root?
  *   Outras rotas do projeto (/checkout, /direct, /salespage) podem ter outra
@@ -14,20 +14,23 @@
 .miembros-shell {
   color-scheme: dark;
 
-  /* Paleta — alinhada com marca [BRAND_NAME] (red-900 oficial) */
-  --bg-deep:        #000000;
-  --bg-primary:     #000000;
-  --bg-surface:    #0c0c14;
-  --bg-elevated:   #14141e;
-  --accent-red:     #7f1d1d;
-  --accent-red-hover:#991b1b;
-  --accent-red-deep:#450a0a;
-  --accent-gold:    #c9a961;
-  --text-primary:   #f5f5f7;
-  --text-secondary:#a0a0b0;
-  --text-muted:     #6a6a7a;
-  --border-subtle:  rgba(255,255,255,0.06);
-  --border-medium:  rgba(255,255,255,0.12);
+  /* Paleta — Los 144000 (FONDO #050510 · DESTACADOS #6D4A9B · TEXTOS #F3F6FA).
+   * Nota: a paleta oficial tem 1 só accent (purple). Os nomes legados
+   * --accent-red e --accent-gold foram mantidos pra não exigir refactor em
+   * 30+ arquivos, mas ambos resolvem pra purple agora. */
+  --bg-deep:        #050510;
+  --bg-primary:     #050510;
+  --bg-surface:    #0c0c1a;
+  --bg-elevated:   #14142a;
+  --accent-red:     #6D4A9B;   /* purple — DESTACADOS oficial */
+  --accent-red-hover:#8a63b8;  /* purple mais claro pra hover */
+  --accent-red-deep:#4A3170;   /* purple mais escuro pra borda/sombra */
+  --accent-gold:    #6D4A9B;   /* paleta mono — accent único */
+  --text-primary:   #F3F6FA;   /* TEXTOS DESTACADOS oficial */
+  --text-secondary:#a8a8c0;
+  --text-muted:     #6a6a85;
+  --border-subtle:  rgba(243,246,250,0.06);
+  --border-medium:  rgba(243,246,250,0.12);
 
   /* Border radius tokens — escala moderna */
   --radius-xs:      4px;   /* tags, chips pequenos */
@@ -38,10 +41,39 @@
   --radius-2xl:     28px;  /* containers especiais */
   --radius-default: var(--radius-md);
 
-  /* Tipografia (variáveis vêm de next/font/google no layout.tsx) */
-  --font-display:   var(--font-cinzel, 'Cinzel'), serif;
+  /* Sombras com tinta da marca — purple sutil + preto. */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.45), 0 0 0 1px rgba(109,74,155,0.05);
+  --shadow-2: 0 4px 14px -4px rgba(0,0,0,0.6), 0 0 0 1px rgba(109,74,155,0.08);
+  --shadow-3: 0 10px 30px -8px rgba(0,0,0,0.75), 0 0 0 1px rgba(109,74,155,0.12);
+  --shadow-4: 0 24px 60px -12px rgba(0,0,0,0.85), 0 0 0 1px rgba(109,74,155,0.16);
+  --shadow-glow-red:  0 12px 40px -8px rgba(109,74,155,0.50);   /* alias legado — purple glow */
+  --shadow-glow-gold: 0 12px 40px -8px rgba(109,74,155,0.30);
+  --shadow-inset-top: inset 0 1px 0 0 rgba(243,246,250,0.04);
+
+  /* Surfaces com elevação — gradient diagonal sutil que cria profundidade
+   * sem precisar de blur (evita glassmorphism barato). Top-left ligeiramente
+   * mais claro, bottom-right mais escuro — simula iluminação de cima. */
+  --surface-1: linear-gradient(135deg, rgba(243,246,250,0.025) 0%, rgba(243,246,250,0.005) 60%, transparent 100%), var(--bg-surface);
+  --surface-2: linear-gradient(135deg, rgba(243,246,250,0.04) 0%, rgba(243,246,250,0.01) 60%, transparent 100%), var(--bg-elevated);
+  --surface-3: linear-gradient(135deg, rgba(109,74,155,0.12) 0%, rgba(243,246,250,0.02) 50%, transparent 100%), var(--bg-elevated);
+  --surface-gold: linear-gradient(135deg, rgba(109,74,155,0.10) 0%, rgba(109,74,155,0.02) 60%, transparent 100%), var(--bg-elevated);
+
+  /* Easing curves — exponenciais (sem bounce/elastic). */
+  --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.20, 0.64, 1); /* leve antecipação só pra elementos lúdicos */
+  --duration-fast:   140ms;
+  --duration-base:   220ms;
+  --duration-slow:   360ms;
+
+  /* Tipografia (variáveis vêm de next/font/google no layout.tsx).
+   * IMPORTANTE: --font-cinzel agora resolve pra Orbitron (display aerospace);
+   * --font-geist-sans resolve pra Manrope (body sans moderno). Os nomes
+   * legados foram mantidos pra não exigir refactor em ~30 arquivos. */
+  --font-display:   var(--font-cinzel, 'Orbitron'), 'Manrope', sans-serif;
   --font-impact:    var(--font-bebas, 'Bebas Neue'), sans-serif;
-  --font-body:      var(--font-dm-sans, 'DM Sans'), sans-serif;
+  --font-body:      var(--font-geist-sans, 'Manrope'), sans-serif;
   --font-mono:      var(--font-jetbrains, 'JetBrains Mono'), monospace;
 
   /* Base do shell (equivalente ao body.) */
@@ -225,12 +257,12 @@
 @keyframes admBadgeGlow {
   0%, 100% {
     filter: drop-shadow(0 0 4px rgba(185, 242, 255, 0.6))
-      drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+      drop-shadow(0 0 8px rgba(109, 74, 155, 0.4));
   }
   50% {
     filter: drop-shadow(0 0 8px rgba(185, 242, 255, 0.95))
       drop-shadow(0 0 16px rgba(255, 255, 255, 0.55))
-      drop-shadow(0 0 24px rgba(201, 169, 97, 0.6));
+      drop-shadow(0 0 24px rgba(109, 74, 155, 0.6));
   }
 }
 
@@ -240,25 +272,25 @@
 @keyframes topoBadgeGlow {
   0%, 100% {
     filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.65))
-      drop-shadow(0 0 10px rgba(127, 29, 29, 0.5));
+      drop-shadow(0 0 10px rgba(109, 74, 155, 0.5));
   }
   50% {
     filter: drop-shadow(0 0 10px rgba(220, 38, 38, 1))
-      drop-shadow(0 0 18px rgba(127, 29, 29, 0.75))
+      drop-shadow(0 0 18px rgba(109, 74, 155, 0.75))
       drop-shadow(0 0 28px rgba(69, 10, 10, 0.5));
   }
 }
 
 /* Glow animado pra Servicio Premium (dourado da marca, intenso).
- * Mesmo padrão de admin/topo mas em tons de gold (#c9a961 / #fde68a). */
+ * Mesmo padrão de admin/topo mas em tons de gold (#6D4A9B / #a78bca). */
 @keyframes revisaoBadgeGlow {
   0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(253, 230, 138, 0.65))
-      drop-shadow(0 0 10px rgba(201, 169, 97, 0.5));
+    filter: drop-shadow(0 0 4px rgba(167, 139, 202, 0.65))
+      drop-shadow(0 0 10px rgba(109, 74, 155, 0.5));
   }
   50% {
-    filter: drop-shadow(0 0 10px rgba(253, 230, 138, 1))
-      drop-shadow(0 0 18px rgba(201, 169, 97, 0.75))
+    filter: drop-shadow(0 0 10px rgba(167, 139, 202, 1))
+      drop-shadow(0 0 18px rgba(109, 74, 155, 0.75))
       drop-shadow(0 0 28px rgba(138, 114, 54, 0.5));
   }
 }
@@ -279,20 +311,148 @@
   display: block;
 }
 
-/* Body preto puro quando estamos numa rota /miembros (shell renderizado). */
+/* Body fundo da paleta quando estamos numa rota /miembros (shell renderizado). */
 body:has(.miembros-shell),
 html:has(.miembros-shell) {
-  background-color: #000000 !important;
+  background-color: #050510 !important;
 }
 
 /* Selects nativos: força fundo escuro + texto claro nas options. */
 .miembros-shell select { color-scheme: dark; }
 .miembros-shell select option {
-  background-color: #12121a;
-  color: #f5f5f7;
+  background-color: #14142a;
+  color: #F3F6FA;
 }
 .miembros-shell select option:checked,
 .miembros-shell select option:hover {
-  background-color: #1a1a24;
-  color: #c9a961;
+  background-color: #1d1a35;
+  color: #6D4A9B;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Utilities modernas — superfícies, lift, foco, brilho
+   Aplicadas via composes: ou className em CSS modules e JSX.
+   ───────────────────────────────────────────────────────────── */
+
+/* Surface com elevação — gradient sutil simula luz de cima.
+ * Use no lugar de background:var(--bg-surface) chapado. */
+.miembros-shell .surface-elevated {
+  background: var(--surface-2);
+  box-shadow: var(--shadow-2), var(--shadow-inset-top);
+}
+
+.miembros-shell .surface-flush {
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1), var(--shadow-inset-top);
+}
+
+.miembros-shell .surface-prominent {
+  background: var(--surface-3);
+  box-shadow: var(--shadow-3), var(--shadow-inset-top);
+}
+
+/* Lift no hover — translateY -2px + sombra mais profunda + tint da borda.
+ * Não anima layout; só transform e box-shadow (cheap pra GPU).
+ * Aplica em qualquer card clicável. */
+.miembros-shell .lift-on-hover {
+  transition:
+    transform var(--duration-base) var(--ease-out-quart),
+    box-shadow var(--duration-base) var(--ease-out-quart),
+    border-color var(--duration-base) var(--ease-out-quart);
+  will-change: transform;
+}
+
+.miembros-shell .lift-on-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3), var(--shadow-inset-top);
+}
+
+.miembros-shell .lift-on-hover:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-fast);
+}
+
+/* Focus visible — anel gold pra navegação por teclado.
+ * Não usa outline nativo (cinza). */
+.miembros-shell .glow-focus:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-deep),
+    0 0 0 4px rgba(109,74,155,0.75),
+    var(--shadow-2);
+}
+
+.miembros-shell .glow-focus-red:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-deep),
+    0 0 0 4px rgba(109,74,155,0.85),
+    var(--shadow-2);
+}
+
+/* Sheen diagonal no hover — varredura de luz curta sobre o card.
+ * Usar com moderação: só nos cards "estrela" (Inicio carrossel, hero da Tienda).
+ * Requer position:relative + overflow:hidden no elemento pai. */
+.miembros-shell .shine-on-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.miembros-shell .shine-on-hover::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 45%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.06) 55%,
+    transparent 100%
+  );
+  transform: skewX(-15deg);
+  transition: left var(--duration-slow) var(--ease-out-quart);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.miembros-shell .shine-on-hover:hover::before {
+  left: 125%;
+}
+
+/* Borda accent no hover — usar com cards que devem ganhar destaque vermelho.
+ * Combina com .lift-on-hover. */
+.miembros-shell .accent-border-on-hover {
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--duration-base) var(--ease-out-quart);
+}
+
+.miembros-shell .accent-border-on-hover:hover {
+  border-color: rgba(109,74,155,0.55);
+}
+
+/* Reveal divider — linha purple de 1px que cresce do meio pra fora.
+ * Usar em separadores de seção (sem deixar regra estática). */
+.miembros-shell .divider-reveal {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(109,74,155,0.35) 50%, transparent 100%);
+  border: none;
+  margin: 1.5rem 0;
+}
+
+/* Respeita prefers-reduced-motion — desliga transições não-essenciais. */
+@media (prefers-reduced-motion: reduce) {
+  .miembros-shell .lift-on-hover,
+  .miembros-shell .lift-on-hover:hover,
+  .miembros-shell .lift-on-hover:active,
+  .miembros-shell .shine-on-hover::before {
+    transition: none !important;
+    transform: none !important;
+  }
+  .miembros-shell .shine-on-hover:hover::before {
+    left: -75%;
+  }
 }

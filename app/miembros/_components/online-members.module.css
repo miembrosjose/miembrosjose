@@ -1,4 +1,4 @@
-/* Widget de miembros online — Supabase Realtime Presence.
+﻿/* Widget de miembros online — Supabase Realtime Presence.
  * Aparece no topo da ViewInicio, com scroll horizontal pra cards de avatares.
  * Padrão visual: cards compactos com avatar + nome + level. Click vai pro perfil. */
 
@@ -116,7 +116,7 @@
   /* !important pelo mesmo motivo dos outros: minificacao em prod quebra a
    * regra global [class*='avatar' i] do tokens.css. */
   border-radius: 50% !important;
-  background: linear-gradient(135deg, #1a1a24, #000000);
+  background: linear-gradient(135deg, #1d1d35, #050510);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;

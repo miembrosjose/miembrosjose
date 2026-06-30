@@ -76,7 +76,7 @@ export function MembersTracker() {
         <button
           type="button"
           onClick={() => setPolling((p) => !p)}
-          className="border border-[#1a1a24] bg-[#12121a]/40 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] hover:border-[#c9a961] hover:text-[#c9a961] [font-family:var(--font-geist-sans)]"
+          className="border border-[#1a1a24] bg-[#12121a]/40 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] hover:border-[#6D4A9B] hover:text-[#6D4A9B] [font-family:var(--font-geist-sans)]"
           title="Alternar atualização automática"
         >
           {polling ? "● Auto-refresh ON" : "○ Pausado"}
@@ -111,13 +111,13 @@ export function MembersTracker() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={m.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-[#c9a961]">
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-[#6D4A9B]">
                           {m.full_name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-[12px] text-[#f5f5f7]">{m.full_name}</div>
+                      <div className="truncate text-[12px] text-[#F3F6FA]">{m.full_name}</div>
                       <div className="truncate text-[10px] text-[#6a6a7a]">
                         {m.username ? `@${m.username} · ` : ""}{m.email}
                       </div>
@@ -305,34 +305,6 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
       .finally(() => setLoading(false))
   }, [memberId])
 
-  // Extend access — adiciona N dias (default 365) ao expires_at do front
-  const [extendBusy, setExtendBusy] = useState(false)
-  const [extendMsg, setExtendMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
-
-  async function extendAccess(days: number) {
-    if (!data?.member.email) return
-    const label = days === 365 ? "1 ano" : `${days} dias`
-    if (!confirm(`Estender acesso ao treinamento por ${label}?`)) return
-    setExtendBusy(true)
-    setExtendMsg(null)
-    try {
-      const res = await fetch("/api/admin/extend-access", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.member.email, days }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Erro desconhecido")
-      setExtendMsg({ kind: "ok", text: `+${label} ✓` })
-      reload()
-    } catch (e) {
-      setExtendMsg({ kind: "err", text: e instanceof Error ? e.message : "Erro" })
-    } finally {
-      setExtendBusy(false)
-    }
-  }
-
   const hasTopo = !!data?.insignias.find((i) => i.id === "el_topo")
   const hasEstudio = !!data?.insignias.find((i) => i.id === "el_estudio")
 
@@ -350,14 +322,14 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
     >
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-[#1a1a24] bg-[#000000]">
         <div className="flex items-center justify-between border-b border-[#1a1a24] px-5 py-4">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
             Detalhe do membro
           </span>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="text-2xl leading-none text-[#a0a0b0] hover:text-[#f5f5f7]"
+            className="text-2xl leading-none text-[#a0a0b0] hover:text-[#F3F6FA]"
           >
             ×
           </button>
@@ -378,18 +350,18 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={data.member.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#c9a961] [font-family:var(--font-cinzel)]">
+                    <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#6D4A9B] [font-family:var(--font-cinzel)]">
                       {data.member.full_name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-lg font-bold text-[#f5f5f7] [font-family:var(--font-cinzel)]">
+                  <h2 className="text-lg font-bold text-[#F3F6FA] [font-family:var(--font-cinzel)]">
                     {data.member.full_name}
                   </h2>
                   <p className="text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)] truncate">{data.member.email}</p>
                   {data.member.username && (
-                    <p className="text-[11px] text-[#c9a961]">@{data.member.username}</p>
+                    <p className="text-[11px] text-[#6D4A9B]">@{data.member.username}</p>
                   )}
                 </div>
               </div>
@@ -402,7 +374,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
               </div>
 
               <section>
-                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                   Aulas / módulos desbloqueados ({aulas.length})
                 </h3>
                 {aulas.length === 0 ? (
@@ -411,7 +383,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                   <div className="space-y-1.5">
                     {aulas.map((i) => (
                       <div key={i.id} className="flex items-center justify-between gap-2 border border-[#1a1a24] bg-[#12121a]/40 px-3 py-2">
-                        <span className="text-xs text-[#f5f5f7]">{i.name}</span>
+                        <span className="text-xs text-[#F3F6FA]">{i.name}</span>
                         <span className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">
                           {new Date(i.unlocked_at).toLocaleDateString("pt-BR")}
                         </span>
@@ -423,7 +395,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
 
               {episodesViewed.length > 0 && (
                 <section>
-                  <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                  <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                     Episódios onde deixou comentário
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
@@ -438,12 +410,12 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
 
               {raras.length > 0 && (
                 <section>
-                  <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                  <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                     Insígnias adicionais
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {raras.map((i) => (
-                      <span key={i.id} className="border border-[#c9a961]/40 bg-[#c9a961]/5 px-2 py-0.5 text-[10px] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                      <span key={i.id} className="border border-[#6D4A9B]/40 bg-[#6D4A9B]/5 px-2 py-0.5 text-[10px] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                         {i.name}
                       </span>
                     ))}
@@ -452,7 +424,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
               )}
 
               <section className="border-t border-[#1a1a24] pt-4">
-                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                   Compras
                 </h3>
                 <p className="text-xs text-[#a0a0b0]">
@@ -477,76 +449,17 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                 </div>
               </section>
 
-              {/* ACCESO AL TREINAMENTO — controle de validade do front (1 año).
-                * Mostra prazo + botão pra estender +1 año. */}
-              <section className="border-t border-[#1a1a24] pt-4">
-                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
-                  Acesso ao Treinamento
-                </h3>
-                {data.purchases.front_expires_at ? (
-                  <div className="mb-3 space-y-1">
-                    <p className="text-[11px] [font-family:var(--font-geist-sans)]">
-                      <span className="text-[#a0a0b0]">Vence: </span>
-                      <span className={data.purchases.front_expired ? "font-semibold text-red-400" : "font-semibold text-[#f5f5f7]"}>
-                        {new Date(data.purchases.front_expires_at).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" })}
-                      </span>
-                      {data.purchases.front_expired && (
-                        <span className="ml-2 border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] text-red-400">
-                          Vencido
-                        </span>
-                      )}
-                    </p>
-                    {!data.purchases.front_expired && (
-                      <p className="text-[10px] text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
-                        {Math.ceil(
-                          (new Date(data.purchases.front_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-                        )}{" "}
-                        dias restantes
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mb-3 text-[11px] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-                    Sem data de vencimento (acesso permanente). Geralmente clientes
-                    pré-migração. Estender adiciona prazo a partir de hoje.
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => extendAccess(365)}
-                    disabled={extendBusy}
-                    className="border border-[#c9a961] bg-[#c9a961]/15 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#fde68a] hover:bg-[#c9a961]/30 disabled:opacity-40 disabled:cursor-not-allowed [font-family:var(--font-geist-sans)]"
-                  >
-                    {extendBusy ? "..." : "Renovar +1 ano"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => extendAccess(30)}
-                    disabled={extendBusy}
-                    className="border border-[#1a1a24] bg-[#12121a]/40 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] hover:border-[#c9a961]/40 hover:text-[#c9a961] disabled:opacity-40 [font-family:var(--font-geist-sans)]"
-                  >
-                    {extendBusy ? "..." : "+30 dias"}
-                  </button>
-                  {extendMsg && (
-                    <span className={`text-[10px] uppercase tracking-[0.2em] [font-family:var(--font-geist-sans)] ${extendMsg.kind === "ok" ? "text-[#009d68]" : "text-red-400"}`}>
-                      {extendMsg.text}
-                    </span>
-                  )}
-                </div>
-              </section>
-
               {/* INSIGNIA EXCLUSIVA Servicio Premium B — concedida manualmente pra clientes
-                * pra quem a [BRAND_NAME] construiu o embudo (serviço premium via Wise). */}
+                * pra quem a Los 144000 construiu o embudo (serviço premium via Wise). */}
               <section className="border-t border-[#1a1a24] pt-4">
-                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#7f1d1d] [font-family:var(--font-geist-sans)]">
+                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                   Insígnia exclusiva — Servicio Premium B
                 </h3>
                 <p className="mb-3 text-[11px] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
                   {hasTopo ? (
                     <>Este membro JÁ tem a insígnia Servicio Premium B. Conceder de novo não faz nada.</>
                   ) : (
-                    <>Conceder quando a [BRAND_NAME] construiu o embudo do cliente. Notifica toda a comunidade.</>
+                    <>Conceder quando a Los 144000 construiu o embudo do cliente. Notifica toda a comunidade.</>
                   )}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -554,7 +467,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
                     type="button"
                     onClick={grantTopo}
                     disabled={topoBusy || hasTopo}
-                    className="border border-[#7f1d1d] bg-[#7f1d1d]/15 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#fca5a5] hover:bg-[#7f1d1d]/30 disabled:opacity-40 disabled:cursor-not-allowed [font-family:var(--font-geist-sans)]"
+                    className="border border-[#6D4A9B] bg-[#6D4A9B]/15 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#fca5a5] hover:bg-[#6D4A9B]/30 disabled:opacity-40 disabled:cursor-not-allowed [font-family:var(--font-geist-sans)]"
                   >
                     {topoBusy ? "..." : "Conceder Servicio Premium B"}
                   </button>
@@ -618,7 +531,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
               </section>
 
               <section className="border-t border-[#1a1a24] pt-4">
-                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                   Atividade na comunidade
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
@@ -643,7 +556,7 @@ function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: (
 function DetailStat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
   return (
     <div className="border border-[#1a1a24] bg-[#12121a]/40 p-3 text-center">
-      <p className="text-xl font-bold text-[#f5f5f7] [font-family:var(--font-cinzel)]">{value}</p>
+      <p className="text-xl font-bold text-[#F3F6FA] [font-family:var(--font-cinzel)]">{value}</p>
       <p className="mt-1 text-[9px] uppercase tracking-[0.2em] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">{label}</p>
       {hint && <p className="text-[8px] text-[#6a6a7a]">{hint}</p>}
     </div>

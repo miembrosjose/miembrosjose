@@ -16,7 +16,7 @@ export default function IntroPreviewPage() {
       style={{
         minHeight: "100dvh",
         background: "#000000",
-        color: "#f5f5f7",
+        color: "#F3F6FA",
         fontFamily: "var(--font-mono)",
       }}
     >
@@ -58,8 +58,8 @@ export default function IntroPreviewPage() {
             style={{
               padding: "0.75rem 1.6rem",
               background: "transparent",
-              border: "1px solid rgba(201, 169, 97, 0.5)",
-              color: "#c9a961",
+              border: "1px solid rgba(109, 74, 155, 0.5)",
+              color: "#6D4A9B",
               fontFamily: "var(--font-mono)",
               fontSize: "0.7rem",
               letterSpacing: "0.32em",

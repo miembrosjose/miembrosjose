@@ -98,9 +98,9 @@ export function StripeInlinePayment(props: Props) {
       appearance: {
         theme: "night" as const,
         variables: {
-          colorPrimary: "#c9a961",
+          colorPrimary: "#6D4A9B",
           colorBackground: "#0f0f17",
-          colorText: "#f5f5f7",
+          colorText: "#F3F6FA",
           colorDanger: "#ef4444",
           fontFamily: "system-ui, -apple-system, sans-serif",
           borderRadius: "0px",
@@ -110,11 +110,11 @@ export function StripeInlinePayment(props: Props) {
           ".Input": {
             backgroundColor: "#12121a",
             border: "1px solid #2a2a36",
-            color: "#f5f5f7",
+            color: "#F3F6FA",
           },
           ".Input:focus": {
-            border: "1px solid #c9a961",
-            boxShadow: "0 0 0 1px rgba(201, 169, 97, 0.4)",
+            border: "1px solid #6D4A9B",
+            boxShadow: "0 0 0 1px rgba(109, 74, 155, 0.4)",
           },
           ".Label": {
             color: "#a0a0b0",
@@ -128,8 +128,8 @@ export function StripeInlinePayment(props: Props) {
             color: "#a0a0b0",
           },
           ".Tab--selected": {
-            backgroundColor: "rgba(201, 169, 97, 0.12)",
-            border: "1px solid #c9a961",
+            backgroundColor: "rgba(109, 74, 155, 0.12)",
+            border: "1px solid #6D4A9B",
             color: "#fde68a",
           },
         },
@@ -160,8 +160,8 @@ export function StripeInlinePayment(props: Props) {
                 style={{
                   flex: 1,
                   padding: "0.75rem",
-                  border: `1px solid ${isActive ? "#c9a961" : "#2a2a36"}`,
-                  background: isActive ? "rgba(201,169,97,0.12)" : "rgba(26,26,36,0.4)",
+                  border: `1px solid ${isActive ? "#6D4A9B" : "#2a2a36"}`,
+                  background: isActive ? "rgba(109,74,155,0.12)" : "rgba(26,26,36,0.4)",
                   color: isActive ? "#fde68a" : "#a0a0b0",
                   cursor: "pointer",
                   fontFamily: "var(--font-mono)",
@@ -183,7 +183,7 @@ export function StripeInlinePayment(props: Props) {
                   fontSize: "1rem",
                   fontWeight: 700,
                   fontFamily: "var(--font-display)",
-                  color: isActive ? "#f5f5f7" : "#a0a0b0",
+                  color: isActive ? "#F3F6FA" : "#a0a0b0",
                   letterSpacing: 0,
                   textTransform: "none",
                 }}>
@@ -331,9 +331,9 @@ function CheckoutForm({
         style={{
           width: "100%",
           padding: "0.95rem 1.25rem",
-          border: "1px solid #c9a961",
-          background: "#c9a961",
-          color: "#000000",
+          border: "1px solid #6D4A9B",
+          background: "#6D4A9B",
+          color: "#050510",
           fontFamily: "var(--font-mono)",
           fontSize: "0.7rem",
           fontWeight: 700,

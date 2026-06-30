@@ -36,8 +36,8 @@ export function RecoverForm() {
 
   if (sent) {
     return (
-      <div className="border border-[#c9a961]/30 bg-[#12121a]/60 p-6">
-        <p className="text-sm text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+      <div className="border border-[#6D4A9B]/30 bg-[#12121a]/60 p-6">
+        <p className="text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
           ✓ Si existe una cuenta con ese email, recibirás un enlace para crear nueva contraseña en los próximos minutos.
         </p>
         <p className="mt-3 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
@@ -65,7 +65,7 @@ export function RecoverForm() {
           onChange={(e) => setEmail(e.target.value)}
           disabled={isPending}
           placeholder="tu@email.com"
-          className="block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3.5 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+          className="block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3.5 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
         />
       </div>
 
@@ -78,7 +78,7 @@ export function RecoverForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex w-full items-center justify-center gap-3 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-4 text-[#000000] text-sm font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
+        className="inline-flex w-full items-center justify-center gap-3 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-4 text-[#000000] text-sm font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
       >
         {isPending ? "Enviando..." : "Enviar enlace"}
       </button>

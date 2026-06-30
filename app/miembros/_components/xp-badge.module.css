@@ -1,12 +1,12 @@
-/* extraído. (.nav-xp-badge) */
+﻿/* extraído. (.nav-xp-badge) */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.875rem;
-  background: linear-gradient(135deg, rgba(127, 29, 29, 0.15), rgba(201, 169, 97, 0.1));
-  border: 1px solid rgba(201, 169, 97, 0.25);
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.15), rgba(109, 74, 155, 0.1));
+  border: 1px solid rgba(109, 74, 155, 0.25);
   border-radius: 20px;
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -17,8 +17,8 @@
 }
 
 .badge:hover {
-  background: linear-gradient(135deg, rgba(127, 29, 29, 0.25), rgba(201, 169, 97, 0.18));
-  border-color: rgba(201, 169, 97, 0.45);
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.25), rgba(109, 74, 155, 0.18));
+  border-color: rgba(109, 74, 155, 0.45);
 }
 
 .level {

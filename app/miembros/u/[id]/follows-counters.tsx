@@ -40,17 +40,17 @@ export function FollowsCountersAndModal({
         <button
           type="button"
           onClick={() => setOpen("followers")}
-          className="hover:text-[#c9a961]"
+          className="hover:text-[#6D4A9B]"
         >
-          <span className="text-[#f5f5f7] font-bold">{followersCount}</span> Seguidores
+          <span className="text-[#F3F6FA] font-bold">{followersCount}</span> Seguidores
         </button>
         <span className="text-[#3a3a45]">·</span>
         <button
           type="button"
           onClick={() => setOpen("following")}
-          className="hover:text-[#c9a961]"
+          className="hover:text-[#6D4A9B]"
         >
-          <span className="text-[#f5f5f7] font-bold">{followingCount}</span> Siguiendo
+          <span className="text-[#F3F6FA] font-bold">{followingCount}</span> Siguiendo
         </button>
       </div>
 
@@ -61,14 +61,14 @@ export function FollowsCountersAndModal({
         >
           <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden border border-[#1a1a24] bg-[#000000]">
             <div className="flex items-center justify-between border-b border-[#1a1a24] px-5 py-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                 {open === "followers" ? "Seguidores" : "Siguiendo"}
               </span>
               <button
                 type="button"
                 onClick={() => setOpen(null)}
                 aria-label="Cerrar"
-                className="text-xl text-[#a0a0b0] hover:text-[#f5f5f7]"
+                className="text-xl text-[#a0a0b0] hover:text-[#F3F6FA]"
               >
                 ×
               </button>
@@ -98,17 +98,17 @@ export function FollowsCountersAndModal({
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img src={u.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[#c9a961] [font-family:var(--font-cinzel)]">
+                            <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[#6D4A9B] [font-family:var(--font-cinzel)]">
                               {u.full_name.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+                          <div className="truncate text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
                             {u.full_name}
                           </div>
                           {u.username && (
-                            <div className="truncate text-[11px] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                            <div className="truncate text-[11px] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                               @{u.username}
                             </div>
                           )}

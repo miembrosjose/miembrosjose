@@ -1,4 +1,4 @@
-/* CSS extraído. */
+﻿/* CSS extraído. */
 
 .composer {
   margin-bottom: 1.5rem;
@@ -52,7 +52,7 @@
 .typeBtn.active {
   border-color: var(--accent-gold);
   color: var(--accent-gold);
-  background: rgba(201, 169, 97, 0.06);
+  background: rgba(109, 74, 155, 0.06);
 }
 
 .composer input[type="text"],
@@ -181,7 +181,7 @@
 }
 
 .post.pinned {
-  border-color: rgba(201, 169, 97, 0.4);
+  border-color: rgba(109, 74, 155, 0.4);
 }
 
 .post.pinned::before {
@@ -259,8 +259,8 @@
   font-family: var(--font-mono);
   font-size: 0.65rem;
   padding: 0.25rem 0.625rem;
-  background: rgba(127, 29, 29, 0.15);
-  border: 1px solid rgba(127, 29, 29, 0.3);
+  background: rgba(109, 74, 155, 0.15);
+  border: 1px solid rgba(109, 74, 155, 0.3);
   color: var(--accent-red);
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -307,7 +307,7 @@
 }
 
 .reaction:hover {
-  background: rgba(127, 29, 29, 0.15);
+  background: rgba(109, 74, 155, 0.15);
   color: var(--text-primary);
   border-color: var(--accent-red);
 }

@@ -6,27 +6,30 @@ export type ProfileMeta = {
   avatar_url?: string
   full_name?: string
   username?: string
-  niche?: string
   instagram?: string
+  /** Flag pra contas dev/admin do projeto (não-cliente). Pula o onboarding. */
+  dev_admin?: boolean
 }
 
 const REQUIRED_FIELDS: Array<keyof ProfileMeta> = [
   "avatar_url",
   "full_name",
   "username",
-  "niche",
   "instagram",
 ]
 
 /**
  * Retorna true se o user tem TODOS os campos obrigatórios preenchidos.
  * Bio é opcional e NÃO entra na checagem.
+ * Contas com dev_admin=true (eu — admin do projeto) sempre passam — não
+ * preciso aparecer como membro nem completar perfil público.
  */
 export function isProfileComplete(
   meta: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!meta) return false
   const m = meta as ProfileMeta
+  if (m.dev_admin === true) return true
   return REQUIRED_FIELDS.every((k) => {
     const v = m[k]
     return typeof v === "string" && v.trim().length > 0

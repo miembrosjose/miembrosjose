@@ -1,5 +1,5 @@
-/* Animação cinematográfica de EL TOPO conquistado.
- * Tema vermelho da marca (#7f1d1d). Mesma estrutura do level-up mas
+﻿/* Animação cinematográfica de EL TOPO conquistado.
+ * Tema vermelho da marca (#6D4A9B). Mesma estrutura do level-up mas
  * com cores e tagline diferentes. Usado quando recipient ve o popup
  * public_insignia_self da insignia EL TOPO. */
 
@@ -18,7 +18,7 @@
   background: radial-gradient(
     ellipse at center,
     rgba(220, 38, 38, 0.3) 0%,
-    rgba(127, 29, 29, 0.2) 30%,
+    rgba(109, 74, 155, 0.2) 30%,
     rgba(0, 0, 0, 0.85) 75%
   );
   -webkit-backdrop-filter: blur(6px);
@@ -70,7 +70,7 @@
   width: clamp(160px, 28vw, 220px);
   height: clamp(180px, 31.5vw, 248px);
   filter: drop-shadow(0 0 30px rgba(220, 38, 38, 0.8))
-    drop-shadow(0 0 60px rgba(127, 29, 29, 0.5));
+    drop-shadow(0 0 60px rgba(109, 74, 155, 0.5));
   animation: topoOverlayBadgeFloat 2.6s ease-in-out infinite;
 }
 
@@ -89,7 +89,7 @@
   font-weight: 700;
   font-size: clamp(3rem, 11vw, 6rem);
   line-height: 0.9;
-  background: linear-gradient(180deg, #fca5a5 0%, #dc2626 45%, #7f1d1d 100%);
+  background: linear-gradient(180deg, #fca5a5 0%, #dc2626 45%, #6D4A9B 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

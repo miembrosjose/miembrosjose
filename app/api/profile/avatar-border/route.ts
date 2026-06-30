@@ -15,8 +15,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 export const dynamic = "force-dynamic"
 
 export const AVATAR_BORDER_PALETTE = [
-  "#7f1d1d", // red-900 marca
-  "#c9a961", // gold marca
+  "#6D4A9B", // red-900 marca
+  "#6D4A9B", // gold marca
   "#ffffff", // branco
   "#10b981", // esmeralda
   "#3b82f6", // azul royal

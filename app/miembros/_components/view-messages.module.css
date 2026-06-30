@@ -1,4 +1,4 @@
-/* ViewMessages — split layout: sidebar de threads + conversa selecionada.
+﻿/* ViewMessages — split layout: sidebar de threads + conversa selecionada.
  * Mobile: stack (sidebar full-width, depois thread fullscreen). */
 
 /* Navbar e fixed top:0 com ~80px de altura. Wrap precisa comecar abaixo dele
@@ -67,7 +67,7 @@
 }
 
 .threadBtn:hover { background: rgba(255, 255, 255, 0.03); }
-.threadBtn.active { background: rgba(127, 29, 29, 0.15); border-left: 2px solid var(--accent-red); padding-left: calc(1.25rem - 2px); }
+.threadBtn.active { background: rgba(109, 74, 155, 0.15); border-left: 2px solid var(--accent-red); padding-left: calc(1.25rem - 2px); }
 
 .threadAvatarWrap {
   position: relative;
@@ -75,7 +75,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50% !important;
-  background: linear-gradient(135deg, #1a1a24, #000000);
+  background: linear-gradient(135deg, #1d1d35, #050510);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -360,7 +360,7 @@
   transition: all 0.2s;
 }
 
-.sendBtn:hover { background: #991b1b; }
+.sendBtn:hover { background: #8a63b8; }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .recordingIndicator {
@@ -368,7 +368,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.875rem;
-  background: rgba(127, 29, 29, 0.15);
+  background: rgba(109, 74, 155, 0.15);
   border: 1px solid var(--accent-red);
   color: var(--accent-red);
   font-size: 0.75rem;

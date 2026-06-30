@@ -15,8 +15,8 @@ export function BonusGanchosContent() {
         <div
           style={{
             display: "inline-block",
-            background: "rgba(201,169,97,0.12)",
-            border: "1px solid rgba(201,169,97,0.35)",
+            background: "rgba(109,74,155,0.12)",
+            border: "1px solid rgba(109,74,155,0.35)",
             padding: "0.35rem 1rem",
             marginBottom: "1.25rem",
             fontFamily: "var(--font-mono)",

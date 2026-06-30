@@ -1,44 +1,97 @@
-/* CSS extraído. — fórum +
+﻿/* CSS extraído. — fórum +
  * report-btn. Adaptado pra CSS Modules. */
 
 .post {
   display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s;
+  grid-template-columns: 56px 1fr;
+  gap: 1.25rem;
+  padding: 1.75rem 1.75rem 1.5rem;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.008) 55%, transparent 100%),
+    #0c0c1a;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px !important;
+  margin-bottom: 1rem;
+  transition:
+    transform 280ms var(--ease-out-quart),
+    border-color 280ms var(--ease-out-quart),
+    box-shadow 280ms var(--ease-out-quart);
+  box-shadow:
+    0 6px 20px -8px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(109,74,155,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Linha dourada vertical sutil que aparece no hover — ancora visual moderna */
+.post::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--accent-red), transparent);
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out-quart);
 }
 
 .post:hover {
-  border-color: var(--border-medium);
-  transform: translateX(2px);
+  border-color: rgba(109, 74, 155, 0.55);
+  transform: translateY(-3px);
+  box-shadow:
+    0 18px 40px -12px rgba(0,0,0,0.75),
+    0 0 32px -10px rgba(109,74,155,0.35),
+    0 0 0 1px rgba(109,74,155,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.post:hover::before {
+  opacity: 1;
 }
 
 .post.pinned {
-  border-color: rgba(201, 169, 97, 0.4);
-  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(201, 169, 97, 0.04) 100%);
+  border-color: rgba(109, 74, 155, 0.5);
+  background:
+    linear-gradient(160deg, rgba(109, 74, 155, 0.10) 0%, rgba(109, 74, 155, 0.02) 50%, transparent 100%),
+    #0c0c1a;
+  box-shadow:
+    0 12px 36px -10px rgba(0,0,0,0.7),
+    0 0 36px -10px rgba(109,74,155,0.30),
+    0 0 0 1px rgba(109,74,155,0.25),
+    inset 0 1px 0 rgba(109,74,155,0.10);
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-red), var(--accent-red-deep));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.1rem;
   color: white;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
   text-decoration: none;
+  box-shadow:
+    0 6px 18px -4px rgba(109,74,155,0.55),
+    0 0 0 1px rgba(109,74,155,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.14);
+  transition: transform 320ms var(--ease-out-quart), box-shadow 320ms var(--ease-out-quart);
+}
+
+.post:hover .avatar {
+  transform: scale(1.06);
+  box-shadow:
+    0 10px 24px -4px rgba(109,74,155,0.7),
+    0 0 0 1px rgba(109,74,155,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.18);
 }
 
 .avatar img {
@@ -50,16 +103,18 @@
 .authorInfo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-  font-size: 0.75rem;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
   flex-wrap: wrap;
 }
 
 .authorName {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: -0.005em;
 }
 
 .authorName:hover {
@@ -71,18 +126,23 @@
   margin-left: auto;
   font-family: var(--font-mono);
   font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .pinnedBadge {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--accent-gold);
-  background: rgba(201, 169, 97, 0.12);
-  border: 1px solid rgba(201, 169, 97, 0.3);
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
+  color: #a78bca;
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.22) 0%, rgba(109, 74, 155, 0.08) 100%);
+  border: 1px solid rgba(109, 74, 155, 0.45);
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px !important;
+  box-shadow: 0 0 12px rgba(109, 74, 155, 0.25);
+  font-weight: 700;
 }
 
 .editedTag {
@@ -94,17 +154,19 @@
 
 .title {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.05rem;
-  margin: 0 0 0.4rem;
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+  margin: 0 0 0.7rem;
   color: var(--text-primary);
 }
 
 .body {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0 0 0.625rem;
+  line-height: 1.7;
+  margin: 0 0 1.1rem;
 }
 
 .body p {
@@ -134,14 +196,15 @@
 
 .tag {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  padding: 0.125rem 0.5rem;
-  background: rgba(127, 29, 29, 0.15);
-  color: var(--accent-red);
-  border: 1px solid rgba(127, 29, 29, 0.3);
-  border-radius: 3px;
+  font-size: 0.6rem;
+  padding: 0.25rem 0.6rem;
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.28) 0%, rgba(109, 74, 155, 0.10) 100%);
+  color: #fca5a5;
+  border: 1px solid rgba(109, 74, 155, 0.45);
+  border-radius: 999px !important;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.18em;
+  font-weight: 600;
 }
 
 .media {
@@ -160,40 +223,59 @@
 .footer {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
   font-family: var(--font-mono);
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
 }
 
+/* Botões de ação como pills com border + bg surface — vibe console técnico */
 .likeBtn,
 .dislikeBtn,
 .replyBtn {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-family: inherit;
-  font-size: inherit;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0;
-  transition: color 0.15s ease;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px !important;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  transition:
+    color 200ms var(--ease-out-quart),
+    background 200ms var(--ease-out-quart),
+    border-color 200ms var(--ease-out-quart),
+    transform 160ms var(--ease-out-quart);
 }
 
 .likeBtn:hover,
 .dislikeBtn:hover,
 .replyBtn:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
 .likeBtn.liked {
-  color: var(--accent-red);
+  color: #fca5a5;
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.30) 0%, rgba(109, 74, 155, 0.10) 100%);
+  border-color: rgba(109, 74, 155, 0.55);
+  box-shadow: 0 0 12px rgba(109, 74, 155, 0.25);
 }
 
 .dislikeBtn.disliked {
-  color: var(--accent-gold);
+  color: #a78bca;
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.22) 0%, rgba(109, 74, 155, 0.08) 100%);
+  border-color: rgba(109, 74, 155, 0.45);
 }
 
 .hot {
@@ -398,11 +480,12 @@
 .composer {
   margin-bottom: 1.5rem;
   border: 1px solid var(--border-medium);
-  background: var(--bg-elevated);
-  padding: 1.25rem;
+  background: var(--surface-2);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  box-shadow: var(--shadow-2), var(--shadow-inset-top);
 }
 
 .composer input[type="text"],
@@ -420,6 +503,7 @@
 .composer input[type="text"]:focus,
 .composer textarea:focus {
   border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(109,74,155,0.15);
 }
 
 .composer textarea {
@@ -481,14 +565,25 @@
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  padding: 0.6rem 1.2rem;
+  padding: 0.7rem 1.4rem;
   cursor: pointer;
   border: none;
   margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-2);
+  transition:
+    background var(--duration-base) var(--ease-out-quart),
+    color var(--duration-base) var(--ease-out-quart),
+    transform var(--duration-fast) var(--ease-out-quart),
+    box-shadow var(--duration-base) var(--ease-out-quart);
 }
 .openComposer:hover {
   background: var(--accent-red);
   color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-red), var(--shadow-2);
+}
+.openComposer:active {
+  transform: translateY(0);
 }
 
 /* ─── Mobile ──────────────────────────────────────────────── */

@@ -21,7 +21,7 @@ const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES]
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024  // 8MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
-const PUBLIC_URL_BASE = "https://avatars.SEU_DOMINIO.com"
+const PUBLIC_URL_BASE = process.env.R2_PUBLIC_URL || ""
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()

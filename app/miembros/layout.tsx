@@ -16,7 +16,6 @@ import { BroadcastProvider } from "./_lib/broadcast-context"
 import { ViewProvider } from "./_lib/view-context"
 import { OnlinePresenceProvider } from "./_lib/online-presence"
 import { UnreadDMProvider } from "./_lib/unread-dm"
-import { CrispChat } from "./_components/CrispChat"
 import { OnlineToast } from "./_components/OnlineToast"
 import { MessengerWidget } from "./_components/MessengerWidget"
 import "./_styles/tokens.css"
@@ -44,8 +43,8 @@ const jetbrains = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Miembros · [BRAND_NAME]",
-  description: "Área exclusiva de miembros de [BRAND_NAME].",
+  title: "Miembros · Los 144000",
+  description: "Área exclusiva de miembros de Los 144000.",
   robots: { index: false, follow: false },
 }
 
@@ -66,8 +65,6 @@ export default function MiembrosLayout({
               {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
               <MessengerWidget />
             </ViewProvider>
-            {/* Crisp widget — boot uma vez por sessão; identifica user automaticamente. */}
-            <CrispChat />
           </UnreadDMProvider>
         </OnlinePresenceProvider>
       </AuthProvider>

@@ -47,8 +47,9 @@ export function Leaderboard() {
       })
       .catch((e) => {
         if (!alive) return
+        setUsers([])
         const msg = e instanceof Error ? e.message : "Error desconocido"
-        setError(msg)
+        console.warn("[Leaderboard] fetch failed:", msg)
       })
       .finally(() => {
         if (alive) setLoading(false)

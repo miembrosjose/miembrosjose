@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       source_user_name: targetName,
       source_user_avatar_url: targetAvatar,
       title: "¡Conquistaste EL TOPO! 🔥",
-      preview: "Insignia exclusiva — [BRAND_NAME] construyó tu embudo (servicio premium [BRAND_NAME])",
+      preview: "Insignia exclusiva — Los 144000 construyó tu embudo (servicio premium Los 144000)",
     })
 
     // 3b. Broadcast pros outros users
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
         source_user_name: targetName,
         source_user_avatar_url: targetAvatar,
         title: `${targetName} entró en EL TOPO 🔥`,
-        preview: "Insignia exclusiva — [BRAND_NAME] construyó tu embudo (servicio premium [BRAND_NAME])",
+        preview: "Insignia exclusiva — Los 144000 construyó tu embudo (servicio premium Los 144000)",
       }))
       for (let i = 0; i < rows.length; i += 100) {
         await admin.from("notifications").insert(rows.slice(i, i + 100))

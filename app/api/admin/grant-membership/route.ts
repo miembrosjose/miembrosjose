@@ -7,7 +7,7 @@
 // Faz tudo de uma vez:
 //   1. Insert em stripe_sales com sale_type='front' (libera membership real)
 //   2. Cria/atualiza account_invite (token único 7 dias)
-//   3. Manda email Resend "Tu acceso a [BRAND_NAME] está listo" (se send_email=true)
+//   3. Manda email Resend "Tu acceso a Los 144000 está listo" (se send_email=true)
 //
 // Idempotente: se conta já existe, pula invite (cliente loga normal). Se invite
 // pendente, regenera token + reenvia email.
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     stripe_customer_id: null,
     sale_type: "front",
     region: "MANUAL",
-    items: [{ key: "front", name: "[BRAND_NAME]", price: 0, qty: 1 }],
+    items: [{ key: "front", name: "Los 144000", price: 0, qty: 1 }],
     amount_total: 0,
     currency: "usd",
     customer_email: email,

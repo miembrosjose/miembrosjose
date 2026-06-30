@@ -100,7 +100,7 @@ export function Navbar() {
       </button>
 
       <div className={styles.logo}>
-        [BRAND_NAME]
+        Los 144000
         <span className={styles.beta}>BETA</span>
       </div>
 

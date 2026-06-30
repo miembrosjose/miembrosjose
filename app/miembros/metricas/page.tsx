@@ -173,10 +173,10 @@ export default async function MetricasPage() {
   const m = await loadMetrics()
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000000", color: "#f5f5f7", padding: "2rem 1.5rem", fontFamily: "var(--font-body)" }}>
+    <div style={{ minHeight: "100vh", background: "#000000", color: "#F3F6FA", padding: "2rem 1.5rem", fontFamily: "var(--font-body)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <header style={{ marginBottom: "2rem", borderBottom: "1px solid rgba(201,169,97,0.3)", paddingBottom: "1rem" }}>
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.4em", textTransform: "uppercase", color: "#c9a961", margin: 0 }}>
+        <header style={{ marginBottom: "2rem", borderBottom: "1px solid rgba(109,74,155,0.3)", paddingBottom: "1rem" }}>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.4em", textTransform: "uppercase", color: "#6D4A9B", margin: 0 }}>
             Dashboard · Admin
           </p>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2.5rem", fontWeight: 700, margin: "0.5rem 0 0", letterSpacing: "-0.01em" }}>
@@ -349,7 +349,7 @@ const sectionTitle: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.25em",
   textTransform: "uppercase",
-  color: "#c9a961",
+  color: "#6D4A9B",
   margin: "0 0 1rem",
 }
 
@@ -357,7 +357,7 @@ const tableStyle: React.CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
   background: "rgba(15,15,23,0.6)",
-  border: "1px solid rgba(201,169,97,0.2)",
+  border: "1px solid rgba(109,74,155,0.2)",
 }
 
 const thStyle: React.CSSProperties = {
@@ -367,23 +367,23 @@ const thStyle: React.CSSProperties = {
   fontSize: "0.65rem",
   letterSpacing: "0.2em",
   textTransform: "uppercase",
-  color: "#c9a961",
-  borderBottom: "1px solid rgba(201,169,97,0.3)",
-  background: "rgba(201,169,97,0.05)",
+  color: "#6D4A9B",
+  borderBottom: "1px solid rgba(109,74,155,0.3)",
+  background: "rgba(109,74,155,0.05)",
 }
 
 const tdStyle: React.CSSProperties = {
   padding: "0.75rem 1rem",
   fontSize: "0.85rem",
   borderBottom: "1px solid rgba(255,255,255,0.05)",
-  color: "#f5f5f7",
+  color: "#F3F6FA",
 }
 
 function Metric({ label, value, accent, hint }: { label: string; value: number | string; accent?: string; hint?: string }) {
   return (
-    <div style={{ padding: "1.25rem 1.5rem", background: "linear-gradient(135deg, rgba(201,169,97,0.08), rgba(15,15,23,0.6))", border: "1px solid rgba(201,169,97,0.25)", borderRadius: 4 }}>
+    <div style={{ padding: "1.25rem 1.5rem", background: "linear-gradient(135deg, rgba(109,74,155,0.08), rgba(15,15,23,0.6))", border: "1px solid rgba(109,74,155,0.25)", borderRadius: 4 }}>
       <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#a0a0b0", margin: 0 }}>{label}</p>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "2.25rem", fontWeight: 700, margin: "0.5rem 0 0", color: accent || "#c9a961", lineHeight: 1 }}>{value}</p>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: "2.25rem", fontWeight: 700, margin: "0.5rem 0 0", color: accent || "#6D4A9B", lineHeight: 1 }}>{value}</p>
       {hint && <p style={{ fontSize: "0.7rem", color: "#a0a0b0", margin: "0.5rem 0 0" }}>{hint}</p>}
     </div>
   )
@@ -398,7 +398,7 @@ function FunnelRow({ label, w }: { label: string; w: FunnelWindow }) {
       <td style={tdStyle}>{w.queued}</td>
       <td style={{ ...tdStyle, color: "#4ade80" }}>{w.sent}</td>
       <td style={{ ...tdStyle, color: "#a0a0b0" }}>{w.canceled_bought}</td>
-      <td style={{ ...tdStyle, color: w.errors > 0 ? "#fca5a5" : "#f5f5f7" }}>{w.errors}</td>
+      <td style={{ ...tdStyle, color: w.errors > 0 ? "#fca5a5" : "#F3F6FA" }}>{w.errors}</td>
       <td style={tdStyle}>{w.waiting}{conversion > 0 && <span style={{ marginLeft: "0.5rem", color: "#a0a0b0", fontSize: "0.7rem" }}>(taxa: {conversion}%)</span>}</td>
     </tr>
   )

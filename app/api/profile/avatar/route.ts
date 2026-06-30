@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ALLOWED_TYPES = ["image/webp"] // cliente converte tudo pra webp
-const PUBLIC_URL_BASE = "https://avatars.SEU_DOMINIO.com"
+const PUBLIC_URL_BASE = process.env.R2_PUBLIC_URL || ""
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()

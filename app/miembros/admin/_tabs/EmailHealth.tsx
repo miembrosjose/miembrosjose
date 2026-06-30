@@ -100,7 +100,7 @@ export function EmailHealth() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           Saúde de envio de emails
         </h2>
         <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
@@ -149,7 +149,7 @@ export function EmailHealth() {
                 {orphans.map((o) => (
                   <tr key={o.stripe_payment_intent_id} className="border-b border-[#1a1a24]">
                     <td className="px-2 py-2">
-                      <div className="text-[#f5f5f7]">{o.email}</div>
+                      <div className="text-[#F3F6FA]">{o.email}</div>
                       {o.customer_name && <div className="text-[10px] text-[#6a6a7a]">{o.customer_name}</div>}
                     </td>
                     <td className="px-2 py-2 text-[#a0a0b0] uppercase text-[10px] tracking-[0.2em] [font-family:var(--font-mono)]">{o.sale_type}</td>
@@ -160,7 +160,7 @@ export function EmailHealth() {
                         type="button"
                         onClick={() => retry(o.email)}
                         disabled={retrying === o.email}
-                        className="inline-flex items-center gap-1 border border-[#c9a961]/40 bg-[#c9a961]/10 text-[#c9a961] text-[10px] font-semibold uppercase tracking-[0.2em] px-2 py-1 hover:bg-[#c9a961]/20 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 border border-[#6D4A9B]/40 bg-[#6D4A9B]/10 text-[#6D4A9B] text-[10px] font-semibold uppercase tracking-[0.2em] px-2 py-1 hover:bg-[#6D4A9B]/20 disabled:opacity-50"
                       >
                         <RefreshCw size={11} className={retrying === o.email ? "animate-spin" : ""} />
                         {retrying === o.email ? "..." : "Reenviar"}
@@ -176,7 +176,7 @@ export function EmailHealth() {
 
       {/* FAILURES */}
       <section>
-        <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           <Mail size={13} />
           Falhas recentes ({failures.length})
         </h3>
@@ -201,7 +201,7 @@ export function EmailHealth() {
               <tbody>
                 {failures.map((f) => (
                   <tr key={f.id} className="border-b border-[#1a1a24]">
-                    <td className="px-2 py-2 text-[#f5f5f7]">{f.email}</td>
+                    <td className="px-2 py-2 text-[#F3F6FA]">{f.email}</td>
                     <td className="px-2 py-2 text-[10px] text-[#a0a0b0] uppercase [font-family:var(--font-mono)]">{f.email_type}</td>
                     <td className="px-2 py-2 text-[10px] text-[#a0a0b0] uppercase [font-family:var(--font-mono)]">{f.source}</td>
                     <td className="px-2 py-2 text-[10px] text-red-400 max-w-xs truncate" title={f.error_message || ""}>{f.error_message || "—"}</td>
@@ -211,7 +211,7 @@ export function EmailHealth() {
                         type="button"
                         onClick={() => retry(f.email)}
                         disabled={retrying === f.email}
-                        className="inline-flex items-center gap-1 border border-[#c9a961]/40 bg-[#c9a961]/10 text-[#c9a961] text-[10px] font-semibold uppercase tracking-[0.2em] px-2 py-1 hover:bg-[#c9a961]/20 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 border border-[#6D4A9B]/40 bg-[#6D4A9B]/10 text-[#6D4A9B] text-[10px] font-semibold uppercase tracking-[0.2em] px-2 py-1 hover:bg-[#6D4A9B]/20 disabled:opacity-50"
                       >
                         <RefreshCw size={11} className={retrying === f.email ? "animate-spin" : ""} />
                         Retry
@@ -238,7 +238,7 @@ function StatCard({ label, value, good, bad }: { label: string; value: string; g
       }`}
     >
       <div className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a] [font-family:var(--font-mono)]">{label}</div>
-      <div className={`mt-1 text-lg font-semibold ${bad ? "text-red-400" : good ? "text-[#009d68]" : "text-[#f5f5f7]"} [font-family:var(--font-display)]`}>
+      <div className={`mt-1 text-lg font-semibold ${bad ? "text-red-400" : good ? "text-[#009d68]" : "text-[#F3F6FA]"} [font-family:var(--font-display)]`}>
         {value}
       </div>
     </div>

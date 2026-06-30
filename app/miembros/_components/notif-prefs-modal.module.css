@@ -1,4 +1,4 @@
-/* Modal de preferências de notificação — toggle sliders.
+﻿/* Modal de preferências de notificação — toggle sliders.
  * Família visual canônica: border-image red→gold, cantos decorativos,
  * eyebrow mono uppercase, Cinzel pro header. */
 
@@ -43,7 +43,7 @@
     )
     1;
   box-shadow:
-    0 0 0 1px rgba(201, 169, 97, 0.15),
+    0 0 0 1px rgba(109, 74, 155, 0.15),
     0 24px 80px rgba(0, 0, 0, 0.7);
   margin: auto;
   animation: prefsModalScale 0.35s cubic-bezier(0.16, 1, 0.3, 1);

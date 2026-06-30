@@ -98,13 +98,13 @@ export function TextsEditor() {
     <div className="space-y-6">
       <div className="border border-[#1a1a24] bg-[#12121a]/40 p-5">
         <p className="text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-          Edita os textos visíveis na plataforma. As mudanças são aplicadas assim que você salva. Use <span className="text-[#c9a961]">Restaurar</span> para voltar ao texto original.
+          Edita os textos visíveis na plataforma. As mudanças são aplicadas assim que você salva. Use <span className="text-[#6D4A9B]">Restaurar</span> para voltar ao texto original.
         </p>
       </div>
 
       {groups.map(([groupName, entries]) => (
         <div key={groupName} className="border border-[#1a1a24] bg-[#12121a]/40 p-5 sm:p-6">
-          <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+          <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
             {groupName}
           </h3>
           <div className="space-y-5">
@@ -120,7 +120,7 @@ export function TextsEditor() {
                     <label className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
                       {entry.label}
                       {isOverridden && (
-                        <span className="ml-2 text-[#c9a961]" title="Editado">●</span>
+                        <span className="ml-2 text-[#6D4A9B]" title="Editado">●</span>
                       )}
 
                     </label>
@@ -152,7 +152,7 @@ export function TextsEditor() {
                       type="button"
                       onClick={() => saveKey(entry.key)}
                       disabled={isSaving || !dirty}
-                      className="border border-[#c9a961] bg-[#c9a961]/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c9a961] hover:bg-[#c9a961] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+                      className="border border-[#6D4A9B] bg-[#6D4A9B]/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] hover:bg-[#6D4A9B] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
                     >
                       {isSaving ? "Salvando..." : "Salvar"}
                     </button>

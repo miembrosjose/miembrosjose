@@ -3,8 +3,8 @@ import { getInviteByToken } from "@/lib/account-invites"
 import CreateAccountForm from "./create-account-form"
 
 export const metadata: Metadata = {
-  title: "Crear Cuenta · [BRAND_NAME]",
-  description: "Crea tu acceso al área de miembros de [BRAND_NAME].",
+  title: "Crear Cuenta · Los 144000",
+  description: "Crea tu acceso al área de miembros de Los 144000.",
   robots: { index: false, follow: false },
 }
 
@@ -19,8 +19,8 @@ export default async function CrearCuentaPage({ searchParams }: { searchParams: 
     <main className="relative min-h-[100dvh] overflow-hidden bg-[#000000] text-[oklch(0.95_0.008_60)] selection:bg-red-900/40">
       {/* Vinheta + spots */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_100%)]" />
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_500px_700px_at_85%_45%,rgba(201,169,97,0.08),transparent_70%)]" />
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_500px_700px_at_15%_55%,rgba(127,29,29,0.18),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_500px_700px_at_85%_45%,rgba(109,74,155,0.08),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_500px_700px_at_15%_55%,rgba(109,74,155,0.18),transparent_70%)]" />
 
       {/* Frame brackets */}
       <FrameBracket pos="top-left" />
@@ -35,7 +35,7 @@ export default async function CrearCuentaPage({ searchParams }: { searchParams: 
       <div className="absolute left-5 top-6 z-30 flex items-center gap-3 sm:left-6">
         <span className="block h-4 w-px flex-shrink-0 bg-red-900/70" />
         <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.5em] text-neutral-400 [font-family:var(--font-geist-sans)]">
-          [BRAND_NAME]
+          Los 144000
         </span>
       </div>
       <div className="absolute right-5 top-6 z-30 hidden items-center gap-3 sm:flex sm:right-6">
@@ -130,7 +130,7 @@ function InvalidTokenShell({ hasToken }: { hasToken: boolean }) {
           </svg>
         </a>
         <p className="max-w-sm text-xs leading-relaxed text-[oklch(0.45_0.01_30)] [font-family:var(--font-geist-sans)]">
-          ¿Necesitas un nuevo enlace? Responde al email que recibiste de [BRAND_NAME] y el equipo te enviará uno nuevo.
+          ¿Necesitas un nuevo enlace? Responde al email que recibiste de Los 144000 y el equipo te enviará uno nuevo.
         </p>
       </div>
     </>

@@ -10,9 +10,13 @@ import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
+import { SeasonsManagerModal } from "./SeasonsManagerModal"
+import { TiendaCarousel } from "./TiendaCarousel"
+import { ProductsManagerModal } from "./ProductsManagerModal"
+import { useSeasons } from "../_lib/use-seasons"
+import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
 import { ALL_BONUSES, type OwnedProduct } from "../_lib/products"
-import { ServicesPremium } from "./ServicesPremium"
 import { checkWelcome, syncUnlockedAchievementsFromServer } from "../_lib/achievements-unlock"
 import { useView } from "../_lib/view-context"
 import { useAuth } from "../_lib/auth-context"
@@ -109,6 +113,21 @@ export function SpaHomeShell() {
   const [salespageProduct, setSalespageProduct] = useState<PremiumProduct | null>(null)
   const { view } = useView()
   const { user } = useAuth()
+  const { seasons: dbSeasons } = useSeasons()
+  const { hasAccess } = useSeasonAccess()
+
+  // Decide se abre a temporada ou redireciona pro checkout (quando admin
+  // marcou is_locked=true e user não tem acesso). Procura a season real
+  // pelo num no banco; se não achar, abre o fallback estático.
+  function tryOpenSeasonByNum(num: number, fallback: Season) {
+    const fromDb = dbSeasons.find((s) => s.num === num)
+    const target = fromDb ?? fallback
+    if (fromDb?.is_locked && !hasAccess(fromDb.id) && fromDb.checkout_url) {
+      window.open(fromDb.checkout_url, "_blank", "noopener")
+      return
+    }
+    setOpenSeason(target)
+  }
   const { owned } = useOwnedProducts()
 
   // Gate de onboarding obrigatorio — user precisa preencher foto, nome,
@@ -219,7 +238,6 @@ export function SpaHomeShell() {
       avatar_url?: string
       username?: string
       bio?: string
-      niche?: string
       instagram?: string
     }
     return (
@@ -228,7 +246,6 @@ export function SpaHomeShell() {
         initialAvatar={meta.avatar_url || null}
         initialUsername={meta.username || ""}
         initialBio={meta.bio || ""}
-        initialNiche={meta.niche || ""}
         initialInstagram={meta.instagram || ""}
       />
     )
@@ -255,9 +272,11 @@ export function SpaHomeShell() {
         progressPct={overallPct}
         continueLabel={resume.hasStarted ? "Continuar Viendo" : "Asistir"}
         onContinue={() => {
-          // Abre a temporada onde o user vai retomar (não fixa em T1)
-          const target = SEASONS.find((s) => s.num === resume.season)
-          if (target) setOpenSeason(target)
+          // Abre a temporada onde o user vai retomar (não fixa em T1).
+          // Se a temporada está bloqueada e o user não tem acesso, redireciona
+          // pro checkout configurado pelo admin.
+          const fallback = SEASONS.find((s) => s.num === resume.season)
+          if (fallback) tryOpenSeasonByNum(resume.season, fallback)
         }}
         onMoreInfo={() => setSeriesInfoOpen(true)}
         visible={introDone && view === "inicio"}
@@ -291,8 +310,10 @@ export function SpaHomeShell() {
             onContinue={(seasonNum) => {
               // Abre EpisodesDrawer da temporada certa. O drawer detecta o
               // primeiro ep não-assistido e mostra "Continuar" no botão dele.
-              const meta = SEASONS.find((s) => s.num === seasonNum)
-              if (meta) setOpenSeason(meta)
+              // Se a temporada está bloqueada e o user não tem acesso, redireciona
+              // pro checkout configurado pelo admin.
+              const fallback = SEASONS.find((s) => s.num === seasonNum)
+              if (fallback) tryOpenSeasonByNum(seasonNum, fallback)
             }}
           />
 
@@ -349,9 +370,11 @@ function ViewInicio({
   onOpenSalespage: (p: PremiumProduct) => void
   owned: OwnedProduct[]
 }) {
+  const { isAdmin } = useAuth()
+  const [seasonsManagerOpen, setSeasonsManagerOpen] = useState(false)
+  const [productsManagerOpen, setProductsManagerOpen] = useState(false)
   const ownedNames = new Set(owned.map((o) => o.name.trim().toLowerCase()))
   const lockedBonuses = ALL_BONUSES.filter((b) => !ownedNames.has(b.name.trim().toLowerCase()))
-  const showTienda = hasLockedProducts(owned) || lockedBonuses.length > 0
 
   return (
     <div className={styles.view}>
@@ -368,13 +391,29 @@ function ViewInicio({
             <p className={styles.sectionKicker}>Mi Biblioteca</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              <span className={styles.sectionTitleAccent}>[BRAND_NAME]</span> — Temporadas
+              <span className={styles.sectionTitleAccent}>Los 144000</span> — Temporadas
             </h2>
           </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setSeasonsManagerOpen(true)}
+              aria-label="Gestionar temporadas"
+              title="Gestionar temporadas"
+              className="inline-flex items-center justify-center border border-[#6D4A9B]/50 bg-[#6D4A9B]/10 px-3 py-2 text-[#a78bca] transition-colors hover:border-[#6D4A9B] hover:bg-[#6D4A9B]/25 hover:text-[#F3F6FA]"
+              style={{ borderRadius: 8 }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.2em] [font-family:var(--font-mono)]">Gestionar</span>
+            </button>
+          )}
         </header>
         <SeasonsCarousel
           onOpenSeason={onOpenSeason}
-          onLockedClick={() => alert("Completa la temporada anterior para desbloquear esta")}
+          onLockedClick={() => undefined}
         />
       </section>
 
@@ -395,34 +434,49 @@ function ViewInicio({
       )}
 
       {/* TIENDA PREMIUM — Locked products + locked bonuses */}
-      {showTienda && (
-        <section id="tienda" className={styles.section}>
-          <header className={styles.sectionHeader}>
-            <div>
-              <p className={styles.sectionKicker}>Desbloquea Más</p>
-              <h2 className={styles.sectionTitle}>
-                <span className={styles.sectionDivider} />
-                Tienda Premium
-              </h2>
-            </div>
-          </header>
-          <LockedProducts owned={owned} onOpenSalespage={onOpenSalespage} lockedBonuses={lockedBonuses} />
-        </section>
-      )}
-
-      {/* SERVICIOS PREMIUM — 2 cards estáticos */}
-      <section id="servicios" className={styles.section}>
+      <section id="tienda" className={styles.section}>
         <header className={styles.sectionHeader}>
           <div>
-            <p className={styles.sectionKicker}>Servicios · [BRAND_NAME]</p>
+            <p className={styles.sectionKicker}>Desbloquea Más</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              Servicios Premium
+              Tienda Premium
             </h2>
           </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setProductsManagerOpen(true)}
+              aria-label="Gestionar productos"
+              title="Gestionar productos"
+              className="inline-flex items-center justify-center border border-[#6D4A9B]/50 bg-[#6D4A9B]/10 px-3 py-2 text-[#a78bca] transition-colors hover:border-[#6D4A9B] hover:bg-[#6D4A9B]/25 hover:text-[#F3F6FA]"
+              style={{ borderRadius: 8 }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.2em] [font-family:var(--font-mono)]">Gestionar</span>
+            </button>
+          )}
         </header>
-        <ServicesPremium />
+        <TiendaCarousel />
       </section>
+
+      {/* Modal de gestão de temporadas — só admin renderiza */}
+      {isAdmin && (
+        <SeasonsManagerModal
+          open={seasonsManagerOpen}
+          onClose={() => setSeasonsManagerOpen(false)}
+        />
+      )}
+      {/* Modal de gestão de produtos — só admin renderiza */}
+      {isAdmin && (
+        <ProductsManagerModal
+          open={productsManagerOpen}
+          onClose={() => setProductsManagerOpen(false)}
+        />
+      )}
     </div>
   )
 }

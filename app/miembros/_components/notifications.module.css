@@ -1,4 +1,4 @@
-/* Bell trigger + dropdown */
+﻿/* Bell trigger + dropdown */
 
 .bellWrap {
   position: relative;
@@ -169,7 +169,7 @@
 }
 
 .item.unread {
-  background: rgba(201, 169, 97, 0.04);
+  background: rgba(109, 74, 155, 0.04);
 }
 
 .item.unread::before {

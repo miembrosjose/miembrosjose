@@ -42,14 +42,12 @@ export function ProfileOnboardingModal({
   initialAvatar,
   initialUsername,
   initialBio,
-  initialNiche,
   initialInstagram,
 }: {
   initialName: string
   initialAvatar: string | null
   initialUsername: string
   initialBio: string
-  initialNiche: string
   initialInstagram: string
 }) {
   const { refresh: refreshAuth } = useAuth()
@@ -57,7 +55,6 @@ export function ProfileOnboardingModal({
   const [name, setName] = useState(initialName)
   const [username, setUsername] = useState(initialUsername)
   const [bio, setBio] = useState(initialBio)
-  const [niche, setNiche] = useState(initialNiche)
   const [instagram, setInstagram] = useState(initialInstagram)
   const [avatar, setAvatar] = useState(initialAvatar)
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialAvatar)
@@ -115,7 +112,6 @@ export function ProfileOnboardingModal({
     const cleanName = name.trim()
     const cleanUsername = username.trim().toLowerCase().replace(/^@/, "")
     const cleanInstagram = instagram.trim().replace(/^@/, "")
-    const cleanNiche = niche.trim()
     const cleanBio = bio.trim()
 
     // Validações
@@ -125,10 +121,6 @@ export function ProfileOnboardingModal({
     }
     if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 30 || !/^[a-z0-9_.]+$/.test(cleanUsername)) {
       setState({ type: "error", msg: "@username inválido (3-30, letras minúsculas, números, _ y .)" })
-      return
-    }
-    if (!cleanNiche) {
-      setState({ type: "error", msg: "Cuéntanos tu nicho" })
       return
     }
     if (!cleanInstagram || cleanInstagram.length > 30 || !/^[a-zA-Z0-9_.]+$/.test(cleanInstagram)) {
@@ -164,7 +156,7 @@ export function ProfileOnboardingModal({
           throw new Error(d.error || "Error al guardar nombre")
         }
 
-        // 3) Update about (username, bio, niche, instagram)
+        // 3) Update about (username, bio, instagram)
         const resAbout = await fetch("/api/profile/update", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -172,7 +164,6 @@ export function ProfileOnboardingModal({
           body: JSON.stringify({
             username: cleanUsername,
             bio: cleanBio,
-            niche: cleanNiche,
             instagram: cleanInstagram,
           }),
         })
@@ -225,7 +216,7 @@ export function ProfileOnboardingModal({
               fontSize: "0.7rem",
               letterSpacing: "0.3em",
               textTransform: "uppercase",
-              color: "var(--accent-gold, #c9a961)",
+              color: "var(--accent-gold, #6D4A9B)",
               marginBottom: "0.5rem",
             }}
           >
@@ -236,7 +227,7 @@ export function ProfileOnboardingModal({
               fontFamily: "var(--font-cinzel, serif)",
               fontSize: "1.65rem",
               fontWeight: 700,
-              color: "#f5f5f7",
+              color: "#F3F6FA",
               lineHeight: 1.15,
               marginBottom: "0.75rem",
             }}
@@ -267,7 +258,7 @@ export function ProfileOnboardingModal({
                   height: 72,
                   borderRadius: "50%",
                   overflow: "hidden",
-                  background: "#1a1a24",
+                  background: "#1d1d35",
                   border: "1px solid #2a2a35",
                   flexShrink: 0,
                 }}
@@ -285,7 +276,7 @@ export function ProfileOnboardingModal({
                       justifyContent: "center",
                       fontFamily: "var(--font-cinzel, serif)",
                       fontSize: "2rem",
-                      color: "#c9a961",
+                      color: "#6D4A9B",
                     }}
                   >
                     {(name || "?").charAt(0).toUpperCase()}
@@ -329,15 +320,6 @@ export function ProfileOnboardingModal({
           />
 
           <Field
-            label="Nicho *"
-            value={niche}
-            onChange={setNiche}
-            placeholder="Marketing, e-commerce, infoproductos..."
-            disabled={isPending}
-            maxLength={60}
-          />
-
-          <Field
             label="Instagram *"
             value={instagram}
             onChange={(v) => setInstagram(v.replace(/^@/, ""))}
@@ -360,7 +342,7 @@ export function ProfileOnboardingModal({
                 width: "100%",
                 background: "#12121a",
                 border: "1px solid #2a2a35",
-                color: "#f5f5f7",
+                color: "#F3F6FA",
                 padding: "0.75rem",
                 fontSize: "0.875rem",
                 fontFamily: "var(--font-geist-sans)",
@@ -392,7 +374,7 @@ export function ProfileOnboardingModal({
             style={{
               width: "100%",
               padding: "0.95rem",
-              background: "var(--accent-red, #7f1d1d)",
+              background: "var(--accent-red, #6D4A9B)",
               color: "#fff",
               border: "1px solid var(--accent-red-deep, #450a0a)",
               fontFamily: "var(--font-cinzel, serif)",
@@ -484,7 +466,7 @@ function Field({
             minWidth: 0,
             background: "transparent",
             border: "none",
-            color: "#f5f5f7",
+            color: "#F3F6FA",
             padding: "0.75rem",
             paddingLeft: prefix ? 0 : "0.75rem",
             fontSize: "0.875rem",

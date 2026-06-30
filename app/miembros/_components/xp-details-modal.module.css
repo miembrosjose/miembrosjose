@@ -1,4 +1,4 @@
-/* Modal de breakdown de XP — equivalente a #xpDetailsModal do prototipo
+﻿/* Modal de breakdown de XP — equivalente a #xpDetailsModal do prototipo
  * (linhas 6190 + openXpDetailsModal). Família visual canônica:
  *  - frame escuro com border-image red→gold (igual AchievementToast)
  *  - cantos decorativos em L gold
@@ -47,7 +47,7 @@
     )
     1;
   box-shadow:
-    0 0 0 1px rgba(201, 169, 97, 0.15),
+    0 0 0 1px rgba(109, 74, 155, 0.15),
     0 24px 80px rgba(0, 0, 0, 0.7);
   margin: auto;
   animation: xpModalScale 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -141,7 +141,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   line-height: 1;
-  background: linear-gradient(180deg, #f5e8b8 0%, #c9a961 100%);
+  background: linear-gradient(180deg, #f5e8b8 0%, #6D4A9B 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

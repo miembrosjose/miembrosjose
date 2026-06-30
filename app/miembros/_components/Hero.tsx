@@ -15,9 +15,9 @@
 
 import { Play, Info } from "lucide-react"
 import { forwardRef, useEffect, useRef } from "react"
+import { HERO_VIDEO_URL } from "../_lib/hero-media"
 import styles from "./hero.module.css"
 
-const HERO_VIDEO_URL = "https://cdn.SEU_DOMINIO.com/hero-video.mp4"
 const SESSION_KEY_INTRO = "app_intro_seen"
 const SESSION_KEY_ENDED = "app_hero_ended"
 
@@ -38,7 +38,7 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
   {
     badge = "EN DESTACADO",
     title,
-    description = "El método cinematográfico para crear embudos que convierten. Continúa donde lo dejaste y avanza hacia el siguiente capítulo.",
+    description = "Durante mucho tiempo olvidaste quién eras para poder llegar hasta aquí. Pero el tiempo del olvido ha concluido. La activación ha comenzado y la frecuencia de los 144,000 vuelve a resonar en aquellos que eligieron estar presentes durante la gran transición.",
     progressLabel = "Temporada — · Episodio —",
     progressPct = 0,
     continueLabel = "Continuar Viendo",
@@ -164,9 +164,7 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
             <>{title}</>
           ) : (
             <>
-              [BRAND_NAME]
-              <br />
-              Entrenamiento
+              Los 144000
             </>
           )}
         </h1>

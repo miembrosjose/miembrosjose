@@ -71,7 +71,7 @@ export function RevokedAccess() {
   return (
     <div className="border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8">
       <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           Acessos perdidos
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -110,14 +110,14 @@ export function RevokedAccess() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={item.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs font-bold text-[#c9a961] [font-family:var(--font-cinzel)]">
+                    <div className="flex h-full w-full items-center justify-center text-xs font-bold text-[#6D4A9B] [font-family:var(--font-cinzel)]">
                       {item.full_name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-sm font-semibold text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+                    <span className="text-sm font-semibold text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
                       {item.full_name}
                     </span>
                     {isFullRevoked && (

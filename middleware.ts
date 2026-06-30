@@ -155,21 +155,10 @@ export async function middleware(req: NextRequest) {
     return applyHeaders(NextResponse.rewrite(rewriteUrl))
   }
 
-  // ── DOMÍNIO PRINCIPAL SEU_DOMINIO.com ────────────────────────────────────
-  // Bloqueio reverso: se cliente acessar /login, /cuenta/crear ou /miembros direto
-  // no domínio principal, redirect pro subdomínio bonito.
-  // EM DEV LOCAL (npm run dev): pula bloqueio + auth pra iterar UI sem login.
+  // Los 144000 roda tudo em los144000.com (sem subdomínio miembros.*).
+  // O bloqueio reverso original (Copy Films) redirecionava /miembros pra
+  // subdomínio bonito — desativado aqui porque MIEMBROS_HOST é placeholder.
   const isDev = (process.env.NODE_ENV as string) === "development"
-  if (
-    !isDev &&
-    (pathname.startsWith("/miembros") ||
-      pathname.startsWith("/login") ||
-      pathname.startsWith("/cuenta"))
-  ) {
-    const targetPath = pathname.replace(/^\/miembros/, "") || "/"
-    const redirectUrl = new URL(`https://${MIEMBROS_HOST}${targetPath}${req.nextUrl.search}`)
-    return NextResponse.redirect(redirectUrl, 308)
-  }
 
   // Dashboard auth guard — HTTP Basic Auth, sem rota extra
   if (pathname.startsWith("/dashboard")) {
@@ -187,7 +176,7 @@ export async function middleware(req: NextRequest) {
     if (!authorized) {
       return new NextResponse("Acesso negado", {
         status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="[BRAND_NAME] Dashboard"' },
+        headers: { "WWW-Authenticate": 'Basic realm="Los 144000 Dashboard"' },
       })
     }
   }

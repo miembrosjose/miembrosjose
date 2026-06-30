@@ -78,7 +78,7 @@ export default function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           disabled={isPending}
           placeholder="tu@email.com"
-          className="block w-full border border-[oklch(0.2_0.015_25)] bg-[oklch(0.05_0.01_25)]/60 px-4 py-3.5 text-base text-[oklch(0.96_0.005_60)] placeholder:text-[oklch(0.4_0.01_30)] transition-colors duration-200 focus:border-red-900 focus:bg-[oklch(0.06_0.01_25)] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+          className="block w-full border border-[#251f30] bg-[#0a0a18]/60 px-4 py-3.5 text-base text-[#F3F6FA] placeholder:text-[#6a6a85] transition-colors duration-200 focus:border-[#6D4A9B] focus:bg-[#0a0a18] focus:outline-none focus:ring-1 focus:ring-[#6D4A9B]/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
         />
       </div>
 
@@ -108,7 +108,7 @@ export default function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           disabled={isPending}
           placeholder="••••••••"
-          className="block w-full border border-[oklch(0.2_0.015_25)] bg-[oklch(0.05_0.01_25)]/60 px-4 py-3.5 text-base text-[oklch(0.96_0.005_60)] placeholder:text-[oklch(0.4_0.01_30)] transition-colors duration-200 focus:border-red-900 focus:bg-[oklch(0.06_0.01_25)] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+          className="block w-full border border-[#251f30] bg-[#0a0a18]/60 px-4 py-3.5 text-base text-[#F3F6FA] placeholder:text-[#6a6a85] transition-colors duration-200 focus:border-[#6D4A9B] focus:bg-[#0a0a18] focus:outline-none focus:ring-1 focus:ring-[#6D4A9B]/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
         />
       </div>
 
@@ -116,7 +116,7 @@ export default function LoginForm() {
       {error && (
         <div
           role="alert"
-          className="border border-red-900/40 bg-red-900/10 px-4 py-3 text-sm text-[oklch(0.85_0.04_25)] [font-family:var(--font-geist-sans)]"
+          className="border border-[#6D4A9B]/40 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#a78bca] [font-family:var(--font-geist-sans)]"
         >
           {error}
         </div>
@@ -126,7 +126,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="group relative mt-2 inline-flex w-full items-center justify-center gap-3 border border-[oklch(0.96_0.005_60)] bg-[oklch(0.96_0.005_60)] px-6 py-4 text-[#000000] transition-colors duration-300 hover:border-red-900 hover:bg-red-900 hover:text-[oklch(0.96_0.005_60)] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[oklch(0.96_0.005_60)] disabled:hover:text-[#000000]"
+        className="group relative mt-2 inline-flex w-full items-center justify-center gap-3 border border-[#6D4A9B] bg-[#6D4A9B] px-6 py-4 text-[#F3F6FA] transition-colors duration-300 hover:border-[#8a63b8] hover:bg-[#8a63b8] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#6D4A9B]"
       >
         <span className="text-sm font-semibold uppercase tracking-[0.3em] [font-family:var(--font-geist-sans)]">
           {isPending ? "Iniciando sesión..." : "Iniciar Sesión"}
@@ -148,7 +148,7 @@ export default function LoginForm() {
       <div className="pt-2">
         <a
           href="/recuperar-contrasena"
-          className="text-xs font-medium uppercase tracking-[0.25em] text-[oklch(0.5_0.012_30)] transition-colors hover:text-red-900 [font-family:var(--font-geist-sans)]"
+          className="text-xs font-medium uppercase tracking-[0.25em] text-[#6a6a85] transition-colors hover:text-[#6D4A9B] [font-family:var(--font-geist-sans)]"
         >
           ¿Olvidaste tu contraseña?
         </a>

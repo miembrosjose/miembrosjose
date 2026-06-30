@@ -44,9 +44,9 @@ type Status =
 const DEFAULT_BUTTON_STYLE: React.CSSProperties = {
   width: "100%",
   padding: "0.95rem 1.5rem",
-  border: "1px solid #c9a961",
-  background: "#c9a961",
-  color: "#000000",
+  border: "1px solid #6D4A9B",
+  background: "#6D4A9B",
+  color: "#050510",
   fontFamily: "var(--font-mono)",
   fontSize: "0.7rem",
   fontWeight: 700,

@@ -34,14 +34,14 @@ export type BroadcastVariant = {
 export const BROADCAST_VARIANTS: Record<string, BroadcastVariant> = {
   public_level_up:        { icon: "🚀", accent: "#3b82f6", label: "NUEVO NIVEL ALCANZADO",       soundKey: "levelUpOther" },
   public_level_up_self:   { icon: "🚀", accent: "#3b82f6", label: "SUBISTE DE NIVEL",             soundKey: "levelUp" },
-  public_insignia:        { icon: "🏆", accent: "#c9a961", label: "INSIGNIA RARA",                soundKey: "insigniaOther" },
-  public_insignia_self:   { icon: "🔥", accent: "#7f1d1d", label: "INSIGNIA EXCLUSIVA",           soundKey: "topoConquista" },
+  public_insignia:        { icon: "🏆", accent: "#6D4A9B", label: "INSIGNIA RARA",                soundKey: "insigniaOther" },
+  public_insignia_self:   { icon: "🔥", accent: "#6D4A9B", label: "INSIGNIA EXCLUSIVA",           soundKey: "topoConquista" },
   public_streak:          { icon: "🔥", accent: "#ef4444", label: "CONSTANCIA EN LLAMAS",         soundKey: "streak" },
   public_funnel_hot:      { icon: "⚡",  accent: "#f59e0b", label: "FUNNEL HOT",                    soundKey: "funnelHot" },
   public_funnel_new:      { icon: "✨", accent: "#22c55e", label: "NUEVO FUNNEL",                  soundKey: "publish" },
-  public_top3:            { icon: "👑", accent: "#c9a961", label: "NUEVO TOP 3",                   soundKey: "top3" },
-  rank_up:                { icon: "⚔️", accent: "#7f1d1d", label: "NUEVA PATENTE",                 soundKey: "levelUpOther" },
-  rank_up_self:           { icon: "⚔️", accent: "#c9a961", label: "ASCENDISTE EN LA COMUNIDAD",    soundKey: "levelUp" },
+  public_top3:            { icon: "👑", accent: "#6D4A9B", label: "NUEVO TOP 3",                   soundKey: "top3" },
+  rank_up:                { icon: "⚔️", accent: "#6D4A9B", label: "NUEVA PATENTE",                 soundKey: "levelUpOther" },
+  rank_up_self:           { icon: "⚔️", accent: "#6D4A9B", label: "ASCENDISTE EN LA COMUNIDAD",    soundKey: "levelUp" },
 }
 
 const BROADCAST_LS_KEY = "app_broadcast_shown_ids_v1"

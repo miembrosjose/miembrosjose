@@ -3,7 +3,7 @@
 // Drawer Netflix-style com hero + lista de episódios + player modal embutido.
 // Equivalente a renderEpisodes + openVideoPlayer.
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { X, Play, Lock, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from "lucide-react"
 import {
   buildConverteaiEmbedUrl,
@@ -19,6 +19,8 @@ import {
   type EpisodeProgress,
   type Season,
 } from "../_lib/seasons"
+import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
+import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
 import { EpisodeComments } from "./EpisodeComments"
 import { ReportModal, type ReportTarget } from "./ReportModal"
@@ -67,9 +69,20 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
     }
   }, [season])
 
-  if (!season) return null
+  // Episódios do banco (Supabase) — só se a season tem id (vem do banco).
+  // Quando season vem do fallback estático (sem id), cai no array hardcoded.
+  const seasonId = (season as Season & { id?: string })?.id ?? null
+  const { episodes: dbEpisodes } = useEpisodes(seasonId ?? null)
 
-  const episodes = getEpisodesBySeason(season.num)
+  const episodes = useMemo<Episode[]>(() => {
+    if (!season) return []
+    if (seasonId && dbEpisodes.length > 0) {
+      return dbEpisodes.map(dbEpToEpisode)
+    }
+    return getEpisodesBySeason(season.num)
+  }, [season, seasonId, dbEpisodes])
+
+  if (!season) return null
   const watched = getWatchedCount(season, progress)
   const total = season.episodes
   const pct = total > 0 ? Math.round((watched / total) * 100) : 0
@@ -160,7 +173,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 )}
                 <div className={styles.heroOverlay} />
                 <div className={styles.heroContent}>
-                  <div className={styles.studioMark}>[BRAND_NAME] · TEMPORADA {season.num}</div>
+                  <div className={styles.studioMark}>Los 144000 · TEMPORADA {season.num}</div>
                   <h1 className={styles.heroTitle}>{season.name}</h1>
                   <div className={styles.heroMetaLine}>
                     {total > 0 && (
@@ -287,7 +300,13 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   </button>
                 </header>
 
-                {playingEp.intro && (
+                {/* BLOCKS acima do vídeo (admin-editáveis, vêm do banco). */}
+                {playingEp.id && (
+                  <EpisodeBlocksView episodeId={playingEp.id} position="above_video" />
+                )}
+
+                {/* Intro legado (array estático) — só renderiza se não tem blocks above. */}
+                {playingEp.intro && !playingEp.id && (
                   <div
                     className={styles.playerIntro}
                     dangerouslySetInnerHTML={{ __html: playingEp.intro }}
@@ -295,16 +314,70 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 )}
 
                 <div className={styles.playerVideoWrap}>
-                  <iframe
-                    key={playingEp.videoId}
-                    src={buildConverteaiEmbedUrl(playingEp.videoId)}
-                    allowFullScreen
-                    referrerPolicy="origin"
-                    title={`Episodio ${playingEp.num} — ${playingEp.title}`}
-                  />
+                  {(() => {
+                    const raw = playingEp.videoId
+                    // 1. Snippet completo do ConverteAI/VTurb (HTML+script) →
+                    //    extrai accountId/videoId e usa URL embed.
+                    const converteaiEmbed = tryExtractConverteaiEmbed(raw)
+                    if (converteaiEmbed) {
+                      return (
+                        <iframe
+                          key={converteaiEmbed}
+                          src={converteaiEmbed}
+                          allowFullScreen
+                          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                          referrerPolicy="origin"
+                          title={`Episodio ${playingEp.num} — ${playingEp.title}`}
+                        />
+                      )
+                    }
+                    // 2. Arquivo direto (.mp4/.webm/.mov) → <video> HTML5
+                    if (isDirectVideoUrl(raw)) {
+                      return (
+                        <video
+                          key={raw}
+                          src={raw}
+                          controls
+                          playsInline
+                          autoPlay
+                          style={{ width: "100%", height: "100%" }}
+                        />
+                      )
+                    }
+                    // 3. URL http(s) qualquer (YouTube, Vimeo, Bunny, etc) →
+                    //    <iframe src={url}>
+                    if (isExternalEmbedUrl(raw)) {
+                      return (
+                        <iframe
+                          key={raw}
+                          src={raw}
+                          allowFullScreen
+                          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          title={`Episodio ${playingEp.num} — ${playingEp.title}`}
+                        />
+                      )
+                    }
+                    // 4. Fallback: assume ID curto ConverteAI legado
+                    return (
+                      <iframe
+                        key={raw}
+                        src={buildConverteaiEmbedUrl(raw)}
+                        allowFullScreen
+                        referrerPolicy="origin"
+                        title={`Episodio ${playingEp.num} — ${playingEp.title}`}
+                      />
+                    )
+                  })()}
                 </div>
 
-                {playingEp.notes && (
+                {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
+                {playingEp.id && (
+                  <EpisodeBlocksView episodeId={playingEp.id} position="below_video" />
+                )}
+
+                {/* Notes legado (array estático) — só renderiza se não tem blocks below. */}
+                {playingEp.notes && !playingEp.id && (
                   <div
                     ref={notesRef}
                     className={styles.playerNotes}
@@ -390,14 +463,14 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                       >
                         <div className="agent-icon">
                           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="22" y="28" width="56" height="44" rx="3" fill="none" stroke="#c9a961" strokeWidth="2"/>
-                            <path d="M 22 38 L 78 38" stroke="#c9a961" strokeWidth="1.5"/>
-                            <circle cx="29" cy="33" r="1.5" fill="#c9a961"/>
-                            <circle cx="35" cy="33" r="1.5" fill="#c9a961"/>
-                            <circle cx="41" cy="33" r="1.5" fill="#c9a961"/>
-                            <polygon points="44,52 58,60 44,68" fill="#c9a961"/>
-                            <line x1="32" y1="78" x2="68" y2="78" stroke="#c9a961" strokeWidth="1.5"/>
-                            <line x1="40" y1="82" x2="60" y2="82" stroke="#c9a961" strokeWidth="1.2" opacity="0.6"/>
+                            <rect x="22" y="28" width="56" height="44" rx="3" fill="none" stroke="#6D4A9B" strokeWidth="2"/>
+                            <path d="M 22 38 L 78 38" stroke="#6D4A9B" strokeWidth="1.5"/>
+                            <circle cx="29" cy="33" r="1.5" fill="#6D4A9B"/>
+                            <circle cx="35" cy="33" r="1.5" fill="#6D4A9B"/>
+                            <circle cx="41" cy="33" r="1.5" fill="#6D4A9B"/>
+                            <polygon points="44,52 58,60 44,68" fill="#6D4A9B"/>
+                            <line x1="32" y1="78" x2="68" y2="78" stroke="#6D4A9B" strokeWidth="1.5"/>
+                            <line x1="40" y1="82" x2="60" y2="82" stroke="#6D4A9B" strokeWidth="1.2" opacity="0.6"/>
                           </svg>
                         </div>
                         <div className="agent-info">
@@ -419,10 +492,10 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                       aria-disabled="true"
                     >
                       <div className="agent-icon" style={{ opacity: 0.55 }}>
-                        <Lock size={56} color="#c9a961" strokeWidth={1.5} />
+                        <Lock size={56} color="#6D4A9B" strokeWidth={1.5} />
                       </div>
                       <div className="agent-info">
-                        <div className="agent-type" style={{ color: "rgba(201,169,97,0.65)" }}>
+                        <div className="agent-type" style={{ color: "rgba(109,74,155,0.65)" }}>
                           Agente GPT · Bloqueado
                         </div>
                         <h4 style={{ opacity: 0.85 }}>{playingEp.agentProductName}</h4>
@@ -462,4 +535,42 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
       <ReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
     </>
   )
+}
+
+// Converte um registro do banco pro tipo Episode esperado pelo drawer.
+// Trata video_url como videoId (player decide entre embed/HTML5 video).
+function dbEpToEpisode(db: DbEpisode): Episode {
+  return {
+    id: db.id,
+    num: db.num,
+    videoId: db.video_url || "",
+    title: db.title,
+    desc: db.description || "",
+    duration: "",
+    thumb: db.thumb_url || undefined,
+  }
+}
+
+function isDirectVideoUrl(s: string): boolean {
+  if (!s) return false
+  if (!/^https?:\/\//i.test(s.trim())) return false
+  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(s)
+}
+
+function isExternalEmbedUrl(s: string): boolean {
+  if (!s) return false
+  if (!/^https?:\/\//i.test(s.trim())) return false
+  return !isDirectVideoUrl(s)
+}
+
+// Detecta snippet completo do ConverteAI/VTurb (HTML+JS colado pelo admin).
+// Padrão: scripts.converteai.net/<accountId>/players/<videoId>/v4/player.js
+// Retorna a URL embed correta ou null.
+function tryExtractConverteaiEmbed(s: string): string | null {
+  if (!s) return null
+  const m = s.match(
+    /scripts\.converteai\.net\/([a-f0-9-]{8,})\/players\/([a-f0-9-]{8,})\/v4\/(?:player|embed)/i,
+  )
+  if (!m) return null
+  return `https://scripts.converteai.net/${m[1]}/players/${m[2]}/v4/embed.html`
 }

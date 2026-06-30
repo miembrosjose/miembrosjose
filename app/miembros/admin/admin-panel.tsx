@@ -24,7 +24,6 @@ type Tab =
   | "reports"
   | "access"
   | "messages"
-  | "emails"
 
 const GrantProduct = dynamic(
   () => import("./_tabs/GrantProduct").then((m) => m.GrantProduct),
@@ -48,10 +47,6 @@ const RevokedAccess = dynamic(
 )
 const MessagesModeration = dynamic(
   () => import("./_tabs/MessagesModeration").then((m) => m.MessagesModeration),
-  { ssr: false },
-)
-const EmailHealth = dynamic(
-  () => import("./_tabs/EmailHealth").then((m) => m.EmailHealth),
   { ssr: false },
 )
 
@@ -82,12 +77,6 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Acessos Revogados",
         description: "Gerenciar acessos revogados (refunds, manuais)",
         icon: ShieldOff,
-      },
-      {
-        id: "emails",
-        label: "Saúde de Emails",
-        description: "Diagnóstico de envios: órfãos, falhas, stats",
-        icon: Mail,
       },
     ],
   },
@@ -146,10 +135,10 @@ export function AdminPanel() {
         <div className="sticky top-4 space-y-6 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-2">
           {/* Header do painel */}
           <div className="border border-[#2a2a36] bg-gradient-to-br from-[#12121a] via-[#0f0f17] to-[#12121a] p-4">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
-              [BRAND_NAME]
+            <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
+              Los 144000
             </p>
-            <h1 className="mt-1 text-lg font-bold tracking-tight text-[#f5f5f7] [font-family:var(--font-cinzel)]">
+            <h1 className="mt-1 text-lg font-bold tracking-tight text-[#F3F6FA] [font-family:var(--font-cinzel)]">
               Admin Panel
             </h1>
             <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
@@ -177,25 +166,25 @@ export function AdminPanel() {
                       }}
                       className={`group relative flex w-full items-center gap-3 border-l-2 px-3 py-2.5 text-left transition-colors [font-family:var(--font-geist-sans)] ${
                         isActive
-                          ? "border-[#c9a961] bg-gradient-to-r from-[#c9a961]/10 to-transparent"
+                          ? "border-[#6D4A9B] bg-gradient-to-r from-[#6D4A9B]/10 to-transparent"
                           : "border-transparent hover:bg-[#12121a]/40"
                       }`}
                     >
                       <Icon
                         size={15}
                         className={
-                          isActive ? "text-[#c9a961]" : "text-[#6a6a7a] group-hover:text-[#a0a0b0]"
+                          isActive ? "text-[#6D4A9B]" : "text-[#6a6a7a] group-hover:text-[#a0a0b0]"
                         }
                       />
                       <span
                         className={`flex-1 text-xs font-semibold ${
-                          isActive ? "text-[#f5f5f7]" : "text-[#a0a0b0] group-hover:text-[#f5f5f7]"
+                          isActive ? "text-[#F3F6FA]" : "text-[#a0a0b0] group-hover:text-[#F3F6FA]"
                         }`}
                       >
                         {t.label}
                       </span>
                       {isActive && (
-                        <ChevronRight size={14} className="text-[#c9a961]" />
+                        <ChevronRight size={14} className="text-[#6D4A9B]" />
                       )}
                     </button>
                   )
@@ -222,29 +211,29 @@ export function AdminPanel() {
           className="flex w-full items-center justify-between border border-[#1a1a24] bg-[#12121a]/40 px-4 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] lg:hidden"
         >
           <span>{mobileNavOpen ? "Fechar menu" : "Menu"}</span>
-          <span className="text-[#c9a961]">{activeTab?.label || ""}</span>
+          <span className="text-[#6D4A9B]">{activeTab?.label || ""}</span>
         </button>
 
         {/* Header contextual da tab ativa */}
         {activeTab && (
           <div className="relative overflow-hidden border border-[#2a2a36] bg-gradient-to-br from-[#12121a] via-[#0f0f17] to-[#12121a] p-6 sm:p-8">
             {/* Cantos decorativos dourados */}
-            <span className="pointer-events-none absolute left-0 top-0 h-2 w-2 border-l-2 border-t-2 border-[#c9a961]" />
-            <span className="pointer-events-none absolute right-0 top-0 h-2 w-2 border-r-2 border-t-2 border-[#c9a961]" />
-            <span className="pointer-events-none absolute bottom-0 left-0 h-2 w-2 border-b-2 border-l-2 border-[#c9a961]" />
-            <span className="pointer-events-none absolute bottom-0 right-0 h-2 w-2 border-b-2 border-r-2 border-[#c9a961]" />
+            <span className="pointer-events-none absolute left-0 top-0 h-2 w-2 border-l-2 border-t-2 border-[#6D4A9B]" />
+            <span className="pointer-events-none absolute right-0 top-0 h-2 w-2 border-r-2 border-t-2 border-[#6D4A9B]" />
+            <span className="pointer-events-none absolute bottom-0 left-0 h-2 w-2 border-b-2 border-l-2 border-[#6D4A9B]" />
+            <span className="pointer-events-none absolute bottom-0 right-0 h-2 w-2 border-b-2 border-r-2 border-[#6D4A9B]" />
 
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-[#c9a961]/40 bg-[#c9a961]/10">
-                <activeTab.icon size={20} className="text-[#c9a961]" />
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-[#6D4A9B]/40 bg-[#6D4A9B]/10">
+                <activeTab.icon size={20} className="text-[#6D4A9B]" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
                   {TAB_GROUPS.find((g) =>
                     g.tabs.some((t) => t.id === activeTab.id),
                   )?.title || ""}
                 </p>
-                <h2 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-[#f5f5f7] [font-family:var(--font-cinzel)] sm:text-3xl">
+                <h2 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-[#F3F6FA] [font-family:var(--font-cinzel)] sm:text-3xl">
                   {activeTab.label}
                 </h2>
                 <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)] sm:text-sm">
@@ -263,7 +252,6 @@ export function AdminPanel() {
           {tab === "reports" && <ReportsModeration />}
           {tab === "access" && <RevokedAccess />}
           {tab === "messages" && <MessagesModeration />}
-          {tab === "emails" && <EmailHealth />}
         </div>
       </main>
     </div>

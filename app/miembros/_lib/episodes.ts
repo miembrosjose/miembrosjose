@@ -4,6 +4,8 @@
 export const CONVERTEAI_ACCOUNT = "SEU_CONVERTEAI_ACCOUNT"
 
 export type Episode = {
+  /** UUID quando o episodio vem do banco (Supabase). Ausente no fallback estático. */
+  id?: string
   num: number
   videoId: string
   title: string

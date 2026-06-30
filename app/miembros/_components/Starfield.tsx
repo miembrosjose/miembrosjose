@@ -181,7 +181,7 @@ export function Starfield({ startedAt, className }: Props) {
         // distribui por hash do x*y pra ficar consistente
         const hash = Math.abs((star.x * 1000 + star.y * 1000) | 0) % 100
         let color: string
-        if (hash < 4) color = `rgba(201, 169, 97, ${alpha})`         // gold (4%)
+        if (hash < 4) color = `rgba(109, 74, 155, ${alpha})`         // gold (4%)
         else if (hash < 10) color = `rgba(252, 165, 165, ${alpha})`  // rosé (6%)
         else if (hash < 18) color = `rgba(186, 230, 253, ${alpha})`  // ice blue (8%)
         else color = `rgba(245, 245, 250, ${alpha})`                 // off-white (82%)

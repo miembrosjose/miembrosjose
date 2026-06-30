@@ -2,6 +2,17 @@
 const nextConfig = {
   async redirects() {
     return [
+      // Atalhos legacy de link que clientes podem ter recebido
+      // (login direto na raiz, /cuenta, etc) — encaminha pra /miembros/*
+      { source: "/login",                 destination: "/miembros/login",                 permanent: true },
+      { source: "/cuenta",                destination: "/miembros/cuenta/crear",          permanent: true },
+      { source: "/cuenta/crear",          destination: "/miembros/cuenta/crear",          permanent: true },
+      { source: "/cuenta/recuperar",      destination: "/miembros/cuenta/recuperar",      permanent: true },
+      { source: "/recuperar-contrasena",  destination: "/miembros/recuperar-contrasena",  permanent: true },
+      { source: "/perfil",                destination: "/miembros/perfil",                permanent: true },
+      { source: "/admin",                 destination: "/miembros/admin",                 permanent: true },
+      { source: "/mensajes",              destination: "/miembros/mensajes",              permanent: true },
+      // Redirects do projeto original (Copy Films) — mantidos por compatibilidade.
       { source: "/dashapp",       destination: "/analytics",  permanent: true },
       { source: "/campanas",      destination: "/andromeda",  permanent: true },
       { source: "/salespagees",   destination: "/salespage",  permanent: true },

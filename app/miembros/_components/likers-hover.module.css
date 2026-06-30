@@ -1,4 +1,4 @@
-/* Popup hover — lista quem curtiu post/reply.
+﻿/* Popup hover — lista quem curtiu post/reply.
  * Aparece após 400ms sobre o botão de like. Família visual canônica
  * (border-image red→gold + cantos decorativos). */
 
@@ -44,7 +44,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow:
-    0 0 0 1px rgba(201, 169, 97, 0.18),
+    0 0 0 1px rgba(109, 74, 155, 0.18),
     0 12px 36px rgba(0, 0, 0, 0.6);
   padding: 0.5rem 0;
   max-height: 280px;

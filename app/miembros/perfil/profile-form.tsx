@@ -360,11 +360,11 @@ export function ProfileForm({
     })
   }
 
-  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
   const labelCls = "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
   const sectionCls = "border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8"
-  const sectionTitleCls = "text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)] mb-6"
-  const btnCls = "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
+  const sectionTitleCls = "text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)] mb-6"
+  const btnCls = "inline-flex items-center justify-center gap-2 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#F3F6FA] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
 
   function StatusMsg({ s }: { s: State }) {
     if (s.type === "idle" || s.type === "saving") return null
@@ -400,7 +400,7 @@ export function ProfileForm({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#c9a961] [font-family:var(--font-cinzel)]">
+                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#6D4A9B] [font-family:var(--font-cinzel)]">
                   {(initialName || "?").charAt(0).toUpperCase()}
                 </div>
               )}
@@ -416,7 +416,7 @@ export function ProfileForm({
               accept="image/*"
               onChange={handleFilePick}
               disabled={isAvatarPending}
-              className="block w-full text-sm text-[#a0a0b0] file:mr-4 file:border-0 file:bg-[#1a1a24] file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-[0.2em] file:text-[#f5f5f7] hover:file:bg-[#2a2a35] [font-family:var(--font-geist-sans)]"
+              className="block w-full text-sm text-[#a0a0b0] file:mr-4 file:border-0 file:bg-[#1a1a24] file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-[0.2em] file:text-[#F3F6FA] hover:file:bg-[#2a2a35] [font-family:var(--font-geist-sans)]"
             />
             <p className="text-xs text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
               Se convertirá automáticamente a WebP (cuadrada, max 512×512).
@@ -544,45 +544,6 @@ export function ProfileForm({
           </div>
 
           <div>
-            <label htmlFor="profile-niche" className={labelCls}>Nicho</label>
-            <select
-              id="profile-niche"
-              value={niche}
-              onChange={(e) => setNiche(e.target.value)}
-              disabled={isAboutPending}
-              className={`${inputCls} appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2212%22%20height=%2212%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a0a0b0%22%20stroke-width=%222%22%20stroke-linecap=%22square%22%3E%3Cpath%20d=%22M6%209l6%206%206-6%22/%3E%3C/svg%3E')] bg-no-repeat pr-10`}
-              style={{ backgroundPosition: "right 1rem center" }}
-            >
-              <option value="">Selecciona tu nicho...</option>
-              <option value="Marketing digital">Marketing digital</option>
-              <option value="Negocios online">Negocios online</option>
-              <option value="Infoproductos">Infoproductos</option>
-              <option value="E-commerce">E-commerce</option>
-              <option value="Dropshipping">Dropshipping</option>
-              <option value="Salud y fitness">Salud y fitness</option>
-              <option value="Belleza">Belleza</option>
-              <option value="Finanzas e inversiones">Finanzas e inversiones</option>
-              <option value="Inmuebles">Inmuebles</option>
-              <option value="Educación">Educación</option>
-              <option value="Idiomas">Idiomas</option>
-              <option value="Coaching">Coaching</option>
-              <option value="Desarrollo personal">Desarrollo personal</option>
-              <option value="Espiritualidad">Espiritualidad</option>
-              <option value="Relaciones">Relaciones</option>
-              <option value="Maternidad">Maternidad</option>
-              <option value="Gastronomía">Gastronomía</option>
-              <option value="Moda">Moda</option>
-              <option value="Tecnología">Tecnología</option>
-              <option value="Fotografía y video">Fotografía y video</option>
-              <option value="Música">Música</option>
-              <option value="Deportes">Deportes</option>
-              <option value="Viajes">Viajes</option>
-              <option value="Pets">Pets</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-
-          <div>
             <label htmlFor="profile-instagram-url" className={labelCls}>Link de Instagram</label>
             <input
               id="profile-instagram-url"
@@ -628,7 +589,7 @@ export function ProfileForm({
                   href={instagramUrl || `https://instagram.com/${instagram.replace(/^@/, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#c9a961] underline hover:text-[#f5f5f7]"
+                  className="text-[#6D4A9B] underline hover:text-[#F3F6FA]"
                 >
                   {instagram ? `@${instagram.replace(/^@/, "")}` : instagramUrl}
                 </a>
@@ -699,7 +660,7 @@ export function ProfileForm({
 
       {/* Voltar */}
       <div className="pt-4">
-        <a href="/" className="text-xs font-medium uppercase tracking-[0.25em] text-[#a0a0b0] transition-colors hover:text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <a href="/" className="text-xs font-medium uppercase tracking-[0.25em] text-[#a0a0b0] transition-colors hover:text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           ← Volver al área
         </a>
       </div>
@@ -815,7 +776,7 @@ function BadgeSection({
     <section className="border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
             {title}
           </h2>
           <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
@@ -835,7 +796,7 @@ function BadgeSection({
           disabled={disabled}
           className={`group flex flex-col items-center justify-start gap-2 border bg-[#000000]/50 p-3 text-center transition-colors ${
             selectedId === null
-              ? "border-[#c9a961] bg-[#c9a961]/10"
+              ? "border-[#6D4A9B] bg-[#6D4A9B]/10"
               : "border-[#1a1a24] hover:border-[#2a2a35]"
           } disabled:cursor-wait disabled:opacity-50`}
           title="Sin insignia"
@@ -863,7 +824,7 @@ function BadgeSection({
               disabled={disabled || !unlocked}
               className={`group flex flex-col items-center justify-start gap-2 border bg-[#000000]/50 p-3 text-center transition-colors ${
                 selected
-                  ? "border-[#c9a961] bg-[#c9a961]/10"
+                  ? "border-[#6D4A9B] bg-[#6D4A9B]/10"
                   : unlocked
                     ? "border-[#1a1a24] hover:border-[#2a2a35]"
                     : "border-[#1a1a24]/50"
@@ -878,7 +839,7 @@ function BadgeSection({
               <div className="flex min-h-[3.5rem] flex-col items-center justify-start gap-1">
                 <span
                   className={`text-[11px] font-semibold uppercase tracking-[0.18em] [font-family:var(--font-geist-sans)] ${
-                    unlocked ? "text-[#f5f5f7]" : "text-[#3a3a45]"
+                    unlocked ? "text-[#F3F6FA]" : "text-[#3a3a45]"
                   }`}
                 >
                   {ach.name}

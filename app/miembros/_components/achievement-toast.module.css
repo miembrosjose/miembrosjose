@@ -1,4 +1,4 @@
-/* Toast de insignia desbloqueada
+﻿/* Toast de insignia desbloqueada
  *. Slide-in da direita, frame com gradient red→gold,
  * cantos decorativos, drop-shadow no ícone. Auto-fecha em 5s. */
 
@@ -42,9 +42,9 @@
     1;
   backdrop-filter: blur(12px);
   box-shadow:
-    0 0 0 1px rgba(201, 169, 97, 0.2),
+    0 0 0 1px rgba(109, 74, 155, 0.2),
     0 12px 48px rgba(0, 0, 0, 0.6),
-    0 0 60px rgba(201, 169, 97, 0.15);
+    0 0 60px rgba(109, 74, 155, 0.15);
 }
 
 .frame::before,
@@ -75,7 +75,7 @@
   height: 56px;
   flex-shrink: 0;
   color: var(--accent-gold);
-  filter: drop-shadow(0 0 12px rgba(201, 169, 97, 0.5));
+  filter: drop-shadow(0 0 12px rgba(109, 74, 155, 0.5));
 }
 
 .icon svg {
@@ -90,7 +90,7 @@
   color: #c0c0c0;
 }
 .tierGold .icon {
-  color: #c9a961;
+  color: #6D4A9B;
 }
 .tierPlatinum .icon {
   color: #e5e4e2;
@@ -99,9 +99,9 @@
   color: #b9f2ff;
 }
 .tierTopo .icon {
-  color: #7f1d1d;
+  color: #6D4A9B;
   filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.7))
-    drop-shadow(0 0 24px rgba(127, 29, 29, 0.5));
+    drop-shadow(0 0 24px rgba(109, 74, 155, 0.5));
 }
 
 .content {
@@ -123,7 +123,7 @@
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
-  color: #f4eedd;
+  color: #F3F6FA;
   letter-spacing: 0.005em;
   line-height: 1.2;
   margin-bottom: 0.2rem;
@@ -154,7 +154,7 @@
   color: #c0c0c0;
 }
 .tierGold .tier {
-  color: #c9a961;
+  color: #6D4A9B;
 }
 .tierPlatinum .tier {
   color: #e5e4e2;

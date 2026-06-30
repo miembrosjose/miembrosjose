@@ -13,13 +13,13 @@ export const PRODUCT_OPTIONS = [
 ] as const
 
 export const inputCls =
-  "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+  "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
 
 export const labelCls =
   "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
 
 export const btnCls =
-  "inline-flex items-center justify-center gap-2 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#f5f5f7] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
+  "inline-flex items-center justify-center gap-2 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#F3F6FA] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
 
 export function FilterBtn({
   children,
@@ -35,7 +35,7 @@ export function FilterBtn({
   const activeCls =
     variant === "red"
       ? "border-red-500 bg-red-500/10 text-red-400"
-      : "border-[#c9a961] bg-[#c9a961]/10 text-[#c9a961]"
+      : "border-[#6D4A9B] bg-[#6D4A9B]/10 text-[#6D4A9B]"
   return (
     <button
       type="button"
@@ -67,7 +67,7 @@ export function AdminCard({
 }) {
   const accentColors = {
     neutral: "border-[#1a1a24]",
-    gold: "border-[#c9a961]/40",
+    gold: "border-[#6D4A9B]/40",
     red: "border-red-900/40",
     green: "border-emerald-700/40",
   }
@@ -76,7 +76,7 @@ export function AdminCard({
       {(title || description) && (
         <div className="mb-4">
           {title && (
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
               {title}
             </h3>
           )}
@@ -107,8 +107,8 @@ export function StatCard({
   icon?: ReactNode
 }) {
   const colors = {
-    neutral: { border: "border-[#1a1a24]", text: "text-[#f5f5f7]", accent: "text-[#a0a0b0]" },
-    gold: { border: "border-[#c9a961]/40", text: "text-[#fde68a]", accent: "text-[#c9a961]" },
+    neutral: { border: "border-[#1a1a24]", text: "text-[#F3F6FA]", accent: "text-[#a0a0b0]" },
+    gold: { border: "border-[#6D4A9B]/40", text: "text-[#a78bca]", accent: "text-[#6D4A9B]" },
     red: { border: "border-red-700/50", text: "text-red-300", accent: "text-red-400" },
     green: { border: "border-emerald-700/50", text: "text-emerald-300", accent: "text-emerald-400" },
   }

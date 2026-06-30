@@ -1,4 +1,4 @@
-/* CSS extraído.
+﻿/* CSS extraído.
  * Adaptado pra CSS Modules. */
 
 .sidebar {
@@ -208,8 +208,8 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   margin-top: 0.4rem;
-  background: rgba(201, 169, 97, 0.08);
-  border: 1px solid rgba(201, 169, 97, 0.25);
+  background: rgba(109, 74, 155, 0.08);
+  border: 1px solid rgba(109, 74, 155, 0.25);
   padding: 0.18rem 0.55rem;
   border-radius: 999px;
 }
@@ -341,8 +341,8 @@
 }
 
 .restRow.isSelf {
-  background: rgba(201, 169, 97, 0.06);
-  border: 1px solid rgba(201, 169, 97, 0.25);
+  background: rgba(109, 74, 155, 0.06);
+  border: 1px solid rgba(109, 74, 155, 0.25);
 }
 
 .restPosition {

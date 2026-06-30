@@ -141,8 +141,8 @@ export function InlineEpisodeCheckout({ product }: Props) {
 
 // Styles
 const containerStyle: React.CSSProperties = {
-  background: "#000000",
-  border: "1px solid rgba(201,169,97,0.25)",
+  background: "#050510",
+  border: "1px solid rgba(109,74,155,0.25)",
   borderRadius: 6,
   overflow: "hidden",
   display: "flex",
@@ -153,7 +153,7 @@ const heroStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   aspectRatio: "16 / 9",
-  backgroundColor: "#000000",
+  backgroundColor: "#050510",
   backgroundSize: "cover",
   backgroundPosition: "center",
 }
@@ -162,7 +162,7 @@ const heroOverlay: React.CSSProperties = {
   position: "absolute",
   inset: 0,
   background:
-    "linear-gradient(to top, #000000 0%, rgba(10,10,15,0.85) 25%, rgba(10,10,15,0.4) 55%, transparent 85%)",
+    "linear-gradient(to top, #050510 0%, rgba(10,10,15,0.85) 25%, rgba(10,10,15,0.4) 55%, transparent 85%)",
   pointerEvents: "none",
 }
 
@@ -180,7 +180,7 @@ const titleStyle: React.CSSProperties = {
   fontWeight: 700,
   fontSize: "1.4rem",
   letterSpacing: "-0.01em",
-  color: "#f5f5f7",
+  color: "#F3F6FA",
   lineHeight: 1.1,
   textShadow: "0 2px 12px rgba(0,0,0,0.7)",
   margin: 0,
@@ -205,8 +205,8 @@ const priceWrap: React.CSSProperties = {
   flexDirection: "column",
   gap: "0.2rem",
   padding: "0.75rem 0.85rem",
-  background: "rgba(201,169,97,0.08)",
-  border: "1px solid rgba(201,169,97,0.25)",
+  background: "rgba(109,74,155,0.08)",
+  border: "1px solid rgba(109,74,155,0.25)",
   borderRadius: 4,
 }
 
@@ -214,7 +214,7 @@ const priceMain: React.CSSProperties = {
   fontFamily: "var(--font-display)",
   fontSize: "1.5rem",
   fontWeight: 700,
-  color: "#c9a961",
+  color: "#6D4A9B",
   letterSpacing: "-0.01em",
 }
 
@@ -222,7 +222,7 @@ const priceLocal: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: "0.7rem",
   letterSpacing: "0.08em",
-  color: "rgba(201,169,97,0.65)",
+  color: "rgba(109,74,155,0.65)",
   textTransform: "uppercase",
 }
 

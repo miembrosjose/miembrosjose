@@ -67,7 +67,7 @@ export function MessagesModeration() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           Moderação de mensagens diretas
         </h2>
         <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
@@ -106,10 +106,10 @@ export function MessagesModeration() {
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <Avatar info={p.user_a_info} />
-                      <span className="text-[12px] text-[#f5f5f7]">{p.user_a_info.full_name}</span>
+                      <span className="text-[12px] text-[#F3F6FA]">{p.user_a_info.full_name}</span>
                       <span className="text-[10px] text-[#6a6a7a]">↔</span>
                       <Avatar info={p.user_b_info} />
-                      <span className="text-[12px] text-[#f5f5f7]">{p.user_b_info.full_name}</span>
+                      <span className="text-[12px] text-[#F3F6FA]">{p.user_b_info.full_name}</span>
                     </div>
                   </td>
                   <td className="px-3 py-2 text-[11px] text-[#a0a0b0] truncate max-w-xs">
@@ -146,7 +146,7 @@ function Avatar({ info }: { info: UserInfo }) {
         justifyContent: "center",
         fontSize: 9,
         fontWeight: 700,
-        color: "#c9a961",
+        color: "#6D4A9B",
       }}
     >
       {info.avatar_url ? (
@@ -224,7 +224,7 @@ function ThreadModal({ pair, onClose }: { pair: Pair; onClose: () => void }) {
         <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #1a1a24", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <p style={{ fontSize: "0.65rem", letterSpacing: "0.3em", color: "#6a6a7a", textTransform: "uppercase", margin: 0 }}>Conversa</p>
-            <h3 style={{ fontSize: "0.95rem", color: "#f5f5f7", margin: "0.25rem 0 0", fontWeight: 700 }}>
+            <h3 style={{ fontSize: "0.95rem", color: "#F3F6FA", margin: "0.25rem 0 0", fontWeight: 700 }}>
               {pair.user_a_info.full_name} ↔ {pair.user_b_info.full_name}
             </h3>
           </div>
@@ -247,13 +247,13 @@ function ThreadModal({ pair, onClose }: { pair: Pair; onClose: () => void }) {
                     key={m.id}
                     style={{
                       padding: "0.625rem 0.875rem",
-                      background: isDeleted ? "rgba(127, 29, 29, 0.1)" : "#12121a",
+                      background: isDeleted ? "rgba(109, 74, 155, 0.1)" : "#12121a",
                       border: "1px solid #1a1a24",
                       opacity: isDeleted ? 0.5 : 1,
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                      <span style={{ fontSize: "0.7rem", color: "#c9a961", fontWeight: 600 }}>
+                      <span style={{ fontSize: "0.7rem", color: "#6D4A9B", fontWeight: 600 }}>
                         {senderInfo?.full_name || "?"}
                       </span>
                       <div style={{ display: "flex", gap: "0.625rem", alignItems: "center" }}>
@@ -276,7 +276,7 @@ function ThreadModal({ pair, onClose }: { pair: Pair; onClose: () => void }) {
                       <span style={{ fontSize: "0.75rem", color: "#fca5a5", fontStyle: "italic" }}>Mensagem apagada pela moderação</span>
                     ) : (
                       <>
-                        {m.body && <div style={{ fontSize: "0.85rem", color: "#f5f5f7", whiteSpace: "pre-wrap" }}>{m.body}</div>}
+                        {m.body && <div style={{ fontSize: "0.85rem", color: "#F3F6FA", whiteSpace: "pre-wrap" }}>{m.body}</div>}
                         {m.media_url && m.media_type === "image" && (
                           <a href={m.media_url} target="_blank" rel="noopener noreferrer">
                             <img src={m.media_url} alt="" style={{ maxWidth: 200, marginTop: "0.5rem", display: "block" }} />

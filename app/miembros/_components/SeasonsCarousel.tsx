@@ -10,7 +10,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Lock } from "lucide-react"
 import {
-  SEASONS,
   getEpisodeProgress,
   isSeasonUnlocked,
   getWatchedCount,
@@ -18,6 +17,9 @@ import {
   type Season,
   type EpisodeProgress,
 } from "../_lib/seasons"
+import { useSeasons } from "../_lib/use-seasons"
+import { useSeasonAccess } from "../_lib/use-season-access"
+import { openExternal } from "../_lib/url-helpers"
 import { unlockAchievement } from "../_lib/achievements-unlock"
 import styles from "./seasons.module.css"
 
@@ -27,6 +29,12 @@ type Props = {
 }
 
 export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
+  // Temporadas vêm do banco via useSeasons (fallback no array estático
+  // SEASONS quando user não está logado ou banco vazio). Re-fetcha
+  // automaticamente quando admin cria/edita/remove via modal.
+  const { seasons } = useSeasons()
+  const { hasAccess } = useSeasonAccess()
+
   // Hidrata progresso só no client (localStorage não existe no server)
   const [progress, setProgress] = useState<EpisodeProgress>({})
   useEffect(() => {
@@ -40,12 +48,18 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
     return () => window.removeEventListener(PROGRESS_CHANGED_EVENT, refresh)
   }, [])
 
-  function handleClick(season: Season) {
+  function handleClick(season: Season & { id?: string; is_locked?: boolean; checkout_url?: string | null }) {
     if (season.external && season.redirectUrl) {
       // T5 — Comunidad VIP: dispara insignia "Círculo VIP" antes de abrir
       // o WhatsApp. Idempotente, no-op se já desbloqueada.
       unlockAchievement("vip_community")
-      window.open(season.redirectUrl, "_blank", "noopener")
+      openExternal(season.redirectUrl)
+      return
+    }
+    // Bloqueio admin (configurável): se a temporada está bloqueada E o user
+    // não tem acesso liberado, redireciona pro checkout configurado.
+    if (season.is_locked && !hasAccess(season.id) && season.checkout_url) {
+      openExternal(season.checkout_url)
       return
     }
     if (!isSeasonUnlocked(season, progress)) {
@@ -57,11 +71,20 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
 
   return (
     <div className={styles.carousel}>
-      {SEASONS.map((season) => {
+      {seasons.map((season) => {
         const unlocked = isSeasonUnlocked(season, progress)
         const watched = getWatchedCount(season, progress)
         const total = season.episodes
         const pct = total > 0 ? Math.round((watched / total) * 100) : 0
+
+        // Bloqueio comercial (admin definiu como bloqueada E o user não tem acesso)
+        const seasonAny = season as Season & {
+          id?: string
+          is_locked?: boolean
+          checkout_url?: string | null
+        }
+        const isCommerciallyLocked =
+          !!seasonAny.is_locked && !hasAccess(seasonAny.id)
 
         const epLabel = season.external
           ? `TEMPORADA ${season.num} · COMUNIDAD`
@@ -69,10 +92,16 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
 
         return (
           <button
-            key={season.num}
+            key={season.id || season.num}
             type="button"
+            data-num={String(season.num).padStart(2, "0")}
             className={`${styles.card} ${unlocked ? "" : styles.locked}`}
-            onClick={() => handleClick(season)}
+            style={
+              isCommerciallyLocked
+                ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
+                : undefined
+            }
+            onClick={() => handleClick(seasonAny)}
           >
             <div className={styles.thumb}>
               {season.videoBg && <SeasonVideo src={season.videoBg} />}
@@ -91,6 +120,7 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
             <div className={styles.info}>
               <div className={styles.epNum}>{epLabel}</div>
               <div className={styles.name}>{season.name}</div>
+              <div className={styles.divider} />
               {!season.external && (
                 <>
                   <div className={styles.meta}>
@@ -129,9 +159,13 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
 // Antes: todos os 5 cards rodavam autoplay quando entravam no viewport
 // (threshold 0.25), causando spike de CPU/GPU + jank em mobile.
 function SeasonVideo({ src }: { src: string }) {
+  // Detecta se é IMAGEM (upload via Mídia → convertido pra WebP) ou VÍDEO.
+  // Admin pode subir foto OU vídeo; só vídeo precisa do player com autoplay.
+  const isImage = /\.(webp|png|jpe?g|gif|avif)(\?|$)/i.test(src)
   const ref = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
+    if (isImage) return
     const video = ref.current
     if (!video) return
 
@@ -185,6 +219,11 @@ function SeasonVideo({ src }: { src: string }) {
       video.pause()
       video.currentTime = 0
     }
+  }
+
+  if (isImage) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="" className={styles.video} loading="lazy" />
   }
 
   return (

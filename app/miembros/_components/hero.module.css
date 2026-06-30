@@ -1,4 +1,4 @@
-/* CSS extraído.
+﻿/* CSS extraído.
  * Adaptado pra CSS Modules. */
 
 .hero {
@@ -15,7 +15,7 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background-color: #000000;
+  background-color: #050510;
 }
 
 .bg video {
@@ -46,7 +46,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 50%, rgba(127, 29, 29, 0.15), transparent 50%);
+  background: radial-gradient(circle at 70% 50%, rgba(109, 74, 155, 0.15), transparent 50%);
 }
 
 .content {
@@ -72,8 +72,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.875rem;
-  background: rgba(127, 29, 29, 0.15);
-  border: 1px solid rgba(127, 29, 29, 0.4);
+  background: rgba(109, 74, 155, 0.15);
+  border: 1px solid rgba(109, 74, 155, 0.4);
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -196,7 +196,7 @@
 .btnPrimary:hover {
   background: var(--accent-red-hover) !important;
   transform: translateY(-1px);
-  box-shadow: 0 12px 40px rgba(127, 29, 29, 0.4);
+  box-shadow: 0 12px 40px rgba(109, 74, 155, 0.4);
 }
 
 .btnPrimary::before {

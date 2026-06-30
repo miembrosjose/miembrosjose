@@ -1,4 +1,4 @@
-/* ─────────────────────────────────────────────────────────────────
+﻿/* ─────────────────────────────────────────────────────────────────
  * INTRO — Deep Space Stellar
  * Nicho aeroespacial. Estética: cosmos visível, starfield 3D,
  * warp jump pelo espaço profundo, logo emergindo de singularidade.
@@ -16,7 +16,7 @@
   flex-direction: column;
   font-family: var(--font-mono, ui-monospace, "JetBrains Mono", monospace);
   color: #f5e9c8;
-  background: #000000;
+  background: #050510;
   transition: opacity 1s cubic-bezier(0.65, 0, 0.35, 1),
               transform 1s cubic-bezier(0.16, 1, 0.3, 1),
               filter 0.6s ease;
@@ -49,15 +49,15 @@
     /* núcleo dourado distante */
     radial-gradient(
       ellipse 60% 40% at 30% 35%,
-      rgba(201, 169, 97, 0.18) 0%,
-      rgba(201, 169, 97, 0.06) 30%,
+      rgba(109, 74, 155, 0.18) 0%,
+      rgba(109, 74, 155, 0.06) 30%,
       transparent 60%
     ),
     /* halo bordô */
     radial-gradient(
       ellipse 50% 60% at 75% 65%,
-      rgba(127, 29, 29, 0.22) 0%,
-      rgba(127, 29, 29, 0.08) 35%,
+      rgba(109, 74, 155, 0.22) 0%,
+      rgba(109, 74, 155, 0.08) 35%,
       transparent 65%
     ),
     /* poeira azul-ice profunda */
@@ -111,8 +111,8 @@
     circle,
     rgba(255, 255, 255, 1) 0%,
     rgba(254, 240, 200, 0.95) 15%,
-    rgba(201, 169, 97, 0.6) 35%,
-    rgba(127, 29, 29, 0.2) 60%,
+    rgba(109, 74, 155, 0.6) 35%,
+    rgba(109, 74, 155, 0.2) 60%,
     transparent 80%
   );
   filter: blur(2px);
@@ -156,7 +156,7 @@
   z-index: 15;
   pointer-events: none;
   border-radius: 50%;
-  border: 1px solid rgba(201, 169, 97, 0.5);
+  border: 1px solid rgba(109, 74, 155, 0.5);
   opacity: 0;
 }
 
@@ -176,7 +176,7 @@
     width: 200vmax;
     height: 200vmax;
     opacity: 0;
-    border-color: rgba(201, 169, 97, 0);
+    border-color: rgba(109, 74, 155, 0);
     border-width: 0.5px;
   }
 }
@@ -211,8 +211,8 @@
   color: #f5e9c8;
   text-shadow:
     0 0 30px rgba(245, 233, 200, 0.7),
-    0 0 60px rgba(201, 169, 97, 0.5),
-    0 0 100px rgba(201, 169, 97, 0.25);
+    0 0 60px rgba(109, 74, 155, 0.5),
+    0 0 100px rgba(109, 74, 155, 0.25);
   white-space: nowrap;
 }
 
@@ -224,14 +224,14 @@
   0%, 100% {
     text-shadow:
       0 0 30px rgba(245, 233, 200, 0.7),
-      0 0 60px rgba(201, 169, 97, 0.5),
-      0 0 100px rgba(201, 169, 97, 0.25);
+      0 0 60px rgba(109, 74, 155, 0.5),
+      0 0 100px rgba(109, 74, 155, 0.25);
   }
   50% {
     text-shadow:
       0 0 40px rgba(245, 233, 200, 0.9),
-      0 0 80px rgba(201, 169, 97, 0.7),
-      0 0 140px rgba(201, 169, 97, 0.4);
+      0 0 80px rgba(109, 74, 155, 0.7),
+      0 0 140px rgba(109, 74, 155, 0.4);
   }
 }
 
@@ -242,11 +242,11 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(201, 169, 97, 0.9) 30%,
-    rgba(201, 169, 97, 0.9) 70%,
+    rgba(109, 74, 155, 0.9) 30%,
+    rgba(109, 74, 155, 0.9) 70%,
     transparent
   );
-  box-shadow: 0 0 8px rgba(201, 169, 97, 0.6);
+  box-shadow: 0 0 8px rgba(109, 74, 155, 0.6);
   transition: width 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
 }
 
@@ -262,8 +262,8 @@
   font-size: clamp(0.65rem, 1.2vw, 0.85rem);
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(201, 169, 97, 0.85);
-  text-shadow: 0 0 8px rgba(201, 169, 97, 0.3);
+  color: rgba(109, 74, 155, 0.85);
+  text-shadow: 0 0 8px rgba(109, 74, 155, 0.3);
   white-space: nowrap;
   display: flex;
   gap: 0.05em;
@@ -289,7 +289,7 @@
 @keyframes starlightChar {
   0%   { opacity: 0; transform: translateY(6px); color: rgba(186, 230, 253, 1); }
   60%  { opacity: 1; transform: translateY(0); color: rgba(186, 230, 253, 1); }
-  100% { opacity: 1; transform: translateY(0); color: rgba(201, 169, 97, 0.85); }
+  100% { opacity: 1; transform: translateY(0); color: rgba(109, 74, 155, 0.85); }
 }
 
 /* ─── Coordenadas estelares ─ canto superior ────────────────────── */
@@ -301,8 +301,8 @@
   font-size: 0.6rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(201, 169, 97, 0.45);
-  text-shadow: 0 0 6px rgba(201, 169, 97, 0.2);
+  color: rgba(109, 74, 155, 0.45);
+  text-shadow: 0 0 6px rgba(109, 74, 155, 0.2);
   line-height: 1.7;
   opacity: 0;
   transition: opacity 0.8s ease 0.5s;
@@ -337,8 +337,8 @@
   transform: translateX(-50%);
   z-index: 60;
   background: transparent;
-  border: 1px solid rgba(201, 169, 97, 0.35);
-  color: rgba(201, 169, 97, 0.7);
+  border: 1px solid rgba(109, 74, 155, 0.35);
+  color: rgba(109, 74, 155, 0.7);
   padding: 0.65rem 1.4rem;
   font-family: var(--font-mono, "JetBrains Mono", monospace);
   font-size: 0.65rem;
@@ -375,21 +375,21 @@
 }
 
 .intro.complete .skip {
-  border-color: rgba(201, 169, 97, 0.65);
-  color: #c9a961;
+  border-color: rgba(109, 74, 155, 0.65);
+  color: #6D4A9B;
   animation: skipPulse 2.4s ease-in-out infinite;
 }
 
 @keyframes skipPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0.45); }
-  50%      { box-shadow: 0 0 0 10px rgba(201, 169, 97, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109, 74, 155, 0.45); }
+  50%      { box-shadow: 0 0 0 10px rgba(109, 74, 155, 0); }
 }
 
 .skip:hover {
-  border-color: #c9a961;
+  border-color: #6D4A9B;
   color: #f5e9c8;
-  background: rgba(201, 169, 97, 0.12);
-  box-shadow: 0 0 20px rgba(201, 169, 97, 0.35);
+  background: rgba(109, 74, 155, 0.12);
+  box-shadow: 0 0 20px rgba(109, 74, 155, 0.35);
 }
 
 /* ─── Mobile ─────────────────────────────────────────────────────── */

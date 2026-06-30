@@ -9,7 +9,7 @@ import { useEffect, useState, type ReactNode } from "react"
  *  - 3 camadas de overlay: vinheta radial + spot dourado + spot vermelho
  *  - Frame brackets nos 4 cantos da viewport
  *  - Linhas vermelhas no topo e base
- *  - Studio mark "[BRAND_NAME]" canto superior esquerdo
+ *  - Studio mark "Los 144000" canto superior esquerdo
  *  - Frame counter custom no canto superior direito
  *
  * Quando renderizado dentro de iframe (popup da area de membros), esconde
@@ -72,7 +72,7 @@ export function CinematicShell({
           <div className="pointer-events-none fixed left-5 top-6 z-30 flex items-center gap-3 sm:left-6">
             <span className="block h-4 w-px flex-shrink-0 bg-red-900/70" />
             <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.5em] text-neutral-400 [font-family:var(--font-geist-sans)]">
-              [BRAND_NAME]
+              Los 144000
             </span>
           </div>
 

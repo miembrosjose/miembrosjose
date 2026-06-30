@@ -73,7 +73,7 @@ export function ReportsModeration() {
   return (
     <div className="border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8">
       <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           Denúncias {filter !== "all" ? `(${filter === "pending" ? "pendentes" : filter === "resolved" ? "resolvidas" : "descartadas"})` : ""}
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -84,7 +84,7 @@ export function ReportsModeration() {
               onClick={() => setFilter(s)}
               className={`border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-colors [font-family:var(--font-geist-sans)] ${
                 filter === s
-                  ? "border-[#c9a961] bg-[#c9a961]/10 text-[#c9a961]"
+                  ? "border-[#6D4A9B] bg-[#6D4A9B]/10 text-[#6D4A9B]"
                   : "border-[#1a1a24] text-[#a0a0b0] hover:border-[#3a3a45]"
               }`}
             >
@@ -126,11 +126,11 @@ export function ReportsModeration() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0]">Denunciado por</p>
-                  <p className="mt-1 text-sm text-[#f5f5f7]">{r.reporter?.full_name || r.reporter_id.slice(0, 8)}</p>
+                  <p className="mt-1 text-sm text-[#F3F6FA]">{r.reporter?.full_name || r.reporter_id.slice(0, 8)}</p>
                 </div>
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#a0a0b0]">Autor do conteúdo</p>
-                  <p className="mt-1 text-sm text-[#f5f5f7]">{r.target_user?.full_name || (r.target_user_id ? r.target_user_id.slice(0, 8) : "—")}</p>
+                  <p className="mt-1 text-sm text-[#F3F6FA]">{r.target_user?.full_name || (r.target_user_id ? r.target_user_id.slice(0, 8) : "—")}</p>
                 </div>
               </div>
 
@@ -140,7 +140,7 @@ export function ReportsModeration() {
               </div>
 
               <div className="mt-3 border border-[#1a1a24] bg-[#12121a]/40 p-3">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#c9a961]">Snapshot</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#6D4A9B]">Snapshot</p>
                 <p className="mt-1 text-xs text-[#a0a0b0] line-clamp-3 break-words">{String(snapText).slice(0, 400)}</p>
               </div>
 

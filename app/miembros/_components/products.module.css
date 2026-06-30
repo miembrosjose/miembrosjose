@@ -1,4 +1,4 @@
-/* CSS extraído.
+﻿/* CSS extraído.
  * Grid de produtos + product-card (owned + locked). */
 
 .grid {
@@ -42,23 +42,75 @@
 }
 
 .card {
-  background: var(--bg-deep);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.008) 50%, transparent 100%),
+    #0a0a18;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px !important;
   overflow: hidden;
-  transition: all 0.3s;
+  transition:
+    transform 380ms var(--ease-out-quart),
+    border-color 280ms var(--ease-out-quart),
+    box-shadow 380ms var(--ease-out-quart);
   cursor: pointer;
   position: relative;
   display: flex;
   flex-direction: column;
   text-decoration: none;
   color: inherit;
+  box-shadow:
+    0 10px 28px -10px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(109, 74, 155, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  isolation: isolate;
+  will-change: transform;
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255,255,255,0.05) 45%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.05) 55%,
+    transparent 100%
+  );
+  transform: skewX(-15deg);
+  transition: left 600ms var(--ease-out-quart);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-red);
-  box-shadow: 0 12px 40px rgba(127, 29, 29, 0.2);
+  transform: translateY(-8px);
+  border-color: rgba(109, 74, 155, 0.85);
+  box-shadow:
+    0 28px 56px -14px rgba(0,0,0,0.85),
+    0 0 50px -10px rgba(109,74,155,0.5),
+    0 0 0 1px rgba(109,74,155,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.card:hover::after {
+  left: 125%;
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-deep),
+    0 0 0 4px rgba(109,74,155,0.6),
+    var(--shadow-3);
+}
+
+.card:hover .thumb img {
+  transform: scale(1.04);
 }
 
 .thumb {
@@ -73,6 +125,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 600ms var(--ease-out-quart);
 }
 
 .thumb::after {
@@ -85,33 +138,58 @@
 }
 
 .body {
-  padding: 1rem;
+  padding: 1.1rem 1.1rem 1.2rem;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   text-align: left;
+  position: relative;
+  gap: 0.6rem;
+}
+
+/* Divider gold animado entre thumb e body */
+.body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.1rem;
+  right: 1.1rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(109, 74, 155, 0.4), transparent);
+  transition: left 480ms var(--ease-out-quart), right 480ms var(--ease-out-quart);
+}
+
+.card:hover .body::before {
+  left: 0.4rem;
+  right: 0.4rem;
 }
 
 .name {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   line-height: 1.2;
   margin-bottom: auto;
-  padding-bottom: 0.875rem;
+  padding-bottom: 0.5rem;
   text-align: left;
+  letter-spacing: -0.01em;
 }
 
 .progress {
-  height: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
   margin-bottom: 0.875rem;
+  border-radius: 999px;
+  overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--accent-red);
+  background: linear-gradient(90deg, var(--accent-red-deep) 0%, var(--accent-red) 100%);
+  box-shadow: 0 0 6px rgba(109, 74, 155, 0.6);
+  border-radius: 999px;
+  transition: width 600ms var(--ease-out-quart);
 }
 
 .footer {
@@ -127,15 +205,27 @@
 }
 
 .access {
-  color: var(--accent-red);
-  font-weight: 600;
-  font-family: var(--font-display);
-  letter-spacing: 0.1em;
-  font-size: 0.7rem;
+  color: #fca5a5;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.2em;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.30) 0%, rgba(109, 74, 155, 0.10) 100%);
+  border: 1px solid rgba(109, 74, 155, 0.5);
+  box-shadow: 0 0 12px rgba(109, 74, 155, 0.2);
+  transition: all 240ms var(--ease-out-quart);
+}
+
+.card:hover .access {
+  background: linear-gradient(135deg, rgba(109, 74, 155, 0.55) 0%, rgba(109, 74, 155, 0.25) 100%);
+  border-color: rgba(109, 74, 155, 0.85);
+  box-shadow: 0 0 20px rgba(109, 74, 155, 0.45);
 }
 
 /* Locked card (Tienda Premium) — mesmo tratamento das temporadas bloqueadas:
@@ -164,7 +254,7 @@
   align-items: center;
   justify-content: center;
   color: var(--accent-gold);
-  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+  filter: drop-shadow(0 0 8px rgba(109, 74, 155, 0.4));
   transition: transform 0.3s;
 }
 
@@ -174,37 +264,44 @@
 
 .offerBadge {
   position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
+  top: 0.85rem;
+  left: 0.85rem;
   z-index: 2;
-  background: var(--accent-red);
+  background: linear-gradient(135deg, #8a63b8, var(--accent-red));
   font-family: var(--font-mono);
-  font-size: 0.625rem;
-  padding: 0.25rem 0.5rem;
-  letter-spacing: 0.15em;
+  font-size: 0.58rem;
+  padding: 0.32rem 0.65rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  animation: blinkBadge 2s ease infinite;
+  font-weight: 700;
+  animation: blinkBadge 2.4s ease infinite;
   color: white;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 14px -2px rgba(109, 74, 155, 0.6), inset 0 1px 0 rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 @keyframes blinkBadge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%, 100% { opacity: 1; box-shadow: 0 4px 14px -2px rgba(109, 74, 155, 0.6), inset 0 1px 0 rgba(255,255,255,0.18); }
+  50% { opacity: 0.85; box-shadow: 0 6px 22px -2px rgba(109, 74, 155, 0.85), inset 0 1px 0 rgba(255,255,255,0.22); }
 }
 
 .bonusBadge {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: 0.85rem;
+  right: 0.85rem;
   z-index: 2;
-  background: var(--accent-gold, #c9a961);
+  background: linear-gradient(135deg, #a78bca 0%, var(--accent-gold) 100%);
   color: #000;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  letter-spacing: 0.15em;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 0.32rem 0.65rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 14px -2px rgba(109, 74, 155, 0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+  border: 1px solid rgba(255, 230, 170, 0.6);
 }
 
 .cardLocked .access {

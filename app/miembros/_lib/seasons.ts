@@ -22,7 +22,7 @@ export const SEASONS: Season[] = [
     episodes: 0,
     starter: true,
     videoBg: "https://cdn.SEU_DOMINIO.com/video1.mp4",
-    gradient: "linear-gradient(135deg, #1a1a24 0%, #7f1d1d 100%)",
+    gradient: "linear-gradient(135deg, #1a1a24 0%, #6D4A9B 100%)",
     emoji: "🎬",
   },
   {
@@ -38,7 +38,7 @@ export const SEASONS: Season[] = [
     name: "Temporada 3",
     episodes: 0,
     videoBg: "https://cdn.SEU_DOMINIO.com/video3.mp4",
-    gradient: "linear-gradient(135deg, #1a1a24 0%, #450a0a 100%)",
+    gradient: "linear-gradient(135deg, #1a1a24 0%, #4A3170 100%)",
     emoji: "📽️",
   },
   {
@@ -199,20 +199,15 @@ export function isSeasonComplete(season: Season, progress: EpisodeProgress): boo
   return true
 }
 
-export function isSeasonUnlocked(season: Season, progress: EpisodeProgress): boolean {
-  if (season.num === 1) return true // T1 sempre destrava
-  if (season.external) return true // Comunidad VIP sem progressão
-  const previous = SEASONS.find((s) => s.num === season.num - 1)
-  if (!previous) return false
-  return isSeasonComplete(previous, progress)
+// Gate de unlock removido — todas as temporadas e episódios ficam livres.
+// O cliente quer acesso aberto, sem condicionar conclusão da temporada
+// anterior. Mantém a assinatura por compatibilidade com chamadores.
+export function isSeasonUnlocked(_season: Season, _progress: EpisodeProgress): boolean {
+  return true
 }
 
-export function isEpisodeUnlocked(seasonNum: number, episodeNum: number, progress: EpisodeProgress): boolean {
-  const season = SEASONS.find((s) => s.num === seasonNum)
-  if (!season) return false
-  if (!isSeasonUnlocked(season, progress)) return false
-  if (episodeNum === 1) return true
-  return !!progress[`s${seasonNum}_e${episodeNum - 1}`]
+export function isEpisodeUnlocked(_seasonNum: number, _episodeNum: number, _progress: EpisodeProgress): boolean {
+  return true
 }
 
 export function getWatchedCount(season: Season, progress: EpisodeProgress): number {

@@ -14,15 +14,6 @@ import { renderRichBody, timeAgoEs } from "../_lib/format"
 import type { FeedPost } from "../_lib/types"
 import styles from "./admin-feed.module.css"
 
-type TypeKey = "content" | "challenge" | "tip" | "bonus"
-
-const FEED_TYPES: Record<TypeKey, { emoji: string; label: string }> = {
-  content:   { emoji: "🎬", label: "Nuevo contenido" },
-  challenge: { emoji: "🏆", label: "Desafío" },
-  tip:       { emoji: "💡", label: "Tip" },
-  bonus:     { emoji: "🎁", label: "Bono exclusivo" },
-}
-
 export function AdminFeed() {
   const { isAdmin } = useAuth()
   const [posts, setPosts] = useState<FeedPost[]>([])
@@ -37,8 +28,9 @@ export function AdminFeed() {
       const data = await api<{ posts: FeedPost[] }>("/api/feed-posts")
       setPosts(data.posts || [])
     } catch (e) {
+      setPosts([])
       const msg = e instanceof Error ? e.message : "Error desconocido"
-      setError(msg)
+      console.warn("[AdminFeed] fetch failed:", msg)
     } finally {
       setLoading(false)
     }
@@ -109,9 +101,11 @@ export function AdminFeed() {
               </div>
               <div className={styles.time}>{timeAgoEs(p.created_at)}</div>
             </div>
-            <div className={styles.typeBadge}>
-              {p.type_emoji} {p.type_label}
-            </div>
+            {p.type_label && (
+              <div className={styles.typeBadge}>
+                {p.type_emoji ? `${p.type_emoji} ` : ""}{p.type_label}
+              </div>
+            )}
             {isAdmin && (
               <button
                 type="button"
@@ -144,7 +138,7 @@ export function AdminFeed() {
 }
 
 function Composer({ onClose, onPublished }: { onClose: () => void; onPublished: () => void }) {
-  const [typeKey, setTypeKey] = useState<TypeKey>("content")
+  const [tagLabel, setTagLabel] = useState("")
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [pinned, setPinned] = useState(false)
@@ -156,15 +150,14 @@ function Composer({ onClose, onPublished }: { onClose: () => void; onPublished: 
     setSubmitting(true)
     setStatus({ kind: "ok", text: "Publicando..." })
     try {
-      const t = FEED_TYPES[typeKey]
       await api("/api/admin/feed-posts", {
         method: "POST",
         body: {
           title: title.trim(),
           body: body.trim(),
-          type_key: typeKey,
-          type_emoji: t.emoji,
-          type_label: t.label,
+          type_key: "custom",
+          type_emoji: "",
+          type_label: tagLabel.trim(),
           pinned,
         },
       })
@@ -181,19 +174,13 @@ function Composer({ onClose, onPublished }: { onClose: () => void; onPublished: 
     <div className={styles.composer}>
       <h3>Nueva publicación del Estudio</h3>
 
-      <div className={styles.types}>
-        {(Object.entries(FEED_TYPES) as [TypeKey, { emoji: string; label: string }][]).map(([k, v]) => (
-          <button
-            key={k}
-            type="button"
-            className={`${styles.typeBtn} ${typeKey === k ? styles.active : ""}`}
-            onClick={() => setTypeKey(k)}
-          >
-            <span>{v.emoji}</span>
-            {v.label}
-          </button>
-        ))}
-      </div>
+      <input
+        type="text"
+        placeholder="Etiqueta (ej: AVISO, PROMOCIÓN, NOVEDAD)"
+        maxLength={40}
+        value={tagLabel}
+        onChange={(e) => setTagLabel(e.target.value.toUpperCase())}
+      />
 
       <input
         type="text"

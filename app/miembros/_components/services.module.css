@@ -1,4 +1,4 @@
-/* Servicios Premium — 2 cards. Família visual canônica (border-image
+﻿/* Servicios Premium — 2 cards. Família visual canônica (border-image
  * red→gold + cantos decorativos em L + frame inset + eyebrow mono).
  * Casa com AchievementToast / XpDetailsModal / NotifPrefsModal. */
 
@@ -22,13 +22,13 @@
     /* Light leak gold top-right */
     radial-gradient(
       ellipse 70% 50% at 100% 0%,
-      rgba(201, 169, 97, 0.14) 0%,
+      rgba(109, 74, 155, 0.14) 0%,
       transparent 55%
     ),
     /* Light leak red bottom-left */
     radial-gradient(
       ellipse 60% 50% at 0% 100%,
-      rgba(127, 29, 29, 0.18) 0%,
+      rgba(109, 74, 155, 0.18) 0%,
       transparent 55%
     ),
     linear-gradient(
@@ -54,7 +54,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 50px rgba(201, 169, 97, 0.08);
+    0 0 50px rgba(109, 74, 155, 0.08);
 }
 
 .card:hover {
@@ -62,7 +62,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 24px 70px rgba(0, 0, 0, 0.65),
-    0 0 80px rgba(201, 169, 97, 0.18);
+    0 0 80px rgba(109, 74, 155, 0.18);
 }
 
 /* Inner frame inset gold sutil */
@@ -70,7 +70,7 @@
   content: "";
   position: absolute;
   inset: 7px;
-  border: 1px solid rgba(201, 169, 97, 0.18);
+  border: 1px solid rgba(109, 74, 155, 0.18);
   pointer-events: none;
   z-index: 0;
 }
@@ -83,7 +83,7 @@
   background: linear-gradient(
     100deg,
     transparent 0%,
-    rgba(201, 169, 97, 0.12) 50%,
+    rgba(109, 74, 155, 0.12) 50%,
     transparent 100%
   );
   transform: translateX(-100%) skewX(-18deg);
@@ -112,7 +112,7 @@
   border: 1px solid var(--accent-gold);
   pointer-events: none;
   z-index: 3;
-  filter: drop-shadow(0 0 4px rgba(201, 169, 97, 0.55));
+  filter: drop-shadow(0 0 4px rgba(109, 74, 155, 0.55));
 }
 .cornerTL {
   top: -1px;
@@ -151,11 +151,11 @@
   background:
     radial-gradient(
       circle at 30% 25%,
-      rgba(201, 169, 97, 0.22) 0%,
+      rgba(109, 74, 155, 0.22) 0%,
       transparent 60%
     ),
-    linear-gradient(135deg, #1a1a24 0%, #000000 60%, rgba(127, 29, 29, 0.55) 100%);
-  border: 1px solid rgba(201, 169, 97, 0.4);
+    linear-gradient(135deg, #1d1d35 0%, #050510 60%, rgba(109, 74, 155, 0.55) 100%);
+  border: 1px solid rgba(109, 74, 155, 0.4);
   outline: 1px solid rgba(0, 0, 0, 0.6);
   outline-offset: 3px;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -171,11 +171,11 @@
   position: relative;
   z-index: 2;
   transition: filter 0.3s ease;
-  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.35));
+  filter: drop-shadow(0 0 8px rgba(109, 74, 155, 0.35));
 }
 
 .card:hover .icon svg {
-  filter: drop-shadow(0 0 16px rgba(201, 169, 97, 0.85));
+  filter: drop-shadow(0 0 16px rgba(109, 74, 155, 0.85));
 }
 
 .iconImage {
@@ -215,7 +215,7 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  text-shadow: 0 0 12px rgba(201, 169, 97, 0.3);
+  text-shadow: 0 0 12px rgba(109, 74, 155, 0.3);
 }
 
 .type::before {
@@ -223,7 +223,7 @@
   width: 18px;
   height: 1px;
   background: var(--accent-gold);
-  box-shadow: 0 0 6px rgba(201, 169, 97, 0.7);
+  box-shadow: 0 0 6px rgba(109, 74, 155, 0.7);
 }
 
 .title {
@@ -236,7 +236,7 @@
   line-height: 1.25;
   text-shadow:
     0 2px 12px rgba(0, 0, 0, 0.6),
-    0 0 24px rgba(201, 169, 97, 0.12);
+    0 0 24px rgba(109, 74, 155, 0.12);
 }
 
 .desc {
@@ -287,7 +287,7 @@
 
 .cta:hover {
   background: var(--accent-red-hover);
-  box-shadow: 0 10px 40px rgba(127, 29, 29, 0.55);
+  box-shadow: 0 10px 40px rgba(109, 74, 155, 0.55);
   letter-spacing: 0.32em;
 }
 
@@ -296,14 +296,14 @@
 }
 
 .ctaGold {
-  background: linear-gradient(135deg, #d8b878 0%, #c9a961 50%, #b08c44 100%);
-  color: #000000;
-  border: 1px solid rgba(201, 169, 97, 0.7);
+  background: linear-gradient(135deg, #d8b878 0%, #6D4A9B 50%, #b08c44 100%);
+  color: #050510;
+  border: 1px solid rgba(109, 74, 155, 0.7);
 }
 
 .ctaGold:hover {
-  background: linear-gradient(135deg, #f0d68b 0%, #d8b878 50%, #c9a961 100%);
-  box-shadow: 0 10px 40px rgba(201, 169, 97, 0.55);
+  background: linear-gradient(135deg, #f0d68b 0%, #d8b878 50%, #6D4A9B 100%);
+  box-shadow: 0 10px 40px rgba(109, 74, 155, 0.55);
 }
 
 @media (max-width: 600px) {

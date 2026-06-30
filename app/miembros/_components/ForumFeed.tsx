@@ -42,9 +42,10 @@ export function ForumFeed() {
       setCursor(data.nextCursor)
       setHasMore(!!data.nextCursor)
     } catch (e) {
+      setPosts([])
+      setHasMore(false)
       const msg = e instanceof Error ? e.message : "Error desconocido"
-      setError(msg)
-      console.error("[ForumFeed] erro ao buscar posts:", e)
+      console.warn("[ForumFeed] fetch failed:", msg)
     } finally {
       setLoading(false)
     }

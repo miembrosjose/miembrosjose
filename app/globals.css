@@ -193,13 +193,17 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --font-cinzel: "Cinzel", serif;
-  --color-gold: #D4AF37;
-  --color-gold-light: #E6C547;
-  --color-gold-dark: #B8960F;
-  --color-neon-green: #00FF00;
-  --color-dark-red: #661111;
-  --color-black: #000000;
+  /* Fallback se next/font não carregar — apesar do nome da var, agora aponta
+   * pra Orbitron (mudança aerospace). Nome legado mantido pra compatibilidade. */
+  --font-cinzel: "Orbitron", "Manrope", sans-serif;
+  /* Cores legadas remapeadas pra paleta Los 144000 (purple mono).
+   * Os nomes ficam pra não exigir refactor de Tailwind classes/componentes. */
+  --color-gold: #6D4A9B;
+  --color-gold-light: #a78bca;
+  --color-gold-dark: #4A3170;
+  --color-neon-green: #6D4A9B;
+  --color-dark-red: #4A3170;
+  --color-black: #050510;
 }
 
 .dark {
@@ -235,11 +239,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
-  --color-gold: #D4AF37;
-  --color-gold-light: #E6C547;
-  --color-gold-dark: #B8960F;
-  --color-neon-green: #00FF00;
-  --color-dark-red: #661111;
+  /* Cores legadas remapeadas pra paleta Los 144000 (purple mono).
+   * Os nomes ficam pra não exigir refactor de Tailwind classes/componentes. */
+  --color-gold: #6D4A9B;
+  --color-gold-light: #a78bca;
+  --color-gold-dark: #4A3170;
+  --color-neon-green: #6D4A9B;
+  --color-dark-red: #4A3170;
 }
 
 @theme inline {
@@ -291,7 +297,7 @@
   }
   
   html {
-    background-color: #000000 !important;
+    background-color: #050510 !important;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -301,7 +307,7 @@
 
   body {
     @apply text-foreground;
-    background-color: #000000 !important;
+    background-color: #050510 !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;

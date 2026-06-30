@@ -57,8 +57,8 @@ export function ViewAdmin() {
           transition: "all 0.15s",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#7f1d1d"
-          e.currentTarget.style.color = "#f5f5f7"
+          e.currentTarget.style.borderColor = "#6D4A9B"
+          e.currentTarget.style.color = "#F3F6FA"
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.borderColor = "#2a2a36"

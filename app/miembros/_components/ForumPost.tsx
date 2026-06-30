@@ -39,14 +39,15 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
   const [dislikesCount, setDislikesCount] = useState(post.dislikes_count ?? 0)
   const [repliesCount, setRepliesCount] = useState(post.replies_count)
 
-  // Sync estado local quando prop muda (ex: parent re-fetcha)
+  // Sync estado local quando prop muda (ex: parent re-fetcha) —
+  // sincroniza SÓ contadores. As flags liked/disliked do user logado
+  // são controladas localmente via toggle, e podem estar "atrasadas"
+  // no prop por causa de race condition entre POST e re-fetch do feed.
   useEffect(() => {
-    setLiked(!!post.liked_by_me)
-    setDisliked(!!post.disliked_by_me)
     setLikesCount(post.likes_count)
     setDislikesCount(post.dislikes_count ?? 0)
     setRepliesCount(post.replies_count)
-  }, [post.liked_by_me, post.disliked_by_me, post.likes_count, post.dislikes_count, post.replies_count])
+  }, [post.likes_count, post.dislikes_count, post.replies_count])
 
   async function toggleReplies() {
     if (repliesOpen) {
@@ -408,12 +409,13 @@ function ReplyItem({ reply, postId, onEdit, onReport, onDeleted }: ReplyItemProp
   const [likesCount, setLikesCount] = useState(reply.likes_count ?? 0)
   const [dislikesCount, setDislikesCount] = useState(reply.dislikes_count ?? 0)
 
+  // Sync SÓ contadores. Flags liked/disliked do user logado são controladas
+  // localmente (evita race com realtime que reflete contagens antes do prop
+  // user atualizar a flag).
   useEffect(() => {
-    setLiked(!!reply.liked_by_me)
-    setDisliked(!!reply.disliked_by_me)
     setLikesCount(reply.likes_count ?? 0)
     setDislikesCount(reply.dislikes_count ?? 0)
-  }, [reply.liked_by_me, reply.disliked_by_me, reply.likes_count, reply.dislikes_count])
+  }, [reply.likes_count, reply.dislikes_count])
 
   async function toggleLike() {
     const newLiked = !liked

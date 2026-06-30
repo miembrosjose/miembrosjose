@@ -270,7 +270,7 @@ export function ViewUserProfile() {
                 <span
                   style={{
                     border: "1px solid var(--accent-gold)",
-                    background: "rgba(201, 169, 97, 0.1)",
+                    background: "rgba(109, 74, 155, 0.1)",
                     padding: "0.125rem 0.5rem",
                     fontSize: "0.625rem",
                     fontWeight: 700,
@@ -351,7 +351,7 @@ export function ViewUserProfile() {
                     onClick={() => setView("messages", null, { withUserId: userId })}
                     style={{
                       border: "1px solid var(--accent-red)",
-                      background: "rgba(127, 29, 29, 0.15)",
+                      background: "rgba(109, 74, 155, 0.15)",
                       padding: "0.5rem 1rem",
                       fontSize: "0.625rem",
                       fontWeight: 600,
@@ -374,7 +374,7 @@ export function ViewUserProfile() {
                     onClick={() => setView("perfil")}
                     style={{
                       border: "1px solid var(--accent-gold)",
-                      background: "rgba(201, 169, 97, 0.1)",
+                      background: "rgba(109, 74, 155, 0.1)",
                       padding: "0.5rem 1rem",
                       fontSize: "0.625rem",
                       fontWeight: 600,

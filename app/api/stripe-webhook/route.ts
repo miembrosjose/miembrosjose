@@ -526,12 +526,12 @@ async function handlePaymentIntentSucceeded(stripe: Stripe, pi: Stripe.PaymentIn
       const parsed = JSON.parse(pi.metadata?.items || "[]") as Array<{ key: string; price: number }>
       items = parsed.map((p) => ({
         key: p.key,
-        name: p.key === "front" ? "[BRAND_NAME]" : p.key,
+        name: p.key === "front" ? "Los 144000" : p.key,
         price: p.price,
         qty: 1,
       }))
     } catch {
-      items = [{ key: "front", name: "[BRAND_NAME]", price: pi.amount / 100, qty: 1 }]
+      items = [{ key: "front", name: "Los 144000", price: pi.amount / 100, qty: 1 }]
     }
   }
 
@@ -1019,21 +1019,21 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     if (installmentNumber === 1) {
       items = parsed.map((p) => ({
         key: p.key,
-        name: p.key === "front" ? "[BRAND_NAME] (parcela 1)" : p.key,
+        name: p.key === "front" ? "Los 144000 (parcela 1)" : p.key,
         price: p.price,
         qty: 1,
       }))
     } else {
       const front = parsed.find((p) => p.key === "front")
       items = front
-        ? [{ key: "front", name: `[BRAND_NAME] (parcela ${installmentNumber})`, price: front.price, qty: 1 }]
+        ? [{ key: "front", name: `Los 144000 (parcela ${installmentNumber})`, price: front.price, qty: 1 }]
         : []
     }
   } catch {
     items = [
       {
         key: "front",
-        name: `[BRAND_NAME] (parcela ${installmentNumber})`,
+        name: `Los 144000 (parcela ${installmentNumber})`,
         price: invoice.amount_paid / 100,
         qty: 1,
       },
@@ -1428,12 +1428,12 @@ async function handlePaymentIntentFailed(stripe: Stripe, pi: Stripe.PaymentInten
     const parsed = JSON.parse(pi.metadata?.items || "[]") as Array<{ key: string; price: number }>
     items = parsed.map((p) => ({
       key: p.key,
-      name: p.key === "front" ? "[BRAND_NAME]" : p.key,
+      name: p.key === "front" ? "Los 144000" : p.key,
       price: p.price,
       qty: 1,
     }))
   } catch {
-    items = [{ key: "front", name: "[BRAND_NAME]", price: pi.amount / 100, qty: 1 }]
+    items = [{ key: "front", name: "Los 144000", price: pi.amount / 100, qty: 1 }]
   }
 
   // Sempre em USD (Utmify converte USD→BRL no painel)
@@ -1555,7 +1555,7 @@ async function handleChargeDisputeCreated(stripe: Stripe, dispute: Stripe.Disput
 // Mantém em sync com /api/webhook/purchase-relay (nameForKey).
 function nameForProductKey(key: string): string {
   const clean = key.replace(/__downsell$/, "")
-  if (clean === "front") return "[BRAND_NAME]"
+  if (clean === "front") return "Los 144000"
   if (clean === "creativos") return "Producto 1"
   if (clean === "andromeda") return "Producto 2"
   if (clean === "analytics") return "Producto 3"
@@ -1611,7 +1611,7 @@ async function sendPurchaseWebhook(params: {
     action_source: "website",
     currency,
     value: usdValue,
-    content_name: itemNames.join(" + ") || "[BRAND_NAME]",
+    content_name: itemNames.join(" + ") || "Los 144000",
     content_type: "product",
     num_items: cleanKeys.length || 1,
     payment_method: "credit_card",

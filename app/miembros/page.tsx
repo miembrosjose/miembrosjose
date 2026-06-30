@@ -6,22 +6,21 @@
 // Pra rollback rápido: voltar este arquivo pra `redirect("/legacy")`.
 
 import type { Metadata } from "next"
-import { requireFrontAccess } from "./_lib/auth-server"
+import { requireMiembrosAuth } from "./_lib/auth-server"
 import { SpaHomeShell } from "./_components/SpaHomeShell"
 
 export const metadata: Metadata = {
-  title: "Miembros · [BRAND_NAME]",
-  description: "Área exclusiva de miembros de [BRAND_NAME].",
+  title: "Miembros · Los 144000",
+  description: "Área exclusiva de miembros de Los 144000.",
   robots: { index: false, follow: false },
 }
 
 export const dynamic = "force-dynamic"
 
 export default async function MiembrosHome() {
-  // requireFrontAccess: redireciona pra /miembros/acceso-vencido se front
-  // expirou. SEM período de graça — vence é vence. Cliente foi avisado
-  // por banner 30/15/7 dias antes. Admin pode renovar manualmente via
-  // painel /miembros/admin → Miembros → botão Renovar +1 año.
-  await requireFrontAccess()
+  // Los 144000 não usa modelo Stripe com expiração de front. Quem está
+  // logado entra. Acesso por temporada/produto é controlado granularmente
+  // pelas tabelas user_season_access / user_product_access.
+  await requireMiembrosAuth()
   return <SpaHomeShell />
 }

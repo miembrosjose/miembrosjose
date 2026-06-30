@@ -1,4 +1,4 @@
-/* Animação cinematográfica de EL ESTUDIO conquistado.
+﻿/* Animação cinematográfica de EL ESTUDIO conquistado.
  * Espelho do TopoOverlay, mas com paleta MAIS premium: base vermelha da
  * marca + sobreposições douradas (luxo cinematográfico). É a insignia mais
  * forte do funil — serviço premium "¿Quieres un área de miembros igual a
@@ -17,7 +17,7 @@
     ellipse at center,
     rgba(252, 165, 165, 0.32) 0%,
     rgba(220, 38, 38, 0.25) 25%,
-    rgba(127, 29, 29, 0.2) 55%,
+    rgba(109, 74, 155, 0.2) 55%,
     rgba(0, 0, 0, 0.88) 80%
   );
   -webkit-backdrop-filter: blur(8px);
@@ -55,9 +55,9 @@
   font-size: 0.85rem;
   letter-spacing: 0.6em;
   /* Dourado claro — separa visualmente do EL TOPO (que usa vermelho) */
-  color: #fde68a;
+  color: #a78bca;
   text-transform: uppercase;
-  text-shadow: 0 0 30px rgba(201, 169, 97, 0.7);
+  text-shadow: 0 0 30px rgba(109, 74, 155, 0.7);
   animation: estudioOverlayPulse 1.6s ease-in-out infinite;
 }
 
@@ -73,7 +73,7 @@
    * a sensação de iluminação cinematográfica de estúdio. */
   filter: drop-shadow(0 0 30px rgba(252, 165, 165, 0.85))
     drop-shadow(0 0 48px rgba(220, 38, 38, 0.7))
-    drop-shadow(0 0 70px rgba(201, 169, 97, 0.4));
+    drop-shadow(0 0 70px rgba(109, 74, 155, 0.4));
   animation: estudioOverlayBadgeFloat 2.6s ease-in-out infinite;
 }
 
@@ -93,12 +93,12 @@
   font-size: clamp(3rem, 11vw, 6rem);
   line-height: 0.9;
   /* Gradient cinematográfico: dourado claro → vermelho marca → vinho profundo */
-  background: linear-gradient(180deg, #fde68a 0%, #dc2626 45%, #7f1d1d 100%);
+  background: linear-gradient(180deg, #a78bca 0%, #dc2626 45%, #6D4A9B 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 40px rgba(220, 38, 38, 0.6))
-    drop-shadow(0 0 60px rgba(201, 169, 97, 0.3));
+    drop-shadow(0 0 60px rgba(109, 74, 155, 0.3));
   letter-spacing: -0.02em;
 }
 
@@ -114,7 +114,7 @@
   position: fixed;
   inset: 0;
   /* Mistura red-600 + dourado pra flash diferenciado do EL TOPO (red puro) */
-  background: linear-gradient(135deg, #dc2626 0%, #c9a961 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #6D4A9B 100%);
   opacity: 0;
   pointer-events: none;
   z-index: 99001;
@@ -132,11 +132,11 @@
   width: 7px;
   height: 7px;
   /* Partículas douradas — acento de "luz de estúdio" */
-  background: #c9a961;
+  background: #6D4A9B;
   border-radius: 50% !important;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 0 14px rgba(201, 169, 97, 0.95);
+  box-shadow: 0 0 14px rgba(109, 74, 155, 0.95);
   animation: estudioOverlayFloat 2.6s ease-out forwards;
 }
 

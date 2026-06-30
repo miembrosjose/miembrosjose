@@ -16,7 +16,7 @@ export async function sendAccountInviteEmail(
   const link = `${MIEMBROS_URL}/cuenta/crear?token=${encodeURIComponent(invite.token)}`
   const firstName = (invite.customer_name?.split(" ")[0] ?? "").trim() || "viajero"
 
-  const subject = "Tu acceso a [BRAND_NAME] está listo"
+  const subject = "Tu acceso a Los 144000 está listo"
   const html = renderInviteHtml({ firstName, link })
   const text = renderInviteText({ firstName, link })
 
@@ -91,7 +91,7 @@ function renderInviteHtml(p: { firstName: string; link: string }): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tu acceso a [BRAND_NAME]</title>
+<title>Tu acceso a Los 144000</title>
 </head>
 <body style="margin:0;padding:0;background:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e8e3d8;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#000000;padding:48px 16px;">
@@ -138,20 +138,20 @@ function renderInviteHtml(p: { firstName: string; link: string }): string {
                 <strong style="color:#8a7a55;">Importante:</strong> este enlace es único y solo puede usarse una vez. Tienes 7 días para crear tu cuenta antes de que expire.
               </p>
               <p style="margin:0 0 24px;font-size:11px;line-height:1.6;color:#6a6249;letter-spacing:0.05em;">
-                Si tienes alguna duda, responde directamente a este email — el equipo de [BRAND_NAME] te responderá lo antes posible.
+                Si tienes alguna duda, responde directamente a este email — el equipo de Los 144000 te responderá lo antes posible.
               </p>
             </td>
           </tr>
           <tr>
             <td style="background:#08080d;padding:20px 40px;border-top:1px solid #1f1925;">
               <p style="margin:0;font-size:10px;letter-spacing:0.4em;text-transform:uppercase;color:#5a523d;font-weight:600;">
-                [BRAND_NAME] · Embudo Gamificado
+                Los 144000 · Embudo Gamificado
               </p>
             </td>
           </tr>
         </table>
         <p style="margin:24px 0 0;font-size:11px;color:#3a3328;text-align:center;">
-          Recibiste este email porque adquiriste un producto de [BRAND_NAME].
+          Recibiste este email porque adquiriste un producto de Los 144000.
         </p>
       </td>
     </tr>
@@ -174,7 +174,7 @@ Importante:
 
 Si tienes dudas, responde directamente a este email.
 
-[BRAND_NAME] · Embudo Gamificado`
+Los 144000 · Embudo Gamificado`
 }
 
 function escapeHtml(s: string): string {
@@ -302,14 +302,14 @@ function renderAccountExistsHtml(p: { firstName: string; loginLink: string }): s
               <div style="height:1px;background:#1f1925;margin:24px 0;"></div>
 
               <p style="margin:0 0 24px;font-size:11px;line-height:1.6;color:#6a6249;letter-spacing:0.05em;">
-                Si tienes alguna duda, responde directamente a este email — el equipo de [BRAND_NAME] te responderá lo antes posible.
+                Si tienes alguna duda, responde directamente a este email — el equipo de Los 144000 te responderá lo antes posible.
               </p>
             </td>
           </tr>
           <tr>
             <td style="background:#08080d;padding:20px 40px;border-top:1px solid #1f1925;">
               <p style="margin:0;font-size:10px;letter-spacing:0.4em;text-transform:uppercase;color:#5a523d;font-weight:600;">
-                [BRAND_NAME] · Embudo Gamificado
+                Los 144000 · Embudo Gamificado
               </p>
             </td>
           </tr>
@@ -333,5 +333,5 @@ ${p.loginLink}
 
 Si tienes dudas, responde directamente a este email.
 
-[BRAND_NAME] · Embudo Gamificado`
+Los 144000 · Embudo Gamificado`
 }

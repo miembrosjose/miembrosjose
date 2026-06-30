@@ -15,8 +15,8 @@ import { useEffect, useRef, useState } from "react"
 import styles from "./intro.module.css"
 import { Starfield } from "./Starfield"
 
-const LOGO_TEXT = "[BRAND_NAME]"
-const TAGLINE = "[BRAND_TAGLINE]"
+const LOGO_TEXT = "Los 144000"
+const TAGLINE = "Fuiste preparado para este momento mucho antes de nacer."
 const SESSION_KEY = "app_intro_seen"
 
 type Phase =

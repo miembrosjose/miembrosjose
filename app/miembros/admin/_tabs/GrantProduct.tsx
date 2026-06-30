@@ -8,90 +8,8 @@ export function GrantProduct() {
     <div className="space-y-10">
       <GrantMembership />
       <div className="border-t border-[#1a1a24]" />
-      <ResendInvite />
-      <div className="border-t border-[#1a1a24]" />
       <GrantProductSection />
     </div>
-  )
-}
-
-// Seção pra reenviar email de acesso pra cliente que não recebeu.
-// Detecta automaticamente se manda invite (criar conta) ou login (já tem conta).
-function ResendInvite() {
-  const [email, setEmail] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null); setSuccess(null)
-    if (!email.trim() || !email.includes("@")) {
-      setError("Email inválido")
-      return
-    }
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/admin/resend-invite", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email: email.trim().toLowerCase() }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
-
-        const msg =
-          data.type === "account_exists"
-            ? `Email de login enviado pra ${email} (cliente já tem conta — manda fazer login)`
-            : `Invite reenviado pra ${email} (resend_count: ${data.resend_count ?? 1})`
-        setSuccess(msg)
-        setEmail("")
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro")
-      }
-    })
-  }
-
-  return (
-    <form onSubmit={submit} className="border border-[#c9a961]/40 bg-[#12121a]/40 p-6 sm:p-8 space-y-5">
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
-          Reenviar email de acesso
-        </h2>
-        <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-          Pra clientes que pagaram (Stripe ou Hotmart) e não receberam o email automático. Detecta se manda invite (criar conta) ou login (conta já existe). Idempotente — pode ser usado várias vezes sem duplicar conta.
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="ri-email" className={labelCls}>Email do cliente *</label>
-        <input
-          id="ri-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isPending}
-          className={inputCls}
-          placeholder="cliente@email.com"
-        />
-      </div>
-
-      {error && (
-        <div className="border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300 [font-family:var(--font-geist-sans)]">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="border border-[#009d68]/40 bg-[#009d68]/10 px-4 py-3 text-sm text-[#009d68] [font-family:var(--font-geist-sans)]">
-          {success}
-        </div>
-      )}
-
-      <button type="submit" disabled={isPending} className={btnCls}>
-        {isPending ? "Enviando..." : "Reenviar email"}
-      </button>
-    </form>
   )
 }
 
@@ -99,9 +17,6 @@ function ResendInvite() {
 // Insere stripe_sales sale_type='front' + cria invite + manda email Resend.
 function GrantMembership() {
   const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [sendEmail, setSendEmail] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -121,9 +36,7 @@ function GrantMembership() {
           credentials: "include",
           body: JSON.stringify({
             email: email.trim().toLowerCase(),
-            name: name.trim() || undefined,
-            phone: phone.trim() || undefined,
-            send_email: sendEmail,
+            send_email: true,
           }),
         })
         const data = await res.json()
@@ -135,11 +48,9 @@ function GrantMembership() {
             ? " · Conta já existe (sem email — cliente loga normal)"
             : data.email_status === "error"
             ? ` · Email falhou: ${data.email_error}`
-            : data.email_status === "not_requested"
-            ? " · Email não enviado (opção desligada)"
             : ""
         setSuccess(`Acesso liberado pra ${email}${emailMsg}`)
-        setEmail(""); setName(""); setPhone("")
+        setEmail("")
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro")
       }
@@ -147,68 +58,28 @@ function GrantMembership() {
   }
 
   return (
-    <form onSubmit={submit} className="border border-[#c9a961]/40 bg-[#12121a]/40 p-6 sm:p-8 space-y-5">
+    <form onSubmit={submit} className="border border-[#6D4A9B]/40 bg-[#12121a]/40 p-6 sm:p-8 space-y-5">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#c9a961] [font-family:var(--font-geist-sans)]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           Liberar acesso à membership
         </h2>
         <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-          Pra vendas via Wise/PIX/manuais. Insere a venda como front + cria invite com link único + manda email Resend pro cliente criar a senha. Idempotente — se a conta já existe, cliente loga normal.
+          Insere o cliente como membro + cria invite com link único + manda email pro cliente criar a senha. Idempotente — se a conta já existe, cliente loga normal.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="gm-email" className={labelCls}>Email do cliente *</label>
-          <input
-            id="gm-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isPending}
-            className={inputCls}
-            placeholder="cliente@email.com"
-          />
-        </div>
-        <div>
-          <label htmlFor="gm-name" className={labelCls}>Nome (opcional)</label>
-          <input
-            id="gm-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isPending}
-            className={inputCls}
-            placeholder="Nome completo"
-          />
-        </div>
-      </div>
-
       <div>
-        <label htmlFor="gm-phone" className={labelCls}>Telefone com DDI (opcional)</label>
+        <label htmlFor="gm-email" className={labelCls}>Email do cliente *</label>
         <input
-          id="gm-phone"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          id="gm-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={isPending}
           className={inputCls}
-          placeholder="5511999999999"
+          placeholder="cliente@email.com"
         />
       </div>
-
-      <label className="flex items-start gap-3 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={sendEmail}
-          onChange={(e) => setSendEmail(e.target.checked)}
-          disabled={isPending}
-          className="mt-0.5 accent-[#c9a961]"
-        />
-        <span>
-          Enviar email <strong className="text-[#f5f5f7]">&quot;Tu acceso a [BRAND_NAME] está listo&quot;</strong> (cliente cria senha via link único, válido 7 dias)
-        </span>
-      </label>
 
       {error && (
         <div className="border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300 [font-family:var(--font-geist-sans)]">
@@ -294,7 +165,7 @@ function GrantProductSection() {
           onClick={() => { setMode("grant"); setError(null); setSuccess(null) }}
           className={`border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] transition-colors [font-family:var(--font-geist-sans)] ${
             mode === "grant"
-              ? "border-[#c9a961] bg-[#c9a961]/10 text-[#c9a961]"
+              ? "border-[#6D4A9B] bg-[#6D4A9B]/10 text-[#6D4A9B]"
               : "border-[#1a1a24] bg-[#12121a]/40 text-[#a0a0b0] hover:border-[#2a2a35]"
           }`}
         >
@@ -315,7 +186,7 @@ function GrantProductSection() {
 
       <form onSubmit={submit} className={`border bg-[#12121a]/40 p-6 sm:p-8 space-y-5 ${isRevoke ? "border-red-500/30" : "border-[#1a1a24]"}`}>
         <div>
-          <h2 className={`text-sm font-semibold uppercase tracking-[0.25em] [font-family:var(--font-geist-sans)] ${isRevoke ? "text-red-400" : "text-[#c9a961]"}`}>
+          <h2 className={`text-sm font-semibold uppercase tracking-[0.25em] [font-family:var(--font-geist-sans)] ${isRevoke ? "text-red-400" : "text-[#6D4A9B]"}`}>
             {isRevoke ? "Revogar acesso a produto" : "Liberar produto manualmente"}
           </h2>
           <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
@@ -351,12 +222,12 @@ function GrantProductSection() {
                   disabled={isPending}
                   className={`border px-4 py-3 text-left text-sm transition-colors [font-family:var(--font-geist-sans)] ${
                     selected
-                      ? (isRevoke ? "border-red-500 bg-red-500/10 text-[#f5f5f7]" : "border-[#c9a961] bg-[#c9a961]/10 text-[#f5f5f7]")
+                      ? (isRevoke ? "border-red-500 bg-red-500/10 text-[#F3F6FA]" : "border-[#6D4A9B] bg-[#6D4A9B]/10 text-[#F3F6FA]")
                       : "border-[#1a1a24] bg-[#000000]/50 text-[#a0a0b0] hover:border-[#2a2a35]"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`text-base ${selected ? (isRevoke ? "text-red-400" : "text-[#c9a961]") : "text-[#3a3a45]"}`}>
+                    <span className={`text-base ${selected ? (isRevoke ? "text-red-400" : "text-[#6D4A9B]") : "text-[#3a3a45]"}`}>
                       {selected ? "✓" : "○"}
                     </span>
                     <span className="font-semibold">{p.name}</span>
@@ -381,7 +252,7 @@ function GrantProductSection() {
                   disabled={isPending}
                   className="mt-1"
                 />
-                <span className="text-sm text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+                <span className="text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
                   <strong className="text-red-400">Revogar acesso COMPLETO (front)</strong>
                   <span className="block text-xs text-[#a0a0b0] mt-1">
                     O usuário será expulso do Estudio imediatamente. Próxima tentativa de login redireciona com mensagem &quot;acesso revogado&quot;.
@@ -412,7 +283,7 @@ function GrantProductSection() {
           type="submit"
           disabled={isPending}
           className={isRevoke
-            ? "inline-flex items-center justify-center gap-2 border border-red-500 bg-red-500 px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:bg-red-600 hover:border-red-600 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
+            ? "inline-flex items-center justify-center gap-2 border border-red-500 bg-red-500 px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:bg-red-600 hover:border-red-600 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
             : btnCls
           }
         >

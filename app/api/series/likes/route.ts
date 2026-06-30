@@ -1,4 +1,4 @@
-// API — likes acumulados na série principal "[BRAND_NAME] Entrenamiento".
+// API — likes acumulados na série principal "Los 144000 Entrenamiento".
 //
 // GET  /api/series/likes  → { count, liked_by_me }
 // POST /api/series/likes  → toggle (idempotente). Retorna { liked, count }

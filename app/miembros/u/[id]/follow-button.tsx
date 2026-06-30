@@ -41,7 +41,7 @@ export function ProfileFollowButton({
       className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition-colors [font-family:var(--font-geist-sans)] disabled:opacity-50 ${
         following
           ? "border border-[#009d68] bg-[#009d68]/10 text-[#009d68] hover:bg-[#009d68] hover:text-[#000000]"
-          : "border border-[#f5f5f7] bg-[#f5f5f7] text-[#000000] hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7]"
+          : "border border-[#F3F6FA] bg-[#F3F6FA] text-[#000000] hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA]"
       }`}
     >
       {label}

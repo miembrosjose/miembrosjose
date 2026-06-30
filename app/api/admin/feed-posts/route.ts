@@ -16,8 +16,6 @@ import { isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
 
-const VALID_TYPES = new Set(["content", "challenge", "tip", "bonus"])
-
 function buildAvatarLetters(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return "M"
@@ -43,16 +41,15 @@ export async function POST(req: NextRequest) {
 
   const title = (body.title || "").trim()
   const text = (body.body || "").trim()
-  const typeKey = body.type_key || "content"
-  const typeEmoji = body.type_emoji || "🎬"
-  const typeLabel = (body.type_label || "NUEVO CONTENIDO").trim()
+  const typeKey = (body.type_key || "custom").trim().slice(0, 40)
+  const typeEmoji = (body.type_emoji || "").trim().slice(0, 8)
+  const typeLabel = (body.type_label || "").trim().slice(0, 40)
   const pinned = body.pinned === true
 
   if (!title) return NextResponse.json({ error: "Title required" }, { status: 400 })
   if (title.length > 200) return NextResponse.json({ error: "Title too long" }, { status: 400 })
   if (!text) return NextResponse.json({ error: "Body required" }, { status: 400 })
   if (text.length > 5000) return NextResponse.json({ error: "Body too long" }, { status: 400 })
-  if (!VALID_TYPES.has(typeKey)) return NextResponse.json({ error: "Invalid type_key" }, { status: 400 })
 
   const meta = (user.user_metadata || {}) as { full_name?: string; name?: string; avatar_url?: string }
   const authorName = meta.full_name || meta.name || (user.email ? user.email.split("@")[0] : "Creador")

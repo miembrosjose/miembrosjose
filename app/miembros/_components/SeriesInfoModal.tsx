@@ -5,13 +5,16 @@
 // Modal genérico que era plano e sem identidade.
 
 import { useEffect, useMemo, useState } from "react"
-import { Play, ThumbsUp, X } from "lucide-react"
-import { api } from "../_lib/api"
+import { Play, X } from "lucide-react"
 import { computeResumePoint, computeOverallProgressPct } from "../_lib/seasons"
 import { getEpisodesBySeason } from "../_lib/episodes"
+import { useSeriesInfo } from "../_lib/use-series-info"
+import { useSeasons } from "../_lib/use-seasons"
+import { useAuth } from "../_lib/auth-context"
+import { HERO_VIDEO_URL } from "../_lib/hero-media"
+import { InlineEditableField } from "./InlineEditableField"
 import styles from "./series-info-modal.module.css"
 
-const HERO_IMAGE_URL = "https://cdn.SEU_DOMINIO.com/info.webp"
 
 type Props = {
   open: boolean
@@ -45,51 +48,11 @@ export function SeriesInfoModal({
     return eps.find((e) => e.num === resume.episode) || eps[0] || null
   }, [resume.season, resume.episode])
 
-  // Likes da série — acumulados de todos os users (server-side via /api/series/likes)
-  const [likeCount, setLikeCount] = useState(0)
-  const [likedByMe, setLikedByMe] = useState(false)
-  const [likeBusy, setLikeBusy] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    let cancelled = false
-    api<{ count: number; liked_by_me: boolean }>("/api/series/likes")
-      .then((data) => {
-        if (cancelled) return
-        setLikeCount(data.count || 0)
-        setLikedByMe(!!data.liked_by_me)
-      })
-      .catch(() => {
-        // silencioso — botão fica como tava
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [open])
-
-  async function toggleLike() {
-    if (likeBusy) return
-    setLikeBusy(true)
-    // Optimistic
-    const newLiked = !likedByMe
-    const newCount = likeCount + (newLiked ? 1 : -1)
-    setLikedByMe(newLiked)
-    setLikeCount(newCount)
-    try {
-      await api<{ liked: boolean; count: number }>("/api/series/likes", {
-        method: "POST",
-      }).then((data) => {
-        setLikedByMe(!!data.liked)
-        setLikeCount(data.count || 0)
-      })
-    } catch {
-      // Revert
-      setLikedByMe(!newLiked)
-      setLikeCount(likeCount)
-    } finally {
-      setLikeBusy(false)
-    }
-  }
+  // Metadados editáveis (banco — admin edita inline) + total real de temporadas
+  const { isAdmin } = useAuth()
+  const { info, update: updateInfo } = useSeriesInfo()
+  const { seasons } = useSeasons()
+  const totalSeasons = seasons.length
   // Esc fecha + trava scroll do body
   useEffect(() => {
     if (!open) return
@@ -131,22 +94,27 @@ export function SeriesInfoModal({
           <X size={20} />
         </button>
 
-        {/* Hero estático — imagem em vez de vídeo (era só frame inicial mesmo) */}
+        {/* Hero — mesmo vídeo do Hero principal, parado no PRIMEIRO frame
+            (não toca, sem áudio). currentTime=0 é o default depois do
+            metadata carregar; preload="metadata" garante que o frame 0
+            aparece sem baixar o vídeo inteiro. */}
         <div className={styles.hero}>
-          <img
+          <video
             className={styles.heroVideo}
-            src={HERO_IMAGE_URL}
-            alt=""
-            loading="eager"
-            decoding="async"
+            src={HERO_VIDEO_URL}
+            preload="metadata"
+            muted
+            playsInline
+            // Sem autoPlay, sem controls, sem loop → fica congelado no frame 0
+            onLoadedMetadata={(e) => {
+              (e.currentTarget as HTMLVideoElement).currentTime = 0
+            }}
           />
           <div className={styles.heroOverlay} />
           <div className={styles.heroContent}>
-            <span className={styles.studioMark}>[BRAND_NAME] · Estudio</span>
+            <span className={styles.studioMark}>Los 144000 · Estudio</span>
             <h2 className={styles.title}>
-              [BRAND_NAME]
-              <br />
-              Entrenamiento
+              Los 144000
             </h2>
 
             <div className={styles.progressRow}>
@@ -164,22 +132,6 @@ export function SeriesInfoModal({
                 <Play size={20} fill="currentColor" />
                 {buttonLabel}
               </button>
-              <button
-                type="button"
-                className={`${styles.btnRound} ${likedByMe ? styles.btnRoundActive : ""}`}
-                aria-label="Me gusta"
-                aria-pressed={likedByMe}
-                title={likedByMe ? "Quitar me gusta" : "Me gusta"}
-                onClick={toggleLike}
-                disabled={likeBusy}
-              >
-                <ThumbsUp size={18} fill="none" />
-                {likeCount > 0 && (
-                  <span className={styles.btnRoundCount}>
-                    {likeCount > 999 ? `${Math.floor(likeCount / 100) / 10}k` : likeCount}
-                  </span>
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -188,10 +140,10 @@ export function SeriesInfoModal({
         <div className={styles.info}>
           <div className={styles.infoMain}>
             <div className={styles.metaLine}>
-              <span>2026</span>
-              <span>5 temporadas</span>
-              <span className={styles.hdBadge}>HD</span>
-              <span className={styles.ageRating}>+18</span>
+              <span>{info.year}</span>
+              <span>
+                {totalSeasons} {totalSeasons === 1 ? "temporada" : "temporadas"}
+              </span>
             </div>
 
             <div className={styles.episodeBlock}>
@@ -200,9 +152,13 @@ export function SeriesInfoModal({
                 {currentEpisode?.title ? ` "${currentEpisode.title}"` : ""}
               </h3>
               <p className={styles.description}>
-                El método para crear embudos gamificados que convierten. Domina los
-                Agentes GPTs, construye tu estructura con producción de contenido
-                audiovisual cinematográfico y entra en la comunidad VIP.
+                <InlineEditableField
+                  value={info.description}
+                  canEdit={isAdmin}
+                  onSave={(v) => updateInfo({ description: v })}
+                  multiline
+                  placeholder="Descripción de la serie..."
+                />
               </p>
             </div>
           </div>
@@ -210,17 +166,36 @@ export function SeriesInfoModal({
           <aside className={styles.infoAside}>
             <div className={styles.asideGroup}>
               <span className={styles.asideLabel}>Elenco: </span>
-              <span className={styles.asideValue}>[BRAND_NAME]</span>
+              <span className={styles.asideValue}>
+                <InlineEditableField
+                  value={info.cast_text}
+                  canEdit={isAdmin}
+                  onSave={(v) => updateInfo({ cast_text: v })}
+                  placeholder="Elenco..."
+                />
+              </span>
             </div>
             <div className={styles.asideGroup}>
               <span className={styles.asideLabel}>Géneros: </span>
               <span className={styles.asideValue}>
-                Marketing Digital, Embudos Cinematográficos, Gamificación
+                <InlineEditableField
+                  value={info.genres}
+                  canEdit={isAdmin}
+                  onSave={(v) => updateInfo({ genres: v })}
+                  placeholder="Géneros separados por coma..."
+                />
               </span>
             </div>
             <div className={styles.asideGroup}>
               <span className={styles.asideLabel}>Esta serie es: </span>
-              <span className={styles.asideValue}>Informativa, Estratégica</span>
+              <span className={styles.asideValue}>
+                <InlineEditableField
+                  value={info.kind}
+                  canEdit={isAdmin}
+                  onSave={(v) => updateInfo({ kind: v })}
+                  placeholder="Tipo de serie..."
+                />
+              </span>
             </div>
           </aside>
         </div>

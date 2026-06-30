@@ -1,46 +1,49 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist, Cinzel } from "next/font/google"
+import { Manrope, Orbitron } from "next/font/google"
 import { GlobalAudioProvider } from "@/components/global-audio-provider"
 import { StorageMigrator } from "@/components/storage-migrator"
 import { ErrorTracker } from "@/components/error-tracker"
 import "./globals.css"
 
-// OTIMIZAÇÃO DE FONTES: 'display: "swap"' adicionado para garantir que o texto 
-// apareça instantaneamente, sem deixar buracos invisíveis na tela.
-const geist = Geist({ 
+// Body font — Manrope (sans-serif moderno, neutro, 200-800 variável).
+// Substitui Geist. CSS variable mantém nome legado (--font-geist-sans)
+// pra não quebrar ~30 arquivos que referenciam direto.
+const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-geist-sans",
 })
 
-// MANTIDO: Todos os pesos da Cinzel preservados para garantir fidelidade ao design.
-const cinzel = Cinzel({
+// Display font — Orbitron (geométrica futurista aerospace).
+// Substitui Cinzel. CSS variable mantém nome legado (--font-cinzel)
+// pra não exigir refactor em todos os componentes.
+const orbitron = Orbitron({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
   variable: "--font-cinzel",
 })
 
 export const metadata: Metadata = {
   other: {
-    "facebook-domain-verification": "SEU_FB_DOMAIN_VERIFICATION_TOKEN",
+    "facebook-domain-verification": "ld18wruw48u1gsm1a6qd2nwp71ri61",
     "format-detection": "telephone=no",
   },
-  title: "[BRAND_NAME]",
+  title: "Los 144000",
   description: "[BRAND_DESCRIPTION]",
   keywords: ["copywriting", "anuncios", "marketing digital", "ventas", "conversiones"],
-  authors: [{ name: "[BRAND_NAME]" }],
+  authors: [{ name: "Los 144000" }],
   openGraph: {
-    title: "[BRAND_NAME]",
+    title: "Los 144000",
     description: "[BRAND_DESCRIPTION]",
     type: "website",
     locale: "es_LA",
-    siteName: "[BRAND_NAME]",
+    siteName: "Los 144000",
   },
   twitter: {
     card: "summary_large_image",
-    title: "[BRAND_NAME]",
+    title: "Los 144000",
     description: "[BRAND_DESCRIPTION]",
   },
   icons: {
@@ -71,17 +74,12 @@ export default function RootLayout({
     // BLINDAGEM MÁXIMA: Fundo preto cravado na raiz e variáveis de fontes devidamente injetadas
     <html
       lang="es"
-      className={`bg-black text-white ${geist.variable} ${cinzel.variable}`}
+      className={`bg-black text-white ${manrope.variable} ${orbitron.variable}`}
     >
       <head>
-        <link rel="preconnect" href="https://cdn.SEU_DOMINIO.com" />
-        <link rel="dns-prefetch" href="https://cdn.SEU_DOMINIO.com" />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-        <link rel="dns-prefetch" href="https://connect.facebook.net" />
-        <link rel="dns-prefetch" href="https://www.facebook.com" />
-        <link rel="dns-prefetch" href="https://www.clarity.ms" />
+        {/* DNS prefetch pro R2 (hero video, thumbs de temporada/episódio) */}
+        <link rel="preconnect" href="https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev" />
+        <link rel="dns-prefetch" href="https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev" />
       </head>
       <body suppressHydrationWarning className="font-sans antialiased bg-black text-white min-h-[100dvh] overflow-x-hidden selection:bg-red-900/30">
         <noscript>

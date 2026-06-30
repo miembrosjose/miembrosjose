@@ -122,19 +122,19 @@ export function BuyProductModal({
           maxHeight: "90vh",
           overflowY: "auto",
           background: "linear-gradient(135deg, #12121a 0%, #0f0f17 50%, #12121a 100%)",
-          border: "1px solid #c9a961",
+          border: "1px solid #6D4A9B",
           padding: "2rem 1.75rem",
-          color: "#f5f5f7",
+          color: "#F3F6FA",
           fontFamily: "var(--font-body)",
           position: "relative",
-          boxShadow: "0 30px 60px -30px rgba(201,169,97,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
+          boxShadow: "0 30px 60px -30px rgba(109,74,155,0.25), inset 0 1px 0 rgba(255,255,255,0.04)",
         }}
       >
         {/* Cantos decorativos dourados */}
-        <span style={{ position: "absolute", left: 0, top: 0, width: 8, height: 8, borderLeft: "2px solid #c9a961", borderTop: "2px solid #c9a961" }} />
-        <span style={{ position: "absolute", right: 0, top: 0, width: 8, height: 8, borderRight: "2px solid #c9a961", borderTop: "2px solid #c9a961" }} />
-        <span style={{ position: "absolute", left: 0, bottom: 0, width: 8, height: 8, borderLeft: "2px solid #c9a961", borderBottom: "2px solid #c9a961" }} />
-        <span style={{ position: "absolute", right: 0, bottom: 0, width: 8, height: 8, borderRight: "2px solid #c9a961", borderBottom: "2px solid #c9a961" }} />
+        <span style={{ position: "absolute", left: 0, top: 0, width: 8, height: 8, borderLeft: "2px solid #6D4A9B", borderTop: "2px solid #6D4A9B" }} />
+        <span style={{ position: "absolute", right: 0, top: 0, width: 8, height: 8, borderRight: "2px solid #6D4A9B", borderTop: "2px solid #6D4A9B" }} />
+        <span style={{ position: "absolute", left: 0, bottom: 0, width: 8, height: 8, borderLeft: "2px solid #6D4A9B", borderBottom: "2px solid #6D4A9B" }} />
+        <span style={{ position: "absolute", right: 0, bottom: 0, width: 8, height: 8, borderRight: "2px solid #6D4A9B", borderBottom: "2px solid #6D4A9B" }} />
 
         {/* Botão X fechar */}
         <button
@@ -156,7 +156,7 @@ export function BuyProductModal({
             cursor: "pointer",
             transition: "color 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#f5f5f7" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#F3F6FA" }}
           onMouseLeave={(e) => { e.currentTarget.style.color = "#a0a0b0" }}
         >
           <X size={18} />
@@ -169,7 +169,7 @@ export function BuyProductModal({
             fontFamily: "var(--font-mono)",
             letterSpacing: "0.4em",
             textTransform: "uppercase",
-            color: "#c9a961",
+            color: "#6D4A9B",
             margin: 0,
           }}
         >
@@ -243,9 +243,9 @@ export function BuyProductModal({
             style={{
               width: "100%",
               padding: "0.95rem 1.25rem",
-              border: "1px solid #c9a961",
-              background: "#c9a961",
-              color: "#000000",
+              border: "1px solid #6D4A9B",
+              background: "#6D4A9B",
+              color: "#050510",
               fontFamily: "var(--font-mono)",
               fontSize: "0.7rem",
               fontWeight: 700,

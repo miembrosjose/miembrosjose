@@ -110,7 +110,7 @@ export function ResetPasswordForm() {
         </p>
         <a
           href="/recuperar-contrasena"
-          className="mt-4 inline-block text-xs font-medium uppercase tracking-[0.25em] text-[#c9a961] transition-colors hover:text-[#f5f5f7] [font-family:var(--font-geist-sans)]"
+          className="mt-4 inline-block text-xs font-medium uppercase tracking-[0.25em] text-[#6D4A9B] transition-colors hover:text-[#F3F6FA] [font-family:var(--font-geist-sans)]"
         >
           → Solicitar nuevo enlace
         </a>
@@ -121,14 +121,14 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="border border-[#009d68]/40 bg-[#009d68]/10 p-6">
-        <p className="text-sm text-[#f5f5f7] [font-family:var(--font-geist-sans)]">
+        <p className="text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
           ✓ Contraseña actualizada. Redirigiendo...
         </p>
       </div>
     )
   }
 
-  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3.5 text-base text-[#f5f5f7] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+  const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3.5 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
   const labelCls = "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
 
   return (
@@ -169,7 +169,7 @@ export function ResetPasswordForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex w-full items-center justify-center gap-3 border border-[#f5f5f7] bg-[#f5f5f7] px-6 py-4 text-[#000000] text-sm font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#f5f5f7] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
+        className="inline-flex w-full items-center justify-center gap-3 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-4 text-[#000000] text-sm font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
       >
         {isPending ? "Actualizando..." : "Actualizar contraseña"}
       </button>

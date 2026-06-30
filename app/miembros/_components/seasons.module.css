@@ -1,5 +1,5 @@
-/* CSS extraído.
- * Adaptado pra CSS Modules — carrossel + cards de temporada Netflix-style. */
+/* Carrossel de temporadas Netflix-style — layout vertical
+ * (thumb em cima, info embaixo), paleta Los 144000 (purple). */
 
 .carousel {
   display: flex;
@@ -14,24 +14,20 @@
   scrollbar-color: var(--accent-red) transparent;
 }
 
-.carousel::-webkit-scrollbar {
-  height: 4px;
-}
-.carousel::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-.carousel::-webkit-scrollbar-thumb {
-  background: var(--accent-red);
-  border-radius: 2px;
-}
+.carousel::-webkit-scrollbar { height: 4px; }
+.carousel::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+.carousel::-webkit-scrollbar-thumb { background: var(--accent-red); border-radius: 2px; }
 
 .card {
   flex: 0 0 280px;
   scroll-snap-align: start;
   background: var(--bg-deep);
-  border-radius: 6px;
+  border-radius: 6px !important;
   overflow: hidden;
-  transition: all 0.4s ease;
+  transition:
+    transform 280ms var(--ease-out-quart),
+    border-color 280ms var(--ease-out-quart),
+    box-shadow 280ms var(--ease-out-quart);
   cursor: pointer;
   position: relative;
   isolation: isolate;
@@ -47,31 +43,35 @@
 .card:hover {
   transform: translateY(-4px);
   border-color: var(--accent-red);
-  box-shadow: 0 12px 40px rgba(127, 29, 29, 0.2);
+  box-shadow: 0 12px 40px rgba(109, 74, 155, 0.25);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-deep),
+    0 0 0 4px rgba(109, 74, 155, 0.7);
 }
 
 .card.locked {
   cursor: not-allowed;
 }
 
-/* Cards locked: glow vermelho do hover bem mais sutil (não tem CTA pra
- * destravar, então não precisa do mesmo destaque dos cards destravados) */
+/* Cards locked: glow do hover bem mais sutil */
 .card.locked:hover {
   border-color: var(--border-medium);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transform: none;
 }
 
-/* Efeito preto e branco + opacidade reduzida sobre o vídeo dos bloqueados.
- * Aplicado SÓ no video/emoji — não no thumb (gradient ::after preserva cor) */
+/* Efeito preto e branco + opacidade reduzida sobre o vídeo dos bloqueados */
 .card.locked .video,
 .card.locked .thumbEmoji {
   filter: grayscale(1) brightness(0.85);
   opacity: 0.7;
 }
 
-.card.locked:hover {
-  transform: none;
-}
+/* ─── THUMB (em cima) ──────────────────────────────────────────────── */
 
 .thumb {
   aspect-ratio: 16/10;
@@ -81,6 +81,7 @@
   background-color: var(--bg-deep);
 }
 
+/* Gradient sutil pra fundir thumb com info embaixo */
 .thumb::after {
   content: '';
   position: absolute;
@@ -90,8 +91,6 @@
   pointer-events: none;
 }
 
-/* Locked: sobrescreve o inline season.gradient (T2/T4 terminam em dourado
- * #c9a961) pra var(--bg-deep). Sem amarelo aparecendo atrás do vídeo. */
 .card.locked .thumb {
   background: var(--bg-deep) !important;
 }
@@ -117,11 +116,13 @@
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
 }
 
+/* ─── BADGE (overlay no canto top-left do thumb) ──────────────────── */
+
 .badge {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  z-index: 2;
+  z-index: 7;
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.15em;
@@ -132,26 +133,25 @@
 }
 
 .badge.starter {
-  background: linear-gradient(135deg, var(--accent-gold) 0%, #e8c878 100%);
-  color: #000000;
+  background: linear-gradient(135deg, #a78bca 0%, var(--accent-gold) 100%);
+  color: #050510;
   font-weight: 800;
-  font-size: 0.5rem;
-  letter-spacing: 0.15em;
-  padding: 0.18rem 0.4rem;
-  box-shadow: 0 0 14px rgba(201, 169, 97, 0.45),
-    0 0 32px rgba(201, 169, 97, 0.18);
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  padding: 0.22rem 0.55rem;
+  box-shadow:
+    0 0 14px rgba(167, 139, 202, 0.45),
+    0 0 32px rgba(167, 139, 202, 0.18);
   animation: starterPulse 2.4s ease-in-out infinite;
-  border: 1px solid rgba(255, 230, 170, 0.45);
+  border: 1px solid rgba(243, 246, 250, 0.25);
 }
 
 @keyframes starterPulse {
   0%, 100% {
-    box-shadow: 0 0 14px rgba(201, 169, 97, 0.45),
-      0 0 32px rgba(201, 169, 97, 0.18);
+    box-shadow: 0 0 14px rgba(167,139,202,0.45), 0 0 32px rgba(167,139,202,0.18);
   }
   50% {
-    box-shadow: 0 0 20px rgba(201, 169, 97, 0.7),
-      0 0 50px rgba(201, 169, 97, 0.35);
+    box-shadow: 0 0 20px rgba(167,139,202,0.7), 0 0 50px rgba(167,139,202,0.35);
   }
 }
 
@@ -161,10 +161,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+  z-index: 7;
   color: var(--accent-gold);
   pointer-events: none;
-  filter: drop-shadow(0 0 8px rgba(201, 169, 97, 0.4));
+  filter: drop-shadow(0 0 8px rgba(109, 74, 155, 0.5));
 }
 
 /* Cadeado precisa ficar acima do .thumb::after (z-index 6) */
@@ -172,6 +172,8 @@
   position: relative;
   z-index: 7;
 }
+
+/* ─── INFO (embaixo) ───────────────────────────────────────────────── */
 
 .info {
   padding: 1.25rem;
@@ -199,6 +201,10 @@
   color: var(--text-primary);
 }
 
+.divider {
+  display: none;
+}
+
 .meta {
   display: flex;
   justify-content: space-between;
@@ -210,9 +216,20 @@
   font-family: var(--font-mono);
 }
 
+.meta span {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0 !important;
+}
+
+.meta span::before {
+  content: none;
+}
+
 .progress {
   height: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(243, 246, 250, 0.08);
   overflow: hidden;
   border-radius: 1px;
 }
@@ -223,7 +240,8 @@
   transition: width 0.6s ease;
 }
 
-/* Mobile — cards menores pra mostrar 1.2 cards e dar hint de swipe horizontal */
+/* ─── MOBILE ──────────────────────────────────────────────────────── */
+
 @media (max-width: 480px) {
   .card {
     flex: 0 0 min(82vw, 240px);

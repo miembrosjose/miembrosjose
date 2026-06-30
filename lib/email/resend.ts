@@ -14,5 +14,5 @@ export function getResend(): Resend {
 }
 
 export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM || "[BRAND_NAME] <noreply@SEU_DOMINIO.com>"
+  return process.env.EMAIL_FROM || "Los 144000 <noreply@SEU_DOMINIO.com>"
 }

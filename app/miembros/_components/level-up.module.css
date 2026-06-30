@@ -1,4 +1,4 @@
-/* Animação cinematográfica de level-up — extraída.
+﻿/* Animação cinematográfica de level-up — extraída.
  *. Mostra overlay com flash branco + card central +
  * partículas douradas subindo do fundo. Som procedural disparado no
  * componente via _lib/sounds.ts (sounds.levelUp). */
@@ -13,8 +13,8 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    rgba(201, 169, 97, 0.25) 0%,
-    rgba(127, 29, 29, 0.15) 30%,
+    rgba(109, 74, 155, 0.25) 0%,
+    rgba(109, 74, 155, 0.15) 30%,
     rgba(0, 0, 0, 0.7) 70%
   );
   backdrop-filter: blur(4px);
@@ -49,7 +49,7 @@
   color: var(--accent-gold);
   text-transform: uppercase;
   margin-bottom: 1rem;
-  text-shadow: 0 0 30px rgba(201, 169, 97, 0.6);
+  text-shadow: 0 0 30px rgba(109, 74, 155, 0.6);
   animation: levelupPulse 1.6s ease-in-out infinite;
 }
 
@@ -68,11 +68,11 @@
   font-weight: 700;
   font-size: clamp(5rem, 18vw, 10rem);
   line-height: 0.85;
-  background: linear-gradient(180deg, #f5e8b8 0%, #c9a961 50%, #7f5a1e 100%);
+  background: linear-gradient(180deg, #f5e8b8 0%, #6D4A9B 50%, #7f5a1e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 40px rgba(201, 169, 97, 0.5));
+  filter: drop-shadow(0 0 40px rgba(109, 74, 155, 0.5));
   letter-spacing: -0.02em;
 }
 
@@ -115,7 +115,7 @@
   border-radius: 50% !important;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 0 12px rgba(201, 169, 97, 0.9);
+  box-shadow: 0 0 12px rgba(109, 74, 155, 0.9);
   animation: levelupFloat 2.4s ease-out forwards;
 }
 
