@@ -118,7 +118,7 @@
   font-size: 0.875rem;
   letter-spacing: 0.5em;
   text-transform: uppercase;
-  color: #e50914;
+  color: var(--accent-red);
   margin-bottom: 1rem;
 }
 
@@ -150,7 +150,7 @@
 .heroProgressFill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: #e50914;
+  background: var(--accent-red);
   transition: width 0.4s ease;
 }
 
@@ -273,7 +273,7 @@
   bottom: 0;
   left: 0;
   height: 3px;
-  background: #e50914;
+  background: var(--accent-red);
   transition: width 0.4s ease;
 }
 
