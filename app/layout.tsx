@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Manrope, Orbitron } from "next/font/google"
+import { Marcellus, EB_Garamond, Space_Mono } from "next/font/google"
 import { GlobalAudioProvider } from "@/components/global-audio-provider"
 import { StorageMigrator } from "@/components/storage-migrator"
 import { ErrorTracker } from "@/components/error-tracker"
@@ -24,6 +25,10 @@ const orbitron = Orbitron({
   display: "swap",
   variable: "--font-cinzel",
 })
+
+const marcellus = Marcellus({ subsets: ["latin"], weight: "400", variable: "--font-marcellus" })
+const ebGaramond = EB_Garamond({ subsets: ["latin"], weight: ["400", "500"], style: ["normal", "italic"], variable: "--font-eb-garamond" })
+const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-space-mono" })
 
 export const metadata: Metadata = {
   other: {
@@ -74,7 +79,7 @@ export default function RootLayout({
     // BLINDAGEM MÁXIMA: Fundo preto cravado na raiz e variáveis de fontes devidamente injetadas
     <html
       lang="es"
-      className={`bg-black text-white ${manrope.variable} ${orbitron.variable}`}
+      className={`${marcellus.variable} ${ebGaramond.variable} ${spaceMono.variable} bg-black text-white ${manrope.variable} ${orbitron.variable}`}
     >
       <head>
         {/* DNS prefetch pro R2 (hero video, thumbs de temporada/episódio) */}

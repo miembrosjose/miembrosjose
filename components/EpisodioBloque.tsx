@@ -275,14 +275,14 @@ export default function EpisodioBloque({
           margin-bottom: 3.5rem;
         }
         .ep-kicker {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-size: 0.8rem;
           letter-spacing: 0.35em;
           color: #c9a227;
           margin: 0 0 1rem;
         }
         .ep-title {
-          font-family: 'Marcellus', serif;
+          font-family: var(--font-marcellus), serif;
           font-weight: 400;
           font-size: clamp(1.7rem, 5vw, 2.6rem);
           letter-spacing: 0.04em;
@@ -302,7 +302,7 @@ export default function EpisodioBloque({
           border: 1px solid #1b1c2a;
           padding: 2.2rem 1.8rem;
           margin-bottom: 3rem;
-          font-family: 'EB Garamond', serif;
+          font-family: var(--font-eb-garamond), serif;
           color: #e8e3d5;
         }
         .ep-block :global(p) {
@@ -333,7 +333,7 @@ export default function EpisodioBloque({
           border-top: none;
         }
         .ep-block :global(.block-eyebrow) {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-size: 0.72rem;
           letter-spacing: 0.25em;
           text-transform: uppercase;
@@ -363,7 +363,7 @@ export default function EpisodioBloque({
           text-align: center;
         }
         .equation {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-weight: 700;
           font-size: clamp(1.1rem, 4.2vw, 1.6rem);
           letter-spacing: 0.04em;
@@ -374,7 +374,7 @@ export default function EpisodioBloque({
           margin: 0 0.35em;
         }
         .equation-caption {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-size: 0.68rem;
           letter-spacing: 0.2em;
           color: #7c8088;
@@ -393,7 +393,7 @@ export default function EpisodioBloque({
           margin-bottom: 0.55rem;
         }
         .decode-row :global(dt) {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-size: 0.9rem;
           color: #c9a227;
           white-space: nowrap;
@@ -406,7 +406,7 @@ export default function EpisodioBloque({
         }
         .voice-signature {
           margin-top: 1.8rem;
-          font-family: 'EB Garamond', serif;
+          font-family: var(--font-eb-garamond), serif;
           font-style: italic;
           font-size: 0.98rem;
           color: #7c8088;
@@ -414,7 +414,7 @@ export default function EpisodioBloque({
         }
         .voice-signature :global(span) {
           display: block;
-          font-family: 'Space Mono', monospace;
+          font-family: var(--font-space-mono), monospace;
           font-style: normal;
           font-size: 0.68rem;
           letter-spacing: 0.2em;
