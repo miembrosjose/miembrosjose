@@ -372,8 +372,9 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   })()}
                 </LazyVideo>
 
-                {/* Bloques José + Sergel DESPUÉS del video — solo Temporada 1 · Episodio 2 */}
-                {season?.num === 1 && playingEp.num === 2 && (
+                {/* Bloques José + Sergel DESPUÉS del video — anclado por TÍTULO
+                    (no por número) para no romperse si se renumera el episodio. */}
+                {playingEp.title === "Los 144.000: frecuencia y responsabilidad" && (
                   <EpisodioBloque />
                 )}
 
