@@ -79,3 +79,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Móvil: acorta el espaciado vertical/horizontal de las secciones de forma
+ * proporcional y pareja (antes eran 5rem fijos → huecos enormes en celular). */
+@media (max-width: 768px) {
+  .section {
+    padding: 2.75rem 1.5rem;
+  }
+  .sectionHeader {
+    margin-bottom: 1.15rem;
+  }
+  .sectionTitle {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: 2rem 1.15rem;
+  }
+  .sectionHeader {
+    margin-bottom: 1rem;
+  }
+  .sectionTitle {
+    font-size: 1.35rem;
+  }
+}

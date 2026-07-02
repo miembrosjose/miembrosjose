@@ -246,4 +246,9 @@
   .card {
     flex: 0 0 min(82vw, 240px);
   }
+  /* Sin hover en móvil → no hace falta el padding extra abajo (era pro
+   * box-shadow do hover). Recorta el hueco bajo el carrusel. */
+  .carousel {
+    padding-bottom: 0.5rem;
+  }
 }
