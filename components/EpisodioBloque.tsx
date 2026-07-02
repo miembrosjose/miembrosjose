@@ -26,14 +26,13 @@ const DEFAULT_JOSE = [
 ];
 
 const DEFAULT_SERGEL = [
-  'Detrás de todo número existe un patrón de organización de la conciencia.',
-  'El código 144.000 describe una estructura de resonancia mediante la cual la experiencia individual aprende a reconocerse como parte de una inteligencia mucho mayor.',
+  'Detrás de toda frecuencia existe una arquitectura de conciencia.',
 ];
 
 const DEFAULT_DECODE: DecodeItem[] = [
-  { term: '432 Hz', description: 'Representa el estado de coherencia desde el cual la vibración puede sostener orden, integración y armonía. Es el punto de equilibrio que permite a la conciencia recordar que toda experiencia participa de un mismo campo de vida.' },
-  { term: '333.333...', description: 'Representa la expansión continua de la conciencia. El patrón permanece abierto porque la creación se encuentra en permanente movimiento. Cada experiencia genera nuevas posibilidades de aprendizaje, nuevas perspectivas de observación y nuevas formas mediante las cuales la vida puede experimentarse a sí misma.' },
-  { term: '144.000', description: 'Representa el momento en que la conciencia individual reconoce su pertenencia a una red mayor de existencia. Cada ser constituye una perspectiva de observación dentro de una estructura de conciencia mucho más amplia. Y así como una célula contiene la información del organismo al que pertenece, cada conciencia contiene información de la totalidad y participa activamente en su evolución. Por esa razón el patrón 144 se replica de forma fractal hacia el interior y hacia el exterior de la experiencia, describiendo un proceso continuo de expansión, integración y recuerdo. El código 144.000 señala el punto en que suficientes conciencias recuerdan simultáneamente su participación dentro de esa totalidad y comienzan a actuar en coherencia con ella.' },
+  { term: '432 Hz', description: 'Frecuencia de coherencia. La vibración alcanza orden y capacidad de integración.' },
+  { term: '333.333...', description: 'Patrón de expansión continua. La conciencia se expresa simultáneamente a través de múltiples experiencias de sí misma.' },
+  { term: '144.000', description: 'Estado de resonancia colectiva. La conciencia individual recuerda su pertenencia a una inteligencia mayor y comienza a actuar en servicio de la totalidad.' },
 ];
 
 function Reveal({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -56,9 +55,9 @@ export default function EpisodioBloque({
   joseParagraphs = DEFAULT_JOSE,
   videoEmbed,
   sergelParagraphs = DEFAULT_SERGEL,
-  equation = { freq: '432', unit: 'Hz', multiplier: '333.333...', result: '144.000', caption: 'Ecuación de cierre' },
+  equation = { freq: '432', unit: 'Hz', multiplier: '333.333...', result: '144.000', caption: 'Patrón de resonancia' },
   decodeItems = DEFAULT_DECODE,
-  sergelQuote = 'Los 144.000 no describen una cantidad de seres. Describen un estado de resonancia en el que la memoria individual se transforma en responsabilidad colectiva.',
+  sergelQuote = 'El 144.000 describe el momento en que el recuerdo se transforma en misión y la vibración se convierte en responsabilidad compartida.',
   part = 'full',
 }: EpisodioBloqueProps) {
   const [stars, setStars] = useState<{ left:number; top:number; size:number; duration:number; delay:number }[]>([]);
@@ -104,7 +103,7 @@ export default function EpisodioBloque({
         {part !== 'jose' && (
         <Reveal className="ep-block ep-block--sergel">
           <span className="corner-tr" /><span className="corner-bl" />
-          <p className="block-eyebrow">Serjel <span className="voice">— Archivo abierto</span></p>
+          <p className="block-eyebrow">Sergel <span className="voice">— Archivo abierto</span></p>
           {sergelParagraphs.map((p, i) => <p key={i}>{p}</p>)}
 
           {equation && (
@@ -130,7 +129,7 @@ export default function EpisodioBloque({
 
           {sergelQuote && (
             <div className="registro">
-              <p className="registro-label">Registro de Serjel</p>
+              <p className="registro-label">Registro de Sergel</p>
               <p className="registro-text">{sergelQuote}</p>
             </div>
           )}
