@@ -169,6 +169,29 @@ function SeasonVideo({ src }: { src: string }) {
     const video = ref.current
     if (!video) return
 
+    // Pinta o primeiro frame como "poster" mesmo pausado. iOS Safari com
+    // preload=metadata deixa o vídeo preto/vazio até tocar — por isso os
+    // banners não apareciam no mobile. Um pequeno seek força o decode +
+    // paint do frame. Complementa o media fragment (#t=0.1) no <source>.
+    const paintPoster = () => {
+      try {
+        if (video.paused && video.readyState >= 1 && video.currentTime === 0) {
+          video.currentTime = 0.1
+        }
+      } catch {
+        /* alguns browsers rejeitam seek antes de metadata; ignora */
+      }
+    }
+    video.addEventListener("loadedmetadata", paintPoster)
+    video.addEventListener("loadeddata", paintPoster)
+    // Tenta já (caso metadata tenha carregado antes do listener)
+    paintPoster()
+
+    const cleanupPoster = () => {
+      video.removeEventListener("loadedmetadata", paintPoster)
+      video.removeEventListener("loadeddata", paintPoster)
+    }
+
     // Detecta device com hover real (desktop com mouse). Mobile + tablet
     // touch retornam false. matchMedia é suportado em todo browser moderno.
     const hasHover =
@@ -180,7 +203,7 @@ function SeasonVideo({ src }: { src: string }) {
       // Desktop: handlers de mouse cuidam do play/pause via JSX. Aqui só
       // garante que o vídeo está parado no frame 1 quando montou.
       video.currentTime = 0
-      return
+      return cleanupPoster
     }
 
     // Mobile: só toca quando >70% do card está visível (= card central
@@ -189,7 +212,7 @@ function SeasonVideo({ src }: { src: string }) {
       // Fallback pra browsers super antigos: comportamento conservador
       // (parado). Browsers modernos sempre têm IntersectionObserver.
       video.currentTime = 0
-      return
+      return cleanupPoster
     }
 
     const observer = new IntersectionObserver(
@@ -198,14 +221,18 @@ function SeasonVideo({ src }: { src: string }) {
           video.play().catch(() => {})
         } else {
           video.pause()
-          video.currentTime = 0
+          // Volta ao frame-poster (0.1) em vez de 0 preto no iOS
+          video.currentTime = 0.1
         }
       },
       // Multiple thresholds pra detecção fina de "qual está mais visível"
       { threshold: [0, 0.5, 0.7, 1] },
     )
     observer.observe(video)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      cleanupPoster()
+    }
   }, [])
 
   // Handlers desktop hover — mobile ignora silenciosamente
@@ -226,6 +253,10 @@ function SeasonVideo({ src }: { src: string }) {
     return <img src={src} alt="" className={styles.video} loading="lazy" />
   }
 
+  // Media fragment #t=0.1 → iOS Safari usa esse frame como poster quando o
+  // vídeo está pausado (senão fica preto até tocar). Não anexa se já houver #.
+  const posterSrc = src.includes("#") ? src : `${src}#t=0.1`
+
   return (
     <video
       ref={ref}
@@ -237,7 +268,7 @@ function SeasonVideo({ src }: { src: string }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <source src={src} type="video/mp4" />
+      <source src={posterSrc} type="video/mp4" />
     </video>
   )
 }
