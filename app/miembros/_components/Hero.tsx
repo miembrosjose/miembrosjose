@@ -2,24 +2,20 @@
 
 // Hero da home com vídeo de fundo cinematográfico.
 //
-// Comportamento (paridade com código original):
-//  - Vídeo começa MUTED + PAUSED (autoplay com som não funciona sem gesture)
+// Comportamento:
+//  - Fundo estilo Netflix: reproduz MUTED em LOOP sempre que o Hero está
+//    visível (não congela mais no último frame).
 //  - Quando user clica "Saltar Intro" no overlay, callback síncrono no shell
-//    aciona video.muted=false + video.play() — gesture válido permite áudio
-//  - Vídeo SEM loop: ao terminar, fica no último frame
-//  - sessionStorage 'app_hero_ended' rastreia quando terminou —
-//    próxima remount (após navegar pra outra view e voltar) restaura último
-//    frame em vez de recomeçar
-//  - sessionStorage 'app_intro_seen' indica que intro já foi pulada;
-//    se sim, vídeo inicia tocando muted (sem som — não tem gesture aqui)
+//    aciona video.muted=false + video.play() — gesture válido permite áudio.
+//  - Se o autoplay for bloqueado (Modo Bajo Consumo iOS / navegador embebido),
+//    pinta um frame-poster (#t=0.1 + seek) em vez de fundo preto.
+//  - IntersectionObserver pausa o vídeo quando o Hero sai do viewport (perf) e
+//    re-toca ao voltar.
 
 import { Play, Info } from "lucide-react"
 import { forwardRef, useEffect, useRef } from "react"
 import { HERO_VIDEO_URL } from "../_lib/hero-media"
 import styles from "./hero.module.css"
-
-const SESSION_KEY_INTRO = "app_intro_seen"
-const SESSION_KEY_ENDED = "app_hero_ended"
 
 type HeroProps = {
   badge?: string
@@ -62,18 +58,9 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     const video = localVideoRef.current
     if (!video) return
 
-    let endedFlag = false
-    let introSeen = false
-    try {
-      endedFlag = sessionStorage.getItem(SESSION_KEY_ENDED) === "1"
-      introSeen = sessionStorage.getItem(SESSION_KEY_INTRO) === "1"
-    } catch {
-      // sessionStorage pode falhar em modo privado
-    }
-
-    // Pinta um frame (poster) quando o vídeo fica pausado ou o autoplay é
-    // bloqueado (ex: Modo Bajo Consumo do iOS, navegador embebido). Sem isto o
-    // fundo fica PRETO. Um pequeno seek força o decode+paint do frame.
+    // Pinta um frame (poster) quando o autoplay é bloqueado (ex: Modo Bajo
+    // Consumo do iOS, navegador embebido). Sem isto o fundo fica PRETO. Um
+    // pequeno seek força o decode+paint do frame.
     function paintFirstFrame() {
       if (!video) return
       try {
@@ -85,55 +72,32 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
       }
     }
 
-    function applyState() {
+    // Fundo estilo Netflix: reproduz muted em loop. Não congela mais no último
+    // frame (antes usava flags de sessão que deixavam o vídeo parado ao voltar).
+    function playMuted() {
       if (!video) return
-      if (endedFlag) {
-        // Restaura último frame: seek pra fim, mantém muted+paused
-        try {
-          video.currentTime = Math.max(0, (video.duration || 0) - 0.05)
-        } catch {
-          // ignora
-        }
-        video.muted = true
-        video.pause()
-      } else if (introSeen) {
-        // Intro já foi pulada nesta sessão — pode tocar muted (sem gesture pra som)
-        video.muted = true
-        video.play().catch(() => {
-          // Autoplay bloqueado (Bajo Consumo / embebido) → ao menos mostra frame
-          paintFirstFrame()
-        })
-      } else {
-        // Intro ainda vai rodar — vídeo paused, esperando gesture do "Saltar Intro".
-        // Pinta o primeiro frame pra não ficar preto atrás do overlay do intro.
-        video.muted = true
-        video.pause()
+      video.muted = true
+      video.play().catch(() => {
+        // Autoplay bloqueado (Bajo Consumo iOS / embebido) → ao menos frame
         paintFirstFrame()
-      }
+      })
     }
 
-    // Aguarda metadata pra saber duration (pra seek no último frame quando endedFlag)
     if (video.readyState >= 1) {
-      applyState()
+      playMuted()
     } else {
-      video.addEventListener("loadedmetadata", applyState, { once: true })
+      video.addEventListener("loadedmetadata", playMuted, { once: true })
     }
 
     // IntersectionObserver: pausa o vídeo quando hero sai do viewport
-    // (user scrollou pra baixo pra ver temporadas/forum). Decode contínuo de
-    // 6.31 MB de WebM em background era a maior fonte de jank no scroll.
-    // Re-toca quando volta a ficar visível, MAS não interfere se endedFlag
-    // (vídeo já chegou no último frame, deve ficar parado lá).
+    // (user scrollou pra baixo pra ver temporadas/forum) pra economizar
+    // CPU/GPU, e re-toca quando volta a ficar visível.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!video) return
         if (entry.isIntersecting) {
-          // Volta visível — re-toca SE não terminou ainda E intro foi seen
-          if (!endedFlag && introSeen && video.paused) {
-            video.play().catch(() => {})
-          }
+          if (video.paused) playMuted()
         } else {
-          // Saiu do viewport — pausa pra economizar CPU/GPU
           if (!video.paused) video.pause()
         }
       },
@@ -142,26 +106,17 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     observer.observe(video)
 
     return () => {
-      video.removeEventListener("loadedmetadata", applyState)
+      video.removeEventListener("loadedmetadata", playMuted)
       observer.disconnect()
     }
   }, [])
 
   // Toca o vídeo SEMPRE que o Hero fica visível, não importa como o intro
-  // terminou (pulado com gesture OU deixado rodar até o fim). Antes o play só
-  // acontecia via gesture "Saltar Intro" ou flag introSeen no mount — se o user
-  // deixava o intro terminar sozinho, o fundo ficava preto. Se o autoplay for
-  // bloqueado (Bajo Consumo iOS), pelo menos garante o frame-poster.
+  // terminou (pulado com gesture OU deixado rodar até o fim). Se o autoplay
+  // for bloqueado (Bajo Consumo iOS), pelo menos garante o frame-poster.
   useEffect(() => {
     const video = localVideoRef.current
     if (!video || !visible) return
-    let ended = false
-    try {
-      ended = sessionStorage.getItem(SESSION_KEY_ENDED) === "1"
-    } catch {
-      // ignora
-    }
-    if (ended) return
     if (video.paused) {
       video.muted = true
       video.play().catch(() => {
@@ -177,15 +132,6 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     }
   }, [visible])
 
-  function handleEnded() {
-    try {
-      sessionStorage.setItem(SESSION_KEY_ENDED, "1")
-    } catch {
-      // ignora
-    }
-    // Vídeo já fica no último frame por default sem loop — só persistimos a flag
-  }
-
   return (
     <section
       className={styles.hero}
@@ -195,9 +141,9 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
         <video
           ref={setRefs}
           muted
+          loop
           playsInline
           preload="auto"
-          onEnded={handleEnded}
         >
           {/* #t=0.1 → iOS usa esse frame como poster quando o autoplay é
               bloqueado (Bajo Consumo/embebido), evitando fundo preto. */}
