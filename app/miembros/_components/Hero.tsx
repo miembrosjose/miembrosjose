@@ -71,6 +71,20 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
       // sessionStorage pode falhar em modo privado
     }
 
+    // Pinta um frame (poster) quando o vídeo fica pausado ou o autoplay é
+    // bloqueado (ex: Modo Bajo Consumo do iOS, navegador embebido). Sem isto o
+    // fundo fica PRETO. Um pequeno seek força o decode+paint do frame.
+    function paintFirstFrame() {
+      if (!video) return
+      try {
+        if (video.readyState >= 1) {
+          video.currentTime = Math.min(0.1, (video.duration || 1) - 0.01)
+        }
+      } catch {
+        // ignora
+      }
+    }
+
     function applyState() {
       if (!video) return
       if (endedFlag) {
@@ -86,12 +100,15 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
         // Intro já foi pulada nesta sessão — pode tocar muted (sem gesture pra som)
         video.muted = true
         video.play().catch(() => {
-          // Silencioso — vídeo pode falhar a tocar sem motivo claro
+          // Autoplay bloqueado (Bajo Consumo / embebido) → ao menos mostra frame
+          paintFirstFrame()
         })
       } else {
-        // Intro ainda vai rodar — vídeo paused, esperando gesture do "Saltar Intro"
+        // Intro ainda vai rodar — vídeo paused, esperando gesture do "Saltar Intro".
+        // Pinta o primeiro frame pra não ficar preto atrás do overlay do intro.
         video.muted = true
         video.pause()
+        paintFirstFrame()
       }
     }
 
@@ -130,6 +147,36 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     }
   }, [])
 
+  // Toca o vídeo SEMPRE que o Hero fica visível, não importa como o intro
+  // terminou (pulado com gesture OU deixado rodar até o fim). Antes o play só
+  // acontecia via gesture "Saltar Intro" ou flag introSeen no mount — se o user
+  // deixava o intro terminar sozinho, o fundo ficava preto. Se o autoplay for
+  // bloqueado (Bajo Consumo iOS), pelo menos garante o frame-poster.
+  useEffect(() => {
+    const video = localVideoRef.current
+    if (!video || !visible) return
+    let ended = false
+    try {
+      ended = sessionStorage.getItem(SESSION_KEY_ENDED) === "1"
+    } catch {
+      // ignora
+    }
+    if (ended) return
+    if (video.paused) {
+      video.muted = true
+      video.play().catch(() => {
+        // Autoplay bloqueado → força o primeiro frame pra não ficar preto
+        try {
+          if (video.readyState >= 1) {
+            video.currentTime = Math.min(0.1, (video.duration || 1) - 0.01)
+          }
+        } catch {
+          // ignora
+        }
+      })
+    }
+  }, [visible])
+
   function handleEnded() {
     try {
       sessionStorage.setItem(SESSION_KEY_ENDED, "1")
@@ -151,9 +198,10 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
           playsInline
           preload="auto"
           onEnded={handleEnded}
-          poster=""
         >
-          <source src={HERO_VIDEO_URL} type="video/mp4" />
+          {/* #t=0.1 → iOS usa esse frame como poster quando o autoplay é
+              bloqueado (Bajo Consumo/embebido), evitando fundo preto. */}
+          <source src={`${HERO_VIDEO_URL}#t=0.1`} type="video/mp4" />
         </video>
       </div>
 
