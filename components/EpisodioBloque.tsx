@@ -12,7 +12,7 @@ interface Equation { freq: string; unit: string; multiplier: string; result: str
 interface EpisodioBloqueProps {
   joseParagraphs?: string[];
   videoEmbed?: ReactNode;
-  sergelIntro?: string;
+  sergelParagraphs?: string[];
   equation?: Equation | null;
   decodeItems?: DecodeItem[];
   sergelQuote?: string | null;
@@ -25,10 +25,15 @@ const DEFAULT_JOSE = [
   '144.000 es una frecuencia — un umbral vibratorio que un grupo de conciencias puede sostener cuando decide recordar antes que creer. Lo que sigue no es información. Es una llave.',
 ];
 
+const DEFAULT_SERGEL = [
+  'Detrás de todo número existe un patrón de organización de la conciencia.',
+  'El código 144.000 describe una estructura de resonancia mediante la cual la experiencia individual aprende a reconocerse como parte de una inteligencia mucho mayor.',
+];
+
 const DEFAULT_DECODE: DecodeItem[] = [
-  { term: '432', description: 'La afinación que distintas tradiciones reconocen como natural — el punto donde el sonido deja de imponerse y empieza a sostener.' },
-  { term: '333.333...', description: 'El tres que no termina de repetirse: el patrón activo, la cifra que nunca cierra del todo porque siempre está en movimiento.' },
-  { term: '144.000', description: 'El lugar donde ambos colapsan. No una cantidad — un código de cierre: el punto exacto donde la frecuencia individual deja de ser propia y se vuelve responsabilidad colectiva.' },
+  { term: '432 Hz', description: 'Representa el estado de coherencia desde el cual la vibración puede sostener orden, integración y armonía. Es el punto de equilibrio que permite a la conciencia recordar que toda experiencia participa de un mismo campo de vida.' },
+  { term: '333.333...', description: 'Representa la expansión continua de la conciencia. El patrón permanece abierto porque la creación se encuentra en permanente movimiento. Cada experiencia genera nuevas posibilidades de aprendizaje, nuevas perspectivas de observación y nuevas formas mediante las cuales la vida puede experimentarse a sí misma.' },
+  { term: '144.000', description: 'Representa el momento en que la conciencia individual reconoce su pertenencia a una red mayor de existencia. Cada ser constituye una perspectiva de observación dentro de una estructura de conciencia mucho más amplia. Y así como una célula contiene la información del organismo al que pertenece, cada conciencia contiene información de la totalidad y participa activamente en su evolución. Por esa razón el patrón 144 se replica de forma fractal hacia el interior y hacia el exterior de la experiencia, describiendo un proceso continuo de expansión, integración y recuerdo. El código 144.000 señala el punto en que suficientes conciencias recuerdan simultáneamente su participación dentro de esa totalidad y comienzan a actuar en coherencia con ella.' },
 ];
 
 function Reveal({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -50,10 +55,10 @@ function Reveal({ children, className = '' }: { children: ReactNode; className?:
 export default function EpisodioBloque({
   joseParagraphs = DEFAULT_JOSE,
   videoEmbed,
-  sergelIntro = 'Detrás de cada número hay una arquitectura. Esta es la que sostiene a 144.000.',
+  sergelParagraphs = DEFAULT_SERGEL,
   equation = { freq: '432', unit: 'Hz', multiplier: '333.333...', result: '144.000', caption: 'Ecuación de cierre' },
   decodeItems = DEFAULT_DECODE,
-  sergelQuote = '"Los números no mienten. Solo esperan a quien sepa leerlos."',
+  sergelQuote = 'Los 144.000 no describen una cantidad de seres. Describen un estado de resonancia en el que la memoria individual se transforma en responsabilidad colectiva.',
   part = 'full',
 }: EpisodioBloqueProps) {
   const [stars, setStars] = useState<{ left:number; top:number; size:number; duration:number; delay:number }[]>([]);
@@ -99,8 +104,8 @@ export default function EpisodioBloque({
         {part !== 'jose' && (
         <Reveal className="ep-block ep-block--sergel">
           <span className="corner-tr" /><span className="corner-bl" />
-          <p className="block-eyebrow">Sergel <span className="voice">— Archivo abierto</span></p>
-          <p>{sergelIntro}</p>
+          <p className="block-eyebrow">Serjel <span className="voice">— Archivo abierto</span></p>
+          {sergelParagraphs.map((p, i) => <p key={i}>{p}</p>)}
 
           {equation && (
             <div className="equation-panel">
@@ -124,7 +129,10 @@ export default function EpisodioBloque({
           )}
 
           {sergelQuote && (
-            <p className="voice-signature">{sergelQuote}<span>SERGEL — CUSTODIO DEL ARCHIVO</span></p>
+            <div className="registro">
+              <p className="registro-label">Registro de Serjel</p>
+              <p className="registro-text">{sergelQuote}</p>
+            </div>
           )}
         </Reveal>
         )}
@@ -207,16 +215,22 @@ export default function EpisodioBloque({
           font-size: 0.9rem; color: #6D4A9B; white-space: nowrap;
         }
         :global(.ep-block .decode-row dd) { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #e8e3d5; }
-        :global(.ep-block .voice-signature) {
-          margin-top: 1.8rem; font-style: italic; font-size: 0.98rem;
-          font-family: var(--ep-eb-garamond), Georgia, serif;
-          color: #7c8088; text-align: right;
+        :global(.ep-block .registro) {
+          margin-top: 1.8rem; padding-top: 1.4rem; border-top: 1px solid #1b1c2a;
         }
-        :global(.ep-block .voice-signature span) {
-          display: block;
+        :global(.ep-block .registro-label) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
-          font-style: normal; font-size: 0.68rem; letter-spacing: 0.2em;
-          color: #4A3170; margin-top: 0.4rem;
+          font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
+          color: #6D4A9B; margin: 0 0 0.9rem;
+        }
+        :global(.ep-block .registro-text) {
+          font-style: italic; color: #cfc9ba;
+        }
+        /* Móvil: la ecuación no debe salirse del cuadro */
+        @media (max-width: 480px) {
+          :global(.ep-block .equation) { font-size: 0.82rem; letter-spacing: 0.01em; }
+          :global(.ep-block .equation .op) { margin: 0 0.18em; }
+          :global(.ep-block .equation-panel) { padding: 1.4rem 0.6rem; }
         }
         @media (prefers-reduced-motion: reduce) {
           :global(.reveal) { transition: none !important; opacity: 1 !important; transform: none !important; }

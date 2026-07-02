@@ -399,7 +399,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 {/* Bloques José + Sergel DESPUÉS del video — anclado por TÍTULO
                     (no por número) para no romperse si se renumera el episodio. */}
                 {playingEp.title === "Los 144.000: frecuencia y responsabilidad" && (
-                  <EpisodioBloque />
+                  <EpisodioBloque part="sergel" />
                 )}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
