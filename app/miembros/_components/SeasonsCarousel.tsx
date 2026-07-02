@@ -264,7 +264,7 @@ function SeasonVideo({ src }: { src: string }) {
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
