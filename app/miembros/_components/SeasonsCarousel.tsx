@@ -169,27 +169,26 @@ function SeasonVideo({ src }: { src: string }) {
     const video = ref.current
     if (!video) return
 
-    // Pinta o primeiro frame como "poster" mesmo pausado. iOS Safari com
-    // preload=metadata deixa o vídeo preto/vazio até tocar — por isso os
-    // banners não apareciam no mobile. Um pequeno seek força o decode +
-    // paint do frame. Complementa o media fragment (#t=0.1) no <source>.
-    const paintPoster = () => {
-      try {
-        if (video.paused && video.readyState >= 1 && video.currentTime === 0) {
-          video.currentTime = 0.1
-        }
-      } catch {
-        /* alguns browsers rejeitam seek antes de metadata; ignora */
-      }
-    }
-    video.addEventListener("loadedmetadata", paintPoster)
-    video.addEventListener("loadeddata", paintPoster)
-    // Tenta já (caso metadata tenha carregado antes do listener)
-    paintPoster()
+    // CRÍTICO iOS: força o atributo muted no DOM. React nem sempre reflete a
+    // prop `muted` como atributo real, e iOS SÓ autoreproduz vídeos muted.
+    // Sem isto, play() é bloqueado e o thumb fica preto.
+    video.muted = true
+    video.defaultMuted = true
+    video.setAttribute("muted", "")
 
-    const cleanupPoster = () => {
-      video.removeEventListener("loadedmetadata", paintPoster)
-      video.removeEventListener("loadeddata", paintPoster)
+    // Toca o vídeo muted (autoplay permitido em iOS por estar muted+inline).
+    // Se por algum motivo for bloqueado, ao menos pinta o frame com um seek.
+    const playMuted = () => {
+      video.muted = true
+      video.play().catch(() => {
+        try {
+          if (video.readyState >= 1 && video.currentTime === 0) {
+            video.currentTime = 0.1
+          }
+        } catch {
+          /* ignora */
+        }
+      })
     }
 
     // Detecta device com hover real (desktop com mouse). Mobile + tablet
@@ -202,37 +201,33 @@ function SeasonVideo({ src }: { src: string }) {
     if (hasHover) {
       // Desktop: handlers de mouse cuidam do play/pause via JSX. Aqui só
       // garante que o vídeo está parado no frame 1 quando montou.
-      video.currentTime = 0
-      return cleanupPoster
+      try {
+        video.currentTime = 0
+      } catch {
+        /* ignora */
+      }
+      return
     }
 
-    // Mobile: só toca quando >70% do card está visível (= card central
-    // do carrossel snap). Demais cards permanecem no frame 1.
+    // Mobile: toca sempre que o card está visível (como o Hero). Antes só
+    // tocava o card central (>70%) e, se o play era bloqueado, ficava preto.
     if (typeof IntersectionObserver === "undefined") {
-      // Fallback pra browsers super antigos: comportamento conservador
-      // (parado). Browsers modernos sempre têm IntersectionObserver.
-      video.currentTime = 0
-      return cleanupPoster
+      playMuted()
+      return
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.intersectionRatio > 0.7) {
-          video.play().catch(() => {})
+        if (entry.isIntersecting) {
+          playMuted()
         } else {
           video.pause()
-          // Volta ao frame-poster (0.1) em vez de 0 preto no iOS
-          video.currentTime = 0.1
         }
       },
-      // Multiple thresholds pra detecção fina de "qual está mais visível"
-      { threshold: [0, 0.5, 0.7, 1] },
+      { threshold: [0, 0.25] }, // toca assim que aparece no viewport
     )
     observer.observe(video)
-    return () => {
-      observer.disconnect()
-      cleanupPoster()
-    }
+    return () => observer.disconnect()
   }, [])
 
   // Handlers desktop hover — mobile ignora silenciosamente
