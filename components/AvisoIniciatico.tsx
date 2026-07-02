@@ -1,73 +1,31 @@
 'use client';
 
 // Aviso iniciático — "compuerta" antes del contenido del Episodio 2.
-// Estética de los bloques del ep2: fondo oscuro, dorado, cósmico, bordes finos.
-// Usa las fuentes ya cargadas en app/layout.tsx (--font-marcellus / -eb-garamond
-// / -space-mono) con fallbacks. Sin <Reveal> (divs planos) para que styled-jsx
-// aplique los estilos sin problemas de scoping.
+// Estética de los bloques del ep2: fondo oscuro, violeta, cósmico, bordes finos.
+// Usa las fuentes ya cargadas en app/layout.tsx (--font-eb-garamond / -space-mono).
 
 export default function AvisoIniciatico({ onContinue }: { onContinue?: () => void }) {
   return (
     <div className="av-stage">
       <div className="av-content">
-        <p className="av-kicker">✦ ANTES DE CONTINUAR TU VIAJE ✦</p>
+        <p className="av-kicker">✦ ANTES DE CONTINUAR ✦</p>
 
         <div className="av-block">
           <span className="corner-tr" />
           <span className="corner-bl" />
-          <div className="av-head">
-            <span className="av-num">1</span>
-            <h3 className="av-subtitle">Avanza con calma y permítete integrar.</h3>
-          </div>
-          <p>Este recorrido no fue diseñado para completarlo rápidamente.</p>
-          <p>
-            Cada episodio contiene enseñanzas, ejercicios y experiencias que buscan despertar
-            recuerdos, comprensiones y nuevas preguntas dentro de ti. Algunas ideas las
-            comprenderás de inmediato y otras continuarán revelándose con el paso de los días.
-          </p>
-          <p>
-            Date el tiempo necesario. Escucha nuevamente un capítulo si así lo sientes. Toma
-            notas. Reflexiona. Observa cómo cada enseñanza dialoga con tu propia vida.
-          </p>
-          <p>La conciencia se expande cuando el conocimiento se convierte en experiencia.</p>
-          <p>Cuando sientas que has integrado lo aprendido, continúa con el siguiente episodio.</p>
-        </div>
 
-        <div className="av-sep">✦</div>
+          <p>Este recorrido no es una carrera.</p>
+          <p>
+            Tómate el tiempo para integrar cada episodio. Algunas enseñanzas se comprenden al
+            escucharlas; otras se revelan después, en silencio, en la práctica o en la vida diaria.
+          </p>
+          <p>
+            Si el episodio incluye meditación, ejercicio o activación, realízalo antes de avanzar.
+            La información abre la mente, pero la experiencia transforma la conciencia.
+          </p>
 
-        <div className="av-block">
-          <span className="corner-tr" />
-          <span className="corner-bl" />
-          <div className="av-head">
-            <span className="av-num">2</span>
-            <h3 className="av-subtitle">Realiza las meditaciones y activaciones.</h3>
-          </div>
-          <p>
-            A lo largo de este viaje encontrarás meditaciones, ejercicios y activaciones de
-            conciencia especialmente diseñados para acompañar tu proceso de recordación.
-          </p>
-          <p>Te invito a vivir cada uno de ellos.</p>
-          <p>La información organiza la mente, pero la experiencia transforma la conciencia.</p>
-          <p>
-            Muchas de las respuestas que estás buscando surgirán en los momentos de silencio,
-            durante una meditación, en una reflexión inesperada o en la profundidad de una
-            experiencia interior.
-          </p>
-          <p>Permítete vivir este proceso con presencia, paciencia y constancia.</p>
-          <p>
-            No conviertas este viaje en una carrera. Convierte este viaje en una experiencia de
-            transformación.
-          </p>
-        </div>
+          <p className="av-highlight">Confía en tu propio ritmo.</p>
 
-        <div className="av-closing">
-          <p className="av-closing-title">✦ CONFÍA EN TU PROPIO RITMO ✦</p>
-          <p>Cada conciencia recuerda a su propio tiempo.</p>
-          <p>Cada alma tiene una manera única de recorrer el camino de la recordación.</p>
-          <p>
-            Permítete sentir. Permítete descubrir. Permítete cambiar. Y, sobre todo, permítete
-            recordar.
-          </p>
           <p className="av-sign">
             Con cariño,
             <br />
@@ -103,24 +61,20 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           letter-spacing: 0.28em;
           text-transform: uppercase;
           color: #6D4A9B;
-          margin: 0 0 2.2rem;
+          margin: 0 0 2rem;
         }
         .av-block {
           position: relative;
           background: #0e0f18;
           border: 1px solid #1b1c2a;
-          padding: 2.2rem 1.8rem;
-          margin-bottom: 2rem;
+          padding: 2.4rem 2rem;
           font-family: var(--font-eb-garamond, Georgia), serif;
           color: #e8e3d5;
         }
         .av-block p {
-          font-size: 1.06rem;
-          line-height: 1.75;
-          margin: 0 0 1rem;
-        }
-        .av-block p:last-child {
-          margin-bottom: 0;
+          font-size: 1.08rem;
+          line-height: 1.8;
+          margin: 0 0 1.2rem;
         }
         .corner-tr,
         .corner-bl {
@@ -141,65 +95,22 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           border-right: none;
           border-top: none;
         }
-        .av-head {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-          margin-bottom: 1.1rem;
-        }
-        .av-num {
-          flex: 0 0 auto;
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #4A3170;
-          background: rgba(109, 74, 155, 0.08);
-          color: #6D4A9B;
-          font-family: var(--font-space-mono, 'Courier New'), monospace;
-          font-size: 0.95rem;
-          font-weight: 700;
-        }
-        .av-subtitle {
-          margin: 0;
-          font-family: var(--font-space-mono, 'Courier New'), monospace;
-          font-size: 0.82rem;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: #e8e3d5;
-          line-height: 1.4;
-        }
-        .av-sep {
+        .av-highlight {
           text-align: center;
-          color: #4A3170;
-          font-size: 0.9rem;
-          margin: 0 0 2rem;
-        }
-        .av-closing {
-          text-align: center;
-          font-family: var(--font-eb-garamond, Georgia), serif;
-          color: #cfc9ba;
-          margin-top: 0.5rem;
-        }
-        .av-closing p {
-          font-size: 1.06rem;
-          line-height: 1.75;
-          margin: 0 0 0.9rem;
-        }
-        .av-closing-title {
           font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.85rem;
-          letter-spacing: 0.22em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #6D4A9B;
-          margin: 0 0 1.4rem;
+          color: #8a63b8;
+          margin: 2rem 0 0 !important;
+          padding-top: 1.6rem;
+          border-top: 1px solid #1b1c2a;
         }
         .av-sign {
+          text-align: center;
           font-style: italic;
           color: #9a9484;
-          margin-top: 1.6rem;
+          margin-top: 1.8rem !important;
         }
         .av-sign span {
           display: block;
