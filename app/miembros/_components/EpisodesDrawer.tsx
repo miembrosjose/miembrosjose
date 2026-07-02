@@ -22,6 +22,7 @@ import {
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
+import AvisoIniciatico from "@/components/AvisoIniciatico"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
 import { EpisodeComments } from "./EpisodeComments"
 import { ReportModal, type ReportTarget } from "./ReportModal"
@@ -41,6 +42,11 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
   const [progress, setProgress] = useState<EpisodeProgress>({})
   const [playingEp, setPlayingEp] = useState<Episode | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
+  // Compuerta del aviso iniciático (Episodio 2): se reinicia al cambiar de episodio.
+  const [gatePassed, setGatePassed] = useState(false)
+  useEffect(() => {
+    setGatePassed(false)
+  }, [playingEp?.id])
   const notesRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -301,6 +307,15 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   </button>
                 </header>
 
+                {/* Aviso iniciático (compuerta) — solo "Los 144.000: frecuencia y responsabilidad".
+                    Al tocar "Continuar" se revela el contenido (video, bloques, comentarios). */}
+                {playingEp.title === "Los 144.000: frecuencia y responsabilidad" && !gatePassed && (
+                  <AvisoIniciatico onContinue={() => setGatePassed(true)} />
+                )}
+
+                {(playingEp.title !== "Los 144.000: frecuencia y responsabilidad" || gatePassed) && (
+                <>
+
                 {/* BLOCKS acima do vídeo (admin-editáveis, vêm do banco). */}
                 {playingEp.id && (
                   <EpisodeBlocksView episodeId={playingEp.id} position="above_video" />
@@ -523,6 +538,8 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   episodeNum={playingEp.num}
                   onReport={(commentId) => setReportTarget({ type: "episode_comment", id: commentId })}
                 />
+                </>
+                )}
               </div>
 
               {/* ── Coluna checkout (sticky na direita) ───────────────
