@@ -169,14 +169,14 @@ export default function EpisodioBloque({
         :global(.ep-content > .ep-block:last-child) { margin-bottom: 0; }
         :global(.ep-block .corner-tr),
         :global(.ep-block .corner-bl) {
-          position: absolute; width: 14px; height: 14px; border: 1px solid #6e5c1c;
+          position: absolute; width: 14px; height: 14px; border: 1px solid #4A3170;
         }
         :global(.ep-block .corner-tr) { top:-1px; right:-1px; border-left:none; border-bottom:none; }
         :global(.ep-block .corner-bl) { bottom:-1px; left:-1px; border-right:none; border-top:none; }
         :global(.ep-block .block-eyebrow) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
-          color: #c9a227; margin: 0 0 1.1rem;
+          color: #6D4A9B; margin: 0 0 1.1rem;
         }
         :global(.ep-block .voice) { color: #7c8088; letter-spacing: 0.2em; }
 
@@ -187,12 +187,12 @@ export default function EpisodioBloque({
 
         :global(.ep-block .equation-panel) {
           margin: 1.6rem 0; padding: 1.6rem 1rem; background: #07070a;
-          border-top: 1px solid #6e5c1c; border-bottom: 1px solid #6e5c1c; text-align: center;
+          border-top: 1px solid #4A3170; border-bottom: 1px solid #4A3170; text-align: center;
         }
         :global(.ep-block .equation) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-weight: 700; font-size: clamp(1.1rem, 4.2vw, 1.6rem);
-          letter-spacing: 0.04em; color: #c9a227;
+          letter-spacing: 0.04em; color: #6D4A9B;
         }
         :global(.ep-block .equation .op) { color: #7c8088; margin: 0 0.35em; }
         :global(.ep-block .equation-caption) {
@@ -204,7 +204,7 @@ export default function EpisodioBloque({
         :global(.ep-block .decode-row) { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; margin-bottom: 0.55rem; }
         :global(.ep-block .decode-row dt) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
-          font-size: 0.9rem; color: #c9a227; white-space: nowrap;
+          font-size: 0.9rem; color: #6D4A9B; white-space: nowrap;
         }
         :global(.ep-block .decode-row dd) { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #e8e3d5; }
         :global(.ep-block .voice-signature) {
@@ -216,7 +216,7 @@ export default function EpisodioBloque({
           display: block;
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-style: normal; font-size: 0.68rem; letter-spacing: 0.2em;
-          color: #6e5c1c; margin-top: 0.4rem;
+          color: #4A3170; margin-top: 0.4rem;
         }
         @media (prefers-reduced-motion: reduce) {
           :global(.reveal) { transition: none !important; opacity: 1 !important; transform: none !important; }

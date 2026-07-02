@@ -102,7 +102,7 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           font-size: 0.8rem;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          color: #c9a227;
+          color: #6D4A9B;
           margin: 0 0 2.2rem;
         }
         .av-block {
@@ -127,7 +127,7 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           position: absolute;
           width: 14px;
           height: 14px;
-          border: 1px solid #6e5c1c;
+          border: 1px solid #4A3170;
         }
         .corner-tr {
           top: -1px;
@@ -155,9 +155,9 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid #6e5c1c;
-          background: rgba(201, 162, 39, 0.08);
-          color: #c9a227;
+          border: 1px solid #4A3170;
+          background: rgba(109, 74, 155, 0.08);
+          color: #6D4A9B;
           font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.95rem;
           font-weight: 700;
@@ -173,7 +173,7 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
         }
         .av-sep {
           text-align: center;
-          color: #6e5c1c;
+          color: #4A3170;
           font-size: 0.9rem;
           margin: 0 0 2rem;
         }
@@ -193,7 +193,7 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           font-size: 0.85rem;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #c9a227;
+          color: #6D4A9B;
           margin: 0 0 1.4rem;
         }
         .av-sign {
@@ -207,7 +207,7 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           font-family: var(--font-space-mono, 'Courier New'), monospace;
           font-size: 0.7rem;
           letter-spacing: 0.18em;
-          color: #6e5c1c;
+          color: #4A3170;
           margin-top: 0.5rem;
         }
         .av-cta {
@@ -222,14 +222,14 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
           font-weight: 700;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #0e0f18;
-          background: linear-gradient(180deg, #d8b642 0%, #c9a227 100%);
-          box-shadow: 0 8px 28px -10px rgba(201, 162, 39, 0.6);
+          color: #F3F6FA;
+          background: linear-gradient(180deg, #8a63b8 0%, #6D4A9B 100%);
+          box-shadow: 0 8px 28px -10px rgba(109, 74, 155, 0.6);
           transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .av-cta:hover {
           transform: translateY(-1px);
-          box-shadow: 0 12px 32px -8px rgba(201, 162, 39, 0.7);
+          box-shadow: 0 12px 32px -8px rgba(109, 74, 155, 0.7);
         }
         .av-cta:active {
           transform: translateY(0);

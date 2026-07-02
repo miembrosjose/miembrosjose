@@ -44,9 +44,18 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
   // Compuerta del aviso iniciático (Episodio 2): se reinicia al cambiar de episodio.
   const [gatePassed, setGatePassed] = useState(false)
+  const playerScrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     setGatePassed(false)
   }, [playingEp?.id])
+  // Al pasar la compuerta, subir al inicio del episodio (el video), no dejarlo abajo.
+  useEffect(() => {
+    if (!gatePassed) return
+    requestAnimationFrame(() => {
+      playerScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+      try { window.scrollTo({ top: 0, behavior: "smooth" }) } catch {}
+    })
+  }, [gatePassed])
   const notesRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -283,7 +292,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
         const hasCheckout = !!checkoutProduct
 
         return (
-          <div className={styles.playerFullscreen} role="dialog" aria-label={`Episodio ${playingEp.num}`}>
+          <div ref={playerScrollRef} className={styles.playerFullscreen} role="dialog" aria-label={`Episodio ${playingEp.num}`}>
             {/* Layout 2 colunas quando há checkout — esquerda: conteúdo; direita: checkout sticky */}
             <div className={hasCheckout ? styles.playerWithCheckout : undefined}>
 
