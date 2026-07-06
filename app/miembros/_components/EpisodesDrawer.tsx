@@ -22,6 +22,7 @@ import {
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
+import JerarquiaGalactica from "@/components/JerarquiaGalactica"
 import AvisoIniciatico from "@/components/AvisoIniciatico"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
 import { EpisodeComments } from "./EpisodeComments"
@@ -400,6 +401,12 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                     (no por número) para no romperse si se renumera el episodio. */}
                 {playingEp.title === "Los 144.000: frecuencia y responsabilidad" && (
                   <EpisodioBloque part="sergel" />
+                )}
+
+                {/* Bloque "La Jerarquía Galáctica" (Temporada 2) — anclado por
+                    TÍTULO para no romperse si se renumera el episodio. */}
+                {playingEp.title === "La jerarquía galáctica" && (
+                  <JerarquiaGalactica />
                 )}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
