@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useTransition, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { ACHIEVEMENTS, getAchievementById, getTierColor, type Achievement } from "@/lib/achievements"
 import { useAuth } from "../_lib/auth-context"
+import { getSupabaseBrowser } from "@/lib/supabase/client"
 
 const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
 
@@ -125,6 +127,22 @@ export function ProfileForm({
   const [isBadgePending, startBadge] = useTransition()
   const [isStarPending, startStar] = useTransition()
   const [isFlamePending, startFlame] = useTransition()
+  const [isSignOutPending, startSignOut] = useTransition()
+
+  const router = useRouter()
+
+  // Cierra la sesión de Supabase y vuelve al login de la plataforma.
+  function handleSignOut() {
+    startSignOut(async () => {
+      try {
+        await getSupabaseBrowser().auth.signOut()
+      } catch {
+        /* ignora — igual redirigimos al login */
+      }
+      router.push("/miembros/login")
+      router.refresh()
+    })
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -657,6 +675,26 @@ export function ProfileForm({
           <StatusMsg s={pwdState} />
         </div>
       </form>
+
+      {/* SESIÓN — cerrar sesión */}
+      <div className={sectionCls}>
+        <h2 className={sectionTitleCls}>Sesión</h2>
+        <p className="mb-5 text-sm leading-relaxed text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Cierra tu sesión en este dispositivo. Tendrás que iniciar sesión de nuevo para volver a
+          entrar.
+        </p>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={isSignOutPending}
+          className="inline-flex w-full items-center justify-center gap-2 border border-[#6D4A9B] bg-transparent px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#a78bca] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 sm:w-auto [font-family:var(--font-geist-sans)]"
+        >
+          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+            <path d="M16 17l5-5-5-5M21 12H9M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {isSignOutPending ? "Cerrando sesión..." : "Cerrar sesión"}
+        </button>
+      </div>
 
       {/* Voltar */}
       <div className="pt-4">
