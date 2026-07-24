@@ -13,8 +13,18 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { getCloudflareContext } from "@opennextjs/cloudflare"
 
 const MIEMBROS_HOST = "miembros.SEU_DOMINIO.com"
-// Rotas públicas dentro do subdomínio miembros — não exigem sessão
-const MIEMBROS_PUBLIC_PATHS = ["/miembros/login", "/miembros/cuenta", "/miembros/recuperar-contrasena"]
+// Rotas públicas dentro do subdomínio miembros — não exigem sessão.
+// /activar-cuenta: página pública de ativação (recebe a invitación do Supabase).
+// /miembros/acceso-suspendido: vista para sessão válida mas membresía não ativa
+//   (é gated só por sessão dentro da própria page, não pelo status — senão loop).
+const MIEMBROS_PUBLIC_PATHS = [
+  "/miembros/login",
+  "/miembros/cuenta",
+  "/miembros/recuperar-contrasena",
+  "/miembros/activar-cuenta",
+  "/activar-cuenta",
+  "/miembros/acceso-suspendido",
+]
 const COOKIE_DOMAIN = ".SEU_DOMINIO.com" // válido em SEU_DOMINIO.com E miembros.SEU_DOMINIO.com
 
 // Salespages embedadas no popup da area de membros (miembros.SEU_DOMINIO.com).
