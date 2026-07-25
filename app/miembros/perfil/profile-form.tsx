@@ -128,8 +128,37 @@ export function ProfileForm({
   const [isStarPending, startStar] = useTransition()
   const [isFlamePending, startFlame] = useTransition()
   const [isSignOutPending, startSignOut] = useTransition()
+  const [isPortalPending, startPortal] = useTransition()
+  const [portalError, setPortalError] = useState<string | null>(null)
 
   const router = useRouter()
+
+  // Abre el Stripe Billing Portal: pide una sesión única al servidor y redirige.
+  function openBillingPortal() {
+    setPortalError(null)
+    startPortal(async () => {
+      try {
+        const res = await fetch("/api/stripe/customer-portal", { method: "POST" })
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { error?: string }
+          if (data.error === "no_billing_account") {
+            setPortalError("No encontramos una suscripción asociada a tu cuenta.")
+          } else {
+            setPortalError("No pudimos abrir el portal ahora. Intenta de nuevo en unos minutos.")
+          }
+          return
+        }
+        const data = (await res.json()) as { url?: string }
+        if (data.url) {
+          window.location.href = data.url
+        } else {
+          setPortalError("No pudimos abrir el portal. Intenta de nuevo.")
+        }
+      } catch {
+        setPortalError("No pudimos abrir el portal. Revisa tu conexión e intenta de nuevo.")
+      }
+    })
+  }
 
   // Cierra la sesión de Supabase y vuelve al login de la plataforma.
   function handleSignOut() {
@@ -675,6 +704,30 @@ export function ProfileForm({
           <StatusMsg s={pwdState} />
         </div>
       </form>
+
+      {/* MI MEMBRESÍA — Stripe Billing Portal */}
+      <div className={sectionCls}>
+        <h2 className={sectionTitleCls}>Mi membresía</h2>
+        <p className="mb-5 text-sm leading-relaxed text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Gestiona tu suscripción, tu método de pago y tus facturas en el portal seguro de Stripe.
+        </p>
+        <button
+          type="button"
+          onClick={openBillingPortal}
+          disabled={isPortalPending}
+          className={btnCls}
+        >
+          {isPortalPending ? "Abriendo..." : "Gestionar membresía"}
+        </button>
+        {portalError && (
+          <div
+            role="alert"
+            className="mt-4 border border-red-900/40 bg-red-900/10 px-4 py-3 text-sm text-red-300 [font-family:var(--font-geist-sans)]"
+          >
+            {portalError}
+          </div>
+        )}
+      </div>
 
       {/* SESIÓN — cerrar sesión */}
       <div className={sectionCls}>
