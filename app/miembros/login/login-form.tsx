@@ -14,6 +14,29 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  // Reenvío de enlaces de Supabase (invitación / recuperación) que aterrizan
+  // aquí por error. El panel manual "Invite user" redirige al Site URL (no
+  // permite fijar redirectTo), así que los tokens caen en /miembros/login
+  // dentro del hash (#access_token=…&type=invite). Sin esto, el usuario queda
+  // atascado en el login. Aquí detectamos ese hash y lo reenviamos a la página
+  // correcta CONSERVANDO el hash, para que allí se establezca la sesión.
+  // Corre primero (efecto de arriba) y no toca los logins normales (sin hash).
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const hash = window.location.hash
+    if (hash.length < 2) return
+    const params = new URLSearchParams(hash.slice(1))
+    const type = params.get("type")
+    const hasAuthPayload = params.get("access_token") || params.get("error_code")
+    if (!hasAuthPayload) return
+    if (type === "recovery") {
+      window.location.replace(`/miembros/cuenta/recuperar${hash}`)
+    } else {
+      // invite / signup / enlace expirado → página de activación
+      window.location.replace(`/activar-cuenta${hash}`)
+    }
+  }, [])
+
   // Acesso revogado: middleware redireciona com ?revoked=1 quando user
   // tenta acessar miembros mas tem app_metadata.access_revoked=true
   // (refund de front, chargeback, ou ban manual via admin).
