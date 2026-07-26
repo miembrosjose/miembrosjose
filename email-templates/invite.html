@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+  PLANTILLA REAL — Invite user (Supabase Auth) · Los 144.000
+  Pegar el contenido de este archivo en:
+    Supabase → Authentication → Emails → Email Templates → Invite user
+  Asunto recomendado: Tu acceso a Los 144.000 está listo
+  IMPORTANTE: NO eliminar ni sustituir la variable {{ .ConfirmationURL }}.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Tu acceso a Los 144.000 está listo</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Fuentes de marca (mejora progresiva; los clientes que no las soporten
+       usan las alternativas del stack inline). */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Cinzel:wght@500;600&family=Manrope:wght@400;500;600&display=swap');
+
+    /* Resets básicos de correo */
+    body { margin:0; padding:0; width:100% !important; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#050510; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { border:0; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+    a { text-decoration:none; }
+    .link-plain { color:#8a63b8 !important; text-decoration:underline; word-break:break-all; }
+
+    /* Móvil */
+    @media only screen and (max-width:620px) {
+      .container { width:100% !important; }
+      .px { padding-left:24px !important; padding-right:24px !important; }
+      .wordmark { font-size:26px !important; letter-spacing:8px !important; }
+      .title { font-size:26px !important; }
+      .btn-a { display:block !important; }
+    }
+  </style>
+</head>
+
+<body style="margin:0; padding:0; background-color:#050510;">
+  <!-- Preheader: resumen para la bandeja de entrada (oculto en el cuerpo) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#050510; opacity:0;">
+    Tu acceso a Los 144.000 está preparado. Solo falta crear tu contraseña para entrar.
+    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+  </div>
+
+  <!-- Lienzo oscuro (color explícito → se ve igual en clientes claros y oscuros) -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#050510;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <!-- Contenedor -->
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px;">
+
+          <!-- Cabecera tipográfica -->
+          <tr>
+            <td align="center" style="padding:8px 24px 28px 24px;">
+              <div style="display:inline-block; width:40px; height:2px; background-color:#6D4A9B; margin:0 0 18px 0; line-height:2px; font-size:0;">&nbsp;</div>
+              <div class="wordmark" style="font-family:'Orbitron','Trebuchet MS',Arial,sans-serif; font-size:30px; font-weight:700; letter-spacing:12px; color:#F3F6FA; text-transform:uppercase; padding-left:12px;">
+                LOS&nbsp;144.000
+              </div>
+            </td>
+          </tr>
+
+          <!-- Tarjeta -->
+          <tr>
+            <td class="px" style="background-color:#0c0c1a; border:1px solid #24243a; border-radius:14px; padding:40px 44px;">
+
+              <!-- Eyebrow -->
+              <p style="margin:0 0 22px 0; font-family:'JetBrains Mono','Courier New',monospace; font-size:11px; font-weight:600; letter-spacing:4px; text-transform:uppercase; color:#6D4A9B;">
+                Activación de cuenta
+              </p>
+
+              <!-- Título -->
+              <h1 class="title" style="margin:0 0 20px 0; font-family:'Cinzel',Georgia,'Times New Roman',serif; font-size:30px; line-height:1.2; font-weight:600; color:#F3F6FA;">
+                Tu acceso está preparado.
+              </h1>
+
+              <!-- Cuerpo -->
+              <p style="margin:0 0 18px 0; font-family:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:1.7; color:#c3c3d4;">
+                Has completado tu ingreso a Los&nbsp;144.000. Solo falta un paso: crear tu contraseña para activar la cuenta y entrar a la plataforma.
+              </p>
+              <p style="margin:0 0 32px 0; font-family:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:1.7; color:#c3c3d4;">
+                Este enlace es personal y está asociado a tu correo.
+              </p>
+
+              <!-- Botón (bulletproof) -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#6D4A9B" style="border-radius:10px;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:52px;v-text-anchor:middle;width:300px;" arcsize="19%" strokecolor="#6D4A9B" fillcolor="#6D4A9B">
+                      <w:anchorlock/>
+                      <center style="color:#F3F6FA;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;">CREAR MI CONTRASEÑA</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-- -->
+                    <a class="btn-a" href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer"
+                       style="display:inline-block; padding:16px 34px; font-family:'Manrope',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#F3F6FA; background-color:#6D4A9B; border:1px solid #8a63b8; border-radius:10px;">
+                      Crear mi contraseña
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Alternativa en texto -->
+              <p style="margin:34px 0 8px 0; font-family:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif; font-size:13px; line-height:1.6; color:#8a8aa0;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin:0; font-family:'JetBrains Mono','Courier New',monospace; font-size:13px; line-height:1.6;">
+                <a class="link-plain" href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <!-- Separador -->
+              <div style="height:1px; background-color:#1e1e30; line-height:1px; font-size:0; margin:32px 0;">&nbsp;</div>
+
+              <!-- Nota de seguridad -->
+              <p style="margin:0; font-family:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif; font-size:13px; line-height:1.6; color:#6a6a85;">
+                Si no solicitaste este acceso, puedes ignorar este mensaje. Nadie podrá entrar sin crear la contraseña desde este enlace.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Pie -->
+          <tr>
+            <td align="center" style="padding:30px 24px 8px 24px;">
+              <p style="margin:0 0 6px 0; font-family:'Orbitron','Trebuchet MS',Arial,sans-serif; font-size:13px; font-weight:500; letter-spacing:5px; text-transform:uppercase; color:#F3F6FA;">
+                Los&nbsp;144.000
+              </p>
+              <p style="margin:0; font-family:'JetBrains Mono','Courier New',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#6a6a85;">
+                Conocimiento &middot; Preparación &middot; Propósito
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
