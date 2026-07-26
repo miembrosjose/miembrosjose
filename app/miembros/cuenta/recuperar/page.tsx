@@ -1,12 +1,15 @@
 import { CinematicShell } from "@/components/cinematic-shell"
 import { ResetPasswordForm } from "./reset-password-form"
 
-export const dynamic = "force-static"
+// Dinámica (no estática): depende de la sesión de recuperación en cookies y de
+// query params (?error). force-static hacía que Cloudflare cacheara la página y
+// sirviera código viejo → falso "Link inválido".
+export const dynamic = "force-dynamic"
 
 /**
- * Pagina onde o user chega apos clicar no link do email enviado pelo Supabase.
- * O Supabase passa o token via URL hash (#access_token=...&type=recovery),
- * NAO via query string. Por isso o form e client-side — precisa ler hash via JS.
+ * Página a la que llega el usuario tras hacer clic en el enlace del email.
+ * El enlace pasa por /auth/confirm (verifyOtp), que establece la sesión de
+ * recuperación en cookies. Esta pantalla comprueba esa sesión (client-side).
  */
 export default function RecuperarPasswordPage() {
   return (
