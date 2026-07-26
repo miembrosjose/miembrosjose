@@ -6,13 +6,19 @@ import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { translateAuthError } from "@/lib/auth-error-messages"
 
 /**
- * Form de nova senha. Le hash da URL (#access_token=...&type=recovery)
- * e seta sessao via supabase.auth.setSession antes de permitir trocar senha.
+ * Pantalla de nueva contraseña (flujo SSR con /auth/confirm).
+ *
+ * El enlace del email va a /auth/confirm, que verifica el token con verifyOtp y
+ * establece la sesión de recuperación en cookies antes de redirigir aquí. Por
+ * eso comprobamos la SESIÓN de Supabase (getSession), no el hash de la URL.
+ *
+ * Se mantiene compatibilidad con el flujo antiguo (tokens en el hash) como
+ * respaldo, pero la sesión SSR es la vía principal.
  */
 export function ResetPasswordForm() {
   const router = useRouter()
-  const [tokenReady, setTokenReady] = useState<boolean | null>(null)
-  const [tokenError, setTokenError] = useState<string | null>(null)
+  const [sessionReady, setSessionReady] = useState<boolean | null>(null)
+  const [sessionError, setSessionError] = useState<string | null>(null)
 
   const [newPwd, setNewPwd] = useState("")
   const [confirmPwd, setConfirmPwd] = useState("")
@@ -20,49 +26,53 @@ export function ResetPasswordForm() {
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  // Le hash da URL e seta sessao Supabase
   useEffect(() => {
-    const hash = window.location.hash.slice(1) // remove "#"
-    if (!hash) {
-      setTokenReady(false)
-      setTokenError("Link inválido. Solicita un nuevo enlace de recuperación.")
-      return
-    }
-    const params = new URLSearchParams(hash)
-    const accessToken = params.get("access_token")
-    const refreshToken = params.get("refresh_token")
-    const type = params.get("type")
-    const errorCode = params.get("error_code")
-    const errorDescription = params.get("error_description")
-
-    if (errorCode || errorDescription) {
-      setTokenReady(false)
-      setTokenError(
-        errorCode === "otp_expired"
-          ? "El enlace expiró. Solicita un nuevo enlace de recuperación."
-          : errorDescription || "Error al validar el link."
-      )
-      return
-    }
-
-    if (!accessToken || !refreshToken || type !== "recovery") {
-      setTokenReady(false)
-      setTokenError("Link inválido o ya utilizado. Solicita un nuevo enlace.")
-      return
-    }
-
     const supabase = getSupabaseBrowser()
-    supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-      .then(({ error }) => {
-        if (error) {
-          setTokenReady(false)
-          setTokenError("Error al validar el link. Solicita uno nuevo.")
-        } else {
-          setTokenReady(true)
-          // Limpa hash da URL (sem reload)
-          window.history.replaceState(null, "", window.location.pathname)
+
+    async function init() {
+      // 1) Error explícito enviado por /auth/confirm (token inválido/expirado).
+      const errParam = new URLSearchParams(window.location.search).get("error")
+      if (errParam) {
+        setSessionError("Este enlace no es válido o ya expiró. Solicita un nuevo enlace de recuperación.")
+        setSessionReady(false)
+        // Limpia la query para no repetir el estado si recarga.
+        window.history.replaceState(null, "", window.location.pathname)
+        return
+      }
+
+      // 2) Vía principal: sesión de recuperación creada por /auth/confirm (cookies SSR).
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        setSessionReady(true)
+        return
+      }
+
+      // 3) Respaldo (compatibilidad): tokens en el hash (#access_token&type=recovery).
+      const hash = window.location.hash.slice(1)
+      if (hash) {
+        const params = new URLSearchParams(hash)
+        const at = params.get("access_token")
+        const rt = params.get("refresh_token")
+        const type = params.get("type")
+        const errorCode = params.get("error_code")
+        if (!errorCode && at && rt && (type === "recovery" || !type)) {
+          const { error } = await supabase.auth.setSession({ access_token: at, refresh_token: rt })
+          if (!error) {
+            window.history.replaceState(null, "", window.location.pathname)
+            setSessionReady(true)
+            return
+          }
         }
-      })
+      }
+
+      // Sin sesión válida por ninguna vía.
+      setSessionError("Link inválido. Solicita un nuevo enlace de recuperación.")
+      setSessionReady(false)
+    }
+
+    init()
   }, [])
 
   function handleSubmit(e: React.FormEvent) {
@@ -82,11 +92,13 @@ export function ResetPasswordForm() {
         const { error } = await supabase.auth.updateUser({ password: newPwd })
         if (error) throw error
         setSuccess(true)
-        // Redirect pra area de membros apos 2s
+        // Cierra la sesión de recuperación y manda al login para entrar con la
+        // nueva contraseña.
+        await supabase.auth.signOut().catch(() => {})
         setTimeout(() => {
-          router.push("/")
+          router.push("/miembros/login")
           router.refresh()
-        }, 2000)
+        }, 1800)
       } catch (e) {
         const raw = e instanceof Error ? e.message : ""
         setError(translateAuthError(raw))
@@ -94,19 +106,19 @@ export function ResetPasswordForm() {
     })
   }
 
-  if (tokenReady === null) {
+  if (sessionReady === null) {
     return (
-      <p className="text-sm text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+      <p className="text-sm text-[#a0a0b0] [font-family:var(--font-geist-sans)]" role="status">
         Validando enlace...
       </p>
     )
   }
 
-  if (!tokenReady) {
+  if (!sessionReady) {
     return (
       <div className="border border-red-900/40 bg-red-900/10 p-6">
         <p className="text-sm text-red-300 [font-family:var(--font-geist-sans)]">
-          {tokenError}
+          {sessionError}
         </p>
         <a
           href="/recuperar-contrasena"
@@ -120,9 +132,9 @@ export function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="border border-[#009d68]/40 bg-[#009d68]/10 p-6">
+      <div className="border border-[#009d68]/40 bg-[#009d68]/10 p-6" role="status">
         <p className="text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
-          ✓ Contraseña actualizada. Redirigiendo...
+          ✓ Contraseña actualizada. Redirigiendo al inicio de sesión...
         </p>
       </div>
     )

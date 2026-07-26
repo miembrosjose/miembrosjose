@@ -1,16 +1,23 @@
-# Plantilla de correo — Invitación (Supabase Auth) · Los 144.000
+# Plantillas de correo (Supabase Auth) · Los 144.000
 
-Plantilla del correo que recibe un nuevo miembro para **crear su contraseña** y activar su cuenta.
+Plantillas de correo con la identidad visual de Los 144.000:
+
+- **Invitación** — el nuevo miembro **crea su contraseña** y activa su cuenta.
+- **Recuperación** — un miembro existente **restablece su contraseña**.
 
 ## Archivos
 
 | Archivo | Uso |
 |---|---|
-| `invite.html` | **La plantilla real.** Es la que se copia en Supabase. Contiene la variable `{{ .ConfirmationURL }}`. |
-| `invite-preview.html` | Solo para **previsualizar** en el navegador. La variable fue reemplazada por `https://los144000.com/activar-cuenta`. **No se pega en Supabase.** |
+| `invite.html` | **Plantilla real** de invitación. Se copia en Supabase. Contiene `{{ .ConfirmationURL }}`. |
+| `invite-preview.html` | Solo para **previsualizar** en el navegador (variable reemplazada por `https://los144000.com/activar-cuenta`). **No se pega en Supabase.** |
+| `recovery.html` | **Plantilla real** de recuperación de contraseña. Se copia en Supabase. Contiene `{{ .ConfirmationURL }}`. |
+| `recovery-preview.html` | Solo para **previsualizar** (variable reemplazada por `https://los144000.com/miembros/cuenta/recuperar`). **No se pega en Supabase.** |
 | `README.md` | Este documento. |
 
 ## Qué copiar en Supabase
+
+### Invitación (Invite user)
 
 1. Abrí **Supabase → Authentication → Emails → Email Templates → *Invite user***.
 2. **Asunto (Subject):**
@@ -20,46 +27,78 @@ Plantilla del correo que recibe un nuevo miembro para **crear su contraseña** y
 3. En el cuerpo (Message body / HTML), pegá **todo el contenido de `invite.html`**.
 4. Guardá los cambios.
 
-> Remitente esperado: `Los 144.000 <no-reply@auth.los144000.com>` (ya configurado en el proyecto; este archivo no lo modifica).
+### Recuperación (Reset password)
 
-## ⚠️ Regla crítica
+1. Abrí **Supabase → Authentication → Emails → Email Templates → *Reset password***.
+2. **Asunto (Subject):**
+   ```
+   Restablece tu acceso a Los 144.000
+   ```
+3. En el cuerpo (Message body / HTML), pegá **todo el contenido de `recovery.html`**.
+4. Guardá los cambios.
 
-**Nunca** elimines ni reemplaces la variable dentro de `invite.html`:
+> Remitente esperado: `Los 144.000 <no-reply@auth.los144000.com>` (ya configurado en el proyecto; estos archivos no lo modifican).
+
+## ⚠️ Regla crítica (variables de Supabase)
+
+**Invitación (`invite.html`)** — usa la variable, en el botón (con respaldo VML) y en el enlace de texto:
 
 ```
 {{ .ConfirmationURL }}
 ```
 
-Aparece **dos veces** (en el botón y en el enlace de texto alternativo). Es la URL personal que Supabase genera para cada invitación. Si la borrás o la cambiás por una URL fija, **el correo dejará de funcionar** y nadie podrá activar su cuenta.
+**Recuperación (`recovery.html`)** — usa el patrón SSR con `verifyOtp`. El enlace (botón + texto) es exactamente:
 
-- No la pongas entre comillas ni la modifiques.
-- No uses un enlace fijo ni compartido del portal.
-- El destino final (`/activar-cuenta`) se controla con el **redirectTo** de la invitación y la lista de *Redirect URLs* de Supabase, no dentro de esta plantilla.
+```
+{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar
+```
+
+**Nunca** elimines ni modifiques estas variables (`{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .TokenHash }}`). Si las borrás o las cambiás por una URL fija, el correo **dejará de funcionar**.
+
+- No las pongas entre comillas ni las alteres.
+- No uses un enlace fijo ni compartido.
+- En recuperación, `next=/miembros/cuenta/recuperar` es la ruta interna real donde el usuario crea la nueva contraseña; `/auth/confirm` es la ruta server-side que valida el token y establece la sesión.
+
+### Configuración necesaria en Supabase (para recuperación SSR)
+
+- **Authentication → URL Configuration → Site URL:** `https://los144000.com` (así `{{ .SiteURL }}` resuelve correctamente).
+- **Authentication → URL Configuration → Redirect URLs:** debe incluir
+  `https://los144000.com/miembros/cuenta/recuperar`
+  (lo usa `resetPasswordForEmail({ redirectTo })`).
+- **Invitación** sigue necesitando en Redirect URLs: `https://los144000.com/activar-cuenta`.
 
 ## Cómo previsualizar
 
-Abrí `invite-preview.html` directamente en el navegador:
+Abrí `invite-preview.html` o `recovery-preview.html` directamente en el navegador:
 
 - **Doble clic** sobre el archivo, o
 - Arrastralo a una pestaña del navegador, o
 - Clic derecho → *Abrir con* → tu navegador.
 
-No requiere servidor ni build. Es un HTML estático.
+No requiere servidor ni build. Son HTML estáticos. Los archivos `*-preview.html` **no** se pegan en Supabase.
 
 ## Seguridad
 
 - Estos archivos **no contienen** claves, tokens, secretos ni variables de entorno.
 - No incluyen imágenes externas (la cabecera es tipográfica), así que **no hay imágenes que se puedan romper**.
-- Las únicas URLs externas son la de Google Fonts (mejora progresiva de tipografías) y, en la vista previa, `https://los144000.com/activar-cuenta`.
+- Las únicas URLs externas son la de Google Fonts (mejora progresiva de tipografías) y, en las vistas previas, las URLs de ejemplo del propio dominio `los144000.com`.
 
 ## Checklist antes de publicar
 
+**Invitación**
 - [ ] El **asunto** es exactamente: `Tu acceso a Los 144.000 está listo`.
 - [ ] Pegaste el contenido de **`invite.html`** (no el de `invite-preview.html`).
-- [ ] `{{ .ConfirmationURL }}` sigue presente **dos veces** en el HTML pegado.
+- [ ] `{{ .ConfirmationURL }}` sigue presente en el botón y en el enlace de texto.
 - [ ] En **Authentication → URL Configuration → Redirect URLs** está permitido `https://los144000.com/activar-cuenta`.
-- [ ] Enviaste una invitación de prueba y el correo llega con el botón **“Crear mi contraseña”** funcionando.
-- [ ] El botón lleva a la página de activación y permite crear la contraseña.
+- [ ] Invitación de prueba: llega el correo y el botón **“Crear mi contraseña”** funciona.
+
+**Recuperación**
+- [ ] El **asunto** es exactamente: `Restablece tu acceso a Los 144.000`.
+- [ ] Pegaste el contenido de **`recovery.html`** (no el de `recovery-preview.html`).
+- [ ] El enlace (botón + texto) contiene `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar`.
+- [ ] **Site URL** = `https://los144000.com`.
+- [ ] En **Redirect URLs** está permitido `https://los144000.com/miembros/cuenta/recuperar`.
+- [ ] Reset de prueba: llega el correo, el botón **“Restablecer mi contraseña”** pasa por `/auth/confirm` y llega a la pantalla de nueva contraseña **sin** el mensaje de enlace inválido.
 
 ## Compatibilidad
 

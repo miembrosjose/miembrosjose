@@ -32,8 +32,10 @@ export async function POST(req: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  // Redirect URL: pagina onde user vai DEFINIR a nova senha apos clicar no email
-  const redirectTo = "https://miembros.SEU_DOMINIO.com/cuenta/recuperar"
+  // Redirect URL: página real donde el usuario define la nueva contraseña tras
+  // hacer clic en el email. Debe estar permitida en Supabase → Authentication →
+  // URL Configuration → Redirect URLs.
+  const redirectTo = "https://los144000.com/miembros/cuenta/recuperar"
 
   // Anti-enumeração: ignora erro (resetPasswordForEmail não acusa email
   // inexistente — só retorna error se passar args invalidos). Sempre 200.

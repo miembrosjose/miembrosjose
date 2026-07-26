@@ -8,7 +8,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-const COOKIE_DOMAIN = process.env.NODE_ENV === "production" ? ".SEU_DOMINIO.com" : undefined
+// los144000.com es un dominio único (sin subdominio miembros.*), así que las
+// cookies de sesión deben ser host-only. Un domain explícito que no sea sufijo
+// del host haría que el navegador RECHACE las cookies que setea el servidor
+// (p. ej. en /auth/confirm), rompiendo la sesión SSR.
+const COOKIE_DOMAIN: string | undefined = undefined
 
 export async function getSupabaseServer() {
   const cookieStore = await cookies()
