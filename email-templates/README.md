@@ -50,14 +50,14 @@ Plantillas de correo con la identidad visual de Los 144.000:
 **Recuperación (`recovery.html`)** — usa el patrón SSR con `verifyOtp`. El enlace (botón + texto) es exactamente:
 
 ```
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar
+{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar
 ```
 
 **Nunca** elimines ni modifiques estas variables (`{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .TokenHash }}`). Si las borrás o las cambiás por una URL fija, el correo **dejará de funcionar**.
 
 - No las pongas entre comillas ni las alteres.
 - No uses un enlace fijo ni compartido.
-- En recuperación, `next=/miembros/cuenta/recuperar` es la ruta interna real donde el usuario crea la nueva contraseña; `/auth/confirm` es la ruta server-side que valida el token y establece la sesión.
+- En recuperación, `next=/miembros/cuenta/recuperar` es la ruta interna real donde el usuario crea la nueva contraseña. `/recuperar-acceso/confirmar` es una **página intermedia**: al abrirse (GET) solo muestra una confirmación y **no** consume el token; recién al pulsar **“Continuar y crear contraseña”** se hace un POST que verifica el token (`verifyOtp`) y establece la sesión. Esto evita que los **escáneres de email** (Gmail/Outlook) consuman el enlace de un solo uso al pre-abrirlo.
 
 ### Configuración necesaria en Supabase (para recuperación SSR)
 
@@ -95,10 +95,10 @@ No requiere servidor ni build. Son HTML estáticos. Los archivos `*-preview.html
 **Recuperación**
 - [ ] El **asunto** es exactamente: `Restablece tu acceso a Los 144.000`.
 - [ ] Pegaste el contenido de **`recovery.html`** (no el de `recovery-preview.html`).
-- [ ] El enlace (botón + texto) contiene `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar`.
+- [ ] El enlace (botón + texto) contiene `{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar`.
 - [ ] **Site URL** = `https://los144000.com`.
 - [ ] En **Redirect URLs** está permitido `https://los144000.com/miembros/cuenta/recuperar`.
-- [ ] Reset de prueba: llega el correo, el botón **“Restablecer mi contraseña”** pasa por `/auth/confirm` y llega a la pantalla de nueva contraseña **sin** el mensaje de enlace inválido.
+- [ ] Reset de prueba: llega el correo, el botón **“Restablecer mi contraseña”** pasa por `/recuperar-acceso/confirmar` y llega a la pantalla de nueva contraseña **sin** el mensaje de enlace inválido.
 
 ## Compatibilidad
 

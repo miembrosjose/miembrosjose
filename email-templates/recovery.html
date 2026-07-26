@@ -4,7 +4,7 @@
   Pegar el contenido de este archivo en:
     Supabase → Authentication → Emails → Email Templates → Reset password
   Asunto recomendado: Restablece tu acceso a Los 144.000
-  Flujo SSR (verifyOtp): el enlace apunta a {{ .SiteURL }}/auth/confirm con
+  Flujo SSR (verifyOtp): el enlace apunta a {{ .SiteURL }}/recuperar-acceso/confirmar con
   token_hash={{ .TokenHash }} y type=recovery.
   IMPORTANTE: NO eliminar ni sustituir las variables {{ .SiteURL }} ni {{ .TokenHash }}.
 -->
@@ -100,13 +100,13 @@
                 <tr>
                   <td align="center" bgcolor="#6D4A9B" style="border-radius:10px;">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" style="height:52px;v-text-anchor:middle;width:340px;" arcsize="19%" strokecolor="#6D4A9B" fillcolor="#6D4A9B">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" style="height:52px;v-text-anchor:middle;width:340px;" arcsize="19%" strokecolor="#6D4A9B" fillcolor="#6D4A9B">
                       <w:anchorlock/>
                       <center style="color:#F3F6FA;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;">RESTABLECER MI CONTRASEÑA</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-- -->
-                    <a class="btn-a" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" target="_blank" rel="noopener noreferrer"
+                    <a class="btn-a" href="{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" target="_blank" rel="noopener noreferrer"
                        style="display:inline-block; padding:16px 34px; font-family:'Manrope',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#F3F6FA; background-color:#6D4A9B; border:1px solid #8a63b8; border-radius:10px;">
                       Restablecer mi contraseña
                     </a>
@@ -120,7 +120,7 @@
                 Si el botón no funciona, copia y pega este enlace en tu navegador:
               </p>
               <p style="margin:0; font-family:'JetBrains Mono','Courier New',monospace; font-size:13px; line-height:1.6;">
-                <a class="link-plain" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" target="_blank" rel="noopener noreferrer">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar</a>
+                <a class="link-plain" href="{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar" target="_blank" rel="noopener noreferrer">{{ .SiteURL }}/recuperar-acceso/confirmar?token_hash={{ .TokenHash }}&type=recovery&next=/miembros/cuenta/recuperar</a>
               </p>
 
               <!-- Separador -->
