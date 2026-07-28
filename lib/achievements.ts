@@ -85,8 +85,10 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "agent_estratega",
     tier: "bronze",
     category: "progression",
-    name: "Agente 1",
-    desc: "Concluiste la clase del Agente 1",
+    // Prueba: renombrada a "144". Se entrega al completar el capítulo 2 de la
+    // Temporada 1 (ya cableado en AGENT_BY_EPISODE → ep:2 en achievements-unlock).
+    name: "144",
+    desc: "Completaste el capítulo 2 de la Temporada 1",
     svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 20 28 L 22 18 L 26 24 L 32 14 L 38 24 L 42 18 L 44 28 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="22" cy="18" r="1.2" fill="currentColor"/><circle cx="32" cy="14" r="1.5" fill="currentColor"/><circle cx="42" cy="18" r="1.2" fill="currentColor"/><rect x="20" y="29" width="24" height="2" fill="currentColor"/><circle cx="32" cy="40" r="3" fill="currentColor"/></g></svg>`,
   },
   {
