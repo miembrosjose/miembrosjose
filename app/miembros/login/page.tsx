@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import LoginForm from "./login-form"
+import { LegalLinks } from "@/components/legal/legal-links"
 
 export const metadata: Metadata = {
   title: "Iniciar Sesión · Los 144000",
@@ -55,6 +56,10 @@ export default function LoginPage() {
           <p className="mt-12 max-w-sm text-xs leading-relaxed text-[#6a6a85] [font-family:var(--font-geist-sans)]">
             ¿Aún no eres miembro? El acceso se envía por email después de tu compra.
           </p>
+
+          <div className="mt-8">
+            <LegalLinks align="start" />
+          </div>
         </div>
       </section>
     </main>

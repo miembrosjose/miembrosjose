@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ACHIEVEMENTS, getAchievementById, getTierColor, type Achievement } from "@/lib/achievements"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
+import { LegalLinks } from "@/components/legal/legal-links"
 
 const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
 
@@ -754,6 +755,10 @@ export function ProfileForm({
         <a href="/" className="text-xs font-medium uppercase tracking-[0.25em] text-[#a0a0b0] transition-colors hover:text-[#6D4A9B] [font-family:var(--font-geist-sans)]">
           ← Volver al área
         </a>
+      </div>
+
+      <div className="pt-2">
+        <LegalLinks align="start" />
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { CinematicShell } from "@/components/cinematic-shell"
 import { RecoverForm } from "./recover-form"
+import { LegalLinks } from "@/components/legal/legal-links"
 
 export const dynamic = "force-static"
 
@@ -26,6 +27,9 @@ export default function RecuperarContrasenaPage() {
           >
             ← Volver al login
           </a>
+        </div>
+        <div className="mt-8">
+          <LegalLinks align="start" />
         </div>
       </main>
     </CinematicShell>

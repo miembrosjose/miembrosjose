@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { ActivateForm } from "./activate-form"
+import { LegalLinks } from "@/components/legal/legal-links"
 
 export const metadata: Metadata = {
   title: "Activa tu Acceso · Los 144000",
@@ -48,6 +49,10 @@ export default function ActivarCuentaPage() {
           <Suspense fallback={null}>
             <ActivateForm />
           </Suspense>
+
+          <div className="mt-10">
+            <LegalLinks align="start" />
+          </div>
         </div>
       </section>
     </main>
