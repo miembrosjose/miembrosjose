@@ -4,7 +4,7 @@
 // Cada tab é um chunk separado via dynamic() — só baixa JS quando user
 // clica naquela aba. Antes era 1 arquivo de 1357 linhas com tudo.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import {
   Unlock,
@@ -14,6 +14,7 @@ import {
   ShieldOff,
   MessageSquare,
   Mail,
+  CreditCard,
   ChevronRight,
 } from "lucide-react"
 
@@ -24,6 +25,7 @@ type Tab =
   | "reports"
   | "access"
   | "messages"
+  | "subs"
 
 const GrantProduct = dynamic(
   () => import("./_tabs/GrantProduct").then((m) => m.GrantProduct),
@@ -47,6 +49,10 @@ const RevokedAccess = dynamic(
 )
 const MessagesModeration = dynamic(
   () => import("./_tabs/MessagesModeration").then((m) => m.MessagesModeration),
+  { ssr: false },
+)
+const Subscriptions = dynamic(
+  () => import("./_tabs/Subscriptions").then((m) => m.Subscriptions),
   { ssr: false },
 )
 
@@ -104,8 +110,14 @@ const TAB_GROUPS: TabGroup[] = [
     ],
   },
   {
-    title: "Sistema",
+    title: "Suscripciones & Sistema",
     tabs: [
+      {
+        id: "subs",
+        label: "Suscripciones",
+        description: "Membresías, estado del sistema y métricas de lanzamiento",
+        icon: CreditCard,
+      },
       {
         id: "texts",
         label: "Textos do Site",
@@ -121,6 +133,21 @@ const ALL_TABS = TAB_GROUPS.flatMap((g) => g.tabs)
 export function AdminPanel() {
   const [tab, setTab] = useState<Tab>("grant")
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // Badge de alerta: sincronizaciones fallidas sin resolver (member_sync_events).
+  const [syncAlert, setSyncAlert] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    fetch("/api/admin/subscriptions", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d?.sync?.failed > 0) setSyncAlert(true)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const activeTab = ALL_TABS.find((t) => t.id === tab)
 
@@ -183,6 +210,13 @@ export function AdminPanel() {
                       >
                         {t.label}
                       </span>
+                      {t.id === "subs" && syncAlert && (
+                        <span
+                          aria-label="Hay sincronizaciones fallidas"
+                          title="Sincronizaciones fallidas sin resolver"
+                          className="h-2 w-2 flex-shrink-0 rounded-full bg-red-500"
+                        />
+                      )}
                       {isActive && (
                         <ChevronRight size={14} className="text-[#6D4A9B]" />
                       )}
@@ -247,6 +281,7 @@ export function AdminPanel() {
         {/* Container do tab ativo */}
         <div className="border border-[#1a1a24] bg-[#000000]/40 p-4 sm:p-6">
           {tab === "grant" && <GrantProduct />}
+          {tab === "subs" && <Subscriptions />}
           {tab === "members" && <MembersTracker />}
           {tab === "texts" && <TextsEditor />}
           {tab === "reports" && <ReportsModeration />}
