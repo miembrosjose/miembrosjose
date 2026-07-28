@@ -9,17 +9,6 @@ import { LegalLinks } from "@/components/legal/legal-links"
 
 const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
 
-// Fondo "cósmico" compartido para los íconos de insignias: nebulosa violeta +
-// estrellas + brillo. El escudo (SVG con el color del tier) flota encima y la
-// nebulosa se ve a través de sus zonas transparentes.
-const COSMIC_BADGE_BG =
-  "radial-gradient(1px 1px at 22% 28%, rgba(255,255,255,0.9), transparent 60%)," +
-  "radial-gradient(1px 1px at 72% 22%, rgba(210,190,255,0.85), transparent 60%)," +
-  "radial-gradient(1px 1px at 38% 72%, rgba(255,255,255,0.7), transparent 60%)," +
-  "radial-gradient(1.4px 1.4px at 82% 66%, rgba(180,160,255,0.8), transparent 60%)," +
-  "radial-gradient(1px 1px at 55% 52%, rgba(255,255,255,0.55), transparent 60%)," +
-  "radial-gradient(circle at 50% 38%, rgba(109,74,155,0.5), rgba(30,16,55,0.6) 55%, #06060f 100%)"
-
 // Le localStorage do prototipo (mesmo subdomínio miembros.SEU_DOMINIO.com)
 // pra saber quais insignias o user já desbloqueou.
 function getUnlockedAchievementIds(): Set<string> {
@@ -788,11 +777,13 @@ function AvatarBadgeOverlay({ badgeId }: { badgeId: string | null }) {
   const isAdminSeal = badgeId === "admin_seal"
   const isTopoSeal = badgeId === "el_topo"
   const isRevisaoSeal = badgeId === "product_revisao"
-  const isExclusive = isAdminSeal || isTopoSeal || isRevisaoSeal
+  // Insignia cósmica autocontenida (SVG con cielo propio) → sin círculo negro.
+  const isCosmic = badgeId === "agent_estratega"
+  const noFrame = isAdminSeal || isTopoSeal || isRevisaoSeal || isCosmic
   return (
     <div
       className={
-        isExclusive
+        noFrame
           ? "absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
           : "absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#1a1a24] bg-[#000000] shadow-[0_0_12px_rgba(0,0,0,0.6)] [&_svg]:h-full [&_svg]:w-full"
       }
@@ -939,16 +930,8 @@ function BadgeSection({
               title={unlocked ? `${ach.name} — ${ach.desc}` : `${ach.name} — bloqueada`}
             >
               <div
-                className="flex h-14 w-14 items-center justify-center rounded-xl p-1 [&_svg]:h-full [&_svg]:w-full"
-                style={{
-                  color,
-                  opacity: unlocked ? 1 : 0.3,
-                  background: COSMIC_BADGE_BG,
-                  boxShadow: unlocked
-                    ? "inset 0 0 10px rgba(109,74,155,0.45), 0 0 10px rgba(109,74,155,0.28)"
-                    : "inset 0 0 8px rgba(0,0,0,0.6)",
-                  filter: unlocked ? "drop-shadow(0 0 2px currentColor)" : "grayscale(0.6)",
-                }}
+                className="h-14 w-14 [&_svg]:h-full [&_svg]:w-full"
+                style={{ color, opacity: unlocked ? 1 : 0.25 }}
                 dangerouslySetInnerHTML={{ __html: ach.svg }}
               />
               <div className="flex min-h-[3.5rem] flex-col items-center justify-start gap-1">
