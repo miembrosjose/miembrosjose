@@ -687,6 +687,45 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
     }
   }, [pseudoFs])
 
+  // Calcula la caja 16:9 centrada según el tamaño REAL del contenedor (en vez de
+  // vw/vh, que iOS no recalcula bien al rotar). Se recalcula al rotar/redimensionar.
+  useEffect(() => {
+    const active = isFs || pseudoFs
+    const node = ref.current
+    if (!active || !node) return
+    function fit() {
+      if (!node) return
+      const cw = node.clientWidth
+      const ch = node.clientHeight
+      if (!cw || !ch) return
+      let w: number
+      let h: number
+      if (cw / ch > 16 / 9) {
+        h = ch
+        w = Math.round((ch * 16) / 9)
+      } else {
+        w = cw
+        h = Math.round((cw * 9) / 16)
+      }
+      node.style.setProperty("--fs-w", `${w}px`)
+      node.style.setProperty("--fs-h", `${h}px`)
+    }
+    fit()
+    // iOS actualiza las dimensiones tarde tras rotar → recalcular con delay.
+    const t1 = setTimeout(fit, 250)
+    const t2 = setTimeout(fit, 600)
+    window.addEventListener("resize", fit)
+    window.addEventListener("orientationchange", fit)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      window.removeEventListener("resize", fit)
+      window.removeEventListener("orientationchange", fit)
+      node.style.removeProperty("--fs-w")
+      node.style.removeProperty("--fs-h")
+    }
+  }, [isFs, pseudoFs])
+
   function toggleFs() {
     const node = ref.current as
       | (HTMLDivElement & { webkitRequestFullscreen?: () => void })
