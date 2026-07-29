@@ -543,6 +543,20 @@
   aspect-ratio: 16 / 9;
 }
 
+/* Pantalla completa REAL: el contenedor llena toda la pantalla en negro y el
+   player queda centrado ocupando el máximo (solo el video, sin nada más). */
+.playerVideoWrap:fullscreen,
+.playerVideoWrap:-webkit-full-screen {
+  margin: 0;
+  aspect-ratio: auto;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .playerVideoWrap iframe {
   width: 100%;
   aspect-ratio: 16 / 9;

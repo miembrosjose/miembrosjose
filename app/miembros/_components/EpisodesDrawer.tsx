@@ -603,6 +603,8 @@ function dbEpToEpisode(db: DbEpisode): Episode {
 function LazyVideo({ className, children }: { className?: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const [show, setShow] = useState(false)
+  const [isFs, setIsFs] = useState(false)
+
   useEffect(() => {
     const node = ref.current
     if (!node) return
@@ -622,9 +624,80 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
     io.observe(node)
     return () => io.disconnect()
   }, [])
+
+  // Pantalla completa REAL (Fullscreen API) sobre el contenedor del video, con
+  // nuestro propio botón. El botón nativo del player VTurb hace un fullscreen
+  // "falso" por CSS (deja la barra de scroll y no rota el móvil). Con la API real
+  // el navegador muestra solo el video, sin nada de la página, y en móvil
+  // bloqueamos la orientación en horizontal (Android; iOS lo ignora por sistema).
+  useEffect(() => {
+    function onFs() {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null }
+      const active = (document.fullscreenElement || doc.webkitFullscreenElement) === ref.current
+      setIsFs(active)
+      const orientation = (screen as unknown as {
+        orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void }
+      }).orientation
+      if (!orientation) return
+      if (active) orientation.lock?.("landscape").catch(() => {})
+      else {
+        try {
+          orientation.unlock?.()
+        } catch {
+          /* ignora */
+        }
+      }
+    }
+    document.addEventListener("fullscreenchange", onFs)
+    document.addEventListener("webkitfullscreenchange", onFs)
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs)
+      document.removeEventListener("webkitfullscreenchange", onFs)
+    }
+  }, [])
+
+  function toggleFs() {
+    const node = ref.current as
+      | (HTMLDivElement & { webkitRequestFullscreen?: () => void })
+      | null
+    if (!node) return
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null
+      webkitExitFullscreen?: () => void
+    }
+    const current = document.fullscreenElement || doc.webkitFullscreenElement
+    if (current) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {})
+      else doc.webkitExitFullscreen?.()
+    } else if (node.requestFullscreen) {
+      node.requestFullscreen().catch(() => {})
+    } else if (node.webkitRequestFullscreen) {
+      node.webkitRequestFullscreen()
+    }
+  }
+
   return (
     <div ref={ref} className={className}>
       {show ? children : null}
+      {show && (
+        <button
+          type="button"
+          onClick={toggleFs}
+          aria-label={isFs ? "Salir de pantalla completa" : "Pantalla completa"}
+          title={isFs ? "Salir de pantalla completa" : "Pantalla completa"}
+          className="absolute right-2 top-2 z-30 flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-black/55 text-white/90 backdrop-blur-sm transition-colors hover:border-[#6D4A9B] hover:text-white"
+        >
+          {isFs ? (
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+              <path d="M9 3v3a3 3 0 0 1-3 3H3M21 9h-3a3 3 0 0 1-3-3V3M3 15h3a3 3 0 0 1 3 3v3M15 21v-3a3 3 0 0 1 3-3h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+      )}
     </div>
   )
 }
@@ -682,34 +755,6 @@ function VturbSmartPlayer({ snippet }: { snippet: string }) {
       host.innerHTML = ""
     }
   }, [snippet])
-
-  // Al entrar en pantalla completa (cualquier botón de fullscreen del player),
-  // en móvil bloquea la orientación en horizontal; al salir, la libera. En iOS
-  // el bloqueo programático no está soportado (el fullscreen nativo de video ya
-  // rota solo), por eso va envuelto en try/catch silencioso.
-  useEffect(() => {
-    function onFsChange() {
-      const doc = document as Document & { webkitFullscreenElement?: Element | null }
-      const inFs = Boolean(document.fullscreenElement || doc.webkitFullscreenElement)
-      const orientation = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }).orientation
-      if (!orientation) return
-      if (inFs) {
-        orientation.lock?.("landscape").catch(() => {})
-      } else {
-        try {
-          orientation.unlock?.()
-        } catch {
-          /* ignora */
-        }
-      }
-    }
-    document.addEventListener("fullscreenchange", onFsChange)
-    document.addEventListener("webkitfullscreenchange", onFsChange)
-    return () => {
-      document.removeEventListener("fullscreenchange", onFsChange)
-      document.removeEventListener("webkitfullscreenchange", onFsChange)
-    }
-  }, [])
 
   return <div ref={hostRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
 }
