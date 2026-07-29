@@ -342,6 +342,11 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 <LazyVideo className={styles.playerVideoWrap}>
                   {(() => {
                     const raw = playingEp.videoId
+                    // 0. Snippet del web component <vturb-smartplayer> → player
+                    //    NATIVO (fullscreen real vía Fullscreen API).
+                    if (raw && /<vturb-smartplayer/i.test(raw)) {
+                      return <VturbSmartPlayer key={raw} snippet={raw} />
+                    }
                     // 1. Snippet completo do ConverteAI/VTurb (HTML+script) →
                     //    extrai accountId/videoId e usa URL embed.
                     const converteaiEmbed = tryExtractConverteaiEmbed(raw)
@@ -646,4 +651,37 @@ function tryExtractConverteaiEmbed(s: string): string | null {
   )
   if (!m) return null
   return `https://scripts.converteai.net/${m[1]}/players/${m[2]}/v4/embed.html`
+}
+
+// Player NATIVO de VTurb: renderiza el web component <vturb-smartplayer> + carga
+// su script (el embed oficial que guarda la base). A diferencia del iframe
+// embed.html, este usa la Fullscreen API real en la propia página, así que el
+// botón de pantalla completa funciona de verdad (no un "fullscreen falso" dentro
+// del iframe). El script es cross-origin permitido por CSP (scripts.converteai.net).
+function VturbSmartPlayer({ snippet }: { snippet: string }) {
+  const hostRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    const idMatch = snippet.match(/id=["'](vid-[a-z0-9]+)["']/i)
+    const srcMatch = snippet.match(/src=["'](https:\/\/scripts\.converteai\.net\/[^"']+\.js)["']/i)
+    const playerId = idMatch?.[1]
+    const scriptSrc = srcMatch?.[1]
+    if (!playerId || !scriptSrc) return
+
+    host.innerHTML = `<vturb-smartplayer id="${playerId}" style="display:block;width:100%;height:100%"></vturb-smartplayer>`
+    // createElement (no innerHTML) para que el script se ejecute; se re-agrega en
+    // cada episodio para que el player se inicialice de nuevo.
+    const script = document.createElement("script")
+    script.src = scriptSrc
+    script.async = true
+    document.body.appendChild(script)
+
+    return () => {
+      script.remove()
+      host.innerHTML = ""
+    }
+  }, [snippet])
+
+  return <div ref={hostRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
 }
