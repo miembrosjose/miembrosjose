@@ -600,10 +600,31 @@ function dbEpToEpisode(db: DbEpisode): Episode {
 // Monta el player SOLO cuando entra en viewport (IntersectionObserver). Con el
 // autoplay del vturb activado, el video arranca al deslizar hasta él. El espacio
 // se reserva con aspect-ratio en .playerVideoWrap para que el layout no salte.
+// Busca un <video> incluso dentro de shadow DOM (VTurb puede encapsularlo).
+function findVideoDeep(root: ParentNode | null): HTMLVideoElement | null {
+  if (!root) return null
+  const direct = (root as Element).querySelector?.("video")
+  if (direct) return direct as HTMLVideoElement
+  const els = (root as Element).querySelectorAll?.("*")
+  if (els) {
+    for (const el of Array.from(els)) {
+      const sr = (el as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot
+      if (sr) {
+        const found = findVideoDeep(sr)
+        if (found) return found
+      }
+    }
+  }
+  return null
+}
+
 function LazyVideo({ className, children }: { className?: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const [show, setShow] = useState(false)
   const [isFs, setIsFs] = useState(false)
+  // "Pantalla completa" por CSS para iOS (Safari no permite fullscreen real de
+  // un contenedor; solo del <video> nativo, que VTurb no siempre expone).
+  const [pseudoFs, setPseudoFs] = useState(false)
 
   useEffect(() => {
     const node = ref.current
@@ -656,6 +677,16 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
     }
   }, [])
 
+  // Bloquea el scroll del body mientras el pseudo-fullscreen (iOS) está activo.
+  useEffect(() => {
+    if (!pseudoFs) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [pseudoFs])
+
   function toggleFs() {
     const node = ref.current as
       | (HTMLDivElement & { webkitRequestFullscreen?: () => void })
@@ -665,6 +696,13 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
       webkitFullscreenElement?: Element | null
       webkitExitFullscreen?: () => void
     }
+
+    // Si estamos en pseudo-fullscreen (iOS), salir.
+    if (pseudoFs) {
+      setPseudoFs(false)
+      return
+    }
+
     const current = document.fullscreenElement || doc.webkitFullscreenElement
     if (current) {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {})
@@ -674,26 +712,30 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
     } else if (node.webkitRequestFullscreen) {
       node.webkitRequestFullscreen()
     } else {
-      // iOS (iPhone): no soporta fullscreen de un <div>; solo del <video> nativo.
-      const v = node.querySelector("video") as
+      // iOS: 1º intentar fullscreen nativo del <video> (incl. shadow DOM);
+      //      si no hay video accesible, 2º pseudo-fullscreen por CSS.
+      const v = findVideoDeep(node) as
         | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
         | null
-      v?.webkitEnterFullscreen?.()
+      if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen()
+      else setPseudoFs(true)
     }
   }
 
+  const fsActive = isFs || pseudoFs
+
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={`${className ?? ""}${pseudoFs ? ` ${styles.pseudoFs}` : ""}`}>
       {show ? children : null}
       {show && (
         <button
           type="button"
           onClick={toggleFs}
-          aria-label={isFs ? "Salir de pantalla completa" : "Pantalla completa"}
-          title={isFs ? "Salir de pantalla completa" : "Pantalla completa"}
-          className="absolute right-2 top-2 z-30 flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-black/55 text-white/90 backdrop-blur-sm transition-colors hover:border-[#6D4A9B] hover:text-white"
+          aria-label={fsActive ? "Salir de pantalla completa" : "Pantalla completa"}
+          title={fsActive ? "Salir de pantalla completa" : "Pantalla completa"}
+          className="absolute right-2 top-2 z-[10000] flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-black/55 text-white/90 backdrop-blur-sm transition-colors hover:border-[#6D4A9B] hover:text-white"
         >
-          {isFs ? (
+          {fsActive ? (
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
               <path d="M9 3v3a3 3 0 0 1-3 3H3M21 9h-3a3 3 0 0 1-3-3V3M3 15h3a3 3 0 0 1 3 3v3M15 21v-3a3 3 0 0 1 3-3h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
