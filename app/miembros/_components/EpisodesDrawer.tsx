@@ -683,5 +683,33 @@ function VturbSmartPlayer({ snippet }: { snippet: string }) {
     }
   }, [snippet])
 
+  // Al entrar en pantalla completa (cualquier botón de fullscreen del player),
+  // en móvil bloquea la orientación en horizontal; al salir, la libera. En iOS
+  // el bloqueo programático no está soportado (el fullscreen nativo de video ya
+  // rota solo), por eso va envuelto en try/catch silencioso.
+  useEffect(() => {
+    function onFsChange() {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null }
+      const inFs = Boolean(document.fullscreenElement || doc.webkitFullscreenElement)
+      const orientation = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }).orientation
+      if (!orientation) return
+      if (inFs) {
+        orientation.lock?.("landscape").catch(() => {})
+      } else {
+        try {
+          orientation.unlock?.()
+        } catch {
+          /* ignora */
+        }
+      }
+    }
+    document.addEventListener("fullscreenchange", onFsChange)
+    document.addEventListener("webkitfullscreenchange", onFsChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange)
+      document.removeEventListener("webkitfullscreenchange", onFsChange)
+    }
+  }, [])
+
   return <div ref={hostRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
 }
