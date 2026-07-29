@@ -673,6 +673,12 @@ function LazyVideo({ className, children }: { className?: string; children: Reac
       node.requestFullscreen().catch(() => {})
     } else if (node.webkitRequestFullscreen) {
       node.webkitRequestFullscreen()
+    } else {
+      // iOS (iPhone): no soporta fullscreen de un <div>; solo del <video> nativo.
+      const v = node.querySelector("video") as
+        | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+        | null
+      v?.webkitEnterFullscreen?.()
     }
   }
 
@@ -756,5 +762,5 @@ function VturbSmartPlayer({ snippet }: { snippet: string }) {
     }
   }, [snippet])
 
-  return <div ref={hostRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+  return <div ref={hostRef} className={styles.vturbHost} />
 }
