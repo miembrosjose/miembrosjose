@@ -390,6 +390,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                         key={raw}
                         src={buildConverteaiEmbedUrl(raw)}
                         allowFullScreen
+                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                         referrerPolicy="origin"
                         title={`Episodio ${playingEp.num} — ${playingEp.title}`}
                       />

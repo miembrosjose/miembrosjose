@@ -111,7 +111,7 @@ export async function middleware(req: NextRequest) {
       // microphone=(self) e camera=(self) liberam pro proprio site usar mic/camera
       // (DMs com audio, futuro video chat). Sem (self), getUserMedia falha
       // mesmo com user permitindo no browser.
-      res.headers.set("Permissions-Policy", "geolocation=(), microphone=(self), camera=(self), payment=*")
+      res.headers.set("Permissions-Policy", "geolocation=(), microphone=(self), camera=(self), payment=*, fullscreen=*")
       res.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0")
       res.headers.set("CDN-Cache-Control", "no-store")
       res.headers.set("Cloudflare-CDN-Cache-Control", "no-store")
@@ -226,7 +226,7 @@ export async function middleware(req: NextRequest) {
   if (!isEmbeddable) res.headers.set("X-Frame-Options", "DENY")
   res.headers.set("X-Content-Type-Options", "nosniff")
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
-  res.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=*")
+  res.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=*, fullscreen=*")
 
   return res
 }
