@@ -40,6 +40,8 @@
   min-height: 100%;
   object-fit: cover;
   object-position: center;
+  /* Realce para que el video se vea más nítido / menos apagado. */
+  filter: brightness(1.14) contrast(1.05) saturate(1.1);
 }
 
 .bg::before {
@@ -47,11 +49,11 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  /* Capa oscura para legibilidad del texto (izquierda) — aligerada para que el
-     video se vea más: antes 0.95/0.6/0.3 y fondo 100%. */
+  /* Capa oscura SOLO en la franja izquierda (detrás del texto). El resto del
+     video queda limpio. Recorte fuerte respecto al original (0.95/0.6/0.3 + fondo 100%). */
   background:
-    linear-gradient(90deg, rgba(10, 10, 15, 0.8) 0%, rgba(10, 10, 15, 0.35) 45%, rgba(10, 10, 15, 0.05) 75%, transparent 100%),
-    linear-gradient(180deg, transparent 65%, rgba(10, 10, 15, 0.92) 100%);
+    linear-gradient(90deg, rgba(10, 10, 15, 0.6) 0%, rgba(10, 10, 15, 0.15) 35%, transparent 58%),
+    linear-gradient(180deg, transparent 74%, rgba(10, 10, 15, 0.75) 100%);
   pointer-events: none;
 }
 
