@@ -103,7 +103,13 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
             }
             onClick={() => handleClick(seasonAny)}
           >
-            <div className={styles.thumb}>
+            <div
+              className={styles.thumb}
+              // Respaldo: gradiente da temporada por trás do vídeo. Se o vídeo
+              // não pinta (ex: iPhone em Modo de Baixo Consumo), a capa fica
+              // com cor em vez de preto.
+              style={season.gradient ? { background: season.gradient } : undefined}
+            >
               {season.videoBg && <SeasonVideo src={season.videoBg} />}
               {!season.videoBg && (
                 <span className={styles.thumbEmoji}>{season.emoji}</span>
@@ -175,20 +181,31 @@ function SeasonVideo({ src }: { src: string }) {
     video.muted = true
     video.defaultMuted = true
     video.setAttribute("muted", "")
+    video.setAttribute("playsinline", "")
+    video.setAttribute("webkit-playsinline", "")
+
+    // iOS NÃO pinta o 1º frame de um vídeo pausado — fica preto até dar play.
+    // Este helper força a decodificação de um frame com um micro-seek assim que
+    // há metadata (readyState>=1), garantindo que apareça imagem mesmo se o
+    // autoplay for bloqueado (ex: Modo de Baixo Consumo do iPhone).
+    const paintFirstFrame = () => {
+      try {
+        if (video.readyState >= 1 && video.currentTime < 0.05) {
+          video.currentTime = 0.1
+        }
+      } catch {
+        /* ignora */
+      }
+    }
 
     // Toca o vídeo muted (autoplay permitido em iOS por estar muted+inline).
-    // Se por algum motivo for bloqueado, ao menos pinta o frame com um seek.
+    // Se for bloqueado, ao menos pinta um frame (paintFirstFrame).
     const playMuted = () => {
       video.muted = true
-      video.play().catch(() => {
-        try {
-          if (video.readyState >= 1 && video.currentTime === 0) {
-            video.currentTime = 0.1
-          }
-        } catch {
-          /* ignora */
-        }
-      })
+      const p = video.play()
+      if (p && typeof p.catch === "function") {
+        p.catch(paintFirstFrame)
+      }
     }
 
     // Detecta device com hover real (desktop com mouse). Mobile + tablet
@@ -201,23 +218,41 @@ function SeasonVideo({ src }: { src: string }) {
     if (hasHover) {
       // Desktop: handlers de mouse cuidam do play/pause via JSX. Aqui só
       // garante que o vídeo está parado no frame 1 quando montou.
-      try {
-        video.currentTime = 0
-      } catch {
-        /* ignora */
-      }
-      return
+      const onReady = () => paintFirstFrame()
+      video.addEventListener("loadeddata", onReady)
+      paintFirstFrame()
+      return () => video.removeEventListener("loadeddata", onReady)
     }
 
-    // Mobile: toca sempre que o card está visível (como o Hero). Antes só
-    // tocava o card central (>70%) e, se o play era bloqueado, ficava preto.
+    // Mobile: quando o card entra no viewport, tenta tocar; ao sair, pausa.
+    // Além disso, assim que carregar dados (loadeddata) reforça o play/paint —
+    // o IntersectionObserver costuma disparar ANTES da metadata estar pronta,
+    // então o 1º play() era rejeitado e o thumb ficava preto no iPhone.
+    let visible = true
+    const onLoaded = () => {
+      if (visible) playMuted()
+      else paintFirstFrame()
+    }
+    video.addEventListener("loadeddata", onLoaded)
+    video.addEventListener("canplay", onLoaded)
+    // Força o download começar (alguns iOS ignoram preload="auto" até interagir).
+    try {
+      video.load()
+    } catch {
+      /* ignora */
+    }
+
     if (typeof IntersectionObserver === "undefined") {
       playMuted()
-      return
+      return () => {
+        video.removeEventListener("loadeddata", onLoaded)
+        video.removeEventListener("canplay", onLoaded)
+      }
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        visible = entry.isIntersecting
         if (entry.isIntersecting) {
           playMuted()
         } else {
@@ -227,8 +262,12 @@ function SeasonVideo({ src }: { src: string }) {
       { threshold: [0, 0.25] }, // toca assim que aparece no viewport
     )
     observer.observe(video)
-    return () => observer.disconnect()
-  }, [])
+    return () => {
+      observer.disconnect()
+      video.removeEventListener("loadeddata", onLoaded)
+      video.removeEventListener("canplay", onLoaded)
+    }
+  }, [isImage])
 
   // Handlers desktop hover — mobile ignora silenciosamente
   const handleMouseEnter = () => {
@@ -260,6 +299,9 @@ function SeasonVideo({ src }: { src: string }) {
       loop
       playsInline
       preload="auto"
+      // iOS antigo precisa do atributo com prefixo pra tocar inline (sem
+      // entrar em fullscreen). React repassa atributos desconhecidos.
+      {...{ "webkit-playsinline": "true" }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
