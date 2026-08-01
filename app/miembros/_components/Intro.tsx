@@ -41,21 +41,15 @@ export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
 
   const completedRef = useRef(false)
 
-  // Decide no mount se vai mostrar
+  // Decide no mount se vai mostrar.
+  // La intro se muestra SIEMPRE al cargar (salvo skip explícito): su clic/ESC es
+  // el gesto que desbloquea el audio del video de miembros. Antes se saltaba si
+  // ya se había visto en la sesión (app_intro_seen) — se quitó ese salto.
   useEffect(() => {
     if (skip) {
       completedRef.current = true
       onComplete?.()
       return
-    }
-    try {
-      if (sessionStorage.getItem(SESSION_KEY) === "1") {
-        completedRef.current = true
-        onComplete?.()
-        return
-      }
-    } catch {
-      // sessionStorage pode falhar em modo privado — segue mostrando
     }
     setMounted(true)
     setStartedAt(performance.now())
