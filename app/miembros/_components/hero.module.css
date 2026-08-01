@@ -47,9 +47,11 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* Capa oscura para legibilidad del texto (izquierda) — aligerada para que el
+     video se vea más: antes 0.95/0.6/0.3 y fondo 100%. */
   background:
-    linear-gradient(90deg, rgba(10, 10, 15, 0.95) 0%, rgba(10, 10, 15, 0.6) 50%, rgba(10, 10, 15, 0.3) 100%),
-    linear-gradient(180deg, transparent 60%, rgba(10, 10, 15, 1) 100%);
+    linear-gradient(90deg, rgba(10, 10, 15, 0.8) 0%, rgba(10, 10, 15, 0.35) 45%, rgba(10, 10, 15, 0.05) 75%, transparent 100%),
+    linear-gradient(180deg, transparent 65%, rgba(10, 10, 15, 0.92) 100%);
   pointer-events: none;
 }
 
