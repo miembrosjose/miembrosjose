@@ -29,6 +29,7 @@ import { EpisodeComments } from "./EpisodeComments"
 import { ReportModal, type ReportTarget } from "./ReportModal"
 import { InlineEpisodeCheckout } from "./InlineEpisodeCheckout"
 import { checkEpisodeAchievements } from "../_lib/achievements-unlock"
+import { SpaceBackground } from "./SpaceBackground"
 import styles from "./episodes-drawer.module.css"
 
 type Props = {
@@ -294,8 +295,11 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
 
         return (
           <div ref={playerScrollRef} className={styles.playerFullscreen} role="dialog" aria-label={`Episodio ${playingEp.num}`}>
+            {/* Fondo de estrellas — pinnado al top del scroller para llenar los
+                márgenes vacíos de la vista de notas. Contenido va con z-index encima. */}
+            <SpaceBackground variant="sticky" zIndex={0} />
             {/* Layout 2 colunas quando há checkout — esquerda: conteúdo; direita: checkout sticky */}
-            <div className={hasCheckout ? styles.playerWithCheckout : undefined}>
+            <div className={hasCheckout ? styles.playerWithCheckout : undefined} style={{ position: "relative", zIndex: 1 }}>
 
               {/* ── Coluna principal (sempre presente) ─────────────── */}
               <div className={hasCheckout ? styles.playerMain : undefined}>

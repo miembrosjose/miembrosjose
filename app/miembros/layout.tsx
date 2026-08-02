@@ -18,6 +18,7 @@ import { OnlinePresenceProvider } from "./_lib/online-presence"
 import { UnreadDMProvider } from "./_lib/unread-dm"
 import { OnlineToast } from "./_components/OnlineToast"
 import { MessengerWidget } from "./_components/MessengerWidget"
+import { SpaceBackground } from "./_components/SpaceBackground"
 import "./_styles/tokens.css"
 import "./_styles/episode-notes.css"
 
@@ -55,19 +56,25 @@ export default function MiembrosLayout({
 }) {
   return (
     <div className={`${bebas.variable} ${dmSans.variable} ${jetbrains.variable} miembros-shell`}>
-      <AuthProvider>
-        <OnlinePresenceProvider>
-          <UnreadDMProvider>
-            <ViewProvider>
-              <BroadcastProvider>{children}</BroadcastProvider>
-              {/* Toast 'fulano se conectó' — escuta app:user-online */}
-              <OnlineToast />
-              {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
-              <MessengerWidget />
-            </ViewProvider>
-          </UnreadDMProvider>
-        </OnlinePresenceProvider>
-      </AuthProvider>
+      {/* Fondo de estrellas persistente (capa fija detrás de todo el contenido).
+          Se ve en los espacios vacíos: márgenes, huecos entre tarjetas y detrás
+          de las temporadas. El contenido va en una capa con z-index encima. */}
+      <SpaceBackground />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <AuthProvider>
+          <OnlinePresenceProvider>
+            <UnreadDMProvider>
+              <ViewProvider>
+                <BroadcastProvider>{children}</BroadcastProvider>
+                {/* Toast 'fulano se conectó' — escuta app:user-online */}
+                <OnlineToast />
+                {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
+                <MessengerWidget />
+              </ViewProvider>
+            </UnreadDMProvider>
+          </OnlinePresenceProvider>
+        </AuthProvider>
+      </div>
     </div>
   )
 }

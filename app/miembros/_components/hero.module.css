@@ -40,6 +40,8 @@
   min-height: 100%;
   object-fit: cover;
   object-position: center;
+  /* Suaviza el fundido de opacidad del loop entre ticks de timeupdate (JS). */
+  transition: opacity 0.3s linear;
 }
 
 .bg::before {

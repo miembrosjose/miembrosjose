@@ -89,6 +89,29 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
       video.addEventListener("loadedmetadata", playMuted, { once: true })
     }
 
+    // Transición suave del LOOP: el vídeo salta de forma dura del último frame
+    // al primero (corte visible). Bajamos la opacidad en los ~0.8s finales y la
+    // subimos en los ~0.8s iniciales, de modo que el empalme ocurre mientras el
+    // vídeo está atenuado → el loop se ve como un fundido, no como un corte.
+    // La transición CSS (opacity) suaviza entre los pocos ticks de timeupdate.
+    const FADE = 0.8 // segundos de fundido a cada extremo
+    const FLOOR = 0.45 // opacidad mínima en el empalme (no llega a negro)
+    function handleTimeUpdate() {
+      if (!video) return
+      const dur = video.duration
+      if (!isFinite(dur) || dur <= FADE * 2) {
+        video.style.opacity = "1"
+        return
+      }
+      const t = video.currentTime
+      const rem = dur - t
+      let op = 1
+      if (t < FADE) op = FLOOR + (1 - FLOOR) * (t / FADE)
+      else if (rem < FADE) op = FLOOR + (1 - FLOOR) * (rem / FADE)
+      video.style.opacity = op.toFixed(3)
+    }
+    video.addEventListener("timeupdate", handleTimeUpdate)
+
     // IntersectionObserver: pausa o vídeo quando hero sai do viewport
     // (user scrollou pra baixo pra ver temporadas/forum) pra economizar
     // CPU/GPU, e re-toca quando volta a ficar visível.
@@ -107,6 +130,7 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
 
     return () => {
       video.removeEventListener("loadedmetadata", playMuted)
+      video.removeEventListener("timeupdate", handleTimeUpdate)
       observer.disconnect()
     }
   }, [])
