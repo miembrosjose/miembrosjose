@@ -6,10 +6,11 @@
   inset: 0;
   z-index: 9000;
   background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  /* display:block (no flex) para que el starfield sticky pueda pinnarse al top
+     del scroller y cubra toda la altura al hacer scroll. El modal se centra
+     horizontalmente con margin:auto. Se quitó backdrop-filter: el starfield
+     opaco ya cubre el fondo, así que el blur no aportaba nada. */
+  display: block;
   padding: 2rem 1rem;
   overflow-y: auto;
   animation: drawerFade 0.3s ease;
@@ -35,7 +36,9 @@
 .modal {
   width: 100%;
   max-width: 850px;
-  background: var(--bg-deep);
+  /* Transparente para que el starfield del drawer se vea también DENTRO del
+     modal (detrás de la lista de episodios). El banner superior es opaco. */
+  background: transparent;
   border-radius: 6px;
   overflow: hidden;
   position: relative;

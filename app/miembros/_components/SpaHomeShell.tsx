@@ -157,6 +157,19 @@ export function SpaHomeShell() {
   // do botão "Saltar Intro" (gesture válido permite áudio com autoplay).
   const heroVideoRef = useRef<HTMLVideoElement | null>(null)
 
+  // Apaga o áudio/vídeo do banner principal (biblioteca cósmica) ao ENTRAR numa
+  // temporada — sem isso o áudio do hero continuava tocando por baixo do drawer/
+  // player. Ao fechar a temporada e voltar pra biblioteca, o banner volta.
+  useEffect(() => {
+    const v = heroVideoRef.current
+    if (!v) return
+    if (openSeason) {
+      v.pause()
+    } else if (introDone && view === "inicio") {
+      v.play().catch(() => {})
+    }
+  }, [openSeason, introDone, view])
+
   // Boot: ping login (incrementa unique_login_days 1×/dia) + welcome achievement
   // (idempotente — só desbloqueia primeira vez) + hidrata window.NOTIF_PREFS
   // pro sounds.ts/broadcast/level-up respeitarem prefs sem precisar abrir modal.
