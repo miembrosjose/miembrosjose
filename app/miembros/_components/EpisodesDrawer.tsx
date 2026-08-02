@@ -173,6 +173,10 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
             if (e.target === e.currentTarget) onClose()
           }}
         >
+          {/* Fondo de estrellas en los márgenes vacíos alrededor del modal.
+              .drawer tiene backdrop-filter → confina el position:fixed a su caja
+              (queda quieto y fuera de flujo, sin romper el centrado del modal). */}
+          <SpaceBackground variant="fixed" zIndex={0} />
           <div className={styles.modal}>
             <button
               type="button"

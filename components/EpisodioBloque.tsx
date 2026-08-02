@@ -139,12 +139,14 @@ export default function EpisodioBloque({
 
       <style jsx>{`
         .ep-stage {
-          position: relative; background: #07070a;
+          position: relative;
+          /* Transparente: se ve el starfield unificado (antes: fondo estelar propio). */
+          background: transparent;
           overflow: hidden; padding: 4rem 0;
         }
+        /* Starfield propio desactivado — usamos el canvas unificado detrás. */
         .ep-starfield {
-          position: absolute; inset: 0; z-index: 0; pointer-events: none;
-          background: radial-gradient(ellipse at 50% -10%, #221c3a 0%, transparent 55%), #07070a;
+          display: none;
         }
         :global(.ep-star) {
           position: absolute; border-radius: 50%; background: #e8e3d5; opacity: 0.35;

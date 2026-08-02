@@ -123,13 +123,15 @@ export default function JerarquiaGalactica() {
       <style jsx>{`
         .jg-stage {
           position: relative;
-          background: #07070a;
+          /* Fondo transparente: se ve el starfield unificado del área de miembros.
+             Antes tenía su propio fondo estelar opaco (#07070a + estrellas CSS). */
+          background: transparent;
           overflow: hidden;
           padding: 4rem 0;
         }
+        /* Starfield propio desactivado — usamos el canvas unificado detrás. */
         .jg-starfield {
-          position: absolute; inset: 0; z-index: 0; pointer-events: none;
-          background: radial-gradient(ellipse at 50% -10%, #221c3a 0%, transparent 55%), #07070a;
+          display: none;
         }
         .jg-star {
           position: absolute; border-radius: 50%; background: #e8e3d5; opacity: 0.35;

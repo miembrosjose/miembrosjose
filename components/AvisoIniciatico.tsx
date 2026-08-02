@@ -42,8 +42,8 @@ export default function AvisoIniciatico({ onContinue }: { onContinue?: () => voi
       <style jsx>{`
         .av-stage {
           position: relative;
-          background:
-            radial-gradient(ellipse at 50% -10%, #221c3a 0%, transparent 55%), #07070a;
+          /* Transparente: se ve el starfield unificado (antes: fondo estelar propio). */
+          background: transparent;
           overflow: hidden;
           padding: 3rem 0 3.5rem;
         }
