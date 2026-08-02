@@ -3,7 +3,7 @@
 // Shell client-side da área de membros — comportamento de aplicativo.
 // 1 ROTA SÓ (/miembros). Troca de tela via state, sem reload.
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "./Navbar"
 import { Hero } from "./Hero"
@@ -157,18 +157,59 @@ export function SpaHomeShell() {
   // do botão "Saltar Intro" (gesture válido permite áudio com autoplay).
   const heroVideoRef = useRef<HTMLVideoElement | null>(null)
 
-  // Apaga o áudio/vídeo do banner principal (biblioteca cósmica) ao ENTRAR numa
-  // temporada — sem isso o áudio do hero continuava tocando por baixo do drawer/
-  // player. Ao fechar a temporada e voltar pra biblioteca, o banner volta.
+  // Fundido de volume do áudio do banner. Rampa v.volume até `to` em `ms`.
+  // Cancela qualquer fundido anterior em curso. `pauseAtEnd` pausa o vídeo ao
+  // terminar (usado no fade-out ao entrar numa temporada).
+  const audioFadeRafRef = useRef<number | null>(null)
+  const fadeHeroAudio = useCallback(
+    (to: number, ms: number, opts?: { pauseAtEnd?: boolean }) => {
+      const v = heroVideoRef.current
+      if (!v) return
+      if (audioFadeRafRef.current != null) {
+        cancelAnimationFrame(audioFadeRafRef.current)
+        audioFadeRafRef.current = null
+      }
+      const clamp = (x: number) => Math.max(0, Math.min(1, x))
+      const from = v.volume
+      const start = performance.now()
+      const step = (now: number) => {
+        const t = ms <= 0 ? 1 : Math.min(1, (now - start) / ms)
+        v.volume = clamp(from + (to - from) * t)
+        if (t < 1) {
+          audioFadeRafRef.current = requestAnimationFrame(step)
+        } else {
+          audioFadeRafRef.current = null
+          if (opts?.pauseAtEnd) v.pause()
+        }
+      }
+      audioFadeRafRef.current = requestAnimationFrame(step)
+    },
+    [],
+  )
+
+  // Áudio do banner principal (biblioteca cósmica): ao ENTRAR numa temporada faz
+  // DESAPARIÇÃO progressiva do som em 1s e pausa; ao fechar e voltar pra
+  // biblioteca faz APARIÇÃO progressiva em 1s. Sem isto o áudio do hero seguia
+  // tocando por baixo do drawer/player (bug reportado).
   useEffect(() => {
     const v = heroVideoRef.current
     if (!v) return
     if (openSeason) {
-      v.pause()
+      // fade-out 1s → pausa
+      fadeHeroAudio(0, 1000, { pauseAtEnd: true })
     } else if (introDone && view === "inicio") {
-      v.play().catch(() => {})
+      if (v.muted) {
+        // Áudio ainda travado (sem gesture) → só toca em mudo.
+        v.play().catch(() => {})
+      } else {
+        // Reanuda com fade-in 1s.
+        v.volume = 0
+        v.play()
+          .then(() => fadeHeroAudio(1, 1000))
+          .catch(() => {})
+      }
     }
-  }, [openSeason, introDone, view])
+  }, [openSeason, introDone, view, fadeHeroAudio])
 
   // Boot: ping login (incrementa unique_login_days 1×/dia) + welcome achievement
   // (idempotente — só desbloqueia primeira vez) + hidrata window.NOTIF_PREFS
@@ -230,12 +271,17 @@ export function SpaHomeShell() {
       } catch {
         // ignora
       }
+      // APARIÇÃO progressiva do áudio em 1s: começa em volume 0 e sobe até 1.
       video.muted = false
-      video.play().catch(() => {
-        // Fallback: se browser ainda bloqueia, tenta muted (sem áudio mas vídeo roda)
-        video.muted = true
-        video.play().catch(() => {})
-      })
+      video.volume = 0
+      video
+        .play()
+        .then(() => fadeHeroAudio(1, 1000))
+        .catch(() => {
+          // Fallback: se browser ainda bloqueia, tenta muted (sem áudio mas vídeo roda)
+          video.muted = true
+          video.play().catch(() => {})
+        })
     }
     // Hero aparece imediatamente — Intro continua por cima animando fade-out
     setIntroDone(true)
