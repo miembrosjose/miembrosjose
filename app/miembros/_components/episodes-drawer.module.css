@@ -36,9 +36,9 @@
 .modal {
   width: 100%;
   max-width: 850px;
-  /* Transparente para que el starfield del drawer se vea también DENTRO del
-     modal (detrás de la lista de episodios). El banner superior es opaco. */
-  background: transparent;
+  /* Tinte oscuro muy sutil: diferencia el modal del borde exterior pero deja
+     ver el starfield del drawer detrás (estrellas un pelín más tenues dentro). */
+  background: rgba(5, 5, 16, 0.35);
   border-radius: 6px;
   overflow: hidden;
   position: relative;
