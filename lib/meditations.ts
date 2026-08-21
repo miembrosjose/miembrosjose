@@ -1,42 +1,76 @@
 // Catálogo SERVER-ONLY de meditaciones.
 //
-// Guarda el OBJECT KEY de R2 (no una URL pública) y el nivel de acceso. Este
-// módulo lo importa SOLO el endpoint de streaming en el servidor; nunca un
-// componente cliente (así el object key jamás llega al bundle del navegador).
-//
-// Para añadir una meditación de prueba: sube el .mp3 al bucket privado
-// `los144000-media` bajo el key indicado y ajusta `objectKey` aquí.
-// (Iteración 1: catálogo en código. Migrable a tabla Supabase más adelante.)
+// Fuente de verdad: tabla Supabase `meditations` (catálogo, precio, acceso y
+// object key privado de R2). Fallback a un pequeño mapa en código para la
+// meditación INCLUIDA de prueba (así sigue funcionando aunque la tabla aún no
+// esté sembrada). El object key jamás llega al cliente (esto es server-only).
+
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export type MeditationAccess = "included" | "premium"
 
 export type ServerMeditation = {
   id: string
-  access: MeditationAccess
+  accessType: MeditationAccess
   /** Object key en el bucket privado los144000-media (NO una URL pública). */
   objectKey: string
-  /** Preparados para el sistema de compras premium (aún sin implementar). */
-  stripeProductId?: string | null
-  stripePriceId?: string | null
+  priceCents: number
+  currency: string
+  title: string
+  subtitle: string | null
+  isPurchasable: boolean
 }
 
-const CATALOG: Record<string, ServerMeditation> = {
-  // ── Temporada 1 · Ep. 5 "El Nombre que Olvidaste" ──────────────────────────
+// Fallback en código — solo para la incluida de prueba ya en producción.
+const CODE_FALLBACK: Record<string, ServerMeditation> = {
   "s1e5-nombre-included": {
     id: "s1e5-nombre-included",
-    access: "included",
-    // ⬇️ Ajusta al key real que subas a R2 (bucket los144000-media).
+    accessType: "included",
     objectKey: "audio/included/Temporada 1/nombre-cosmico-sintonia.mp3",
-  },
-  "s1e5-nombre-premium": {
-    id: "s1e5-nombre-premium",
-    access: "premium",
-    objectKey: "audio/premium/Temporada 1/nombre-cosmico-activacion.mp3",
-    stripeProductId: null,
-    stripePriceId: null,
+    priceCents: 0,
+    currency: "usd",
+    title: "Sintonía con el Nombre Cósmico",
+    subtitle: null,
+    isPurchasable: false,
   },
 }
 
-export function getServerMeditation(id: string): ServerMeditation | null {
-  return CATALOG[id] ?? null
+type MeditationRow = {
+  id: string
+  access_type: MeditationAccess
+  audio_object_key: string
+  price_cents: number
+  currency: string
+  title: string
+  subtitle: string | null
+  is_purchasable: boolean
+}
+
+function mapRow(r: MeditationRow): ServerMeditation {
+  return {
+    id: r.id,
+    accessType: r.access_type,
+    objectKey: r.audio_object_key,
+    priceCents: r.price_cents ?? 0,
+    currency: (r.currency || "usd").toLowerCase(),
+    title: r.title,
+    subtitle: r.subtitle ?? null,
+    isPurchasable: !!r.is_purchasable,
+  }
+}
+
+/** Resuelve una meditación por id (DB → fallback en código). */
+export async function getServerMeditation(id: string): Promise<ServerMeditation | null> {
+  try {
+    const admin = getSupabaseAdmin()
+    const { data } = await admin
+      .from("meditations")
+      .select("id, access_type, audio_object_key, price_cents, currency, title, subtitle, is_purchasable")
+      .eq("id", id)
+      .maybeSingle()
+    if (data) return mapRow(data as MeditationRow)
+  } catch {
+    // Sin tabla / sin service key → usa fallback.
+  }
+  return CODE_FALLBACK[id] ?? null
 }

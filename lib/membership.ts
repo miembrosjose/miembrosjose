@@ -5,6 +5,7 @@
 // El control de acceso a audios privados SIEMPRE ocurre aquí, en el servidor.
 
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 type SupabaseServer = Awaited<ReturnType<typeof getSupabaseServer>>
 
@@ -49,14 +50,26 @@ export async function getMembership(supabase: SupabaseServer): Promise<Membershi
 /**
  * Entitlement de una meditación PREMIUM (compra específica).
  *
- * STUB — el sistema de compras adicionales aún no existe. La separación queda
- * preparada: cuando exista (Stripe + tabla de entitlements), esta función
- * consultará la compra del usuario. Hoy devuelve false → premium sigue bloqueado.
+ * Consulta `meditation_purchases` con el service_role (fiable, sin sorpresas de
+ * RLS): true si el usuario tiene una compra `paid` de esa meditación.
+ * Si la tabla aún no existe, degrada a false (premium bloqueado).
  */
 export async function hasPremiumEntitlement(
   _supabase: SupabaseServer,
-  _userId: string,
-  _meditationId: string,
+  userId: string,
+  meditationId: string,
 ): Promise<boolean> {
-  return false
+  try {
+    const admin = getSupabaseAdmin()
+    const { data } = await admin
+      .from("meditation_purchases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("meditation_id", meditationId)
+      .eq("status", "paid")
+      .maybeSingle()
+    return !!data
+  } catch {
+    return false
+  }
 }

@@ -37,7 +37,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params
-  const med = getServerMeditation(id)
+  const med = await getServerMeditation(id)
   if (!med) return new Response("Meditación no encontrada", { status: 404 })
 
   // ── Control de acceso (server-side, nunca solo frontend) ──────────────────
@@ -49,7 +49,9 @@ export async function GET(
   if (!membership.active) {
     return new Response("Membresía activa requerida", { status: 403 })
   }
-  if (med.access === "premium") {
+  // Premium: el permiso REAL viene de Supabase (entitlement), no de que el key
+  // contenga "premium". Nunca se entrega el MP3 antes de comprobar la compra.
+  if (med.accessType === "premium") {
     const ok = await hasPremiumEntitlement(supabase, membership.userId!, med.id)
     if (!ok) return new Response("Meditación premium bloqueada", { status: 403 })
   }

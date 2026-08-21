@@ -26,6 +26,7 @@ import Stripe from "stripe"
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revokeAccessByTransaction, restoreAccessByTransaction } from "@/lib/access-revocation"
+import { registerMeditationEntitlement } from "@/lib/meditation-purchase"
 import { createOrRefreshInvite } from "@/lib/account-invites"
 import { sendAccountInviteEmail, sendAccountExistsEmail } from "@/lib/email/account-invite"
 
@@ -423,7 +424,30 @@ async function handleUpgradeToLifetime(pi: Stripe.PaymentIntent) {
   }
 }
 
+// Meditación premium — reconciliación idempotente del entitlement.
+// El desbloqueo inmediato lo hace el endpoint /unlock|/confirm; aquí el webhook
+// garantiza que quede registrado aunque el cliente se desconecte tras pagar.
+async function handlePremiumMeditationPaid(pi: Stripe.PaymentIntent) {
+  const userId = pi.metadata?.user_id
+  const meditationId = pi.metadata?.meditation_id
+  if (!userId || !meditationId) return
+  await registerMeditationEntitlement({
+    userId,
+    meditationId,
+    paymentIntentId: pi.id,
+    amountCents: pi.amount,
+    currency: pi.currency,
+  })
+}
+
 async function handlePaymentIntentSucceeded(stripe: Stripe, pi: Stripe.PaymentIntent) {
+  // Meditación premium (compra 1-clic / Payment Element): registra entitlement
+  // idempotente y sale — no es una venta del funil (no tiene sale_type).
+  if (pi.metadata?.type === "premium_meditation") {
+    await handlePremiumMeditationPaid(pi)
+    return
+  }
+
   // PIs de subscription (parcelas) são tratados pelo invoice.payment_succeeded.
   // Aqui processa só PIs avulsos: front 1x, upsell off-session OU downsell (oferta única).
   //
