@@ -17,8 +17,8 @@ import { getStripe } from "@/lib/stripe/server"
 import { getServerMeditation } from "@/lib/meditations"
 import { getMembership, hasPremiumEntitlement } from "@/lib/membership"
 import {
-  getMemberStripeCustomerId,
-  getReusablePaymentMethod,
+  resolveInAccountCustomerId,
+  resolveReusablePayment,
   registerMeditationEntitlement,
 } from "@/lib/meditation-purchase"
 
@@ -63,13 +63,20 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   }
 
   const stripe = getStripe()
-  const customerId = await getMemberStripeCustomerId(userId, user.email ?? null)
+
+  // Customer VÁLIDO en la cuenta Stripe de este Worker (nunca lanza).
+  const customerId = await resolveInAccountCustomerId(stripe, userId, user.email ?? null)
   if (!customerId) {
-    return NextResponse.json({ status: "needs_payment_method" })
+    // Sin customer reutilizable en esta cuenta → tarjeta por Payment Element.
+    console.warn(`[meditations/unlock] diag=no_in_account_customer user=${userId}`)
+    return NextResponse.json({ status: "needs_payment_method", reason: "no_in_account_customer" })
   }
-  const paymentMethodId = await getReusablePaymentMethod(stripe, customerId)
-  if (!paymentMethodId) {
-    return NextResponse.json({ status: "needs_payment_method" })
+
+  const pm = await resolveReusablePayment(stripe, customerId)
+  if (pm.status !== "ok") {
+    // Customer existe pero sin método reutilizable → Payment Element.
+    console.warn(`[meditations/unlock] diag=no_payment_method user=${userId}`)
+    return NextResponse.json({ status: "needs_payment_method", reason: "no_payment_method" })
   }
 
   try {
@@ -78,7 +85,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
         amount: med.priceCents,
         currency: med.currency,
         customer: customerId,
-        payment_method: paymentMethodId,
+        payment_method: pm.paymentMethodId,
         off_session: false, // on_session: usuario presente
         confirm: true,
         description: `Meditación premium: ${med.title}`,

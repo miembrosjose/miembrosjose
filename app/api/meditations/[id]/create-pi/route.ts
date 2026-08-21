@@ -12,7 +12,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getStripe } from "@/lib/stripe/server"
 import { getServerMeditation } from "@/lib/meditations"
 import { getMembership, hasPremiumEntitlement } from "@/lib/membership"
-import { getMemberStripeCustomerId } from "@/lib/meditation-purchase"
+import { resolveInAccountCustomerId } from "@/lib/meditation-purchase"
 
 export const dynamic = "force-dynamic"
 
@@ -43,8 +43,10 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
 
   const stripe = getStripe()
 
-  // Customer existente o nuevo (para poder guardar la tarjeta).
-  let customerId = await getMemberStripeCustomerId(userId, user.email ?? null)
+  // Customer VÁLIDO en esta cuenta Stripe, o nuevo (para poder guardar la tarjeta).
+  // Si el customer sincronizado pertenece a otra cuenta, resolveInAccountCustomerId
+  // lo descarta y aquí creamos uno nuevo en ESTA cuenta.
+  let customerId = await resolveInAccountCustomerId(stripe, userId, user.email ?? null)
   if (!customerId) {
     const created = await stripe.customers.create({
       email: user.email ?? undefined,
