@@ -16,7 +16,8 @@
     "enabled": true
   },
   "r2_buckets": [
-    { "binding": "AVATARS_BUCKET", "bucket_name": "miembros" }
+    { "binding": "AVATARS_BUCKET", "bucket_name": "miembros" },
+    { "binding": "MEDIA", "bucket_name": "los144000-media" }
   ],
   "vars": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://kjozrcugsywykpuvuqzu.supabase.co",

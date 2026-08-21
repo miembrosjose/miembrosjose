@@ -23,7 +23,7 @@ import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
 import EpisodioArchivo from "@/components/EpisodioArchivo"
-import MeditacionCard from "@/components/MeditacionCard"
+import MeditationPlayer from "@/components/MeditationPlayer"
 import { getSeason1Archivo } from "../_lib/season1-archivos"
 import { getSeason1Meditaciones } from "../_lib/season1-meditaciones"
 import JerarquiaGalactica from "@/components/JerarquiaGalactica"
@@ -434,15 +434,15 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   return archivo ? <EpisodioArchivo content={archivo} /> : null
                 })()}
 
-                {/* Meditaciones complementarias (debajo del archivo). Gratuitas
-                    y/o de pago, según el episodio. */}
+                {/* Meditaciones complementarias (debajo del archivo). Incluidas
+                    (con membresía) y/o premium (bloqueadas), según el episodio. */}
                 {season.num === 1 && (() => {
                   const meds = getSeason1Meditaciones(playingEp.num, playingEp.title)
                   if (!meds.length) return null
                   return (
                     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 1.5rem 3.5rem" }}>
-                      {meds.map((m, i) => (
-                        <MeditacionCard key={i} data={m} />
+                      {meds.map((m) => (
+                        <MeditationPlayer key={m.id} meditation={m} />
                       ))}
                     </div>
                   )

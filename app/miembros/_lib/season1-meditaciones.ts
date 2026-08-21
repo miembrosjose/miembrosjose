@@ -1,35 +1,40 @@
-// Meditaciones complementarias por episodio (Temporada 1).
-// Se muestran DEBAJO del archivo del episodio, con <MeditacionCard>.
-//
-// Cada episodio puede tener varias: normalmente una gratuita y una de pago.
-// Los enlaces (mediaUrl para reproducir · checkoutUrl para comprar) se completan
-// cuando el creador los envía; sin enlace, la tarjeta queda "Disponible pronto".
+// Metadatos CLIENTE de las meditaciones por episodio (Temporada 1).
+// NO contiene el object key de R2 (eso vive solo en el servidor: lib/meditations.ts).
+// El audio se solicita al endpoint seguro /api/meditations/<id>/audio, que valida
+// sesión + membresía + (para premium) entitlement antes de servir el MP3.
 
-import type { MeditacionData } from "@/components/MeditacionCard"
+export type MeditationClient = {
+  /** Debe coincidir con el id del catálogo servidor (lib/meditations.ts). */
+  id: string
+  access: "included" | "premium"
+  title: string
+  subtitle?: string
+  /** Portada opcional (URL pública de imagen; el audio NUNCA es público). */
+  image?: string
+  /** Duración conocida en segundos (para mostrar en el estado bloqueado). */
+  durationSec?: number
+  /** Precio para premium (ej. "4.99"). */
+  price?: string
+}
 
 // ── Episodio 5 · El Nombre que Olvidaste ────────────────────────────────────
-const EP5_MEDITACIONES: MeditacionData[] = [
+const EP5_MEDITACIONES: MeditationClient[] = [
   {
-    variant: "free",
+    id: "s1e5-nombre-included",
+    access: "included",
     title: "Sintonía con el Nombre Cósmico",
-    description:
-      "Práctica breve para aquietar la mente, abrir el silencio interior y comenzar a percibir la vibración de tu nombre desde planos profundos.",
-    // image: "", // portada (opcional) — pendiente
-    // mediaUrl: "", // audio/video — pendiente
+    subtitle: "Aquieta la mente y abre el silencio interior para percibir tu vibración.",
   },
   {
-    variant: "paid",
+    id: "s1e5-nombre-premium",
+    access: "premium",
     title: "Activación del Nombre Cósmico",
-    description:
-      "Meditación guiada completa para recibir, vocalizar y afinar tu nombre cósmico. Trabaja el sonido de origen y la terminación del despertar, integrando la clave vibracional del alma.",
+    subtitle: "Práctica guiada completa: recibir, vocalizar y afinar tu nombre cósmico.",
     price: "4.99",
-    // image: "", // portada (opcional) — pendiente
-    // checkoutUrl: "", // enlace de compra (Stripe Payment Link) — pendiente
-    // mediaUrl: "", // audio/video (se reproduce tras desbloquear) — pendiente
   },
 ]
 
-export function getSeason1Meditaciones(num: number, title: string): MeditacionData[] {
+export function getSeason1Meditaciones(num: number, title: string): MeditationClient[] {
   const t = (title || "").toLowerCase()
   if (num === 5 || (/nombre/.test(t) && /olvid/.test(t))) return EP5_MEDITACIONES
   return []
