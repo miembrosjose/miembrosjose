@@ -1,123 +1,82 @@
 // Contenido de los "Archivos de Sergel" — Temporada 1, episodios 3 a 7.
-// Se renderiza con <EpisodioArchivo> como una COMPOSICIÓN VISUAL (arquitecturas
-// con flechas, tarjetas-nodo, columnas, chips, cajas) en la estética del Ep. 2.
+// Composición VISUAL compacta (estética del Ep. 2): frase breve de apertura,
+// arquitectura central protagonista, explicación compacta en tarjetas-nodo y
+// Registro de Sergel. Extensión similar al Ep. 2, para dejar espacio debajo a
+// recursos complementarios (meditaciones, ejercicios).
 //
-// Los episodios 1 y 2 NO se tocan (el 2 usa components/EpisodioBloque).
-// La selección es por nº de episodio + palabras clave del título.
+// Ep. 1 y 2 NO se tocan. Selección por nº de episodio + palabras clave.
 
 import type { ArchivoContent } from "@/components/EpisodioArchivo"
 
 const EP3_SEMILLA_ESTELAR: ArchivoContent = {
-  lead: "Toda semilla trae memoria del lugar donde fue originada, y revela su propósito cuando acepta germinar en la tierra que la recibe.",
+  lead: "Una semilla despierta cuando su origen se convierte en servicio sobre la Tierra.",
   sections: [
-    { kind: "arch", caption: "Proceso de germinación", stack: [
-      "MEMORIA ESTELAR", "↓", "ENCARNACIÓN HUMANA", "↓", "SERVICIO EN LA TIERRA",
-    ] },
+    { kind: "arch", caption: "Proceso de germinación", stack: ["ORIGEN", "→", "ENCARNACIÓN", "→", "SERVICIO"] },
     { kind: "nodes", items: [
-      { label: "Memoria estelar", text: "El alma conserva registros de otros sistemas, planos o civilizaciones de conciencia. Esa memoria se siente como nostalgia por el cielo, sensibilidad profunda o certeza interior de misión." },
-      { label: "Encarnación humana", text: "La semilla acepta cuerpo, emoción, familia, tiempo y olvido. La frecuencia estelar entra en la densidad para aprender a expresarse desde lo humano." },
-      { label: "Servicio en la Tierra", text: "La memoria madura al volverse presencia concreta: sanar, crear, cuidar, enseñar, acompañar, proteger la vida o sostener luz en medio del caos." },
-    ] },
-    { kind: "box", formula: "CIELO + TIERRA = GERMINACIÓN", lines: [
-      "El origen estelar entrega dirección.",
-      "La Tierra entrega raíz.",
-      "La misión nace cuando ambas memorias cooperan dentro del alma encarnada.",
+      { label: "Origen estelar", text: "Memoria de otros mundos, planos o civilizaciones de conciencia." },
+      { label: "Encarnación humana", text: "La frecuencia entra en cuerpo, emoción, tiempo y olvido para aprender desde la experiencia terrestre." },
+      { label: "Servicio", text: "La memoria madura cuando se transforma en acción: sanar, crear, cuidar, enseñar, acompañar o sostener luz." },
     ] },
   ],
-  registro: "Una semilla estelar despierta cuando su origen deja de ser identidad y se convierte en responsabilidad.",
-  cierre: "La memoria del cielo alcanza su forma más alta cuando aprende a servir en la Tierra.",
+  registro: "La semilla estelar alcanza madurez cuando deja de buscar solo de dónde viene y reconoce qué vino a sembrar.",
 }
 
 const EP4_HERIDA_DEL_OLVIDO: ArchivoContent = {
-  lead: "El alma aceptó olvidar para entrar en la experiencia humana con libertad real.",
+  lead: "El alma aceptó olvidar para elegir, amar y recordar desde la experiencia.",
   sections: [
-    { kind: "arch", caption: "Tecnología de encarnación", stack: [
-      "ACUERDO PREVIO", "↓", "VELO DEL OLVIDO", "↓", "RECORDACIÓN GRADUAL",
-    ] },
+    { kind: "arch", caption: "Tecnología de encarnación", stack: ["ACUERDO", "→", "VELO", "→", "RECORDACIÓN"] },
     { kind: "nodes", items: [
-      { label: "Acuerdo previo", text: "Antes de nacer, el alma observa vínculos, aprendizajes, desafíos, dones y rutas posibles. La vida se prepara como un campo exacto de experiencia." },
-      { label: "Velo del olvido", text: "La memoria se comprime para que el amor, la elección y el aprendizaje nazcan desde la libertad. El alma entra en la vida y se descubre desde dentro." },
-      { label: "Recordación gradual", text: "El recuerdo vuelve por capas: primero sensación, luego intuición, después comprensión y finalmente integración." },
+      { label: "Acuerdo previo", text: "Antes de nacer, el alma reconoce vínculos, aprendizajes, dones y rutas de expansión." },
+      { label: "Velo del olvido", text: "La memoria se comprime para que la vida sea real y cada elección nazca desde la libertad." },
+      { label: "Recordación gradual", text: "El recuerdo vuelve como sensación, intuición, comprensión e integración." },
     ] },
-    { kind: "chips", label: "La memoria permanece activa", chips: [
-      "Sueños", "Símbolos", "Talentos", "Miedos inexplicables", "Lugares que llaman", "Encuentros que despiertan", "Sensaciones de misión",
-    ] },
-    { kind: "note", text: "La herida del olvido se siente como nostalgia de algo esencial. Esa nostalgia señala memoria que espera madurez para abrirse." },
   ],
-  registro: "La herida del olvido sana cuando la encarnación se reconoce como el escenario elegido para recuperar la luz desde dentro de la experiencia.",
-  cierre: "El recuerdo auténtico llega cuando la conciencia está preparada para sostenerlo.",
+  registro: "La herida del olvido sana cuando la encarnación se reconoce como el escenario elegido para recuperar la luz desde dentro.",
 }
 
 const EP5_NOMBRE_QUE_OLVIDASTE: ArchivoContent = {
-  lead: "Antes de recibir un nombre humano, tu conciencia ya emitía una vibración reconocible dentro de la Creación.",
+  lead: "Tu nombre cósmico guarda el sonido de tu origen y la señal de tu despertar.",
   sections: [
-    { kind: "arch", caption: "Arquitectura de la clave personal", stack: [
-      "NOMBRE CÓSMICO", "=", "ORIGEN", "+", "DESPERTAR",
+    { kind: "arch", caption: "Clave vibracional del alma", stack: ["NOMBRE CÓSMICO", "=", "ORIGEN", "+", "DESPERTAR"] },
+    { kind: "twoCol", cols: [
+      { label: "Primera parte", text: "Sonido original que surge cuando la conciencia nace como ser individual dentro de la Creación." },
+      { label: "Terminación cósmica", text: "Las dos últimas letras indican el momento en que el alma despierta al camino espiritual." },
     ] },
     { kind: "twoCol", cols: [
-      { label: "Primera parte del nombre", text: "Sonido original del alma al nacer como ser individual dentro de la Creación. Aquí se registra la nota primordial, la firma vibracional y la frecuencia que permanece más allá de vidas, cuerpos e historias." },
-      { label: "Terminación cósmica", text: "Las dos últimas letras del nombre indican el momento del despertar espiritual. Señalan el punto en que la conciencia comienza a reconocer su camino, su misión y su retorno consciente." },
+      { label: "Trabajo lunar", sublabel: "Lunes · Miércoles · Viernes", text: "Interioriza, escucha, afina y recibe la vibración desde planos profundos." },
+      { label: "Trabajo solar", sublabel: "Martes · Jueves · Sábados", text: "Proyecta, afirma, irradia y ancla la vibración en la acción consciente." },
     ] },
-    { kind: "box", title: "Trabajo con el Nombre Cósmico" },
-    { kind: "twoCol", cols: [
-      { label: "Meditación lunar", sublabel: "Lunes · Miércoles · Viernes", lines: ["Interioriza.", "Escucha.", "Afina.", "Recibe la vibración desde planos profundos."] },
-      { label: "Meditación solar", sublabel: "Martes · Jueves · Sábados", lines: ["Proyecta.", "Afirma.", "Irradia.", "Ancla la vibración en la acción consciente."] },
-    ] },
-    { kind: "pairs", rows: [
-      ["Lunar recibe", "Solar proyecta"],
-      ["Lunar abre memoria", "Solar activa propósito"],
-    ] },
-    { kind: "note", text: "El nombre cósmico se recibe, se practica, se afina y se desarrolla. Su repetición consciente actúa como un diapasón interior: ordena la frecuencia, despierta memoria y alinea la identidad humana con la vibración esencial del alma." },
   ],
-  registro: "El nombre cósmico guarda el sonido de tu origen y la señal de tu despertar. Al recordarlo, la identidad humana comienza a alinearse con la memoria esencial del alma.",
-  cierre: "Tu nombre verdadero ordena el camino.",
+  registro: "El nombre cósmico se recibe, se practica y se afina. Cada repetición consciente ordena la frecuencia interna y acerca al alma a su memoria.",
 }
 
 const EP6_GRAN_MISION_TIERRA: ArchivoContent = {
   lead: "La Tierra fue preparada como un punto de integración dentro del Plan Cósmico.",
   sections: [
-    { kind: "arch", caption: "Síntesis planetaria", stack: [
-      "CUERPO", "+", "EMOCIÓN", "+", "MENTE", "+", "ESPÍRITU", "=", "SÍNTESIS PLANETARIA",
-    ] },
+    { kind: "arch", caption: "Síntesis planetaria", stack: ["CUERPO", "+", "EMOCIÓN", "+", "MENTE", "+", "ESPÍRITU"] },
     { kind: "nodes", items: [
       { label: "Cuerpo", text: "La conciencia aprende a expresarse dentro de la materia." },
-      { label: "Emoción", text: "El alma descubre vínculo, dolor, compasión, profundidad y amor." },
-      { label: "Mente", text: "La experiencia se vuelve comprensión, elección y responsabilidad." },
-      { label: "Espíritu", text: "La memoria superior desciende para actuar dentro de la vida cotidiana." },
+      { label: "Emoción", text: "El alma descubre vínculo, dolor, compasión y amor." },
+      { label: "Mente", text: "La experiencia se convierte en comprensión, elección y responsabilidad." },
+      { label: "Espíritu", text: "La memoria superior desciende para actuar en la vida cotidiana." },
     ] },
-    { kind: "box", title: "La Tierra como proyecto evolutivo", text: "Muchas civilizaciones desarrollaron mente, tecnología, organización o espiritualidad en líneas separadas. La Tierra reunió esas fuerzas en un mismo escenario para producir integración." },
-    { kind: "box", title: "La humanidad como sistema nervioso", text: "Cada pensamiento, emoción, conflicto, acto de amor o decisión colectiva genera información dentro del campo planetario. Cuando una persona sana, la Tierra registra una posibilidad nueva." },
-    { kind: "box", formula: "AMOR = TECNOLOGÍA EVOLUTIVA", lines: [
-      "Amor como capacidad de integrar opuestos sin destruirlos.",
-      "Amor como elección consciente dentro del conflicto.",
-      "Amor como respuesta que la Tierra entrega al cosmos.",
-    ] },
+    { kind: "box", formula: "AMOR = TECNOLOGÍA EVOLUTIVA", text: "Integrar opuestos sin destruirlos. Elegir conciencia dentro del conflicto. Convertir la experiencia humana en respuesta para el cosmos." },
   ],
-  registro: "La misión de la Tierra consiste en demostrar que la conciencia puede atravesar la densidad, recordar el amor y transformar la experiencia humana en una respuesta para el cosmos.",
-  cierre: "La Tierra enseña integración.",
+  registro: "La misión de la Tierra consiste en demostrar que la conciencia puede atravesar la densidad, recordar el amor y generar integración.",
 }
 
 const EP7_PROPOSITO_Y_DISCERNIMIENTO: ArchivoContent = {
-  lead: "El propósito de vida se revela cuando una persona aprende a reconocer la felicidad profunda de su alma.",
+  lead: "El propósito se revela cuando una persona reconoce la felicidad profunda de su alma.",
   sections: [
-    { kind: "arch", caption: "Ruta de coherencia", stack: [
-      "FELICIDAD DEL ALMA", "↓", "PROPÓSITO", "↓", "DISCERNIMIENTO",
-    ] },
+    { kind: "arch", caption: "Ruta de coherencia", stack: ["FELICIDAD DEL ALMA", "→", "PROPÓSITO", "→", "DISCERNIMIENTO"] },
     { kind: "nodes", items: [
-      { label: "Felicidad del alma", text: "Alegría profunda que aparece cuando la vida se alinea con la verdad interior. El alma se expande donde hay vida y se contrae donde existe desgaste." },
-      { label: "Propósito", text: "Dirección del alma expresada en servicio, creación, sanación, enseñanza, cuidado, arte, presencia o construcción de algo que devuelve vida." },
-      { label: "Discernimiento", text: "Capacidad de reconocer la vibración de cada señal por sus frutos: claridad, libertad, humildad, paz y responsabilidad." },
+      { label: "Felicidad del alma", text: "Alegría profunda que aparece cuando la vida se alinea con la verdad interior." },
+      { label: "Propósito", text: "Dirección expresada en servicio, creación, sanación, cuidado, enseñanza o presencia." },
+      { label: "Niño interior", text: "Memoria de la alegría original, antes del miedo, la aprobación y la programación." },
+      { label: "Discernimiento", text: "Pacto con la verdad interior para reconocer señales por sus frutos: claridad, humildad, libertad y coherencia." },
     ] },
-    { kind: "box", title: "El niño interior como puerta del propósito", text: "Jesús señaló la infancia como camino de regreso a la esencia. El niño interior conserva memoria de la alegría original: lo que emocionaba, lo que nacía sin esfuerzo, lo que el mundo intentó apagar y lo que el alma hacía antes de traicionarse para encajar." },
-    { kind: "twoCol", cols: [
-      { label: "Señal verdadera", chips: ["Paz profunda", "Claridad", "Humildad", "Libertad interior", "Responsabilidad"] },
-      { label: "Interferencia", chips: ["Urgencia", "Confusión", "Dependencia", "Superioridad", "Miedo", "Separación"] },
-    ] },
-    { kind: "triad", lines: ["El espíritu inspira.", "El alma traduce.", "La acción encarna."] },
-    { kind: "note", text: "El propósito se vuelve real cuando baja a decisiones concretas: cómo vivo, cómo amo, cómo trabajo, cómo cuido mi energía, cómo escucho mi cuerpo y cómo sostengo coherencia cuando la vida me prueba." },
   ],
-  registro: "El propósito florece cuando la felicidad deja de ser búsqueda externa y se convierte en una forma de vivir en verdad, coherencia y servicio.",
-  cierre: "La dicha del alma muestra el camino. El discernimiento sostiene el rumbo.",
+  registro: "El propósito florece cuando la felicidad deja de ser búsqueda externa y se convierte en una forma de vivir en verdad y servicio.",
 }
 
 /**

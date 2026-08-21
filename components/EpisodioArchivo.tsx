@@ -35,7 +35,8 @@ export type ArchivoContent = {
   lead: string;
   sections: ArchivoSection[];
   registro: string;
-  cierre: string;
+  /** Cierre breve opcional (algunos archivos terminan en el Registro). */
+  cierre?: string;
 };
 
 const OP_RE = /^[×+=→↓·−-]$/;
@@ -185,10 +186,12 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
             <p className="registro-text">{content.registro}</p>
           </div>
 
-          <div className="ea-cierre">
-            <span className="ea-cierre-mark" aria-hidden />
-            <p className="ea-cierre-text">{content.cierre}</p>
-          </div>
+          {content.cierre && (
+            <div className="ea-cierre">
+              <span className="ea-cierre-mark" aria-hidden />
+              <p className="ea-cierre-text">{content.cierre}</p>
+            </div>
+          )}
         </Reveal>
       </div>
 
@@ -218,8 +221,10 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         }
         :global(.ea-block .voice) { color: #7c8088; letter-spacing: 0.2em; }
 
+        /* Frase de apertura: breve y secundaria — NO titular. Mismo peso que un
+           párrafo del Ep. 2, para que la fórmula central sea la protagonista. */
         :global(.ea-block .ea-lead) {
-          font-size: 1.2rem; line-height: 1.7; color: #f0ece0; margin: 0 0 1.6rem;
+          font-size: 1.05rem; line-height: 1.6; color: #cfc9ba; margin: 0 0 1.6rem;
         }
 
         /* ── Arquitectura central (nodos + flechas/operadores) ─────────── */
