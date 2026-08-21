@@ -22,7 +22,8 @@ import {
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
-import EpisodioNombreCosmico from "@/components/EpisodioNombreCosmico"
+import EpisodioArchivo from "@/components/EpisodioArchivo"
+import { getSeason1Archivo } from "../_lib/season1-archivos"
 import JerarquiaGalactica from "@/components/JerarquiaGalactica"
 import AvisoIniciatico from "@/components/AvisoIniciatico"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
@@ -423,15 +424,13 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   <JerarquiaGalactica />
                 )}
 
-                {/* Cap. 5 · Temporada 1 "El Nombre que Olvidaste" — anclado por
-                    título (contiene "nombre" + "olvid") con el nº de episodio 5
-                    como red de seguridad, por si la mayúscula/puntuación del
-                    título guardado varía. Mismo lenguaje visual que el Cap. 2. */}
-                {season.num === 1 &&
-                  (playingEp.num === 5 ||
-                    (/nombre/i.test(playingEp.title) && /olvid/i.test(playingEp.title))) && (
-                    <EpisodioNombreCosmico />
-                  )}
+                {/* Archivos de Sergel — Temporada 1, episodios 3 a 7. Mismo
+                    lenguaje visual que el Cap. 2 (EpisodioBloque). Selección por
+                    nº de episodio + palabras clave del título. Ep. 1 y 2 intactos. */}
+                {season.num === 1 && (() => {
+                  const archivo = getSeason1Archivo(playingEp.num, playingEp.title)
+                  return archivo ? <EpisodioArchivo content={archivo} /> : null
+                })()}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
                 {playingEp.id && (
