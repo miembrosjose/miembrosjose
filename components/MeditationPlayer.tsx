@@ -45,8 +45,8 @@ const COMPLETE_TOLERANCE = 1.5;
 // ════════════════════════════════════════════════════════════════════════════
 // Reproductor de audio (incluida, o premium ya desbloqueada)
 // ════════════════════════════════════════════════════════════════════════════
-function AudioPlayer({ id, title, subtitle, image, badge }: {
-  id: string; title: string; subtitle?: string | null; image?: string; badge: string;
+function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
+  id: string; title: string; subtitle?: string | null; image?: string; badge: string; premium?: boolean;
 }) {
   const streamUrl = `/api/meditations/${encodeURIComponent(id)}/audio`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -166,7 +166,7 @@ function AudioPlayer({ id, title, subtitle, image, badge }: {
   return (
     <>
       {immersive && <div className="mp-dim" aria-hidden onClick={() => setImmersive(false)} />}
-      <div className={`mp-wrap ${immersive ? 'mp-immersive' : ''}`}>
+      <div className={`mp-wrap ${premium ? 'mp-premium' : ''} ${immersive ? 'mp-immersive' : ''}`}>
         <audio ref={audioRef} src={streamUrl} preload="metadata"
           onLoadedMetadata={onLoadedMeta} onTimeUpdate={onTimeUpdate} onPlay={onPlay} onPause={onPause}
           onWaiting={onWaiting} onPlaying={onPlaying} onEnded={onEnded} onError={onError} />
@@ -303,7 +303,7 @@ function PremiumGate({ meditation }: { meditation: MeditationClient }) {
         </div>
       );
     }
-    return <AudioPlayer id={id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación premium · Desbloqueada" />;
+    return <AudioPlayer premium id={id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación premium · Desbloqueada" />;
   }
 
   const priceLabel = money(priceCents, currency);
@@ -415,6 +415,32 @@ const styleTag = (
 
     .mp-error { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: #d8a0a0; font-size: 0.9rem; padding: 0.8rem 0; }
     .mp-retry { font-family: var(--font-mono, monospace); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: #cbb9e6; background: rgba(109,74,155,0.12); border: 1px solid #4A3170; border-radius: 8px; padding: 0.45rem 0.9rem; cursor: pointer; }
+
+    /* ── Variante PREMIUM (dorada) — reproductor de una meditación comprada.
+       Diferencia visualmente el contenido premium del incluido (violeta). ── */
+    .mp-premium { border-color: #3a2e18; }
+    .mp-premium .mp-cover--ph {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(201,168,107,0.26), transparent 55%),
+        radial-gradient(circle at 75% 70%, rgba(109,74,155,0.30), transparent 55%),
+        linear-gradient(135deg, #1a1330 0%, #0a0812 100%);
+    }
+    .mp-premium .mp-chip { color: #e6cf95; border-color: rgba(201,168,107,0.4); }
+    .mp-premium .mp-kicker { color: #b79554; }
+    .mp-premium .mp-play {
+      background: radial-gradient(circle at 50% 35%, #e6c574, #b8923f); color: #221a08; border-color: #d9b866;
+      box-shadow: 0 0 0 6px rgba(201,168,107,0.14), 0 10px 30px rgba(160,120,40,0.4);
+    }
+    .mp-premium .mp-play:hover { box-shadow: 0 0 0 8px rgba(201,168,107,0.2), 0 14px 36px rgba(160,120,40,0.5); }
+    .mp-premium .mp-range::-webkit-slider-runnable-track {
+      background: linear-gradient(90deg, #d9b866 0%, #d9b866 var(--mp-pct, 0%), rgba(243,246,250,0.12) var(--mp-pct, 0%), rgba(243,246,250,0.12) 100%);
+    }
+    .mp-premium .mp-range::-moz-range-progress { background: #d9b866; }
+    .mp-premium .mp-range::-webkit-slider-thumb { border-color: #c39f4e; box-shadow: 0 0 10px rgba(217,184,102,0.6); }
+    .mp-premium .mp-range::-moz-range-thumb { border-color: #c39f4e; }
+    .mp-premium .mp-resume { color: #e6cf95; background: rgba(201,168,107,0.1); border-color: #b79554; }
+    .mp-premium .mp-resume:hover { background: rgba(201,168,107,0.2); }
+    .mp-premium .mp-immersiveBtn:hover, .mp-premium .mp-immersiveBtn.is-on { color: #e6cf95; border-color: #b79554; }
 
     @keyframes mpSpin { to { transform: rotate(360deg); } }
     @keyframes mpFade { from { opacity: 0; } to { opacity: 1; } }
