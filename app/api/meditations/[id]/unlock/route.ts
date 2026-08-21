@@ -80,28 +80,29 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   }
 
   try {
-    const pi = await stripe.paymentIntents.create(
-      {
-        amount: med.priceCents,
-        currency: med.currency,
-        customer: customerId,
-        payment_method: pm.paymentMethodId,
-        // Config IDÉNTICA al flujo probado /api/buy-product: cobro directo de la
-        // tarjeta guardada. off_session evita el requisito de return_url (no hay
-        // redirección posible). Si la tarjeta exige 3DS, Stripe lanza
-        // 'authentication_required' → el catch devuelve needs_payment_method →
-        // el usuario completa la autenticación en el Payment Element.
-        off_session: true,
-        confirm: true,
-        description: `Meditación premium: ${med.title}`,
-        metadata: {
-          type: "premium_meditation",
-          user_id: userId,
-          meditation_id: med.id,
-        },
+    // Config IDÉNTICA al flujo probado /api/buy-product: cobro directo de la
+    // tarjeta guardada. off_session evita el requisito de return_url. Si la
+    // tarjeta exige 3DS, Stripe lanza 'authentication_required' → el catch
+    // devuelve needs_payment_method → el usuario completa en el Payment Element.
+    //
+    // Sin idempotencyKey fija (igual que buy-product): reintentar con parámetros
+    // distintos rompía la clave. El doble cobro se evita con: botón deshabilitado
+    // en el front, verificación de entitlement previa (already_owned) y
+    // unique(user_id, meditation_id) en la DB.
+    const pi = await stripe.paymentIntents.create({
+      amount: med.priceCents,
+      currency: med.currency,
+      customer: customerId,
+      payment_method: pm.paymentMethodId,
+      off_session: true,
+      confirm: true,
+      description: `Meditación premium: ${med.title}`,
+      metadata: {
+        type: "premium_meditation",
+        user_id: userId,
+        meditation_id: med.id,
       },
-      { idempotencyKey: `medunlock_${userId}_${med.id}` },
-    )
+    })
 
     if (pi.status === "succeeded") {
       await registerMeditationEntitlement({
