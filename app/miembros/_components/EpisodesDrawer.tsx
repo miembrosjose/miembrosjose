@@ -22,6 +22,7 @@ import {
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
+import EpisodioNombreCosmico from "@/components/EpisodioNombreCosmico"
 import JerarquiaGalactica from "@/components/JerarquiaGalactica"
 import AvisoIniciatico from "@/components/AvisoIniciatico"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
@@ -421,6 +422,16 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                 {playingEp.title === "La jerarquía galáctica" && (
                   <JerarquiaGalactica />
                 )}
+
+                {/* Cap. 5 · Temporada 1 "El Nombre que Olvidaste" — anclado por
+                    título (contiene "nombre" + "olvid") con el nº de episodio 5
+                    como red de seguridad, por si la mayúscula/puntuación del
+                    título guardado varía. Mismo lenguaje visual que el Cap. 2. */}
+                {season.num === 1 &&
+                  (playingEp.num === 5 ||
+                    (/nombre/i.test(playingEp.title) && /olvid/i.test(playingEp.title))) && (
+                    <EpisodioNombreCosmico />
+                  )}
 
                 {/* BLOCKS abaixo do vídeo (admin-editáveis). */}
                 {playingEp.id && (
