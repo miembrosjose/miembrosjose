@@ -86,12 +86,13 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
         currency: med.currency,
         customer: customerId,
         payment_method: pm.paymentMethodId,
-        off_session: false, // on_session: usuario presente
+        // Config IDÉNTICA al flujo probado /api/buy-product: cobro directo de la
+        // tarjeta guardada. off_session evita el requisito de return_url (no hay
+        // redirección posible). Si la tarjeta exige 3DS, Stripe lanza
+        // 'authentication_required' → el catch devuelve needs_payment_method →
+        // el usuario completa la autenticación en el Payment Element.
+        off_session: true,
         confirm: true,
-        // Solo métodos sin redirección (la tarjeta guardada). Evita el requisito
-        // de return_url cuando la cuenta tiene métodos con redirect habilitados.
-        // El 3DS on-session se completa vía Stripe.js (requires_action).
-        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
         description: `Meditación premium: ${med.title}`,
         metadata: {
           type: "premium_meditation",
