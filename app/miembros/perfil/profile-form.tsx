@@ -113,7 +113,7 @@ export function ProfileForm({
   const [featuredStarId, setFeaturedStarId] = useState<string | null>(initialFeaturedStarId)
   const [featuredFlameId, setFeaturedFlameId] = useState<string | null>(initialFeaturedFlameId)
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set())
-  const { refresh: refreshAuth } = useAuth()
+  const { refresh: refreshAuth, patchMetadata } = useAuth()
 
   const [nameState, setNameState] = useState<State>({ type: "idle" })
   const [avatarState, setAvatarState] = useState<State>({ type: "idle" })
@@ -184,6 +184,7 @@ export function ProfileForm({
     if (isStarPending) return
     const previous = featuredStarId
     setFeaturedStarId(starId)
+    patchMetadata({ featured_star_id: starId }) // refleja al instante en navbar/perfil
     startStar(async () => {
       try {
         setStarState({ type: "saving" })
@@ -199,6 +200,7 @@ export function ProfileForm({
         refreshAuth().catch(() => {})
       } catch (e) {
         setFeaturedStarId(previous)
+        patchMetadata({ featured_star_id: previous })
         setStarState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }
     })
@@ -208,6 +210,7 @@ export function ProfileForm({
     if (isFlamePending) return
     const previous = featuredFlameId
     setFeaturedFlameId(flameId)
+    patchMetadata({ featured_flame_id: flameId }) // refleja al instante en navbar/perfil
     startFlame(async () => {
       try {
         setFlameState({ type: "saving" })
@@ -223,6 +226,7 @@ export function ProfileForm({
         refreshAuth().catch(() => {})
       } catch (e) {
         setFeaturedFlameId(previous)
+        patchMetadata({ featured_flame_id: previous })
         setFlameState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }
     })
@@ -232,6 +236,7 @@ export function ProfileForm({
     if (isBadgePending) return
     const previous = featuredBadgeId
     setFeaturedBadgeId(badgeId)
+    patchMetadata({ featured_badge_id: badgeId }) // refleja al instante en navbar/perfil
     startBadge(async () => {
       try {
         setBadgeState({ type: "saving" })
@@ -248,6 +253,7 @@ export function ProfileForm({
         refreshAuth().catch(() => {})
       } catch (e) {
         setFeaturedBadgeId(previous)
+        patchMetadata({ featured_badge_id: previous })
         setBadgeState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }
     })

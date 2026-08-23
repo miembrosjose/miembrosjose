@@ -6,6 +6,15 @@
   min-height: 100dvh;
 }
 
+/* Vistas que empiezan arriba (perfil, feed, comunidad, etc. — NO la home, que
+ * tiene el Hero): en móvil el navbar fijo (~64px) tapaba el encabezado. Se les
+ * añade un offset superior en pantallas pequeñas para bajar el título. */
+@media (max-width: 768px) {
+  .viewTopOffset {
+    padding-top: 2.75rem;
+  }
+}
+
 .view {
   animation: viewFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }

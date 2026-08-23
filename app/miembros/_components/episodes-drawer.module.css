@@ -13,6 +13,9 @@
   display: block;
   padding: 2rem 1rem;
   overflow-y: auto;
+  /* Evita que el scroll táctil "encadene" al fondo cuando llega al tope. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   animation: drawerFade 0.3s ease;
   color: white;
 }
@@ -435,6 +438,8 @@
   z-index: 9100;
   background: var(--bg-deep);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   animation: drawerFade 0.3s ease;
@@ -671,6 +676,22 @@
     box-shadow: 0 0 36px rgba(109, 74, 155, 0.55),
       inset 0 0 0 1px rgba(109, 74, 155, 0.45);
   }
+}
+
+/* Variante "Siguiente" (siguiente episodio) — resaltada en violeta para que
+ * destaque sobre "Anterior". Aplica en todos los episodios con episodio siguiente. */
+.playerNavBtnNext:not(:disabled) {
+  background: rgba(109, 74, 155, 0.14);
+  border-color: rgba(109, 74, 155, 0.55);
+  box-shadow: 0 0 18px rgba(109, 74, 155, 0.22), inset 0 0 0 1px rgba(109, 74, 155, 0.12);
+}
+.playerNavBtnNext:not(:disabled):hover {
+  background: rgba(109, 74, 155, 0.24);
+  border-color: var(--accent-red);
+  box-shadow: 0 0 28px rgba(109, 74, 155, 0.4);
+}
+.playerNavBtnNext:not(:disabled) small {
+  color: rgba(203, 185, 230, 0.95);
 }
 
 .playerNavBtn small {

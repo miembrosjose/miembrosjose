@@ -81,13 +81,36 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
     return () => window.removeEventListener("keydown", onKey)
   }, [season, playingEp, onClose])
 
-  // Trava scroll do body
+  // Trava scroll do body — versión iOS-safe. En iOS Safari, `overflow:hidden`
+  // en el body NO impide el scroll táctil del fondo (el usuario "mueve la
+  // pantalla de fondo"). Se fija el body con position:fixed + top negativo para
+  // conservar la posición, y se restaura al cerrar.
   useEffect(() => {
     if (!season) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = "hidden"
+    const scrollY = window.scrollY
+    const body = document.body
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    }
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+    body.style.overflow = "hidden"
     return () => {
-      document.body.style.overflow = prev
+      body.style.position = prev.position
+      body.style.top = prev.top
+      body.style.left = prev.left
+      body.style.right = prev.right
+      body.style.width = prev.width
+      body.style.overflow = prev.overflow
+      window.scrollTo(0, scrollY)
     }
   }, [season])
 
@@ -495,7 +518,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   ) : (
                     <button
                       type="button"
-                      className={styles.playerNavBtn}
+                      className={`${styles.playerNavBtn} ${styles.playerNavBtnNext}`}
                       onClick={() => navigate(1)}
                       disabled={!nextEp?.videoId}
                       style={{ textAlign: "right" }}

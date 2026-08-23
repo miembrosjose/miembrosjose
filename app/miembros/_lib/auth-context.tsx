@@ -26,6 +26,10 @@ type AuthState = {
    *  user_metadata (ex: featured_badge_id, avatar_url, full_name) pra propagar
    *  imediatamente em todos consumidores do useAuth (Navbar, etc). */
   refresh: () => Promise<void>
+  /** Atualização OTIMISTA do user_metadata local (sem round-trip). Reflete
+   *  imediatamente em Navbar/perfil ao trocar insignia/estrella/llama;
+   *  o refresh() posterior confirma contra o servidor. */
+  patchMetadata: (partial: Record<string, unknown>) => void
 }
 
 const AuthContext = createContext<AuthState>({
@@ -33,6 +37,7 @@ const AuthContext = createContext<AuthState>({
   isLoading: true,
   isAdmin: false,
   refresh: async () => {},
+  patchMetadata: () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -48,6 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.refreshSession().catch(() => {})
     const { data } = await supabase.auth.getUser()
     setUser(data.user ?? null)
+  }, [])
+
+  const patchMetadata = useCallback((partial: Record<string, unknown>) => {
+    setUser((prev) =>
+      prev
+        ? ({ ...prev, user_metadata: { ...(prev.user_metadata || {}), ...partial } } as User)
+        : prev,
+    )
   }, [])
 
   useEffect(() => {
@@ -81,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAdmin, refresh }}>
+    <AuthContext.Provider value={{ user, isLoading, isAdmin, refresh, patchMetadata }}>
       {children}
     </AuthContext.Provider>
   )

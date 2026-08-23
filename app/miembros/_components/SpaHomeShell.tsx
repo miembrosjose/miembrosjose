@@ -351,7 +351,7 @@ export function SpaHomeShell() {
         <>
           <Navbar />
 
-          <div className={styles.viewWrap}>
+          <div className={`${styles.viewWrap} ${view !== "inicio" ? styles.viewTopOffset : ""}`}>
             {view === "inicio" && (
               <ViewInicio
                 onOpenSeason={(s) => setOpenSeason(s)}
