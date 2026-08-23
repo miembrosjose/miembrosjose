@@ -24,6 +24,7 @@ const EP5_MEDITACIONES: MeditationClient[] = [
     access: "included",
     title: "Sintonía con el Nombre Cósmico",
     subtitle: "Aquieta la mente y abre el silencio interior para percibir tu vibración.",
+    image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/Gu%C3%ADas%20foto%20meditaciones/Sergel-included.jpg",
   },
   {
     id: "s1e5-nombre-premium",
@@ -31,6 +32,7 @@ const EP5_MEDITACIONES: MeditationClient[] = [
     title: "Activación del Nombre Cósmico",
     subtitle: "Práctica guiada completa: recibir, vocalizar y afinar tu nombre cósmico.",
     price: "4.99",
+    image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/Gu%C3%ADas%20foto%20meditaciones/Sergel-premium.jpg",
   },
 ]
 

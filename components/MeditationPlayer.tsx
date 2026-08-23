@@ -172,6 +172,7 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
           onWaiting={onWaiting} onPlaying={onPlaying} onEnded={onEnded} onError={onError} />
 
         <div className={`mp-cover ${image ? '' : 'mp-cover--ph'} ${isPlaying ? 'mp-breathe' : ''}`} style={coverStyle}>
+          <span className="mp-cosmic" aria-hidden />
           <span className="mp-chip">{completed ? 'Práctica completada' : badge}</span>
           <span className="mp-coverFade" aria-hidden />
         </div>
@@ -312,6 +313,7 @@ function PremiumGate({ meditation }: { meditation: MeditationClient }) {
   return (
     <div className="mp-wrap mp-locked">
       <div className={`mp-cover mp-cover--paid ${meditation.image ? '' : 'mp-cover--ph'}`} style={coverStyle}>
+        <span className="mp-cosmic" aria-hidden />
         <span className="mp-lockChip"><Lock size={12} /> Meditación especial</span>
         <span className="mp-coverFade" aria-hidden />
       </div>
@@ -367,6 +369,29 @@ const styleTag = (
     .mp-cover--paid.mp-cover--ph { background: radial-gradient(circle at 30% 25%, rgba(201,168,107,0.26), transparent 55%), radial-gradient(circle at 75% 70%, rgba(109,74,155,0.35), transparent 55%), linear-gradient(135deg, #1a1330 0%, #0a0812 100%); }
     .mp-breathe { animation: mpBreathe 7s ease-in-out infinite; }
     .mp-coverFade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 45%, rgba(13,13,21,0.85) 92%, #0d0d15 100%); }
+    /* Velo cósmico sobre la foto: resplandor superior + estrellas dispersas.
+       Sutil, para no tapar a Sergel. Violeta (incluida) / dorado (premium). */
+    .mp-cosmic {
+      position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      background:
+        radial-gradient(circle at 50% 4%, rgba(138,99,184,0.28), transparent 42%),
+        radial-gradient(1px 1px at 16% 22%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1px 1px at 83% 15%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(1.4px 1.4px at 68% 28%, rgba(203,185,230,0.75), transparent),
+        radial-gradient(1px 1px at 32% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.2px 1.2px at 91% 46%, rgba(203,185,230,0.6), transparent),
+        radial-gradient(1px 1px at 47% 18%, rgba(255,255,255,0.5), transparent);
+    }
+    .mp-premium .mp-cosmic, .mp-cover--paid .mp-cosmic {
+      background:
+        radial-gradient(circle at 50% 4%, rgba(217,184,102,0.26), transparent 42%),
+        radial-gradient(1px 1px at 16% 22%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1px 1px at 83% 15%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(1.4px 1.4px at 68% 28%, rgba(230,207,149,0.75), transparent),
+        radial-gradient(1px 1px at 32% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.2px 1.2px at 91% 46%, rgba(230,207,149,0.6), transparent),
+        radial-gradient(1px 1px at 47% 18%, rgba(255,255,255,0.5), transparent);
+    }
     .mp-chip, .mp-lockChip { position: absolute; top: 0.9rem; left: 0.9rem; z-index: 2; display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-mono, monospace); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.35rem 0.7rem; border-radius: 999px; background: rgba(10,8,18,0.72); border: 1px solid rgba(243,246,250,0.14); color: #cbb9e6; backdrop-filter: blur(4px); }
     .mp-lockChip { color: #e6cf95; border-color: rgba(201,168,107,0.4); }
 
