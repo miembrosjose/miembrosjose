@@ -120,7 +120,7 @@ export function OnlinePresenceProvider({ children }: { children: React.ReactNode
         avatar_url: meta.avatar_url || null,
         initials: buildAvatarLetters(fullName),
         level,
-        badge_id: isAdmin ? "admin_seal" : meta.featured_badge_id || "welcome",
+        badge_id: meta.featured_badge_id || (isAdmin ? "admin_seal" : "welcome"),
         star_id: meta.featured_star_id || null,
         flame_id: meta.featured_flame_id || null,
         is_admin: isAdmin,

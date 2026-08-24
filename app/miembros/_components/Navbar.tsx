@@ -98,11 +98,13 @@ export function Navbar() {
   const fullName = meta.full_name || meta.name || user?.email?.split("@")[0] || "Miembro"
   const initials = buildAvatarLetters(fullName)
   const avatarUrl = (typeof meta.avatar_url === "string" && meta.avatar_url) || null
-  // Admin SEMPRE mostra admin_seal. Outros users: featured_badge_id (escolhida
-  // em /perfil → BadgeSection) ou fallback "welcome" (todo user tem por default).
-  const featuredBadgeId = isAdmin
-    ? "admin_seal"
-    : (typeof meta.featured_badge_id === "string" && meta.featured_badge_id) || "welcome"
+  // La insignia ELEGIDA por el usuario (featured_badge_id) tiene prioridad.
+  // Si no eligió ninguna, el default es "admin_seal" para admin y "welcome" para
+  // el resto. Así, al cambiar la insignia en /perfil, el avatar del navbar se
+  // actualiza al instante (antes el admin quedaba fijo en admin_seal).
+  const featuredBadgeId =
+    (typeof meta.featured_badge_id === "string" && meta.featured_badge_id) ||
+    (isAdmin ? "admin_seal" : "welcome")
   const featuredStarId =
     (typeof meta.featured_star_id === "string" && meta.featured_star_id) || null
   const featuredFlameId =
