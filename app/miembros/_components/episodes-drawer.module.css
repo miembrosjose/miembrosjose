@@ -707,36 +707,6 @@
   font-weight: 500;
 }
 
-/* Botón manual "Marcar como completado" (solo para iframes no detectables). */
-.manualComplete {
-  width: 100%;
-  max-width: var(--player-width);
-  margin: 0.75rem auto 0;
-}
-.manualCompleteBtn {
-  width: 100%;
-  padding: 0.9rem 1.25rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #cbb9e6;
-  background: rgba(109, 74, 155, 0.14);
-  border: 1px solid #4A3170;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-.manualCompleteBtn:hover:not(:disabled) {
-  background: rgba(109, 74, 155, 0.24);
-  border-color: var(--accent-red);
-}
-.manualCompleteBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  color: #7c8088;
-}
-
 @media (max-width: 768px) {
   .playerHeader,
   .playerIntro,
