@@ -14,6 +14,7 @@ import {
   SEASONS,
   getEpisodeProgress,
   isEpisodeUnlocked,
+  isSeasonComplete,
   markEpisodeWatched,
   getWatchedCount,
   type EpisodeProgress,
@@ -50,10 +51,24 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
   // Compuerta del aviso iniciático (Episodio 2): se reinicia al cambiar de episodio.
   const [gatePassed, setGatePassed] = useState(false)
+  // Completado por fin-de-video: si el <video> es accesible (true) se detecta el
+  // final automáticamente; si es iframe (false) se ofrece un botón manual con
+  // tiempo mínimo. Se reinicia al cambiar de episodio.
+  const [videoDetectable, setVideoDetectable] = useState<boolean | null>(null)
+  const [manualEnabled, setManualEnabled] = useState(false)
   const playerScrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     setGatePassed(false)
   }, [playingEp?.id])
+  // Reinicia el estado de completado al cambiar de episodio. El botón manual
+  // (para iframes) se habilita tras un tiempo mínimo de visionado.
+  useEffect(() => {
+    setVideoDetectable(null)
+    setManualEnabled(false)
+    if (!playingEp) return
+    const t = window.setTimeout(() => setManualEnabled(true), 45000) // 45s
+    return () => window.clearTimeout(t)
+  }, [playingEp?.id, playingEp?.num])
   // Al pasar la compuerta, subir al inicio del episodio (el video), no dejarlo abajo.
   useEffect(() => {
     if (!gatePassed) return
@@ -142,13 +157,19 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
     setPlayingEp(ep)
   }
 
+  // Marca el episodio ACTUAL como completado. SOLO se llama cuando el video
+  // llega al final (auto, video accesible) o el usuario pulsa el botón manual
+  // (iframes). Ya NO se marca por abrir/cerrar el episodio.
+  function markCurrentComplete() {
+    if (!season || !playingEp) return
+    if (progress[`s${season.num}_e${playingEp.num}`]) return // ya visto
+    markEpisodeWatched(season.num, playingEp.num)
+    setProgress(getEpisodeProgress())
+    checkEpisodeAchievements(season.num, episodes)
+  }
+
   function closePlayer() {
-    if (playingEp) {
-      // Marca assistido ao fechar
-      markEpisodeWatched(season!.num, playingEp.num)
-      setProgress(getEpisodeProgress())
-      checkEpisodeAchievements(season!.num, episodes)
-    }
+    // Cerrar ya NO marca el episodio como visto (antes bastaba entrar y salir).
     setPlayingEp(null)
   }
 
@@ -156,10 +177,12 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
     if (!playingEp) return
     const target = episodes.find((e) => e.num === playingEp.num + direction)
     if (!target?.videoId) return
-    // Marca o atual como visto antes de mover
-    markEpisodeWatched(season!.num, playingEp.num)
-    setProgress(getEpisodeProgress())
-    checkEpisodeAchievements(season!.num, episodes)
+    // Al avanzar, respeta el gating: el siguiente episodio solo se abre si el
+    // actual está completado (video terminado).
+    if (direction === 1 && !isEpisodeUnlocked(season!.num, target.num, progress)) {
+      alert("Termina de ver este episodio para desbloquear el siguiente.")
+      return
+    }
     setPlayingEp(target)
   }
 
@@ -177,11 +200,12 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
 
   function handleAdvanceSeason() {
     if (!playingEp || !season || !nextSeasonForAdvance) return
-    // Marca episódio atual como assistido (libera próxima temporada via
-    // PROGRESS_CHANGED_EVENT que o SeasonsCarousel escuta).
-    markEpisodeWatched(season.num, playingEp.num)
-    setProgress(getEpisodeProgress())
-    checkEpisodeAchievements(season.num, episodes)
+    // Solo avanza si la temporada actual está completa (todos sus episodios
+    // terminados). Así no se abre una temporada bloqueada saltándose el gate.
+    if (!isSeasonComplete(season, progress)) {
+      alert("Completa todos los episodios de esta temporada para avanzar a la siguiente.")
+      return
+    }
     setPlayingEp(null)
     if (onAdvanceSeason) {
       onAdvanceSeason(nextSeasonForAdvance)
@@ -373,7 +397,12 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                   />
                 )}
 
-                <LazyVideo className={styles.playerVideoWrap}>
+                <LazyVideo
+                  key={playingEp.id || playingEp.num}
+                  className={styles.playerVideoWrap}
+                  onComplete={markCurrentComplete}
+                  onDetectResult={(found) => setVideoDetectable(found)}
+                >
                   {(() => {
                     const raw = playingEp.videoId
                     // 0. Snippet del web component <vturb-smartplayer> → player
@@ -484,6 +513,27 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                     dangerouslySetInnerHTML={{ __html: playingEp.notes }}
                   />
                 )}
+
+                {/* Botón manual de completado — SOLO cuando el video es un
+                    iframe externo (no se puede detectar el final). Se habilita
+                    tras un tiempo mínimo de visionado. Para video accesible el
+                    completado es automático al terminar. */}
+                {videoDetectable === false &&
+                  playingEp &&
+                  !progress[`s${season.num}_e${playingEp.num}`] && (
+                    <div className={styles.manualComplete}>
+                      <button
+                        type="button"
+                        className={styles.manualCompleteBtn}
+                        disabled={!manualEnabled}
+                        onClick={markCurrentComplete}
+                      >
+                        {manualEnabled
+                          ? "✓ Marcar episodio como completado"
+                          : "Mira el episodio para habilitar el completado…"}
+                      </button>
+                    </div>
+                  )}
 
                 <div className={styles.playerNav}>
                   <button
@@ -674,10 +724,77 @@ function findVideoDeep(root: ParentNode | null): HTMLVideoElement | null {
   return null
 }
 
-function LazyVideo({ className, children }: { className?: string; children: ReactNode }) {
+function LazyVideo({
+  className,
+  children,
+  onComplete,
+  onDetectResult,
+}: {
+  className?: string
+  children: ReactNode
+  /** Se dispara UNA vez cuando el <video> accesible llega a ~90% o termina. */
+  onComplete?: () => void
+  /** Informa si se detectó un <video> accesible (true) o no —iframe— (false). */
+  onDetectResult?: (found: boolean) => void
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const [show, setShow] = useState(false)
   const [isFs, setIsFs] = useState(false)
+
+  // Detección de "terminó de ver el video": busca el <video> interno (incluye
+  // shadow DOM del player VTurb) y marca completado al llegar a ~90% o al 'ended'.
+  // En iframes externos no hay <video> accesible → reporta onDetectResult(false)
+  // para que el drawer ofrezca el botón manual.
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
+  const onDetectRef = useRef(onDetectResult)
+  onDetectRef.current = onDetectResult
+  useEffect(() => {
+    if (!show) return
+    let done = false
+    let attached: HTMLVideoElement | null = null
+    let reported = false
+    const COMPLETE_RATIO = 0.9
+    const onTime = () => {
+      if (done || !attached) return
+      if (attached.duration > 0 && attached.currentTime >= attached.duration * COMPLETE_RATIO) {
+        done = true
+        onCompleteRef.current?.()
+      }
+    }
+    const onEnded = () => {
+      if (done) return
+      done = true
+      onCompleteRef.current?.()
+    }
+    const poll = window.setInterval(() => {
+      const v = findVideoDeep(ref.current)
+      if (v && v !== attached) {
+        attached = v
+        v.addEventListener("timeupdate", onTime)
+        v.addEventListener("ended", onEnded)
+        if (!reported) {
+          reported = true
+          onDetectRef.current?.(true)
+        }
+      }
+    }, 1000)
+    // Si tras 5s no hay <video> accesible → es un iframe.
+    const detectTimeout = window.setTimeout(() => {
+      if (!reported) {
+        reported = true
+        onDetectRef.current?.(false)
+      }
+    }, 5000)
+    return () => {
+      window.clearInterval(poll)
+      window.clearTimeout(detectTimeout)
+      if (attached) {
+        attached.removeEventListener("timeupdate", onTime)
+        attached.removeEventListener("ended", onEnded)
+      }
+    }
+  }, [show])
   // "Pantalla completa" por CSS para iOS (Safari no permite fullscreen real de
   // un contenedor; solo del <video> nativo, que VTurb no siempre expone).
   const [pseudoFs, setPseudoFs] = useState(false)
