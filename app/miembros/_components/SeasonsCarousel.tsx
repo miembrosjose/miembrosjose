@@ -62,7 +62,7 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
       openExternal(season.checkout_url)
       return
     }
-    if (!isSeasonUnlocked(season, progress)) {
+    if (!isSeasonUnlocked(season, progress, seasons)) {
       onLockedClick?.(season)
       return
     }
@@ -72,7 +72,7 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
   return (
     <div className={styles.carousel}>
       {seasons.map((season) => {
-        const unlocked = isSeasonUnlocked(season, progress)
+        const unlocked = isSeasonUnlocked(season, progress, seasons)
         const watched = getWatchedCount(season, progress)
         const total = season.episodes
         const pct = total > 0 ? Math.round((watched / total) * 100) : 0

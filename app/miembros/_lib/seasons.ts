@@ -199,15 +199,36 @@ export function isSeasonComplete(season: Season, progress: EpisodeProgress): boo
   return true
 }
 
-// Gate de unlock removido — todas as temporadas e episódios ficam livres.
-// O cliente quer acesso aberto, sem condicionar conclusão da temporada
-// anterior. Mantém a assinatura por compatibilidade com chamadores.
-export function isSeasonUnlocked(_season: Season, _progress: EpisodeProgress): boolean {
-  return true
+// Gate de progreso: una temporada se desbloquea al completar la anterior; un
+// episodio se desbloquea al completar el episodio anterior.
+//
+// isSeasonUnlocked necesita la LISTA de temporadas para localizar la anterior
+// por número. Si no se pasa (o vacía), no bloquea (fallback seguro).
+export function isSeasonUnlocked(
+  season: Season,
+  progress: EpisodeProgress,
+  allSeasons?: Season[],
+): boolean {
+  if (season.external) return true // Comunidad (T5) siempre accesible
+  if (!allSeasons || allSeasons.length === 0) return true
+  const ordered = allSeasons
+    .filter((s) => !s.external)
+    .sort((a, b) => a.num - b.num)
+  const idx = ordered.findIndex((s) => s.num === season.num)
+  if (idx <= 0) return true // primera temporada → siempre desbloqueada
+  const prev = ordered[idx - 1]
+  if (!prev || prev.episodes === 0) return true // temporada anterior vacía no bloquea
+  return isSeasonComplete(prev, progress)
 }
 
-export function isEpisodeUnlocked(_seasonNum: number, _episodeNum: number, _progress: EpisodeProgress): boolean {
-  return true
+// Episodio desbloqueado si es el primero, o si el episodio anterior está visto.
+export function isEpisodeUnlocked(
+  seasonNum: number,
+  episodeNum: number,
+  progress: EpisodeProgress,
+): boolean {
+  if (episodeNum <= 1) return true
+  return !!progress[`s${seasonNum}_e${episodeNum - 1}`]
 }
 
 export function getWatchedCount(season: Season, progress: EpisodeProgress): number {

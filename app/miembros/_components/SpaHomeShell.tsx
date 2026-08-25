@@ -478,7 +478,13 @@ function ViewInicio({
         </header>
         <SeasonsCarousel
           onOpenSeason={onOpenSeason}
-          onLockedClick={() => undefined}
+          onLockedClick={(s) => {
+            if (typeof window !== "undefined") {
+              window.alert(
+                `Completa la Temporada ${s.num - 1} para desbloquear esta temporada.`,
+              )
+            }
+          }}
         />
       </section>
 

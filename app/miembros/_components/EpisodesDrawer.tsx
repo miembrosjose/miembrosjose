@@ -275,7 +275,7 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
                           className={`${styles.episodeRow} ${unlocked ? "" : styles.locked}`}
                           onClick={() => {
                             if (!unlocked) {
-                              alert("Completa la clase anterior para desbloquear esta")
+                              alert("Completa el episodio anterior para desbloquear este.")
                               return
                             }
                             openPlayer(ep)
