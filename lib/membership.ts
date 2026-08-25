@@ -36,14 +36,20 @@ export async function getMembership(supabase: SupabaseServer): Promise<Membershi
   // Membro normal: RLS devuelve solo su propia fila.
   const { data: sub } = await supabase
     .from("member_subscriptions")
-    .select("status")
+    .select("status, current_period_end")
     .maybeSingle()
+
+  // Igual que el gate (auth-server): activa, o cancelada al final del período
+  // con acceso vigente hasta current_period_end.
+  const s = sub as { status?: string; current_period_end?: string | null } | null
+  const periodEndMs = s?.current_period_end ? new Date(s.current_period_end).getTime() : 0
+  const active = s?.status === "active" || (s?.status === "canceled" && periodEndMs > Date.now())
 
   return {
     userId: user.id,
     authenticated: true,
     isAdmin: false,
-    active: sub?.status === "active",
+    active,
   }
 }
 

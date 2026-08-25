@@ -52,11 +52,23 @@ export async function requireMiembrosAuth(): Promise<MiembrosAuthResult> {
   //    só retorna a linha cujo email == email da sessão.
   const { data: sub } = await supabase
     .from("member_subscriptions")
-    .select("status")
+    .select("status, current_period_end")
     .maybeSingle()
 
-  // 4. Fail-closed: só entra com status 'active'. Qualquer outro caso → suspenso.
-  if (sub?.status !== "active") {
+  // 4. Acesso concedido se:
+  //    - status 'active', OU
+  //    - cancelada AO FINAL DO PERÍODO: acceso permanece até current_period_end
+  //      (é o que a própria página "Acceso hasta …" indica). Antes qualquer
+  //      status != 'active' bloqueava, o que negava acesso já pago.
+  const periodEndMs = sub?.current_period_end
+    ? new Date(sub.current_period_end as string).getTime()
+    : 0
+  const hasAccess =
+    sub?.status === "active" ||
+    (sub?.status === "canceled" && periodEndMs > Date.now())
+
+  // Fail-closed: qualquer outro caso (past_due / inactive / expirada / sem linha) → suspenso.
+  if (!hasAccess) {
     redirect("/miembros/acceso-suspendido")
   }
 
