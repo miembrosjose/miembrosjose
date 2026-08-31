@@ -17,6 +17,8 @@ import { ProductBlocksEditor } from "./ProductBlocksEditor"
 type Props = {
   open: boolean
   onClose: () => void
+  /** Sección que se gestiona: "biblioteca" (default) o "tienda". */
+  category?: string
 }
 
 // "4,99" | "4.99" | "" → centavos (499 | 0). Acepta coma o punto decimal.
@@ -26,8 +28,11 @@ function priceStrToCents(s: string): number {
   return Math.round(n * 100)
 }
 
-export function ProductsManagerModal({ open, onClose }: Props) {
+export function ProductsManagerModal({ open, onClose, category = "biblioteca" }: Props) {
   const { products, loading, refresh, createProduct, updateProduct, deleteProduct } = useProducts()
+  // Solo los productos de la sección que estamos gestionando.
+  const visibleProducts = products.filter((p) => (p.category ?? "biblioteca") === category)
+  const sectionLabel = category === "tienda" ? "Tienda" : "Biblioteca de los 144000"
   const [addingOpen, setAddingOpen] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -70,8 +75,8 @@ export function ProductsManagerModal({ open, onClose }: Props) {
   }
 
   async function handleMove(product: DbProduct, direction: "up" | "down") {
-    const idx = products.findIndex((p) => p.id === product.id)
-    const swapWith = direction === "up" ? products[idx - 1] : products[idx + 1]
+    const idx = visibleProducts.findIndex((p) => p.id === product.id)
+    const swapWith = direction === "up" ? visibleProducts[idx - 1] : visibleProducts[idx + 1]
     if (!swapWith) return
     setBusyId(product.id)
     setErr(null)
@@ -124,7 +129,7 @@ export function ProductsManagerModal({ open, onClose }: Props) {
                   ? "Editar módulo + video + bloques de texto"
                   : editingProduct
                   ? "Editar producto + lista de módulos"
-                  : `${products.length} producto${products.length === 1 ? "" : "s"} · solo admin`}
+                  : `${sectionLabel} · ${visibleProducts.length} producto${visibleProducts.length === 1 ? "" : "s"}`}
               </p>
             </div>
           </div>
@@ -204,18 +209,18 @@ export function ProductsManagerModal({ open, onClose }: Props) {
                 <p className="text-center text-sm text-[#a8a8c0] [font-family:var(--font-geist-sans)]">Cargando productos...</p>
               )}
 
-              {!loading && products.length === 0 && (
-                <p className="text-center text-sm text-[#a8a8c0] [font-family:var(--font-geist-sans)]">No hay productos todavía.</p>
+              {!loading && visibleProducts.length === 0 && (
+                <p className="text-center text-sm text-[#a8a8c0] [font-family:var(--font-geist-sans)]">No hay productos en {sectionLabel} todavía.</p>
               )}
 
               <ul className="space-y-3">
-                {products.map((p, idx) => (
+                {visibleProducts.map((p, idx) => (
                   <ProductRow
                     key={p.id}
                     product={p}
                     busy={busyId === p.id}
                     canUp={idx > 0}
-                    canDown={idx < products.length - 1}
+                    canDown={idx < visibleProducts.length - 1}
                     onMoveUp={() => handleMove(p, "up")}
                     onMoveDown={() => handleMove(p, "down")}
                     onEdit={() => setEditingProduct(p)}
@@ -235,6 +240,7 @@ export function ProductsManagerModal({ open, onClose }: Props) {
               {addingOpen ? (
                 <AddProductForm
                   nextNum={products.length > 0 ? Math.max(...products.map((p) => p.num)) + 1 : 1}
+                  defaultCategory={category}
                   onCancel={() => setAddingOpen(false)}
                   onCreate={async (payload) => {
                     try {
@@ -1021,17 +1027,19 @@ function AddModuleForm({
 
 function AddProductForm({
   nextNum,
+  defaultCategory = "biblioteca",
   onCreate,
   onCancel,
 }: {
   nextNum: number
+  defaultCategory?: string
   onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null; category: string; price_cents: number }) => Promise<void>
   onCancel: () => void
 }) {
   const [num, setNum] = useState(nextNum)
   const [name, setName] = useState(`Producto ${nextNum}`)
   const [availableFrom, setAvailableFrom] = useState("")
-  const [category, setCategory] = useState("biblioteca")
+  const [category, setCategory] = useState(defaultCategory)
   const [priceStr, setPriceStr] = useState("")
   const [submitting, setSubmitting] = useState(false)
 

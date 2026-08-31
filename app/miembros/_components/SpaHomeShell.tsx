@@ -444,6 +444,8 @@ function ViewInicio({
   const { isAdmin } = useAuth()
   const [seasonsManagerOpen, setSeasonsManagerOpen] = useState(false)
   const [productsManagerOpen, setProductsManagerOpen] = useState(false)
+  // Qué sección gestiona el modal de productos ("biblioteca" | "tienda").
+  const [productsManagerCategory, setProductsManagerCategory] = useState("biblioteca")
   const ownedNames = new Set(owned.map((o) => o.name.trim().toLowerCase()))
   const lockedBonuses = ALL_BONUSES.filter((b) => !ownedNames.has(b.name.trim().toLowerCase()))
 
@@ -523,7 +525,7 @@ function ViewInicio({
           {isAdmin && (
             <button
               type="button"
-              onClick={() => setProductsManagerOpen(true)}
+              onClick={() => { setProductsManagerCategory("biblioteca"); setProductsManagerOpen(true) }}
               aria-label="Gestionar productos"
               title="Gestionar productos"
               className="inline-flex items-center justify-center border border-[#6D4A9B]/50 bg-[#6D4A9B]/10 px-3 py-2 text-[#a78bca] transition-colors hover:border-[#6D4A9B] hover:bg-[#6D4A9B]/25 hover:text-[#F3F6FA]"
@@ -553,7 +555,7 @@ function ViewInicio({
           {isAdmin && (
             <button
               type="button"
-              onClick={() => setProductsManagerOpen(true)}
+              onClick={() => { setProductsManagerCategory("tienda"); setProductsManagerOpen(true) }}
               aria-label="Gestionar productos"
               title="Gestionar productos"
               className="inline-flex items-center justify-center border border-[#c9a86b]/50 bg-[#c9a86b]/10 px-3 py-2 text-[#e6cf95] transition-colors hover:border-[#c9a86b] hover:bg-[#c9a86b]/20 hover:text-[#F3F6FA]"
@@ -582,6 +584,7 @@ function ViewInicio({
         <ProductsManagerModal
           open={productsManagerOpen}
           onClose={() => setProductsManagerOpen(false)}
+          category={productsManagerCategory}
         />
       )}
     </div>
