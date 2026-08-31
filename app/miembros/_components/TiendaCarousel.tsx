@@ -5,17 +5,46 @@
 // (a view de detalhes do produto fica pra outra onda).
 
 import { Lock, Clock } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { openExternal } from "../_lib/url-helpers"
 import { ProductDrawer } from "./ProductDrawer"
 import styles from "./products.module.css"
 
+// Convierte "Diciembre 2026" → clave numérica ordenable (año*100 + mes).
+// Sin fecha (disponible ya) → 0 (van primero). Sin mes reconocible → fin de año.
+const MONTHS: Record<string, number> = {
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+  julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10,
+  noviembre: 11, diciembre: 12,
+}
+function availableKey(af: string | null | undefined): number {
+  if (!af || !af.trim()) return 0 // disponible ya → primero
+  const s = af.toLowerCase()
+  const yearMatch = s.match(/(20\d{2})/)
+  const year = yearMatch ? parseInt(yearMatch[1], 10) : 9999
+  let month = 13
+  for (const name in MONTHS) {
+    if (s.includes(name)) { month = MONTHS[name]; break }
+  }
+  return year * 100 + month
+}
+
 export function TiendaCarousel() {
   const { products, loading } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
   const [openProduct, setOpenProduct] = useState<DbProduct | null>(null)
+
+  // Orden por fecha de disponibilidad (los sin fecha primero). Empate → sort_order.
+  const orderedProducts = useMemo(
+    () =>
+      [...products].sort((a, b) => {
+        const d = availableKey(a.available_from) - availableKey(b.available_from)
+        return d !== 0 ? d : (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      }),
+    [products],
+  )
 
   function handleClick(p: DbProduct) {
     // Produtos bloqueados SEMPRE redirecionam pro checkout no click,
@@ -42,7 +71,7 @@ export function TiendaCarousel() {
 
   return (
     <div className={styles.grid}>
-      {products.map((p) => {
+      {orderedProducts.map((p) => {
         const userHasAccess = hasAccess(p.id) || isAdminOverride
         const isLockedForUser = !userHasAccess && p.is_locked
         // "Próximamente": si tiene fecha de disponibilidad, es un placeholder
