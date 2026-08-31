@@ -18,6 +18,9 @@ export type DbProduct = {
   sort_order: number
   is_locked: boolean
   checkout_url: string | null
+  /** Si está definido (ej. "Diciembre 2026"), el producto se muestra como
+   *  "Disponible a partir de …" (próximamente), no comprable todavía. */
+  available_from: string | null
   created_at: string
   updated_at: string
 }

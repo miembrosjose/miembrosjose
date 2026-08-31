@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       sort_order: Number(body.sort_order) || num,
       is_locked: body.is_locked === false ? false : true,
       checkout_url: typeof body.checkout_url === "string" ? body.checkout_url : null,
+      available_from: typeof body.available_from === "string" ? body.available_from : null,
     })
     .select()
     .single()

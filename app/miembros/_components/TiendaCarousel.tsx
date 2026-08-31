@@ -4,7 +4,7 @@
 // Bloqueado: grayscale + click abre checkout. Liberado: ainda só visual
 // (a view de detalhes do produto fica pra outra onda).
 
-import { Lock } from "lucide-react"
+import { Lock, Clock } from "lucide-react"
 import { useState } from "react"
 import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
@@ -45,17 +45,22 @@ export function TiendaCarousel() {
       {products.map((p) => {
         const userHasAccess = hasAccess(p.id) || isAdminOverride
         const isLockedForUser = !userHasAccess && p.is_locked
+        // "Próximamente": si tiene fecha de disponibilidad, es un placeholder
+        // no comprable todavía (aunque seas admin).
+        const comingSoon = !!p.available_from
 
         return (
           <button
             key={p.id}
             type="button"
-            onClick={() => handleClick(p)}
-            className={`${styles.card} ${isLockedForUser ? styles.cardLocked : ""}`}
+            onClick={() => { if (!comingSoon) handleClick(p) }}
+            className={`${styles.card} ${(isLockedForUser || comingSoon) ? styles.cardLocked : ""}`}
             style={
-              isLockedForUser
-                ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
-                : { cursor: userHasAccess ? "pointer" : "default" }
+              comingSoon
+                ? { filter: "grayscale(0.55) brightness(0.8)", cursor: "default" }
+                : isLockedForUser
+                  ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
+                  : { cursor: userHasAccess ? "pointer" : "default" }
             }
           >
             <div className={styles.thumb}>
@@ -71,22 +76,30 @@ export function TiendaCarousel() {
                   {p.emoji}
                 </div>
               )}
-              {isLockedForUser && (
+              {comingSoon ? (
+                <div className={styles.lockIcon}>
+                  <Clock size={34} strokeWidth={1.5} />
+                </div>
+              ) : isLockedForUser ? (
                 <div className={styles.lockIcon}>
                   <Lock size={36} strokeWidth={1.5} />
                 </div>
-              )}
+              ) : null}
             </div>
             <div className={styles.body}>
               <h3 className={styles.name}>{p.name}</h3>
-              {p.description && (
+              {comingSoon ? (
+                <p style={{ fontSize: "0.72rem", color: "#a78bca", marginTop: "0.35rem", lineHeight: 1.4, fontFamily: "var(--font-mono)", letterSpacing: "0.03em" }}>
+                  Disponible a partir de {p.available_from}
+                </p>
+              ) : p.description ? (
                 <p style={{ fontSize: "0.75rem", color: "#a8a8c0", marginTop: "0.3rem", lineHeight: 1.4 }}>
                   {p.description}
                 </p>
-              )}
+              ) : null}
               <div className={styles.footer} style={{ marginTop: "0.75rem" }}>
                 <span className={styles.access}>
-                  {isLockedForUser ? "Desbloquear" : userHasAccess ? "Disponible" : "Bloqueado"}
+                  {comingSoon ? "Próximamente" : isLockedForUser ? "Desbloquear" : userHasAccess ? "Disponible" : "Bloqueado"}
                 </span>
               </div>
             </div>
