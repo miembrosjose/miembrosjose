@@ -31,19 +31,30 @@ function availableKey(af: string | null | undefined): number {
   return year * 100 + month
 }
 
-export function TiendaCarousel() {
+export function TiendaCarousel({
+  category = "biblioteca",
+  variant = "biblioteca",
+}: {
+  /** Filtra los productos por sección: "biblioteca" (default) o "tienda". */
+  category?: string
+  /** Estilo visual: "biblioteca" (violeta) o "tienda" (dorado, diferenciado). */
+  variant?: "biblioteca" | "tienda"
+} = {}) {
   const { products, loading } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
   const [openProduct, setOpenProduct] = useState<DbProduct | null>(null)
+  const isTienda = variant === "tienda"
 
-  // Orden por fecha de disponibilidad (los sin fecha primero). Empate → sort_order.
+  // Filtra por categoría (sin categoría = "biblioteca") y ordena por fecha.
   const orderedProducts = useMemo(
     () =>
-      [...products].sort((a, b) => {
-        const d = availableKey(a.available_from) - availableKey(b.available_from)
-        return d !== 0 ? d : (a.sort_order ?? 0) - (b.sort_order ?? 0)
-      }),
-    [products],
+      products
+        .filter((p) => (p.category ?? "biblioteca") === category)
+        .sort((a, b) => {
+          const d = availableKey(a.available_from) - availableKey(b.available_from)
+          return d !== 0 ? d : (a.sort_order ?? 0) - (b.sort_order ?? 0)
+        }),
+    [products, category],
   )
 
   function handleClick(p: DbProduct) {
@@ -61,10 +72,10 @@ export function TiendaCarousel() {
     return <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem" }}>Cargando productos...</p>
   }
 
-  if (products.length === 0) {
+  if (orderedProducts.length === 0) {
     return (
       <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem", padding: "2rem 0" }}>
-        No hay productos en la tienda todavía.
+        {isTienda ? "No hay productos en la tienda todavía." : "No hay productos todavía."}
       </p>
     )
   }
@@ -83,7 +94,7 @@ export function TiendaCarousel() {
             key={p.id}
             type="button"
             onClick={() => { if (!comingSoon) handleClick(p) }}
-            className={`${styles.card} ${(isLockedForUser || comingSoon) ? styles.cardLocked : ""}`}
+            className={`${styles.card} ${isTienda ? styles.cardTienda : ""} ${(isLockedForUser || comingSoon) ? styles.cardLocked : ""}`}
             style={
               comingSoon
                 ? { filter: "grayscale(0.55) brightness(0.8)", cursor: "default" }

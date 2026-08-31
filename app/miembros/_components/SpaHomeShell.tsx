@@ -510,8 +510,8 @@ function ViewInicio({
         </section>
       )}
 
-      {/* TIENDA PREMIUM — Locked products + locked bonuses */}
-      <section id="tienda" className={styles.section}>
+      {/* BIBLIOTECA — productos categoría "biblioteca" */}
+      <section id="biblioteca" className={styles.section}>
         <header className={styles.sectionHeader}>
           <div>
             <p className={styles.sectionKicker}>Desbloquea Más</p>
@@ -537,7 +537,37 @@ function ViewInicio({
             </button>
           )}
         </header>
-        <TiendaCarousel />
+        <TiendaCarousel category="biblioteca" />
+      </section>
+
+      {/* TIENDA — sección aparte, estilo dorado (diferenciado de Biblioteca) */}
+      <section id="tienda" className={styles.section}>
+        <header className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionKicker} style={{ color: "#c9a86b" }}>Adquiere</p>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionDivider} style={{ background: "#d9b866" }} />
+              Tienda
+            </h2>
+          </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setProductsManagerOpen(true)}
+              aria-label="Gestionar productos"
+              title="Gestionar productos"
+              className="inline-flex items-center justify-center border border-[#c9a86b]/50 bg-[#c9a86b]/10 px-3 py-2 text-[#e6cf95] transition-colors hover:border-[#c9a86b] hover:bg-[#c9a86b]/20 hover:text-[#F3F6FA]"
+              style={{ borderRadius: 8 }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.2em] [font-family:var(--font-mono)]">Gestionar</span>
+            </button>
+          )}
+        </header>
+        <TiendaCarousel category="tienda" variant="tienda" />
       </section>
 
       {/* Modal de gestão de temporadas — só admin renderiza */}

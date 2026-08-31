@@ -21,6 +21,8 @@ export type DbProduct = {
   /** Si está definido (ej. "Diciembre 2026"), el producto se muestra como
    *  "Disponible a partir de …" (próximamente), no comprable todavía. */
   available_from: string | null
+  /** Sección donde aparece: "biblioteca" (por defecto) o "tienda". */
+  category: string | null
   created_at: string
   updated_at: string
 }

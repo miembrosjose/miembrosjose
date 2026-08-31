@@ -23,6 +23,7 @@ const EDITABLE = [
   "is_locked",
   "checkout_url",
   "available_from",
+  "category",
 ] as const
 
 export async function PATCH(req: Request, ctx: RouteContext) {

@@ -30,7 +30,7 @@ const VALID_VIEWS: ViewKey[] = [
   "miembros_lista",
 ]
 
-export type Anchor = "cursos" | "tienda" | "servicios" | null
+export type Anchor = "cursos" | "biblioteca" | "tienda" | "servicios" | null
 
 export type ViewParams = {
   userId?: string
@@ -88,7 +88,7 @@ function parsePath(pathname: string, hash: string): ParseResult {
   if ((VALID_VIEWS as string[]).includes(clean)) {
     return { view: clean as ViewKey, anchor: null, params: {} }
   }
-  if (clean === "cursos" || clean === "tienda" || clean === "servicios") {
+  if (clean === "cursos" || clean === "biblioteca" || clean === "tienda" || clean === "servicios") {
     return { view: "inicio", anchor: clean, params: {} }
   }
   return { view: "inicio", anchor: null, params: {} }

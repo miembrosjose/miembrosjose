@@ -519,6 +519,7 @@ function ProductEditor({
   const [name, setName] = useState(product.name)
   const [description, setDescription] = useState(product.description ?? "")
   const [availableFrom, setAvailableFrom] = useState(product.available_from ?? "")
+  const [category, setCategory] = useState(product.category ?? "biblioteca")
   const [thumbUrl, setThumbUrl] = useState(product.thumb_url ?? "")
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -532,8 +533,9 @@ function ProductEditor({
     () =>
       name !== product.name ||
       description !== (product.description ?? "") ||
-      availableFrom !== (product.available_from ?? ""),
-    [name, description, availableFrom, product],
+      availableFrom !== (product.available_from ?? "") ||
+      category !== (product.category ?? "biblioteca"),
+    [name, description, availableFrom, category, product],
   )
 
   async function handleSave() {
@@ -544,6 +546,7 @@ function ProductEditor({
         name: name.trim() || product.name,
         description: description || null,
         available_from: availableFrom.trim() || null,
+        category,
       })
       setSavedAt(Date.now())
     } finally {
@@ -654,6 +657,15 @@ function ProductEditor({
           <p className="mt-1 text-[10px] text-[#6a6a85] [font-family:var(--font-mono)]">
             Si escribes una fecha, el producto se muestra como “Próximamente · Disponible a partir de …” y no es comprable aún.
           </p>
+        </div>
+        <div>
+          <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Sección</label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
+                  style={{ borderRadius: 6 }}>
+            <option value="biblioteca">Biblioteca de los 144000</option>
+            <option value="tienda">Tienda</option>
+          </select>
         </div>
         <div className="flex items-center justify-end gap-2">
           {isDirty && (
@@ -987,12 +999,13 @@ function AddProductForm({
   onCancel,
 }: {
   nextNum: number
-  onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null }) => Promise<void>
+  onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null; category: string }) => Promise<void>
   onCancel: () => void
 }) {
   const [num, setNum] = useState(nextNum)
   const [name, setName] = useState(`Producto ${nextNum}`)
   const [availableFrom, setAvailableFrom] = useState("")
+  const [category, setCategory] = useState("biblioteca")
   const [submitting, setSubmitting] = useState(false)
 
   async function submit() {
@@ -1004,6 +1017,7 @@ function AddProductForm({
         name: name.trim(),
         sort_order: num,
         available_from: availableFrom.trim() || null,
+        category,
       })
     } finally {
       setSubmitting(false)
@@ -1045,6 +1059,15 @@ function AddProductForm({
           className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85]"
           style={{ borderRadius: 6 }}
         />
+      </div>
+      <div>
+        <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Sección</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)}
+                className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
+                style={{ borderRadius: 6 }}>
+          <option value="biblioteca">Biblioteca de los 144000</option>
+          <option value="tienda">Tienda</option>
+        </select>
       </div>
       <div className="flex justify-end gap-2">
         <button
