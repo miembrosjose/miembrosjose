@@ -59,6 +59,8 @@ export async function POST(req: Request) {
       checkout_url: typeof body.checkout_url === "string" ? body.checkout_url : null,
       available_from: typeof body.available_from === "string" ? body.available_from : null,
       category: typeof body.category === "string" ? body.category : "biblioteca",
+      price_cents: Number.isFinite(Number(body.price_cents)) ? Math.max(0, Math.round(Number(body.price_cents))) : 0,
+      currency: typeof body.currency === "string" && body.currency.trim() ? body.currency.trim().toLowerCase() : "usd",
     })
     .select()
     .single()

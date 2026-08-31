@@ -19,6 +19,13 @@ type Props = {
   onClose: () => void
 }
 
+// "4,99" | "4.99" | "" → centavos (499 | 0). Acepta coma o punto decimal.
+function priceStrToCents(s: string): number {
+  const n = parseFloat(s.replace(",", ".").trim())
+  if (!Number.isFinite(n) || n <= 0) return 0
+  return Math.round(n * 100)
+}
+
 export function ProductsManagerModal({ open, onClose }: Props) {
   const { products, loading, refresh, createProduct, updateProduct, deleteProduct } = useProducts()
   const [addingOpen, setAddingOpen] = useState(false)
@@ -520,6 +527,10 @@ function ProductEditor({
   const [description, setDescription] = useState(product.description ?? "")
   const [availableFrom, setAvailableFrom] = useState(product.available_from ?? "")
   const [category, setCategory] = useState(product.category ?? "biblioteca")
+  // Precio en la unidad (dólares), se guarda en centavos. "" = sin precio (0).
+  const [priceStr, setPriceStr] = useState(
+    product.price_cents && product.price_cents > 0 ? (product.price_cents / 100).toFixed(2) : "",
+  )
   const [thumbUrl, setThumbUrl] = useState(product.thumb_url ?? "")
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -534,8 +545,9 @@ function ProductEditor({
       name !== product.name ||
       description !== (product.description ?? "") ||
       availableFrom !== (product.available_from ?? "") ||
-      category !== (product.category ?? "biblioteca"),
-    [name, description, availableFrom, category, product],
+      category !== (product.category ?? "biblioteca") ||
+      priceStrToCents(priceStr) !== (product.price_cents ?? 0),
+    [name, description, availableFrom, category, priceStr, product],
   )
 
   async function handleSave() {
@@ -547,6 +559,7 @@ function ProductEditor({
         description: description || null,
         available_from: availableFrom.trim() || null,
         category,
+        price_cents: priceStrToCents(priceStr),
       })
       setSavedAt(Date.now())
     } finally {
@@ -666,6 +679,19 @@ function ProductEditor({
             <option value="biblioteca">Biblioteca de los 144000</option>
             <option value="tienda">Tienda</option>
           </select>
+        </div>
+        <div>
+          <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Precio (USD) — compra 1-click</label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[#a8a8c0] [font-family:var(--font-mono)]">US$</span>
+            <input value={priceStr} onChange={(e) => setPriceStr(e.target.value)}
+                   inputMode="decimal" placeholder="4.99"
+                   className="w-32 border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85] [font-family:var(--font-mono)]"
+                   style={{ borderRadius: 6 }} />
+          </div>
+          <p className="mt-1 text-[10px] text-[#6a6a85] [font-family:var(--font-mono)]">
+            Con precio &gt; 0 y producto “Bloqueado”, el usuario compra en 1 clic con su tarjeta guardada (como las meditaciones). Vacío = usa la URL de checkout externa.
+          </p>
         </div>
         <div className="flex items-center justify-end gap-2">
           {isDirty && (
@@ -999,13 +1025,14 @@ function AddProductForm({
   onCancel,
 }: {
   nextNum: number
-  onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null; category: string }) => Promise<void>
+  onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null; category: string; price_cents: number }) => Promise<void>
   onCancel: () => void
 }) {
   const [num, setNum] = useState(nextNum)
   const [name, setName] = useState(`Producto ${nextNum}`)
   const [availableFrom, setAvailableFrom] = useState("")
   const [category, setCategory] = useState("biblioteca")
+  const [priceStr, setPriceStr] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   async function submit() {
@@ -1018,6 +1045,7 @@ function AddProductForm({
         sort_order: num,
         available_from: availableFrom.trim() || null,
         category,
+        price_cents: priceStrToCents(priceStr),
       })
     } finally {
       setSubmitting(false)
@@ -1068,6 +1096,17 @@ function AddProductForm({
           <option value="biblioteca">Biblioteca de los 144000</option>
           <option value="tienda">Tienda</option>
         </select>
+      </div>
+      <div>
+        <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Precio USD (opcional, 1-click)</label>
+        <input
+          value={priceStr}
+          onChange={(e) => setPriceStr(e.target.value)}
+          inputMode="decimal"
+          placeholder="Ej: 4.99 (vacío = usa checkout externo)"
+          className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85] [font-family:var(--font-mono)]"
+          style={{ borderRadius: 6 }}
+        />
       </div>
       <div className="flex justify-end gap-2">
         <button

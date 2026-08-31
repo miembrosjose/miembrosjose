@@ -10,6 +10,7 @@ import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { openExternal } from "../_lib/url-helpers"
 import { ProductDrawer } from "./ProductDrawer"
+import { ProductCheckoutModal } from "./ProductCheckoutModal"
 import styles from "./products.module.css"
 
 // Convierte "Diciembre 2026" → clave numérica ordenable (año*100 + mes).
@@ -19,6 +20,11 @@ const MONTHS: Record<string, number> = {
   julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10,
   noviembre: 11, diciembre: 12,
 }
+function money(cents: number, currency = "usd"): string {
+  const sym = currency.toLowerCase() === "usd" ? "US$" : currency.toUpperCase() + " "
+  return `${sym}${(cents / 100).toFixed(2)}`
+}
+
 function availableKey(af: string | null | undefined): number {
   if (!af || !af.trim()) return 0 // disponible ya → primero
   const s = af.toLowerCase()
@@ -43,6 +49,7 @@ export function TiendaCarousel({
   const { products, loading } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
   const [openProduct, setOpenProduct] = useState<DbProduct | null>(null)
+  const [checkoutProduct, setCheckoutProduct] = useState<DbProduct | null>(null)
   const isTienda = variant === "tienda"
 
   // Filtra por categoría (sin categoría = "biblioteca") y ordena por fecha.
@@ -58,13 +65,25 @@ export function TiendaCarousel({
   )
 
   function handleClick(p: DbProduct) {
-    // Produtos bloqueados SEMPRE redirecionam pro checkout no click,
-    // mesmo pra admin. Admin gerencia via modal "Gestionar".
-    if (p.is_locked && p.checkout_url) {
-      openExternal(p.checkout_url)
+    const userHasAccess = hasAccess(p.id) || isAdminOverride
+    // Con acceso (comprado o admin) → abre el drawer con los módulos.
+    if (userHasAccess) {
+      setOpenProduct(p)
       return
     }
-    // Produto liberado (ou admin que tem acesso) → abre drawer com módulos
+    // Bloqueado y sin acceso: si tiene precio → compra 1-click; si solo tiene
+    // checkout_url externo (legado) → abre ese enlace.
+    if (p.is_locked) {
+      if ((p.price_cents ?? 0) > 0) {
+        setCheckoutProduct(p)
+        return
+      }
+      if (p.checkout_url) {
+        openExternal(p.checkout_url)
+        return
+      }
+    }
+    // No bloqueado → abre el drawer.
     setOpenProduct(p)
   }
 
@@ -139,7 +158,15 @@ export function TiendaCarousel({
               ) : null}
               <div className={styles.footer} style={{ marginTop: "0.75rem" }}>
                 <span className={styles.access}>
-                  {comingSoon ? "Próximamente" : isLockedForUser ? "Desbloquear" : userHasAccess ? "Disponible" : "Bloqueado"}
+                  {comingSoon
+                    ? "Próximamente"
+                    : isLockedForUser
+                      ? (p.price_cents ?? 0) > 0
+                        ? `Comprar · ${money(p.price_cents, p.currency)}`
+                        : "Desbloquear"
+                      : userHasAccess
+                        ? "Disponible"
+                        : "Bloqueado"}
                 </span>
               </div>
             </div>
@@ -148,6 +175,12 @@ export function TiendaCarousel({
       })}
       {/* Drawer do produto (membro) — abre quando clica em produto liberado */}
       <ProductDrawer product={openProduct} onClose={() => setOpenProduct(null)} />
+      {/* Compra 1-click (producto con precio) — al desbloquear, abre el drawer */}
+      <ProductCheckoutModal
+        product={checkoutProduct}
+        onClose={() => setCheckoutProduct(null)}
+        onSuccess={(p) => { setCheckoutProduct(null); setOpenProduct(p) }}
+      />
     </div>
   )
 }

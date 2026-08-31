@@ -24,6 +24,8 @@ const EDITABLE = [
   "checkout_url",
   "available_from",
   "category",
+  "price_cents",
+  "currency",
 ] as const
 
 export async function PATCH(req: Request, ctx: RouteContext) {

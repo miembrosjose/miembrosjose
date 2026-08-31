@@ -23,6 +23,10 @@ export type DbProduct = {
   available_from: string | null
   /** Sección donde aparece: "biblioteca" (por defecto) o "tienda". */
   category: string | null
+  /** Precio en centavos (ej. 499 = US$ 4.99). 0 = sin precio (usa checkout_url). */
+  price_cents: number
+  /** Moneda ISO en minúscula (ej. "usd"). */
+  currency: string
   created_at: string
   updated_at: string
 }
