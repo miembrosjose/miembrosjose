@@ -511,7 +511,7 @@ function ViewInicio({
             <p className={styles.sectionKicker}>Desbloquea Más</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              Tienda Premium
+              Biblioteca de los 144000
             </h2>
           </div>
           {isAdmin && (
