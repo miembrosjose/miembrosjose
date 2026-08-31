@@ -249,18 +249,25 @@ export type ResumePoint = {
   hasStarted: boolean
 }
 
-export function computeResumePoint(): ResumePoint {
+// IMPORTANTE: recibe la lista REAL de temporadas (del banco), porque el array
+// estático SEASONS tiene episodes:0 y daría siempre (1,1)/0%. Fallback a SEASONS.
+export function computeResumePoint(seasons: Season[] = SEASONS): ResumePoint {
   if (typeof window === "undefined") {
     return { season: 1, episode: 1, hasStarted: false }
   }
   const progress = getEpisodeProgress()
   const hasStarted = Object.keys(progress).length > 0
-  if (!hasStarted) return { season: 1, episode: 1, hasStarted: false }
+  const ordered = [...seasons]
+    .filter((s) => !s.external && s.episodes > 0)
+    .sort((a, b) => a.num - b.num)
+  if (!hasStarted) {
+    const first = ordered[0]
+    return { season: first?.num ?? 1, episode: 1, hasStarted: false }
+  }
 
-  let lastS = 1
+  let lastS = ordered[0]?.num ?? 1
   let lastE = 1
-  for (const s of SEASONS) {
-    if (s.external || s.episodes === 0) continue
+  for (const s of ordered) {
     for (let n = 1; n <= s.episodes; n++) {
       if (!progress[`s${s.num}_e${n}`]) {
         return { season: s.num, episode: n, hasStarted: true }
@@ -273,12 +280,12 @@ export function computeResumePoint(): ResumePoint {
 }
 
 /** % total assistido considerando todas as temporadas não-externas. */
-export function computeOverallProgressPct(): number {
+export function computeOverallProgressPct(seasons: Season[] = SEASONS): number {
   if (typeof window === "undefined") return 0
   const progress = getEpisodeProgress()
   let total = 0
   let watched = 0
-  for (const s of SEASONS) {
+  for (const s of seasons) {
     if (s.external || s.episodes === 0) continue
     total += s.episodes
     for (let n = 1; n <= s.episodes; n++) {

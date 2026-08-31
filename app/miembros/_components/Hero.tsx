@@ -12,7 +12,7 @@
 //  - IntersectionObserver pausa o vídeo quando o Hero sai do viewport (perf) e
 //    re-toca ao voltar.
 
-import { Play, Info } from "lucide-react"
+import { Play } from "lucide-react"
 import { forwardRef, useEffect, useRef } from "react"
 import { HERO_VIDEO_URL } from "../_lib/hero-media"
 import styles from "./hero.module.css"
@@ -39,7 +39,6 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     progressPct = 0,
     continueLabel = "Continuar Viendo",
     onContinue,
-    onMoreInfo,
     visible = true,
   },
   ref
@@ -200,10 +199,6 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
           <button type="button" className={styles.btnPrimary} onClick={onContinue}>
             <Play size={18} fill="currentColor" />
             {continueLabel}
-          </button>
-          <button type="button" className={styles.btnSecondary} onClick={onMoreInfo}>
-            <Info size={18} />
-            Más Información
           </button>
         </div>
       </div>

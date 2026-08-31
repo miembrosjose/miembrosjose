@@ -116,6 +116,9 @@ export function SpaHomeShell() {
   const [introMounted, setIntroMounted] = useState(true)
   const [seriesInfoOpen, setSeriesInfoOpen] = useState(false)
   const [openSeason, setOpenSeason] = useState<Season | null>(null)
+  // Episodio a abrir automáticamente al entrar a la temporada (solo "Continuar
+  // viendo" → reanuda el último episodio). null = abrir la lista normal.
+  const [continueTo, setContinueTo] = useState<number | null>(null)
   const [salespageProduct, setSalespageProduct] = useState<PremiumProduct | null>(null)
   const { view } = useView()
   const { user } = useAuth()
@@ -149,9 +152,9 @@ export function SpaHomeShell() {
   const [overallPct, setOverallPct] = useState(0)
   useEffect(() => {
     if (view !== "inicio") return
-    setResume(computeResumePoint())
-    setOverallPct(computeOverallProgressPct())
-  }, [view, openSeason])
+    setResume(computeResumePoint(dbSeasons))
+    setOverallPct(computeOverallProgressPct(dbSeasons))
+  }, [view, openSeason, dbSeasons])
 
   // Ref do <video> do Hero — usado pra disparar play+unmute SÍNCRONO no click
   // do botão "Saltar Intro" (gesture válido permite áudio com autoplay).
@@ -231,9 +234,10 @@ export function SpaHomeShell() {
     syncProgressFromServer()
       .then(() => {
         // Recalcula resume + progress pct após sync (caso server tinha eps que
-        // localStorage local não tinha — comum em login num device novo)
-        setResume(computeResumePoint())
-        setOverallPct(computeOverallProgressPct())
+        // localStorage local não tinha — comum em login num device novo).
+        // El efecto keyed en dbSeasons lo recalcula de nuevo al cargar temporadas.
+        setResume(computeResumePoint(dbSeasons))
+        setOverallPct(computeOverallProgressPct(dbSeasons))
       })
       .catch(() => {})
     // Sincroniza lista de insignias desbloqueadas entre devices.
@@ -320,8 +324,9 @@ export function SpaHomeShell() {
     <>
       <EpisodesDrawer
         season={openSeason}
-        onClose={() => setOpenSeason(null)}
-        onAdvanceSeason={(next) => setOpenSeason(next)}
+        initialEpisodeNum={continueTo}
+        onClose={() => { setOpenSeason(null); setContinueTo(null) }}
+        onAdvanceSeason={(next) => { setContinueTo(null); setOpenSeason(next) }}
         onOpenCheckout={(p) => setSalespageProduct(p)}
         ownedProductNames={owned.map((o) => o.name)}
       />
@@ -337,10 +342,11 @@ export function SpaHomeShell() {
         progressPct={overallPct}
         continueLabel={resume.hasStarted ? "Continuar Viendo" : "Asistir"}
         onContinue={() => {
-          // Abre a temporada onde o user vai retomar (não fixa em T1).
-          // Se a temporada está bloqueada e o user não tem acesso, redireciona
-          // pro checkout configurado pelo admin.
+          // Reanuda: abre la temporada del punto de avance Y el episodio exacto
+          // donde quedó (primer episodio no completado). Si la temporada está
+          // bloqueada y sin acceso, tryOpenSeasonByNum redirige al checkout.
           const fallback = SEASONS.find((s) => s.num === resume.season)
+          setContinueTo(resume.episode)
           if (fallback) tryOpenSeasonByNum(resume.season, fallback)
         }}
         onMoreInfo={() => setSeriesInfoOpen(true)}
@@ -354,7 +360,7 @@ export function SpaHomeShell() {
           <div className={`${styles.viewWrap} ${view !== "inicio" ? styles.viewTopOffset : ""}`}>
             {view === "inicio" && (
               <ViewInicio
-                onOpenSeason={(s) => setOpenSeason(s)}
+                onOpenSeason={(s) => { setContinueTo(null); setOpenSeason(s) }}
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 owned={owned}
               />

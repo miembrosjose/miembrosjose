@@ -38,13 +38,16 @@ import styles from "./episodes-drawer.module.css"
 
 type Props = {
   season: Season | null
+  /** Si se pasa, al abrir la temporada se reproduce directamente ese episodio
+   *  (usado por "Continuar viendo" para retomar el último video). */
+  initialEpisodeNum?: number | null
   onClose: () => void
   onAdvanceSeason?: (nextSeason: Season) => void
   onOpenCheckout?: (p: PremiumProduct) => void
   ownedProductNames?: string[]
 }
 
-export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckout, ownedProductNames }: Props) {
+export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSeason, onOpenCheckout, ownedProductNames }: Props) {
   const [progress, setProgress] = useState<EpisodeProgress>({})
   const [playingEp, setPlayingEp] = useState<Episode | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
@@ -126,6 +129,17 @@ export function EpisodesDrawer({ season, onClose, onAdvanceSeason, onOpenCheckou
     }
     return getEpisodesBySeason(season.num)
   }, [season, seasonId, dbEpisodes])
+
+  // "Continuar viendo": al abrir la temporada con un episodio inicial, reproduce
+  // directamente ese episodio (el último no completado). Se dispara al cambiar de
+  // temporada/episodio inicial o cuando los episodios terminan de cargar. Cerrar
+  // el player NO re-dispara (las deps no cambian), así el usuario puede navegar.
+  useEffect(() => {
+    if (!season || initialEpisodeNum == null || episodes.length === 0) return
+    const target = episodes.find((e) => e.num === initialEpisodeNum)
+    if (target?.videoId) setPlayingEp(target)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [season, initialEpisodeNum, episodes.length])
 
   if (!season) return null
   const watched = getWatchedCount(season, progress)

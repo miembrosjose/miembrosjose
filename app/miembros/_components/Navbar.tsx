@@ -23,7 +23,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Inicio", view: "inicio", anchor: null },
-  { label: "Mis Productos", view: "inicio", anchor: "cursos" },
+  { label: "Biblioteca", view: "inicio", anchor: "cursos" },
   { label: "Comunidad", view: "comunidad", anchor: null },
   { label: "Miembros", view: "miembros_lista", anchor: null },
   { label: "Feed", view: "feed", anchor: null },
