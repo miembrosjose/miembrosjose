@@ -518,6 +518,7 @@ function ProductEditor({
   const { modules, createModule, updateModule, deleteModule, loading } = useProductModules(product.id)
   const [name, setName] = useState(product.name)
   const [description, setDescription] = useState(product.description ?? "")
+  const [availableFrom, setAvailableFrom] = useState(product.available_from ?? "")
   const [thumbUrl, setThumbUrl] = useState(product.thumb_url ?? "")
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -530,15 +531,20 @@ function ProductEditor({
   const isDirty = useMemo(
     () =>
       name !== product.name ||
-      description !== (product.description ?? ""),
-    [name, description, product],
+      description !== (product.description ?? "") ||
+      availableFrom !== (product.available_from ?? ""),
+    [name, description, availableFrom, product],
   )
 
   async function handleSave() {
     if (!isDirty || saving) return
     setSaving(true)
     try {
-      await onChange({ name: name.trim() || product.name, description: description || null })
+      await onChange({
+        name: name.trim() || product.name,
+        description: description || null,
+        available_from: availableFrom.trim() || null,
+      })
       setSavedAt(Date.now())
     } finally {
       setSaving(false)
@@ -638,6 +644,16 @@ function ProductEditor({
                  placeholder="Aparece debajo del título"
                  className="w-full border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85]"
                  style={{ borderRadius: 6 }} />
+        </div>
+        <div>
+          <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Disponible a partir de</label>
+          <input value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)}
+                 placeholder="Ej: Diciembre 2026 (vacío = disponible ya)"
+                 className="w-full border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85]"
+                 style={{ borderRadius: 6 }} />
+          <p className="mt-1 text-[10px] text-[#6a6a85] [font-family:var(--font-mono)]">
+            Si escribes una fecha, el producto se muestra como “Próximamente · Disponible a partir de …” y no es comprable aún.
+          </p>
         </div>
         <div className="flex items-center justify-end gap-2">
           {isDirty && (
@@ -971,11 +987,12 @@ function AddProductForm({
   onCancel,
 }: {
   nextNum: number
-  onCreate: (payload: { num: number; name: string; sort_order: number }) => Promise<void>
+  onCreate: (payload: { num: number; name: string; sort_order: number; available_from: string | null }) => Promise<void>
   onCancel: () => void
 }) {
   const [num, setNum] = useState(nextNum)
   const [name, setName] = useState(`Producto ${nextNum}`)
+  const [availableFrom, setAvailableFrom] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   async function submit() {
@@ -986,6 +1003,7 @@ function AddProductForm({
         num,
         name: name.trim(),
         sort_order: num,
+        available_from: availableFrom.trim() || null,
       })
     } finally {
       setSubmitting(false)
@@ -1017,6 +1035,16 @@ function AddProductForm({
             style={{ borderRadius: 6 }}
           />
         </div>
+      </div>
+      <div>
+        <label className="block mb-1 text-[10px] uppercase tracking-[0.2em] text-[#a8a8c0] [font-family:var(--font-mono)]">Disponible a partir de (opcional)</label>
+        <input
+          value={availableFrom}
+          onChange={(e) => setAvailableFrom(e.target.value)}
+          placeholder="Ej: Diciembre 2026 (vacío = disponible ya)"
+          className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B] placeholder:text-[#6a6a85]"
+          style={{ borderRadius: 6 }}
+        />
       </div>
       <div className="flex justify-end gap-2">
         <button
