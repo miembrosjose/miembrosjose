@@ -53,6 +53,48 @@
     0 0 0 4px rgba(109, 74, 155, 0.7);
 }
 
+/* ─── Cards de PORTAL (camino iniciático dentro del carrusel) ────────
+ * Se ven distintos a las temporadas: acento violeta/dorado, sin video. */
+.portalCard {
+  border-color: rgba(167, 139, 202, 0.45);
+}
+.portalCard:hover {
+  border-color: rgba(167, 139, 202, 0.9);
+  box-shadow: 0 14px 44px rgba(167, 139, 202, 0.28);
+}
+.portalCard .thumbEmoji {
+  opacity: 0.92;
+  font-size: 3rem;
+}
+.portalGold {
+  border-color: rgba(217, 184, 102, 0.55);
+}
+.portalGold:hover {
+  border-color: rgba(217, 184, 102, 0.95);
+  box-shadow: 0 14px 44px rgba(217, 184, 102, 0.3);
+}
+.portalSoon {
+  opacity: 0.72;
+  cursor: default !important;
+}
+.portalSoon:hover {
+  transform: none;
+  border-color: rgba(167, 139, 202, 0.3);
+  box-shadow: none;
+}
+/* Chip PORTAL / INTEGRACIÓN sobre el thumb */
+.portalBadge {
+  background: linear-gradient(135deg, #6D4A9B, #a78bca) !important;
+  color: #fff !important;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  border: 1px solid rgba(243, 246, 250, 0.18);
+}
+.portalBadgeGold {
+  background: linear-gradient(135deg, #c9a86b, #e6cf95) !important;
+  color: #050510 !important;
+}
+
 .card.locked {
   cursor: not-allowed;
 }

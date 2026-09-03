@@ -26,9 +26,21 @@ import styles from "./seasons.module.css"
 type Props = {
   onOpenSeason?: (season: Season) => void
   onLockedClick?: (season: Season) => void
+  // Portales del camino iniciático, intercalados dentro del carrusel.
+  onOpenIngreso?: () => void
+  onOpenIntegration?: (id: 1 | 2 | 3) => void
+  onOpenObjetivos?: () => void
 }
 
-export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
+type SeasonLike = Season & { id?: string; is_locked?: boolean; checkout_url?: string | null }
+
+export function SeasonsCarousel({
+  onOpenSeason,
+  onLockedClick,
+  onOpenIngreso,
+  onOpenIntegration,
+  onOpenObjetivos,
+}: Props) {
   // Temporadas vêm do banco via useSeasons (fallback no array estático
   // SEASONS quando user não está logado ou banco vazio). Re-fetcha
   // automaticamente quando admin cria/edita/remove via modal.
@@ -75,95 +87,162 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
     onOpenSeason?.(season)
   }
 
+  // Card de una temporada real (T1-T4): mantiene el diseño de video/episodios.
+  function renderSeasonCard(season: SeasonLike) {
+    const unlocked = isSeasonUnlocked(season, progress, seasons)
+    const watched = getWatchedCount(season, progress)
+    const total = season.episodes
+    const pct = total > 0 ? Math.round((watched / total) * 100) : 0
+    const isCommerciallyLocked = !!season.is_locked && !hasAccess(season.id)
+    const epLabel = season.external
+      ? `TEMPORADA ${season.num} · COMUNIDAD`
+      : `TEMPORADA ${season.num} · ${total} EPS`
+
+    return (
+      <button
+        key={season.id || season.num}
+        type="button"
+        data-num={String(season.num).padStart(2, "0")}
+        className={`${styles.card} ${unlocked ? "" : styles.locked}`}
+        style={
+          isCommerciallyLocked
+            ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
+            : undefined
+        }
+        onClick={() => handleClick(season)}
+      >
+        <div
+          className={styles.thumb}
+          style={season.gradient ? { background: season.gradient } : undefined}
+        >
+          {season.videoBg && <SeasonVideo src={season.videoBg} />}
+          {!season.videoBg && <span className={styles.thumbEmoji}>{season.emoji}</span>}
+          {season.starter && (
+            <span className={`${styles.badge} ${styles.starter}`}>EMPIEZA AQUÍ</span>
+          )}
+          {!unlocked && (
+            <div className={styles.lockOverlay}>
+              <Lock size={32} />
+            </div>
+          )}
+        </div>
+        <div className={styles.info}>
+          <div className={styles.epNum}>{epLabel}</div>
+          <div className={styles.name}>{season.name}</div>
+          <div className={styles.divider} />
+          {!season.external ? (
+            <>
+              <div className={styles.meta}>
+                <span>{pct}% completado</span>
+                <span>{watched}/{total} eps</span>
+              </div>
+              <div className={styles.progress}>
+                <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+              </div>
+            </>
+          ) : (
+            <div className={styles.meta}>
+              <span>Acceso directo</span>
+              <span>Grupo VIP</span>
+            </div>
+          )}
+        </div>
+      </button>
+    )
+  }
+
+  // Card de un PORTAL del camino (ingreso, integración, objetivos, umbral).
+  function renderPortalCard(cfg: {
+    key: string
+    variant?: "gold" | "soon"
+    badge: string
+    badgeGold?: boolean
+    epLabel: string
+    name: string
+    emoji: string
+    gradient: string
+    metaA: string
+    metaB: string
+    onClick?: () => void
+  }) {
+    const variantClass =
+      cfg.variant === "gold" ? styles.portalGold : cfg.variant === "soon" ? styles.portalSoon : ""
+    return (
+      <button
+        key={cfg.key}
+        type="button"
+        className={`${styles.card} ${styles.portalCard} ${variantClass}`}
+        onClick={cfg.variant === "soon" ? undefined : cfg.onClick}
+      >
+        <div className={styles.thumb} style={{ background: cfg.gradient }}>
+          <span className={styles.thumbEmoji}>{cfg.emoji}</span>
+          <span className={`${styles.badge} ${styles.portalBadge} ${cfg.badgeGold ? styles.portalBadgeGold : ""}`}>
+            {cfg.badge}
+          </span>
+        </div>
+        <div className={styles.info}>
+          <div className={styles.epNum}>{cfg.epLabel}</div>
+          <div className={styles.name}>{cfg.name}</div>
+          <div className={styles.divider} />
+          <div className={styles.meta}>
+            <span>{cfg.metaA}</span>
+            <span>{cfg.metaB}</span>
+          </div>
+        </div>
+      </button>
+    )
+  }
+
+  const bySeason = (n: number) => seasons.find((s) => s.num === n) as SeasonLike | undefined
+  const violet = "linear-gradient(135deg, #14142a 0%, #6D4A9B 100%)"
+  const blue = "linear-gradient(135deg, #0d1330 0%, #2a3f8f 100%)"
+  const gold = "linear-gradient(135deg, #1a1608 0%, #6D4A9B 55%, #c9a86b 100%)"
+  const dim = "linear-gradient(135deg, #0c0c18 0%, #23233a 100%)"
+
+  const s1 = bySeason(1), s2 = bySeason(2), s3 = bySeason(3), s4 = bySeason(4)
+
   return (
     <div className={styles.carousel}>
-      {seasons.map((season) => {
-        // Temporada 5 = Portal de Misión: siempre accesible, sin gate ni bloqueo.
-        const isPortal = season.num === 5
-        const unlocked = isPortal || isSeasonUnlocked(season, progress, seasons)
-        const watched = getWatchedCount(season, progress)
-        const total = season.episodes
-        const pct = total > 0 ? Math.round((watched / total) * 100) : 0
+      {renderPortalCard({
+        key: "ingreso", badge: "PORTAL", epLabel: "PORTAL DE INGRESO",
+        name: "Antes del Llamado", emoji: "🚪", gradient: violet,
+        metaA: "Ceremonia", metaB: "Entrar", onClick: onOpenIngreso,
+      })}
 
-        // Bloqueio comercial (admin definiu como bloqueada E o user não tem acesso)
-        const seasonAny = season as Season & {
-          id?: string
-          is_locked?: boolean
-          checkout_url?: string | null
-        }
-        const isCommerciallyLocked =
-          !isPortal && !!seasonAny.is_locked && !hasAccess(seasonAny.id)
-        const epLabel = isPortal
-          ? `TEMPORADA ${season.num} · PORTAL DE MISIÓN`
-          : season.external
-            ? `TEMPORADA ${season.num} · COMUNIDAD`
-            : `TEMPORADA ${season.num} · ${total} EPS`
+      {s1 && renderSeasonCard(s1)}
+      {renderPortalCard({
+        key: "int1", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
+        name: "Portal del Compromiso", emoji: "✦", gradient: blue,
+        metaA: "T1 → T2", metaB: "Integrar", onClick: () => onOpenIntegration?.(1),
+      })}
 
-        return (
-          <button
-            key={season.id || season.num}
-            type="button"
-            data-num={String(season.num).padStart(2, "0")}
-            className={`${styles.card} ${unlocked ? "" : styles.locked}`}
-            style={
-              isCommerciallyLocked
-                ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
-                : undefined
-            }
-            onClick={() => handleClick(seasonAny)}
-          >
-            <div
-              className={styles.thumb}
-              // Respaldo: gradiente da temporada por trás do vídeo. Se o vídeo
-              // não pinta (ex: iPhone em Modo de Baixo Consumo), a capa fica
-              // com cor em vez de preto.
-              style={season.gradient ? { background: season.gradient } : undefined}
-            >
-              {season.videoBg && <SeasonVideo src={season.videoBg} />}
-              {!season.videoBg && (
-                <span className={styles.thumbEmoji}>{season.emoji}</span>
-              )}
-              {season.starter && (
-                <span className={`${styles.badge} ${styles.starter}`}>EMPIEZA AQUÍ</span>
-              )}
-              {!unlocked && (
-                <div className={styles.lockOverlay}>
-                  <Lock size={32} />
-                </div>
-              )}
-            </div>
-            <div className={styles.info}>
-              <div className={styles.epNum}>{epLabel}</div>
-              <div className={styles.name}>{season.name}</div>
-              <div className={styles.divider} />
-              {isPortal && (
-                <div className={styles.meta}>
-                  <span>7 Objetivos · Misión</span>
-                  <span>Entrar</span>
-                </div>
-              )}
-              {!isPortal && !season.external && (
-                <>
-                  <div className={styles.meta}>
-                    <span>{pct}% completado</span>
-                    <span>
-                      {watched}/{total} eps
-                    </span>
-                  </div>
-                  <div className={styles.progress}>
-                    <div className={styles.progressFill} style={{ width: `${pct}%` }} />
-                  </div>
-                </>
-              )}
-              {!isPortal && season.external && (
-                <div className={styles.meta}>
-                  <span>Acceso directo</span>
-                  <span>Grupo VIP</span>
-                </div>
-              )}
-            </div>
-          </button>
-        )
+      {s2 && renderSeasonCard(s2)}
+      {renderPortalCard({
+        key: "int2", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
+        name: "Portal del Mapa Cósmico", emoji: "✦", gradient: blue,
+        metaA: "T2 → T3", metaB: "Integrar", onClick: () => onOpenIntegration?.(2),
+      })}
+
+      {s3 && renderSeasonCard(s3)}
+      {renderPortalCard({
+        key: "int3", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
+        name: "Portal de la Memoria Terrestre", emoji: "✦", gradient: blue,
+        metaA: "T3 → T4", metaB: "Integrar", onClick: () => onOpenIntegration?.(3),
+      })}
+
+      {s4 && renderSeasonCard(s4)}
+
+      {renderPortalCard({
+        key: "objetivos", variant: "gold", badge: "MISIÓN", badgeGold: true,
+        epLabel: "TEMPORADA 5 · PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
+        emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
+        onClick: onOpenObjetivos,
+      })}
+
+      {renderPortalCard({
+        key: "umbral", variant: "soon", badge: "PRÓXIMAMENTE", epLabel: "EL SIGUIENTE UMBRAL",
+        name: "El Umbral del Contacto", emoji: "🔒", gradient: dim,
+        metaA: "En preparación", metaB: "Pronto",
       })}
     </div>
   )

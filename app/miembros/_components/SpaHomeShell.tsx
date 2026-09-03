@@ -11,7 +11,6 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { RouteMap } from "./RouteMap"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
@@ -511,31 +510,11 @@ function ViewInicio({
       {/* MIEMBROS ONLINE — widget realtime (Supabase Presence) */}
       <OnlineMembers />
 
-      {/* EL CAMINO INICIÁTICO — mapa de ruta con portales de ingreso,
-          integración, misión y umbral. No reemplaza las temporadas. */}
-      <section id="camino" className={styles.section}>
-        <header className={styles.sectionHeader}>
-          <div>
-            <p className={styles.sectionKicker}>Ruta iniciática</p>
-            <h2 className={styles.sectionTitle}>
-              <span className={styles.sectionDivider} />
-              El Camino de <span className={styles.sectionTitleAccent}>Los 144000</span>
-            </h2>
-          </div>
-        </header>
-        <RouteMap
-          onOpenIngreso={onOpenIngreso}
-          onOpenIntegration={onOpenIntegration}
-          onOpenSeason={onOpenSeason}
-          onOpenObjetivos={onOpenObjetivos}
-        />
-      </section>
-
-      {/* MI BIBLIOTECA — Temporadas */}
+      {/* MI BIBLIOTECA — Temporadas + camino iniciático (portales intercalados) */}
       <section id="cursos" className={styles.section}>
         <header className={styles.sectionHeader}>
           <div>
-            <p className={styles.sectionKicker}>Mi Biblioteca</p>
+            <p className={styles.sectionKicker}>Camino iniciático</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
               <span className={styles.sectionTitleAccent}>Los 144000</span> — Temporadas
@@ -560,6 +539,9 @@ function ViewInicio({
         </header>
         <SeasonsCarousel
           onOpenSeason={onOpenSeason}
+          onOpenIngreso={onOpenIngreso}
+          onOpenIntegration={onOpenIntegration}
+          onOpenObjetivos={onOpenObjetivos}
           onLockedClick={(s) => {
             if (typeof window !== "undefined") {
               window.alert(
