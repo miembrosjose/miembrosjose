@@ -748,6 +748,122 @@
   border-color: var(--s5-gold);
 }
 
+/* ── Portal de Ingreso: "Cómo recorrer" (4 tarjetas) ──────────────── */
+.howGrid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: clamp(0.9rem, 2vw, 1.3rem);
+}
+.howCard {
+  position: relative;
+  padding: clamp(1.2rem, 2.6vw, 1.7rem);
+  border-radius: 18px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background: linear-gradient(155deg, rgba(20, 22, 48, 0.7), rgba(9, 10, 24, 0.6));
+  transition: transform 0.3s var(--ease-out-quart, ease), border-color 0.3s;
+}
+.howCard:hover { transform: translateY(-3px); border-color: rgba(217, 184, 102, 0.4); }
+.howNum {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: 1.4rem;
+  background: linear-gradient(180deg, #fff, #d9b866);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.howName {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+.howText {
+  margin: 0.6rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #b9bfdd;
+}
+
+/* Acuerdo / bloque de texto ceremonial */
+.creed {
+  margin-top: 1.6rem;
+  padding: clamp(1.6rem, 4vw, 2.6rem);
+  border-radius: 20px;
+  border: 1px solid rgba(217, 184, 102, 0.2);
+  background: linear-gradient(160deg, rgba(109, 74, 155, 0.12), rgba(12, 14, 34, 0.5));
+  text-align: center;
+}
+.creed p {
+  margin: 0 auto 1rem;
+  max-width: 62ch;
+  line-height: 1.85;
+  color: #d3d8ef;
+  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+}
+.creed p:last-child { margin-bottom: 0; }
+
+/* Frase central de un portal de integración */
+.portalFrase {
+  margin: 1.6rem 0 0;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: clamp(1.2rem, 3.2vw, 2rem);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+.portalFrase span {
+  display: block;
+  background: linear-gradient(180deg, #ffffff, #e6cf95);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Caja de acción concreta */
+.actionBox {
+  margin-top: 1.6rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: clamp(1.1rem, 2.6vw, 1.6rem);
+  border-radius: 16px;
+  border: 1px solid rgba(111, 155, 240, 0.28);
+  background: rgba(10, 14, 34, 0.55);
+}
+.actionIcon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(111, 155, 240, 0.4);
+  color: var(--s5-blue);
+}
+.actionLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--s5-blue);
+  margin: 0 0 0.4rem;
+}
+.actionText {
+  margin: 0;
+  line-height: 1.65;
+  color: #d7dcf2;
+  font-size: clamp(0.94rem, 1.5vw, 1.04rem);
+}
+
+/* Portal de integración: contenedor centrado más compacto */
+.portalHero {
+  min-height: auto;
+  padding: 7rem 0 1rem;
+}
+
 /* Reveal al entrar en viewport */
 .reveal {
   opacity: 0;

@@ -11,6 +11,8 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
+import { RouteMap } from "./RouteMap"
+import { getIntegrationPortal } from "../_lib/portals-data"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
@@ -35,6 +37,14 @@ const EpisodesDrawer = dynamic(
 )
 const Season5Portal = dynamic(
   () => import("./Season5Portal").then((m) => m.Season5Portal),
+  { ssr: false },
+)
+const PortalIngreso = dynamic(
+  () => import("./PortalIngreso").then((m) => m.PortalIngreso),
+  { ssr: false },
+)
+const IntegrationPortal = dynamic(
+  () => import("./IntegrationPortal").then((m) => m.IntegrationPortal),
   { ssr: false },
 )
 const ProductPurchaseModal = dynamic(
@@ -122,6 +132,9 @@ export function SpaHomeShell() {
   const [openSeason, setOpenSeason] = useState<Season | null>(null)
   // Temporada 5 = Portal de Misión (overlay propio, no drawer de episodios).
   const [portalOpen, setPortalOpen] = useState(false)
+  // Camino iniciático: Portal de Ingreso + Portales de Integración (1|2|3).
+  const [ingresoOpen, setIngresoOpen] = useState(false)
+  const [integrationId, setIntegrationId] = useState<1 | 2 | 3 | null>(null)
   // Episodio a abrir automáticamente al entrar a la temporada (solo "Continuar
   // viendo" → reanuda el último episodio). null = abrir la lista normal.
   const [continueTo, setContinueTo] = useState<number | null>(null)
@@ -142,6 +155,11 @@ export function SpaHomeShell() {
       return
     }
     setOpenSeason(target)
+  }
+  // Abre una temporada por número (usado por los portales del camino).
+  function openSeasonByNum(num: number) {
+    const fallback = SEASONS.find((s) => s.num === num) ?? SEASONS[0]
+    tryOpenSeasonByNum(num, fallback)
   }
   const { owned } = useOwnedProducts()
 
@@ -342,6 +360,18 @@ export function SpaHomeShell() {
         onClose={() => setPortalOpen(false)}
         onGoToForo={() => setView("comunidad")}
       />
+      {/* Camino iniciático — Portal de Ingreso (antes de la Temporada 1) */}
+      <PortalIngreso
+        open={ingresoOpen}
+        onClose={() => setIngresoOpen(false)}
+        onEnterT1={() => { setIngresoOpen(false); openSeasonByNum(1) }}
+      />
+      {/* Camino iniciático — Portales de Integración entre temporadas */}
+      <IntegrationPortal
+        portal={integrationId ? getIntegrationPortal(integrationId) ?? null : null}
+        onClose={() => setIntegrationId(null)}
+        onAdvance={(num) => { setIntegrationId(null); openSeasonByNum(num) }}
+      />
       {introMounted && <Intro onSkip={handleIntroSkip} onComplete={handleIntroComplete} />}
 
       {/* Hero PERSISTENTE — sempre renderizado pra ref do vídeo existir antes
@@ -377,6 +407,9 @@ export function SpaHomeShell() {
                   setContinueTo(null); setOpenSeason(s)
                 }}
                 onOpenSalespage={(p) => setSalespageProduct(p)}
+                onOpenIngreso={() => setIngresoOpen(true)}
+                onOpenIntegration={(id) => setIntegrationId(id)}
+                onOpenObjetivos={() => setPortalOpen(true)}
                 owned={owned}
               />
             )}
@@ -450,10 +483,16 @@ export function SpaHomeShell() {
 function ViewInicio({
   onOpenSeason,
   onOpenSalespage,
+  onOpenIngreso,
+  onOpenIntegration,
+  onOpenObjetivos,
   owned,
 }: {
   onOpenSeason: (s: Season) => void
   onOpenSalespage: (p: PremiumProduct) => void
+  onOpenIngreso: () => void
+  onOpenIntegration: (id: 1 | 2 | 3) => void
+  onOpenObjetivos: () => void
   owned: OwnedProduct[]
 }) {
   const { isAdmin } = useAuth()
@@ -471,6 +510,26 @@ function ViewInicio({
 
       {/* MIEMBROS ONLINE — widget realtime (Supabase Presence) */}
       <OnlineMembers />
+
+      {/* EL CAMINO INICIÁTICO — mapa de ruta con portales de ingreso,
+          integración, misión y umbral. No reemplaza las temporadas. */}
+      <section id="camino" className={styles.section}>
+        <header className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionKicker}>Ruta iniciática</p>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionDivider} />
+              El Camino de <span className={styles.sectionTitleAccent}>Los 144000</span>
+            </h2>
+          </div>
+        </header>
+        <RouteMap
+          onOpenIngreso={onOpenIngreso}
+          onOpenIntegration={onOpenIntegration}
+          onOpenSeason={onOpenSeason}
+          onOpenObjetivos={onOpenObjetivos}
+        />
+      </section>
 
       {/* MI BIBLIOTECA — Temporadas */}
       <section id="cursos" className={styles.section}>
