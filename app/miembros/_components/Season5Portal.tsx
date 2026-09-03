@@ -12,12 +12,13 @@ import {
 import styles from "./season5.module.css"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { CosmicField } from "./CosmicField"
+import { FORUM_TITLES } from "../_lib/portals-data"
 
 type Props = {
   open: boolean
   onClose: () => void
-  /** Navega al foro/comunidad (cierra el portal). */
-  onGoToForo?: () => void
+  /** Navega al foro (cierra el portal); opcionalmente a un tema concreto. */
+  onGoToForo?: (title?: string) => void
 }
 
 // ── Los 7 objetivos ──────────────────────────────────────────────────
@@ -144,9 +145,9 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     objetivosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
 
-  const goForo = useCallback(() => {
+  const goForo = useCallback((title?: string) => {
     onClose()
-    onGoToForo?.()
+    onGoToForo?.(title)
   }, [onClose, onGoToForo])
 
   if (!open) return null
@@ -163,7 +164,7 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
       <div className={styles.inner}>
         {/* ── 1. HERO ── */}
         <header className={styles.hero}>
-          <p className={styles.kicker}>Temporada 5 · Portal de Misión</p>
+          <p className={styles.kicker}>Portal de Misión · Los 144.000</p>
           <h1 className={styles.heroTitle}>OBJETIVOS DE<br />LOS 144.000</h1>
           <p className={styles.heroSub}>Misión planetaria · territorio · memoria sagrada</p>
           <div className={styles.heroLead}>
@@ -253,19 +254,29 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
               <ul className={styles.questionList}>
                 {TERRITORY_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
               </ul>
-              <button
-                type="button"
-                className={styles.cta}
-                style={{ marginTop: "1.6rem" }}
-                onClick={() => setJournal({
-                  key: "territorio",
-                  title: "Bitácora del Territorio",
-                  sub: "Investiga y registra la historia sagrada del lugar donde vives: ancestros, símbolos, heridas, puntos de poder y memorias planetarias.",
-                  template: TERRITORY_TEMPLATE,
-                })}
-              >
-                <MapIcon size={15} /> Abrir mi bitácora del territorio
-              </button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
+                <button
+                  type="button"
+                  className={styles.cta}
+                  style={{ margin: 0 }}
+                  onClick={() => setJournal({
+                    key: "territorio",
+                    title: "Bitácora del Territorio",
+                    sub: "Investiga y registra la historia sagrada del lugar donde vives: ancestros, símbolos, heridas, puntos de poder y memorias planetarias.",
+                    template: TERRITORY_TEMPLATE,
+                  })}
+                >
+                  <MapIcon size={15} /> Abrir mi bitácora del territorio
+                </button>
+                <button
+                  type="button"
+                  className={styles.cta}
+                  style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
+                  onClick={() => goForo(FORUM_TITLES.territorio)}
+                >
+                  <MessageSquare size={15} /> Compartir mi territorio en el foro
+                </button>
+              </div>
             </div>
 
             <p style={{ marginTop: "1.6rem" }}>
@@ -315,19 +326,19 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
               <span className={`${styles.intTag} ${styles.intTagLive}`}>Disponible</span>
             </button>
 
-            <button type="button" className={styles.intCard} onClick={goForo}>
+            <button type="button" className={styles.intCard} onClick={() => goForo(FORUM_TITLES.objetivos)}>
               <span className={styles.intIcon}><MessageSquare size={22} /></span>
               <span className={styles.intName}>Foro de la Red</span>
               <span className={styles.intDesc}>Comparte experiencias con otros miembros desde respeto, discernimiento y claridad.</span>
-              <span className={`${styles.intTag} ${styles.intTagLive}`}>Ir a la comunidad</span>
+              <span className={`${styles.intTag} ${styles.intTagLive}`}>Ir al foro</span>
             </button>
 
-            <div className={styles.intCard} data-soon="true">
+            <button type="button" className={styles.intCard} onClick={() => goForo(FORUM_TITLES.nodos)}>
               <span className={styles.intIcon}><Share2 size={22} /></span>
               <span className={styles.intName}>Nodos 144.000</span>
-              <span className={styles.intDesc}>Guía para formar comunidades de base físicas, virtuales o mentales.</span>
-              <span className={`${styles.intTag} ${styles.intTagSoon}`}>Próximamente</span>
-            </div>
+              <span className={styles.intDesc}>Encuentra o forma tu comunidad de base (física, virtual o mental) con otros miembros cercanos.</span>
+              <span className={`${styles.intTag} ${styles.intTagLive}`}>Encontrar mi nodo</span>
+            </button>
 
             <div className={styles.intCard} data-soon="true">
               <span className={styles.intIcon}><Lock size={22} /></span>

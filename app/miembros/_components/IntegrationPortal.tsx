@@ -5,7 +5,7 @@
 // concreta y un botón para avanzar a la siguiente temporada.
 
 import { useEffect, useState } from "react"
-import { X, ArrowRight, Sparkles, PenLine } from "lucide-react"
+import { X, ArrowRight, Sparkles, PenLine, MessageSquare } from "lucide-react"
 import styles from "./season5.module.css"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { CosmicField } from "./CosmicField"
@@ -16,9 +16,11 @@ type Props = {
   onClose: () => void
   /** Avanza a la temporada nextSeason (cierra el portal y abre el drawer). */
   onAdvance: (seasonNum: number) => void
+  /** Lleva al tema del foro de este portal. */
+  onGoToForo?: (title: string) => void
 }
 
-export function IntegrationPortal({ portal, onClose, onAdvance }: Props) {
+export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Props) {
   const [journal, setJournal] = useState<JournalDef | null>(null)
 
   useEffect(() => {
@@ -94,6 +96,14 @@ export function IntegrationPortal({ portal, onClose, onAdvance }: Props) {
               })}
             >
               <PenLine size={15} /> Abrir mi bitácora
+            </button>
+            <button
+              type="button"
+              className={styles.cta}
+              style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
+              onClick={() => onGoToForo?.(portal.forumTitle)}
+            >
+              <MessageSquare size={15} /> Compartir en el foro
             </button>
             <button
               type="button"

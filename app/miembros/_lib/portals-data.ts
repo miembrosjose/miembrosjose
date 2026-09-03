@@ -14,7 +14,17 @@ export type IntegrationPortalDef = {
   action: string
   buttonLabel: string
   journalKey: string
+  /** Título EXACTO del tema del foro (debe coincidir con el SQL sembrado). */
+  forumTitle: string
 }
+
+// Títulos EXACTOS de los temas del foro (coinciden con docs/sql/foro_temario_144000.sql).
+export const FORUM_TITLES = {
+  ingreso: "Portal de Ingreso — ¿Por qué llegaste a este camino?",
+  objetivos: "Objetivos de Los 144.000 — De la memoria a la misión",
+  territorio: "Misión Territorial — La historia sagrada de tu lugar",
+  nodos: "Nodos 144.000 — Formar comunidad de base",
+} as const
 
 export const INTEGRATION_PORTALS: IntegrationPortalDef[] = [
   {
@@ -36,6 +46,7 @@ export const INTEGRATION_PORTALS: IntegrationPortalDef[] = [
     action: "Escribe una declaración personal de intención para este camino.",
     buttonLabel: "Entrar a la Temporada 2",
     journalKey: "portal_compromiso",
+    forumTitle: "Portal del Compromiso (T1 → T2) — Tu declaración de intención",
   },
   {
     id: 2,
@@ -56,6 +67,7 @@ export const INTEGRATION_PORTALS: IntegrationPortalDef[] = [
     action: "Elige una de las 7 leyes universales y obsérvala durante una semana en tu vida diaria.",
     buttonLabel: "Entrar a la Temporada 3",
     journalKey: "portal_mapa_cosmico",
+    forumTitle: "Portal del Mapa Cósmico (T2 → T3) — Elige una de las 7 leyes universales",
   },
   {
     id: 3,
@@ -76,6 +88,7 @@ export const INTEGRATION_PORTALS: IntegrationPortalDef[] = [
     action: "Durante siete días registra sueños, símbolos, emociones o intuiciones relacionadas con las memorias de la Tierra.",
     buttonLabel: "Entrar a la Temporada 4",
     journalKey: "portal_memoria_terrestre",
+    forumTitle: "Portal de la Memoria Terrestre (T3 → T4) — Sueños y señales (7 días)",
   },
 ]
 

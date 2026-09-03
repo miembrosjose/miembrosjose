@@ -12,6 +12,7 @@ import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
+import { setForumTarget } from "../_lib/forum-nav"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
@@ -159,6 +160,22 @@ export function SpaHomeShell() {
   function openSeasonByNum(num: number) {
     const fallback = SEASONS.find((s) => s.num === num) ?? SEASONS[0]
     tryOpenSeasonByNum(num, fallback)
+  }
+  // Entra a una temporada; para T2-T4 muestra primero su portal de integración.
+  function enterSeason(season: Season) {
+    setContinueTo(null)
+    if (season.num >= 2 && season.num <= 4) {
+      setOpenSeason(null)
+      setIntegrationId((season.num - 1) as 1 | 2 | 3)
+      return
+    }
+    if (season.num === 5) { setPortalOpen(true); return }
+    setOpenSeason(season)
+  }
+  // Lleva al foro (opcionalmente a un tema concreto por título).
+  function goToForo(title?: string) {
+    setForumTarget(title ?? null)
+    setView("comunidad")
   }
   const { owned } = useOwnedProducts()
 
@@ -349,27 +366,29 @@ export function SpaHomeShell() {
         season={openSeason}
         initialEpisodeNum={continueTo}
         onClose={() => { setOpenSeason(null); setContinueTo(null) }}
-        onAdvanceSeason={(next) => { setContinueTo(null); setOpenSeason(next) }}
+        onAdvanceSeason={(next) => { enterSeason(next) }}
         onOpenCheckout={(p) => setSalespageProduct(p)}
         ownedProductNames={owned.map((o) => o.name)}
       />
-      {/* Temporada 5 — Portal de Misión "Objetivos de los 144.000" */}
+      {/* Portal de Misión "Objetivos de los 144.000" (tras la Temporada 4) */}
       <Season5Portal
         open={portalOpen}
         onClose={() => setPortalOpen(false)}
-        onGoToForo={() => setView("comunidad")}
+        onGoToForo={(title) => goToForo(title)}
       />
       {/* Camino iniciático — Portal de Ingreso (antes de la Temporada 1) */}
       <PortalIngreso
         open={ingresoOpen}
         onClose={() => setIngresoOpen(false)}
         onEnterT1={() => { setIngresoOpen(false); openSeasonByNum(1) }}
+        onGoToForo={(title) => goToForo(title)}
       />
-      {/* Camino iniciático — Portales de Integración entre temporadas */}
+      {/* Camino iniciático — Portales de Integración (antes de entrar a T2/T3/T4) */}
       <IntegrationPortal
         portal={integrationId ? getIntegrationPortal(integrationId) ?? null : null}
         onClose={() => setIntegrationId(null)}
         onAdvance={(num) => { setIntegrationId(null); openSeasonByNum(num) }}
+        onGoToForo={(title) => goToForo(title)}
       />
       {introMounted && <Intro onSkip={handleIntroSkip} onComplete={handleIntroComplete} />}
 
@@ -401,13 +420,9 @@ export function SpaHomeShell() {
           <div className={`${styles.viewWrap} ${view !== "inicio" ? styles.viewTopOffset : ""}`}>
             {view === "inicio" && (
               <ViewInicio
-                onOpenSeason={(s) => {
-                  if (s.num === 5) { setPortalOpen(true); return }
-                  setContinueTo(null); setOpenSeason(s)
-                }}
+                onOpenSeason={(s) => enterSeason(s)}
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 onOpenIngreso={() => setIngresoOpen(true)}
-                onOpenIntegration={(id) => setIntegrationId(id)}
                 onOpenObjetivos={() => setPortalOpen(true)}
                 owned={owned}
               />
@@ -483,14 +498,12 @@ function ViewInicio({
   onOpenSeason,
   onOpenSalespage,
   onOpenIngreso,
-  onOpenIntegration,
   onOpenObjetivos,
   owned,
 }: {
   onOpenSeason: (s: Season) => void
   onOpenSalespage: (p: PremiumProduct) => void
   onOpenIngreso: () => void
-  onOpenIntegration: (id: 1 | 2 | 3) => void
   onOpenObjetivos: () => void
   owned: OwnedProduct[]
 }) {
@@ -540,7 +553,6 @@ function ViewInicio({
         <SeasonsCarousel
           onOpenSeason={onOpenSeason}
           onOpenIngreso={onOpenIngreso}
-          onOpenIntegration={onOpenIntegration}
           onOpenObjetivos={onOpenObjetivos}
           onLockedClick={(s) => {
             if (typeof window !== "undefined") {

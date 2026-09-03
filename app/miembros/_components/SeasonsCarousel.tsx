@@ -26,9 +26,9 @@ import styles from "./seasons.module.css"
 type Props = {
   onOpenSeason?: (season: Season) => void
   onLockedClick?: (season: Season) => void
-  // Portales del camino iniciático, intercalados dentro del carrusel.
+  // Portales del camino: ingreso (antes de T1) y objetivos (tras T4). Las
+  // integraciones NO son cards: se disparan al entrar a la siguiente temporada.
   onOpenIngreso?: () => void
-  onOpenIntegration?: (id: 1 | 2 | 3) => void
   onOpenObjetivos?: () => void
 }
 
@@ -38,7 +38,6 @@ export function SeasonsCarousel({
   onOpenSeason,
   onLockedClick,
   onOpenIngreso,
-  onOpenIntegration,
   onOpenObjetivos,
 }: Props) {
   // Temporadas vêm do banco via useSeasons (fallback no array estático
@@ -195,7 +194,6 @@ export function SeasonsCarousel({
 
   const bySeason = (n: number) => seasons.find((s) => s.num === n) as SeasonLike | undefined
   const violet = "linear-gradient(135deg, #14142a 0%, #6D4A9B 100%)"
-  const blue = "linear-gradient(135deg, #0d1330 0%, #2a3f8f 100%)"
   const gold = "linear-gradient(135deg, #1a1608 0%, #6D4A9B 55%, #c9a86b 100%)"
   const dim = "linear-gradient(135deg, #0c0c18 0%, #23233a 100%)"
 
@@ -210,31 +208,13 @@ export function SeasonsCarousel({
       })}
 
       {s1 && renderSeasonCard(s1)}
-      {renderPortalCard({
-        key: "int1", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
-        name: "Portal del Compromiso", emoji: "✦", gradient: blue,
-        metaA: "T1 → T2", metaB: "Integrar", onClick: () => onOpenIntegration?.(1),
-      })}
-
       {s2 && renderSeasonCard(s2)}
-      {renderPortalCard({
-        key: "int2", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
-        name: "Portal del Mapa Cósmico", emoji: "✦", gradient: blue,
-        metaA: "T2 → T3", metaB: "Integrar", onClick: () => onOpenIntegration?.(2),
-      })}
-
       {s3 && renderSeasonCard(s3)}
-      {renderPortalCard({
-        key: "int3", badge: "INTEGRACIÓN", epLabel: "PORTAL DE INTEGRACIÓN",
-        name: "Portal de la Memoria Terrestre", emoji: "✦", gradient: blue,
-        metaA: "T3 → T4", metaB: "Integrar", onClick: () => onOpenIntegration?.(3),
-      })}
-
       {s4 && renderSeasonCard(s4)}
 
       {renderPortalCard({
         key: "objetivos", variant: "gold", badge: "MISIÓN", badgeGold: true,
-        epLabel: "TEMPORADA 5 · PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
+        epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
         emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
         onClick: onOpenObjetivos,
       })}

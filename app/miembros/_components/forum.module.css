@@ -654,3 +654,13 @@
     margin-left: 0;
   }
 }
+
+/* Resalte temporal cuando se llega a un tema desde un portal del camino. */
+.highlight {
+  animation: forumHighlight 2.8s var(--ease-out-quart, ease);
+  border-radius: 14px;
+}
+@keyframes forumHighlight {
+  0% { box-shadow: 0 0 0 2px rgba(217, 184, 102, 0.9), 0 0 42px -4px rgba(217, 184, 102, 0.7); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 184, 102, 0); }
+}

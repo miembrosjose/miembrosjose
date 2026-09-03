@@ -5,17 +5,29 @@
 // de la Temporada 1.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowDown, ArrowRight, PenLine } from "lucide-react"
+import { X, ArrowDown, ArrowRight, PenLine, MessageSquare } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
+import { FORUM_TITLES } from "../_lib/portals-data"
 
 type Props = {
   open: boolean
   onClose: () => void
   /** Entra a la Temporada 1 (cierra el portal y abre el drawer). */
   onEnterT1: () => void
+  /** Lleva al tema del foro de ingreso. */
+  onGoToForo?: (title: string) => void
 }
+
+// La Gran Invocación — estrofas.
+const INVOCATION = [
+  "Desde el punto de Luz en la Mente de Dios\nQue afluya luz a las mentes humanas\nQue la Luz descienda a la Tierra.",
+  "Desde el punto de Amor en el Corazón de Dios\nQue afluya amor a los corazones humanos\nQue Aquél que Viene retorne a la Tierra.",
+  "Desde el centro donde la Voluntad de Dios es conocida\nQue el propósito guíe a todas las pequeñas voluntades humanas\nEl propósito que los Maestros conocen y sirven.",
+  "Desde el centro que llamamos la raza humana\nQue se realice el Plan de Amor y de Luz\nY selle la puerta donde se halla el mal.",
+  "Que la Luz, el Amor y el Poder restablezcan el Plan en la Tierra.",
+]
 
 const HOW = [
   { n: 1, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No las recorras con prisa. Cada transmisión contiene una llave." },
@@ -35,7 +47,7 @@ const INGRESO_TEMPLATE =
   INGRESO_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
   "\n— Escribe aquí tu punto de partida —\n"
 
-export function PortalIngreso({ open, onClose, onEnterT1 }: Props) {
+export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const howRef = useRef<HTMLDivElement>(null)
   const [journal, setJournal] = useState<JournalDef | null>(null)
@@ -96,6 +108,22 @@ export function PortalIngreso({ open, onClose, onEnterT1 }: Props) {
           <div className={styles.scrollHint} aria-hidden />
         </header>
 
+        {/* LA GRAN INVOCACIÓN */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <p className={styles.kicker}>Invocación sagrada</p>
+          <h2 className={styles.sectionTitle}>LA GRAN INVOCACIÓN</h2>
+          <div className={styles.invocation}>
+            <div className={styles.invocationRule} aria-hidden />
+            {INVOCATION.map((stanza, i) => (
+              <p key={i} className={styles.invocationStanza}>
+                {stanza.split("\n").map((line, j) => (
+                  <span key={j}>{line}{j < stanza.split("\n").length - 1 ? <br /> : null}</span>
+                ))}
+              </p>
+            ))}
+          </div>
+        </section>
+
         {/* CÓMO RECORRER */}
         <section className={`${styles.section} ${styles.reveal}`} ref={howRef}>
           <p className={styles.kicker}>La ruta</p>
@@ -134,19 +162,29 @@ export function PortalIngreso({ open, onClose, onEnterT1 }: Props) {
             <ul className={styles.questionList}>
               {INGRESO_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
             </ul>
-            <button
-              type="button"
-              className={styles.cta}
-              style={{ marginTop: "1.6rem" }}
-              onClick={() => setJournal({
-                key: "ingreso",
-                title: "Bitácora de Ingreso",
-                sub: "Tu punto de partida en el camino. Se guarda en este dispositivo.",
-                template: INGRESO_TEMPLATE,
-              })}
-            >
-              <PenLine size={15} /> Abrir mi bitácora de ingreso
-            </button>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
+              <button
+                type="button"
+                className={styles.cta}
+                style={{ margin: 0 }}
+                onClick={() => setJournal({
+                  key: "ingreso",
+                  title: "Bitácora de Ingreso",
+                  sub: "Tu punto de partida en el camino. Se guarda en este dispositivo.",
+                  template: INGRESO_TEMPLATE,
+                })}
+              >
+                <PenLine size={15} /> Abrir mi bitácora
+              </button>
+              <button
+                type="button"
+                className={styles.cta}
+                style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
+                onClick={() => onGoToForo?.(FORUM_TITLES.ingreso)}
+              >
+                <MessageSquare size={15} /> Presentarme en el foro
+              </button>
+            </div>
           </div>
 
           {/* Botón final */}

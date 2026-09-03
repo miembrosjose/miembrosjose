@@ -13,6 +13,7 @@ import { ForumPost } from "./ForumPost"
 import { ForumComposer } from "./ForumComposer"
 import { EditModal, type EditTarget } from "./EditModal"
 import { ReportModal, type ReportTarget } from "./ReportModal"
+import { consumeForumTarget, FORUM_GOTO_EVENT } from "../_lib/forum-nav"
 import styles from "./forum.module.css"
 
 type FeedResponse = {
@@ -31,6 +32,38 @@ export function ForumFeed() {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const feedRef = useRef<HTMLDivElement | null>(null)
+
+  // Scroll + resalta el post cuyo título coincide (navegación desde portales).
+  const scrollToTitle = useCallback((title: string) => {
+    const root = feedRef.current
+    if (!root) return
+    let tries = 0
+    const attempt = () => {
+      const nodes = Array.from(root.querySelectorAll<HTMLElement>("[data-post-title]"))
+      const el = nodes.find((n) => n.getAttribute("data-post-title") === title)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        el.classList.add(styles.highlight)
+        setTimeout(() => el.classList.remove(styles.highlight), 2800)
+      } else if (tries++ < 24) {
+        setTimeout(attempt, 250)
+      }
+    }
+    attempt()
+  }, [])
+
+  // Al montar (o al recibir el evento) atiende un objetivo pendiente.
+  useEffect(() => {
+    const onEvt = (e: Event) => {
+      const d = (e as CustomEvent).detail as { title?: string } | undefined
+      if (d?.title) scrollToTitle(d.title)
+    }
+    window.addEventListener(FORUM_GOTO_EVENT, onEvt)
+    const pend = consumeForumTarget()
+    if (pend) scrollToTitle(pend)
+    return () => window.removeEventListener(FORUM_GOTO_EVENT, onEvt)
+  }, [scrollToTitle])
 
   // Carga inicial (sem cursor) — substitui a lista
   const fetchInitial = useCallback(async () => {
@@ -205,7 +238,7 @@ export function ForumFeed() {
   }
 
   return (
-    <div>
+    <div ref={feedRef}>
       <ForumComposer onCreate={handleCreate} />
 
       {loading && (
@@ -229,16 +262,17 @@ export function ForumFeed() {
       )}
 
       {!loading && posts.length > 0 && posts.map((post) => (
-        <ForumPost
-          key={post.id}
-          post={post}
-          onEdit={handleEdit}
-          onReport={handleReport}
-          onDelete={handleDelete}
-          onDeleteAdmin={handleDeleteAdmin}
-          onEditReply={handleEditReply}
-          onReportReply={handleReportReply}
-        />
+        <div key={post.id} data-post-title={post.title} style={{ borderRadius: 14 }}>
+          <ForumPost
+            post={post}
+            onEdit={handleEdit}
+            onReport={handleReport}
+            onDelete={handleDelete}
+            onDeleteAdmin={handleDeleteAdmin}
+            onEditReply={handleEditReply}
+            onReportReply={handleReportReply}
+          />
+        </div>
       ))}
 
       {/* Sentinel pra IntersectionObserver: dispara fetchMore() quando entra
