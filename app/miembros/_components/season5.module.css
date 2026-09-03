@@ -1,0 +1,767 @@
+/* ─────────────────────────────────────────────────────────────────────
+   TEMPORADA 5 — Portal de Misión "Objetivos de los 144.000".
+   Estética propia, distinta de las temporadas (que son cards de episodios).
+   Paleta cósmica scopeada: violeta + azul profundo + dorado real + blanco solar.
+   (Dentro de /miembros --accent-gold resuelve a purple; aquí lo redefinimos.)
+   ───────────────────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  color: #eef1fb;
+  background:
+    radial-gradient(1200px 800px at 50% -8%, rgba(60, 52, 120, 0.35) 0%, transparent 60%),
+    radial-gradient(900px 700px at 85% 12%, rgba(30, 52, 120, 0.28) 0%, transparent 55%),
+    radial-gradient(1000px 900px at 12% 82%, rgba(90, 60, 130, 0.22) 0%, transparent 55%),
+    #05060f;
+  font-family: var(--font-body, "Manrope", sans-serif);
+  animation: s5FadeIn 0.5s var(--ease-out-quart, ease) both;
+
+  /* Paleta local del portal */
+  --s5-gold: #d9b866;
+  --s5-gold-soft: #e6cf95;
+  --s5-violet: #a78bca;
+  --s5-violet-deep: #6D4A9B;
+  --s5-blue: #6f9bf0;
+  --s5-blue-deep: #2a3f8f;
+  --s5-white: #f3f6fa;
+  --s5-dim: #9aa0c0;
+}
+
+@keyframes s5FadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Capas de fondo cósmico (fijas detrás del contenido, dentro del overlay) */
+.field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.stars,
+.starsFar {
+  position: absolute;
+  inset: -20%;
+  background-repeat: repeat;
+}
+.stars {
+  background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, rgba(255,255,255,0.9) 0, transparent 100%),
+    radial-gradient(1.2px 1.2px at 70% 60%, rgba(214,224,255,0.8) 0, transparent 100%),
+    radial-gradient(1.6px 1.6px at 40% 80%, rgba(230,207,149,0.7) 0, transparent 100%),
+    radial-gradient(1.1px 1.1px at 85% 25%, rgba(255,255,255,0.75) 0, transparent 100%),
+    radial-gradient(1.3px 1.3px at 55% 12%, rgba(180,200,255,0.7) 0, transparent 100%);
+  background-size: 480px 480px, 620px 620px, 540px 540px, 700px 700px, 400px 400px;
+  animation: s5Twinkle 6s ease-in-out infinite alternate, s5Drift 140s linear infinite;
+}
+.starsFar {
+  background-image:
+    radial-gradient(1px 1px at 33% 44%, rgba(255,255,255,0.5) 0, transparent 100%),
+    radial-gradient(1px 1px at 66% 22%, rgba(200,210,255,0.45) 0, transparent 100%),
+    radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.4) 0, transparent 100%);
+  background-size: 300px 300px, 360px 360px, 280px 280px;
+  opacity: 0.6;
+  animation: s5Drift 220s linear infinite reverse;
+}
+@keyframes s5Twinkle {
+  0% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+@keyframes s5Drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-60px, -40px, 0); }
+}
+
+/* Red planetaria — SVG a pantalla completa detrás del hero */
+.network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+.netLine {
+  stroke: url(#s5line);
+  stroke-width: 1;
+  fill: none;
+  stroke-dasharray: 4 8;
+  animation: s5Flow 18s linear infinite;
+}
+@keyframes s5Flow {
+  to { stroke-dashoffset: -240; }
+}
+.netNode {
+  fill: var(--s5-gold);
+  animation: s5NodePulse 4s ease-in-out infinite;
+}
+@keyframes s5NodePulse {
+  0%, 100% { opacity: 0.35; r: 2; }
+  50% { opacity: 1; r: 3.4; }
+}
+
+/* Aro de geometría sagrada tras el hero */
+.sacredRing {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  width: min(760px, 116vw);
+  height: min(760px, 116vw);
+  transform: translateX(-50%);
+  opacity: 0.32;
+  animation: s5Spin 120s linear infinite;
+}
+@keyframes s5Spin {
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+.close {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px !important;
+  border: 1px solid rgba(217, 184, 102, 0.3);
+  background: rgba(8, 8, 20, 0.6);
+  color: var(--s5-gold-soft);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s, transform 0.25s;
+}
+.close:hover {
+  border-color: var(--s5-gold);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 clamp(1.1rem, 4vw, 2.5rem) 5rem;
+}
+
+/* Kicker mono común */
+.kicker {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--s5-gold);
+  margin: 0 0 1rem;
+}
+.kicker::before {
+  content: "";
+  display: inline-block;
+  width: 26px;
+  height: 1px;
+  background: var(--s5-gold);
+  vertical-align: middle;
+  margin-right: 0.7em;
+  opacity: 0.7;
+}
+
+/* ── 1. HERO ──────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 7rem 0 4rem;
+}
+.heroTitle {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: clamp(2.1rem, 7vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  margin: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #e6cf95 55%, #c9a86b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 60px rgba(217, 184, 102, 0.18);
+}
+.heroSub {
+  margin: 1.1rem auto 0;
+  max-width: 40ch;
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(0.72rem, 2vw, 0.9rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--s5-violet);
+}
+.heroLead {
+  margin: 2rem auto 0;
+  max-width: 60ch;
+  font-size: clamp(0.98rem, 1.6vw, 1.12rem);
+  line-height: 1.75;
+  color: #cfd4ec;
+}
+.heroLead strong {
+  color: #fff;
+  font-weight: 600;
+}
+.heroLeadHi {
+  display: block;
+  margin: 1.3rem auto;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+  letter-spacing: 0.04em;
+  color: var(--s5-gold-soft);
+}
+.cta {
+  margin-top: 2.6rem;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 2.2rem;
+  border-radius: 999px !important;
+  border: 1px solid rgba(217, 184, 102, 0.55);
+  background: linear-gradient(135deg, rgba(217,184,102,0.16), rgba(109,74,155,0.16));
+  color: #fff;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  box-shadow: 0 0 0 rgba(217, 184, 102, 0);
+}
+.cta:hover {
+  transform: translateY(-2px);
+  border-color: var(--s5-gold);
+  box-shadow: 0 16px 40px -12px rgba(217, 184, 102, 0.5);
+}
+.scrollHint {
+  margin: 3.2rem auto 0;
+  width: 22px;
+  height: 36px;
+  border: 1px solid rgba(167, 139, 202, 0.5);
+  border-radius: 999px !important;
+  position: relative;
+}
+.scrollHint::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 3px;
+  height: 7px;
+  border-radius: 999px !important;
+  background: var(--s5-gold);
+  transform: translateX(-50%);
+  animation: s5ScrollDot 1.8s ease-in-out infinite;
+}
+@keyframes s5ScrollDot {
+  0% { opacity: 0; transform: translate(-50%, 0); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, 12px); }
+}
+
+/* ── Sección genérica ─────────────────────────────────────────────── */
+.section {
+  padding: clamp(3.5rem, 8vw, 6rem) 0 0;
+}
+.sectionTitle {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  line-height: 1.1;
+  margin: 0.2rem 0 0;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.sectionIntro {
+  margin: 1.2rem 0 0;
+  max-width: 66ch;
+  font-size: clamp(0.96rem, 1.5vw, 1.08rem);
+  line-height: 1.78;
+  color: #c6cbe6;
+}
+.sectionIntro strong { color: #fff; font-weight: 600; }
+
+/* ── 2. DECLARACIÓN ───────────────────────────────────────────────── */
+.declaration {
+  position: relative;
+  margin-top: 1.6rem;
+  padding: clamp(1.6rem, 4vw, 2.8rem);
+  border-radius: 20px;
+  border: 1px solid rgba(167, 139, 202, 0.2);
+  background:
+    linear-gradient(160deg, rgba(109, 74, 155, 0.14) 0%, rgba(20, 24, 55, 0.5) 60%, rgba(8, 9, 20, 0.4) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 70px -30px rgba(0, 0, 0, 0.8);
+}
+.declaration p {
+  margin: 0 0 1.05rem;
+  line-height: 1.85;
+  color: #d3d8ef;
+  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+}
+.declaration p:last-child { margin-bottom: 0; }
+.declBig {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem) !important;
+  color: var(--s5-gold-soft) !important;
+  letter-spacing: 0.02em;
+  line-height: 1.4 !important;
+}
+.declLedger {
+  display: block;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(217, 184, 102, 0.5);
+  color: #e7d9b6 !important;
+}
+
+/* ── 3. LOS 7 OBJETIVOS (constelación de sellos) ──────────────────── */
+.constellation {
+  position: relative;
+  margin-top: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.1rem, 2.5vw, 1.8rem);
+}
+/* línea vertical viva que atraviesa la constelación */
+.constellation::before {
+  content: "";
+  position: absolute;
+  left: 33px;
+  top: 24px;
+  bottom: 24px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(217,184,102,0.55) 12%, rgba(111,155,240,0.4) 88%, transparent);
+}
+@media (max-width: 640px) {
+  .constellation::before { left: 25px; }
+}
+
+.seal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: clamp(0.9rem, 2vw, 1.4rem);
+  align-items: start;
+  padding: clamp(1.15rem, 2.6vw, 1.7rem);
+  padding-left: clamp(1.15rem, 2.6vw, 1.7rem);
+  border-radius: 18px;
+  border: 1px solid rgba(167, 139, 202, 0.16);
+  background: linear-gradient(150deg, rgba(20, 22, 48, 0.66) 0%, rgba(10, 11, 26, 0.55) 100%);
+  transition: transform 0.35s var(--ease-out-quart, ease), border-color 0.35s, box-shadow 0.35s;
+}
+.seal:hover {
+  transform: translateY(-3px);
+  border-color: rgba(217, 184, 102, 0.5);
+  box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.85), 0 0 40px -14px rgba(217, 184, 102, 0.35);
+}
+@media (max-width: 640px) {
+  .seal { grid-template-columns: 52px 1fr; gap: 0.85rem; }
+}
+
+.sealMedal {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px !important;
+  border: 1px solid rgba(217, 184, 102, 0.45);
+  background: radial-gradient(circle at 50% 35%, rgba(217,184,102,0.22), rgba(10,11,26,0.9) 70%);
+  box-shadow: 0 0 26px -6px rgba(217, 184, 102, 0.4), inset 0 0 14px rgba(217, 184, 102, 0.12);
+}
+@media (max-width: 640px) {
+  .sealMedal { width: 52px; height: 52px; }
+}
+.sealMedal span {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  background: linear-gradient(180deg, #fff, #d9b866);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.sealMedal::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px !important;
+  border: 1px dashed rgba(167, 139, 202, 0.35);
+  animation: s5Spin 40s linear infinite;
+}
+
+.sealBody { min-width: 0; }
+.sealNum {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--s5-violet);
+}
+.sealTitle {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 700;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  color: #fff;
+  line-height: 1.15;
+}
+.sealPhrase {
+  margin: 0.7rem 0 0;
+  padding-left: 0.9rem;
+  border-left: 2px solid rgba(217, 184, 102, 0.5);
+  font-size: clamp(0.9rem, 1.6vw, 1.02rem);
+  font-style: italic;
+  color: var(--s5-gold-soft);
+  line-height: 1.5;
+}
+.sealText {
+  margin: 0.9rem 0 0;
+  font-size: clamp(0.92rem, 1.5vw, 1.02rem);
+  line-height: 1.75;
+  color: #c4c9e4;
+}
+
+/* ── 4. MISIÓN TERRITORIAL ────────────────────────────────────────── */
+.territory {
+  position: relative;
+  margin-top: 1.8rem;
+  padding: clamp(1.6rem, 4.5vw, 3rem);
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(111, 155, 240, 0.28);
+  background:
+    radial-gradient(600px 300px at 100% 0%, rgba(42, 63, 143, 0.4), transparent 60%),
+    linear-gradient(160deg, rgba(16, 24, 55, 0.8), rgba(8, 9, 20, 0.75));
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.85);
+}
+.territoryGlow {
+  position: absolute;
+  right: -80px;
+  top: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 999px !important;
+  background: radial-gradient(circle, rgba(111, 155, 240, 0.28), transparent 70%);
+  pointer-events: none;
+}
+.territory p {
+  position: relative;
+  margin: 0 0 1.05rem;
+  max-width: 68ch;
+  line-height: 1.82;
+  color: #cfd5f0;
+  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+}
+.territoryHi {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: clamp(1.05rem, 2.3vw, 1.4rem) !important;
+  color: var(--s5-blue) !important;
+  letter-spacing: 0.02em;
+}
+.questionCard {
+  position: relative;
+  margin-top: 1.6rem;
+  padding: clamp(1.2rem, 3vw, 1.8rem);
+  border-radius: 16px;
+  border: 1px solid rgba(217, 184, 102, 0.25);
+  background: rgba(8, 9, 22, 0.55);
+}
+.questionCardTitle {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--s5-gold);
+  margin: 0 0 1rem;
+}
+.questionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.questionList li {
+  position: relative;
+  padding-left: 1.9rem;
+  line-height: 1.6;
+  color: #dfe3f5;
+  font-size: clamp(0.94rem, 1.5vw, 1.04rem);
+}
+.questionList li::before {
+  content: "◈";
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  color: var(--s5-gold);
+  font-size: 0.85em;
+}
+
+/* ── 5. ÁREA DE INTEGRACIÓN ───────────────────────────────────────── */
+.integrationGrid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: clamp(0.9rem, 2vw, 1.3rem);
+}
+.intCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: clamp(1.2rem, 2.6vw, 1.7rem);
+  border-radius: 18px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background: linear-gradient(155deg, rgba(20, 22, 48, 0.7), rgba(9, 10, 24, 0.6));
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-out-quart, ease), border-color 0.3s, box-shadow 0.3s;
+  color: inherit;
+}
+.intCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(217, 184, 102, 0.5);
+  box-shadow: 0 24px 55px -24px rgba(0, 0, 0, 0.85), 0 0 34px -14px rgba(167, 139, 202, 0.4);
+}
+.intCard[data-soon="true"] { cursor: default; }
+.intCard[data-soon="true"]:hover { transform: none; border-color: rgba(167, 139, 202, 0.28); }
+.intIcon {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 184, 102, 0.35);
+  background: radial-gradient(circle at 40% 30%, rgba(217,184,102,0.2), rgba(10,11,26,0.9) 75%);
+  color: var(--s5-gold-soft);
+}
+.intName {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.intDesc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #b9bfdd;
+}
+.intTag {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px !important;
+  border: 1px solid rgba(167, 139, 202, 0.4);
+  color: var(--s5-violet);
+}
+.intTagSoon {
+  border-color: rgba(217, 184, 102, 0.4);
+  color: var(--s5-gold);
+}
+.intTagLive {
+  border-color: rgba(111, 155, 240, 0.5);
+  color: var(--s5-blue);
+}
+.unlockList {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.unlockList li {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px !important;
+  border: 1px solid rgba(167, 139, 202, 0.22);
+  color: #aeb4d6;
+}
+
+/* ── 6. UMBRAL (cierre) ───────────────────────────────────────────── */
+.umbral {
+  margin-top: clamp(3.5rem, 8vw, 6rem);
+  text-align: center;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1.1rem, 4vw, 2.5rem);
+  border-radius: 24px;
+  border: 1px solid rgba(217, 184, 102, 0.22);
+  background:
+    radial-gradient(500px 300px at 50% 0%, rgba(109, 74, 155, 0.3), transparent 70%),
+    linear-gradient(180deg, rgba(14, 16, 40, 0.7), rgba(8, 9, 20, 0.6));
+}
+.umbral p {
+  margin: 1rem auto 0;
+  max-width: 60ch;
+  line-height: 1.8;
+  color: #cbd0ec;
+  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+}
+.finalQuote {
+  margin: 2.2rem auto 0;
+  max-width: 46ch;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: clamp(1.05rem, 2.6vw, 1.6rem);
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+}
+.finalQuote span {
+  display: block;
+  background: linear-gradient(180deg, #ffffff, #e6cf95);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.umbralBtn {
+  margin-top: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 2rem;
+  border-radius: 999px !important;
+  border: 1px dashed rgba(167, 139, 202, 0.45);
+  background: rgba(10, 11, 26, 0.5);
+  color: var(--s5-violet);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+/* ── Journal modal (bitácoras) ────────────────────────────────────── */
+.journalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(4, 5, 12, 0.82);
+  backdrop-filter: blur(6px);
+  animation: s5FadeIn 0.25s ease both;
+}
+.journalPanel {
+  width: min(640px, 96vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  border: 1px solid rgba(217, 184, 102, 0.28);
+  background: linear-gradient(160deg, rgba(18, 20, 44, 0.98), rgba(8, 9, 20, 0.98));
+  box-shadow: 0 40px 90px -20px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+.journalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.3rem 1.4rem 1rem;
+  border-bottom: 1px solid rgba(167, 139, 202, 0.15);
+}
+.journalTitle {
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #fff;
+  margin: 0;
+}
+.journalSub {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #aab0d2;
+  max-width: 52ch;
+}
+.journalArea {
+  flex: 1;
+  min-height: 240px;
+  margin: 0;
+  padding: 1.2rem 1.4rem;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: #eef1fb;
+  font-family: var(--font-body, "Manrope", sans-serif);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+.journalArea::placeholder { color: #6a6f92; }
+.journalFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.4rem;
+  border-top: 1px solid rgba(167, 139, 202, 0.15);
+}
+.journalStatus {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--s5-gold);
+}
+.journalClose {
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px !important;
+  border: 1px solid rgba(217, 184, 102, 0.4);
+  background: rgba(217, 184, 102, 0.1);
+  color: var(--s5-gold-soft);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.journalClose:hover {
+  background: rgba(217, 184, 102, 0.2);
+  border-color: var(--s5-gold);
+}
+
+/* Reveal al entrar en viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease-out-quart, ease), transform 0.7s var(--ease-out-quart, ease);
+}
+.revealIn {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars, .starsFar, .netLine, .netNode, .sacredRing, .sealMedal::before, .scrollHint::after {
+    animation: none !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

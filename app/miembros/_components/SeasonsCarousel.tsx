@@ -49,6 +49,12 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
   }, [])
 
   function handleClick(season: Season & { id?: string; is_locked?: boolean; checkout_url?: string | null }) {
+    // Temporada 5 — Portal de Misión "Objetivos de los 144.000". No abre el
+    // drawer de episodios ni un enlace externo: el shell muestra el portal.
+    if (season.num === 5) {
+      onOpenSeason?.(season)
+      return
+    }
     if (season.external && season.redirectUrl) {
       // T5 — Comunidad VIP: dispara insignia "Círculo VIP" antes de abrir
       // o WhatsApp. Idempotente, no-op se já desbloqueada.
@@ -72,7 +78,9 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
   return (
     <div className={styles.carousel}>
       {seasons.map((season) => {
-        const unlocked = isSeasonUnlocked(season, progress, seasons)
+        // Temporada 5 = Portal de Misión: siempre accesible, sin gate ni bloqueo.
+        const isPortal = season.num === 5
+        const unlocked = isPortal || isSeasonUnlocked(season, progress, seasons)
         const watched = getWatchedCount(season, progress)
         const total = season.episodes
         const pct = total > 0 ? Math.round((watched / total) * 100) : 0
@@ -84,11 +92,12 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
           checkout_url?: string | null
         }
         const isCommerciallyLocked =
-          !!seasonAny.is_locked && !hasAccess(seasonAny.id)
-
-        const epLabel = season.external
-          ? `TEMPORADA ${season.num} · COMUNIDAD`
-          : `TEMPORADA ${season.num} · ${total} EPS`
+          !isPortal && !!seasonAny.is_locked && !hasAccess(seasonAny.id)
+        const epLabel = isPortal
+          ? `TEMPORADA ${season.num} · PORTAL DE MISIÓN`
+          : season.external
+            ? `TEMPORADA ${season.num} · COMUNIDAD`
+            : `TEMPORADA ${season.num} · ${total} EPS`
 
         return (
           <button
@@ -127,7 +136,13 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
               <div className={styles.epNum}>{epLabel}</div>
               <div className={styles.name}>{season.name}</div>
               <div className={styles.divider} />
-              {!season.external && (
+              {isPortal && (
+                <div className={styles.meta}>
+                  <span>7 Objetivos · Misión</span>
+                  <span>Entrar</span>
+                </div>
+              )}
+              {!isPortal && !season.external && (
                 <>
                   <div className={styles.meta}>
                     <span>{pct}% completado</span>
@@ -140,7 +155,7 @@ export function SeasonsCarousel({ onOpenSeason, onLockedClick }: Props) {
                   </div>
                 </>
               )}
-              {season.external && (
+              {!isPortal && season.external && (
                 <div className={styles.meta}>
                   <span>Acceso directo</span>
                   <span>Grupo VIP</span>

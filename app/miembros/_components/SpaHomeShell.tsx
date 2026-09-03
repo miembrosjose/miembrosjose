@@ -33,6 +33,10 @@ const EpisodesDrawer = dynamic(
   () => import("./EpisodesDrawer").then((m) => m.EpisodesDrawer),
   { ssr: false },
 )
+const Season5Portal = dynamic(
+  () => import("./Season5Portal").then((m) => m.Season5Portal),
+  { ssr: false },
+)
 const ProductPurchaseModal = dynamic(
   () => import("./ProductModals").then((m) => m.ProductPurchaseModal),
   { ssr: false },
@@ -116,11 +120,13 @@ export function SpaHomeShell() {
   const [introMounted, setIntroMounted] = useState(true)
   const [seriesInfoOpen, setSeriesInfoOpen] = useState(false)
   const [openSeason, setOpenSeason] = useState<Season | null>(null)
+  // Temporada 5 = Portal de Misión (overlay propio, no drawer de episodios).
+  const [portalOpen, setPortalOpen] = useState(false)
   // Episodio a abrir automáticamente al entrar a la temporada (solo "Continuar
   // viendo" → reanuda el último episodio). null = abrir la lista normal.
   const [continueTo, setContinueTo] = useState<number | null>(null)
   const [salespageProduct, setSalespageProduct] = useState<PremiumProduct | null>(null)
-  const { view } = useView()
+  const { view, setView } = useView()
   const { user } = useAuth()
   const { seasons: dbSeasons } = useSeasons()
   const { hasAccess } = useSeasonAccess()
@@ -330,6 +336,12 @@ export function SpaHomeShell() {
         onOpenCheckout={(p) => setSalespageProduct(p)}
         ownedProductNames={owned.map((o) => o.name)}
       />
+      {/* Temporada 5 — Portal de Misión "Objetivos de los 144.000" */}
+      <Season5Portal
+        open={portalOpen}
+        onClose={() => setPortalOpen(false)}
+        onGoToForo={() => setView("comunidad")}
+      />
       {introMounted && <Intro onSkip={handleIntroSkip} onComplete={handleIntroComplete} />}
 
       {/* Hero PERSISTENTE — sempre renderizado pra ref do vídeo existir antes
@@ -360,7 +372,10 @@ export function SpaHomeShell() {
           <div className={`${styles.viewWrap} ${view !== "inicio" ? styles.viewTopOffset : ""}`}>
             {view === "inicio" && (
               <ViewInicio
-                onOpenSeason={(s) => { setContinueTo(null); setOpenSeason(s) }}
+                onOpenSeason={(s) => {
+                  if (s.num === 5) { setPortalOpen(true); return }
+                  setContinueTo(null); setOpenSeason(s)
+                }}
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 owned={owned}
               />
