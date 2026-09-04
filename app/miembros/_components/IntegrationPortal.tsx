@@ -152,7 +152,7 @@ export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Pr
         </header>
 
         {/* REVELACIÓN */}
-        <section className={styles.section} style={{ paddingTop: "0.5rem" }}>
+        <section className={styles.section}>
           <p className={styles.kicker}>Revelación</p>
           <div className={styles.declaration}>
             {portal.revelacion.map((p, i) => <p key={i}>{p}</p>)}
@@ -167,7 +167,7 @@ export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Pr
         </section>
 
         {/* ESPEJOS */}
-        <section className={styles.section} style={{ paddingTop: 0 }}>
+        <section className={styles.section}>
           <p className={styles.kicker}>Espejos de integración</p>
           <h2 className={styles.sectionTitle} style={{ fontSize: "clamp(1.3rem,3.5vw,1.9rem)" }}>MÍRATE EN TRES ESPEJOS</h2>
           <p className={styles.sectionIntro}>
@@ -201,7 +201,7 @@ export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Pr
 
         {/* LEYES (solo T2) */}
         {portal.laws && portal.laws.length > 0 && (
-          <section className={styles.section} style={{ paddingTop: 0 }}>
+          <section className={styles.section}>
             <p className={styles.kicker}>Mapa de desprogramación</p>
             <h2 className={styles.sectionTitle} style={{ fontSize: "clamp(1.3rem,3.5vw,1.9rem)" }}>LAS 7 LEYES COMO ESPEJO</h2>
             <div className={styles.lawGrid}>
@@ -230,7 +230,7 @@ export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Pr
         )}
 
         {/* ACCIONES ALQUÍMICAS */}
-        <section className={styles.section} style={{ paddingTop: 0 }}>
+        <section className={styles.section}>
           <p className={styles.kicker}>Acción alquímica</p>
           <h2 className={styles.sectionTitle} style={{ fontSize: "clamp(1.3rem,3.5vw,1.9rem)" }}>TRANSFORMAR, NO SOLO COMPRENDER</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.4rem", marginTop: "1.4rem" }}>
@@ -239,7 +239,7 @@ export function IntegrationPortal({ portal, onClose, onAdvance, onGoToForo }: Pr
         </section>
 
         {/* SELLO DE INTEGRACIÓN */}
-        <section className={styles.section} style={{ paddingTop: 0 }}>
+        <section className={styles.section}>
           <div className={`${styles.selloCard} ${sealed ? styles.selloCardOn : ""}`}>
             <span className={styles.selloGlyph}>{seal?.glyph ?? "✷"}</span>
             <p className={styles.selloKicker}>Sello de integración</p>

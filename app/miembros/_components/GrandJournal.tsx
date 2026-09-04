@@ -14,11 +14,17 @@ import {
   migrateLegacyJournal, JOURNAL_CHANGED_EVENT,
 } from "../_lib/journal-store"
 import { SEALS, getUnlockedSeals, SEALS_CHANGED_EVENT } from "../_lib/seals"
+import { JournalPdfExportButton } from "./JournalPdfExportButton"
 
 export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<JournalCategory>("camino")
   const [rev, setRev] = useState(0) // fuerza recomputar listas al cambiar el store
   const refresh = useCallback(() => setRev((n) => n + 1), [])
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  // Al cambiar de pestaña, el contenido vuelve al inicio (no queda scrolleado
+  // tapando el título de la sección).
+  useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [tab])
 
   useEffect(() => {
     if (!open) return
@@ -80,11 +86,22 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
                 <BookOpen size={20} className="text-[#e6cf95]" /> Mi Gran Bitácora
               </h2>
             </div>
-            <button type="button" onClick={onClose} aria-label="Cerrar"
-              className="rounded-full p-2 text-[#a8a8c0] transition-colors hover:bg-[#251f30] hover:text-[#F3F6FA]">
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <JournalPdfExportButton
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors"
+                style={{ border: "1px solid rgba(217,184,102,0.5)", background: "linear-gradient(135deg,rgba(230,207,149,0.18),rgba(217,184,102,0.1))", color: "#e6cf95" }}
+              />
+              <button type="button" onClick={onClose} aria-label="Cerrar"
+                className="rounded-full p-2 text-[#a8a8c0] transition-colors hover:bg-[#251f30] hover:text-[#F3F6FA]">
+                <X size={20} />
+              </button>
+            </div>
           </div>
+          {/* Botón PDF visible también en mobile */}
+          <JournalPdfExportButton
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] [font-family:var(--font-mono)] transition-colors sm:hidden"
+            style={{ border: "1px solid rgba(217,184,102,0.5)", background: "linear-gradient(135deg,rgba(230,207,149,0.18),rgba(217,184,102,0.1))", color: "#e6cf95" }}
+          />
 
           {/* Sellos iniciáticos */}
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -131,7 +148,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {activeCat && (
             <p className="mb-3 text-[0.78rem] leading-relaxed text-[#8b90b4] [font-family:var(--font-geist-sans)]">{activeCat.hint}</p>
           )}

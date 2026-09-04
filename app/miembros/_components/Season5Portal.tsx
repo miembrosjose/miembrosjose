@@ -19,6 +19,7 @@ import {
   type MissionState,
 } from "../_lib/missions"
 import { unlockSeal, type SealId } from "../_lib/seals"
+import { MissionRevealer } from "./MissionRevealer"
 
 type Props = {
   open: boolean
@@ -404,6 +405,9 @@ export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props
             ))}
           </div>
         </section>
+
+        {/* REVELADOR DE MISIÓN (IA local) */}
+        <MissionRevealer onGoToMisiones={() => scrollTo(misionesRef)} />
 
         {/* MISIONES DE CUSTODIA */}
         <section className={`${styles.section} ${styles.reveal}`} ref={misionesRef} style={{ paddingTop: 0 }}>

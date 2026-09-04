@@ -1022,14 +1022,14 @@
 .cautionBox p { margin: 0; font-size: 0.9rem; line-height: 1.6; }
 
 .mirrorBlock {
-  margin-top: 1.8rem;
-  padding: 1.2rem 1.2rem 0.4rem;
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding: clamp(1.3rem, 3vw, 1.9rem) clamp(1.1rem, 3vw, 1.6rem) 0.6rem;
   border: 1px solid rgba(167, 139, 202, 0.16);
   border-radius: 16px;
   background: rgba(10, 11, 26, 0.4);
 }
 .mirrorLabel {
-  margin: 0 0 0.6rem;
+  margin: 0 0 1rem;
   font-family: var(--font-mono), monospace;
   font-size: 0.66rem;
   font-weight: 700;
@@ -1260,3 +1260,46 @@
   transition: border-color 0.2s, color 0.2s;
 }
 .missionShare:hover { border-color: var(--s5-gold); color: #fff; }
+
+/* ── Revelador de Misión ────────────────────────────────────────────── */
+.revealerBox {
+  margin-top: 1.6rem;
+  padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 1px solid rgba(217, 184, 102, 0.3);
+  border-radius: 20px;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(217, 184, 102, 0.1), rgba(10, 11, 26, 0.55) 62%);
+}
+.revealerHint {
+  margin: 0 0 1.2rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--s5-gold-soft);
+}
+.revealerBody { margin: 0 0 0.6rem; font-size: 0.98rem; line-height: 1.7; color: #d9dced; }
+.revealerCard {
+  padding: 1.1rem 1.2rem;
+  border: 1px solid rgba(167, 139, 202, 0.2);
+  border-left: 3px solid var(--s5-gold);
+  border-radius: 12px;
+  background: rgba(10, 11, 26, 0.5);
+}
+.revealerCardNum {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--s5-gold);
+  margin-bottom: 0.5rem;
+}
+.revealerSteps { margin: 0; padding-left: 1.3rem; color: #e6e9f7; }
+.revealerSteps li { font-size: 0.96rem; line-height: 1.6; margin-bottom: 0.3rem; }
+.revealerFrase {
+  margin: 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--s5-gold-soft);
+}

@@ -162,6 +162,16 @@ export const INTEGRATION_PORTALS: IntegrationPortalDef[] = [
       "¿Qué miedo no empezó conmigo, pero sigue actuando en mí?",
       "¿Qué historia de mis padres o abuelos sigo repitiendo sin darme cuenta?",
     ],
+    espejoTerritorio: [
+      "¿Qué creencias colectivas siento presentes en el lugar donde vivo?",
+      "¿Qué patrón se repite en mi ciudad o país: miedo, escasez, violencia, resignación, corrupción, silencio, culpa, división o desconfianza?",
+      "¿Qué frase colectiva he escuchado muchas veces en mi territorio?",
+      "¿Qué forma de pensar de mi país o ciudad también vive dentro de mí?",
+      "¿Qué herida territorial puede estar conectada con mi propia historia personal?",
+      "¿Qué parte del territorio donde vivo necesita una nueva frecuencia?",
+      "¿Qué ley universal podría ayudarme a comprender el patrón de este lugar?",
+      "Frase colectiva heredada de mi territorio (ej: «Aquí nada cambia») → nueva instrucción consciente (ej: «Yo puedo sostener una frecuencia distinta desde mi lugar»):",
+    ],
     laws: [
       {
         n: 1, name: "MENTALISMO",
