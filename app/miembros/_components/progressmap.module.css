@@ -1,0 +1,187 @@
+/* MAPA DE PROGRESO del recorrido de Los 144000.
+   Riel horizontal: Portal · T1 · ◇ · T2 · ◇ · T3 · ◇ · T4 · ✦ Objetivo.
+   Estados: completado, actual, disponible, bloqueado. Cliente, sin fetch. */
+
+.wrap {
+  position: relative;
+  margin: 0 0 1.4rem;
+  padding: 1.1rem clamp(0.6rem, 2vw, 1.2rem) 0.9rem;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background:
+    radial-gradient(600px 200px at 12% -20%, rgba(109, 74, 155, 0.18), transparent 60%),
+    linear-gradient(160deg, rgba(16, 16, 40, 0.55), rgba(8, 9, 20, 0.4));
+  overflow: hidden;
+}
+.legendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+.here {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #cbd0ec;
+}
+.here b { color: #e6cf95; font-weight: 700; }
+.legend {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9aa0c0;
+}
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.dotDone, .dotCurrent, .dotAvail, .dotLocked {
+  width: 9px; height: 9px; border-radius: 999px !important; display: inline-block;
+}
+.dotDone { background: #d9b866; }
+.dotCurrent { background: #a78bca; box-shadow: 0 0 8px #a78bca; }
+.dotAvail { border: 1px solid #a78bca; }
+.dotLocked { background: #3a3a52; }
+
+/* Riel scrollable en móvil */
+.track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2rem 0.2rem 0.4rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167,139,202,0.4) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.track::-webkit-scrollbar { height: 4px; }
+.track::-webkit-scrollbar-thumb { background: rgba(167,139,202,0.4); border-radius: 2px; }
+
+/* Cada paso = nodo + etiqueta */
+.step {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: clamp(66px, 15vw, 96px);
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.step:disabled { cursor: default; }
+
+.node {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(167, 139, 202, 0.35);
+  background: radial-gradient(circle at 50% 35%, rgba(26, 28, 60, 0.95), rgba(8, 9, 20, 0.95));
+  color: #cdd3ef;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: 0.95rem;
+  transition: transform 0.25s var(--ease-out-quart, ease), box-shadow 0.25s, border-color 0.25s;
+}
+.step:not(:disabled):hover .node { transform: scale(1.08); }
+
+.node.done {
+  border-color: rgba(217, 184, 102, 0.85);
+  background: radial-gradient(circle at 50% 30%, rgba(217, 184, 102, 0.3), rgba(8, 9, 20, 0.9) 72%);
+  color: #f3e6c4;
+  box-shadow: 0 0 18px -5px rgba(217, 184, 102, 0.6);
+}
+.node.current {
+  border-color: #a78bca;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(167, 139, 202, 0.22), 0 0 22px -4px rgba(167, 139, 202, 0.7);
+  animation: pmPulse 2.4s ease-in-out infinite;
+}
+@keyframes pmPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(167,139,202,0.18), 0 0 18px -6px rgba(167,139,202,0.55); }
+  50% { box-shadow: 0 0 0 5px rgba(167,139,202,0.28), 0 0 30px -4px rgba(167,139,202,0.85); }
+}
+.node.avail {
+  border-color: rgba(167, 139, 202, 0.7);
+  color: #dcd6f2;
+}
+.node.locked {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #565676;
+  background: rgba(12, 12, 24, 0.7);
+}
+.node.objetivo {
+  width: 46px;
+  height: 46px;
+}
+.node.objetivo.done, .node.objetivo.current, .node.objetivo.avail {
+  border-color: rgba(217, 184, 102, 0.9);
+  color: #ffe9b0;
+  box-shadow: 0 0 26px -5px rgba(217, 184, 102, 0.7);
+}
+
+/* Rombo pequeño para integraciones (umbral) */
+.diamond {
+  flex: 0 0 auto;
+  width: clamp(34px, 8vw, 46px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 6px;
+}
+.rhombus {
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+  border: 1.5px solid rgba(167, 139, 202, 0.35);
+  border-radius: 3px;
+  background: rgba(10, 11, 26, 0.9);
+}
+.rhombus.done {
+  border-color: rgba(217, 184, 102, 0.8);
+  background: rgba(217, 184, 102, 0.28);
+  box-shadow: 0 0 12px -3px rgba(217, 184, 102, 0.55);
+}
+.rhombus.locked { border-color: rgba(255,255,255,0.1); }
+
+.connector {
+  flex: 1 1 14px;
+  min-width: 14px;
+  height: 2px;
+  margin-top: 25px;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, rgba(167,139,202,0.4), rgba(167,139,202,0.15));
+  align-self: flex-start;
+}
+.connector.done {
+  background: linear-gradient(90deg, rgba(217,184,102,0.7), rgba(167,139,202,0.5));
+}
+
+.label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.54rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: #aab0d2;
+  text-align: center;
+}
+.step.isCurrent .label { color: #e6cf95; }
+.step.isLocked .label { color: #6a6f92; }
+
+@media (prefers-reduced-motion: reduce) {
+  .node.current { animation: none !important; }
+}

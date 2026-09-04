@@ -10,6 +10,7 @@ import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
+import { ProgressMap } from "./ProgressMap"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
@@ -424,6 +425,7 @@ export function SpaHomeShell() {
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 onOpenIngreso={() => setIngresoOpen(true)}
                 onOpenObjetivos={() => setPortalOpen(true)}
+                seasons={dbSeasons}
                 owned={owned}
               />
             )}
@@ -499,12 +501,14 @@ function ViewInicio({
   onOpenSalespage,
   onOpenIngreso,
   onOpenObjetivos,
+  seasons,
   owned,
 }: {
   onOpenSeason: (s: Season) => void
   onOpenSalespage: (p: PremiumProduct) => void
   onOpenIngreso: () => void
   onOpenObjetivos: () => void
+  seasons: Season[]
   owned: OwnedProduct[]
 }) {
   const { isAdmin } = useAuth()
@@ -550,6 +554,12 @@ function ViewInicio({
             </button>
           )}
         </header>
+        <ProgressMap
+          seasons={seasons}
+          onOpenIngreso={onOpenIngreso}
+          onOpenSeason={onOpenSeason}
+          onOpenObjetivos={onOpenObjetivos}
+        />
         <SeasonsCarousel
           onOpenSeason={onOpenSeason}
           onOpenIngreso={onOpenIngreso}
@@ -664,17 +674,26 @@ function ViewInicio({
 // ─────────────────────────────────────────────────────────────────────────
 
 function ViewComunidad() {
+  const { setView } = useView()
   return (
     <div className={styles.view}>
       <section className={styles.section}>
         <header className={styles.sectionHeader}>
           <div>
-            <p className={styles.sectionKicker}>Comunidad</p>
+            <p className={styles.sectionKicker}>Foro · parte del recorrido</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              Foro
+              Foro de la Red
             </h2>
           </div>
+          <button
+            type="button"
+            onClick={() => setView("inicio", "cursos")}
+            className="inline-flex items-center gap-2 border border-[#6D4A9B]/50 bg-[#6D4A9B]/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a78bca] transition-colors hover:border-[#6D4A9B] hover:bg-[#6D4A9B]/25 hover:text-[#F3F6FA] [font-family:var(--font-mono)]"
+            style={{ borderRadius: 8 }}
+          >
+            ← Volver al recorrido
+          </button>
         </header>
         <div className={styles.comunidadGrid}>
           <Leaderboard />

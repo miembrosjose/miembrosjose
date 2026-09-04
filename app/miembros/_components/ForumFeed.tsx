@@ -39,9 +39,14 @@ export function ForumFeed() {
     const root = feedRef.current
     if (!root) return
     let tries = 0
+    const key = title.split(" — ")[0].trim()
     const attempt = () => {
       const nodes = Array.from(root.querySelectorAll<HTMLElement>("[data-post-title]"))
-      const el = nodes.find((n) => n.getAttribute("data-post-title") === title)
+      // Exacto primero; si no, por el primer segmento del título (resiliente a
+      // pequeñas ediciones del título en el foro).
+      const el =
+        nodes.find((n) => n.getAttribute("data-post-title") === title) ||
+        (key ? nodes.find((n) => (n.getAttribute("data-post-title") || "").startsWith(key)) : undefined)
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" })
         el.classList.add(styles.highlight)
