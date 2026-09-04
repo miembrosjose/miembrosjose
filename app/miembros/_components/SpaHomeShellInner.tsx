@@ -10,7 +10,6 @@ import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
-import { ProgressMap } from "./ProgressMap"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
@@ -562,12 +561,6 @@ function ViewInicio({
             </button>
           )}
         </header>
-        <ProgressMap
-          seasons={seasons}
-          onOpenIngreso={onOpenIngreso}
-          onOpenSeason={onOpenSeason}
-          onOpenObjetivos={onOpenObjetivos}
-        />
         <SeasonsCarousel
           seasons={seasons}
           hasAccess={hasSeasonAccess}
