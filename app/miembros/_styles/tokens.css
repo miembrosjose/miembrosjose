@@ -25,7 +25,9 @@
   --accent-red:     #6D4A9B;   /* purple — DESTACADOS oficial */
   --accent-red-hover:#8a63b8;  /* purple mais claro pra hover */
   --accent-red-deep:#4A3170;   /* purple mais escuro pra borda/sombra */
-  --accent-gold:    #6D4A9B;   /* paleta mono — accent único */
+  --accent-gold:    #6D4A9B;   /* paleta mono — accent único (legacy: en realidad púrpura) */
+  --gold:           #d9b866;   /* dorado real del camino Los 144.000 (acentos) */
+  --gold-soft:      #e6cf95;
   --text-primary:   #F3F6FA;   /* TEXTOS DESTACADOS oficial */
   --text-secondary:#a8a8c0;
   --text-muted:     #6a6a85;
