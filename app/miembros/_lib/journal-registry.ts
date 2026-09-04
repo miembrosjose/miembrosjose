@@ -49,7 +49,10 @@ export const JOURNAL_ENTRIES: JournalEntryDef[] = [
   { key: "portal_mapa_cosmico", title: "Portal del Mapa Cósmico", stage: "Integración · Temporada 2 → 3", tab: "proceso", order: 30 },
   { key: "portal_memoria_terrestre", title: "Portal de la Memoria Terrestre", stage: "Integración · Temporada 3 → 4", tab: "linaje", order: 40 },
   { key: "personal", title: "Bitácora Personal", stage: "Objetivos de Los 144.000", tab: "proceso", order: 50 },
+  { key: "historia_personal", title: "Mi Historia Personal", stage: "Objetivos de Los 144.000", tab: "linaje", order: 45 },
+  { key: "integracion_solar", title: "Integración Solar", stage: "Objetivos de Los 144.000", tab: "senales", order: 55 },
   { key: "territorio", title: "Bitácora del Territorio", stage: "Misión Territorial", tab: "territorio", order: 60 },
+  { key: "custodia", title: "Misiones de Custodia", stage: "Objetivos de Los 144.000", tab: "misiones", order: 70 },
 ]
 
 /** Lee el contenido guardado de una entrada (localStorage, cliente). */

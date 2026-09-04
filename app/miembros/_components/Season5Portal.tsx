@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   X, ArrowDown, BookOpen, Map as MapIcon, MessageSquare, Share2, Lock, Check,
+  Sun, Shield, ScrollText,
 } from "lucide-react"
 import styles from "./season5.module.css"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
@@ -93,6 +94,44 @@ const TERRITORY_TEMPLATE =
   "BITÁCORA DEL TERRITORIO\n\n" +
   TERRITORY_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
   "\n— Escribe aquí tus hallazgos, señales y compromisos con tu lugar —\n"
+
+// ── Mi Historia Personal ──
+const HISTORIA_QUESTIONS = [
+  "¿De qué linaje vengo y qué historias me marcaron?",
+  "¿Qué heridas familiares siento que vine a sanar?",
+  "¿Qué dones, oficios o memorias se repiten en mi sangre?",
+  "¿En qué momento de mi vida sentí por primera vez el Llamado?",
+  "¿Qué parte de mi historia se transforma al entrar en Los 144.000?",
+]
+const HISTORIA_TEMPLATE =
+  "MI HISTORIA PERSONAL\n\n" +
+  HISTORIA_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
+  "\n— Escribe aquí tu historia, tu linaje y tu punto de giro —\n"
+
+// ── Misiones de Custodia ──
+const CUSTODIA_MISIONES = [
+  { title: "Custodiar un lugar", text: "Elige un punto de tu territorio (un cerro, un río, un templo, una esquina) y sostenlo con oración, limpieza y presencia consciente." },
+  { title: "Custodiar una memoria", text: "Recupera y registra una historia, un símbolo o un relato ancestral de tu tierra que esté por perderse." },
+  { title: "Custodiar a una persona", text: "Acompaña conscientemente a alguien que despierta: sin imponer, sin depender, sosteniendo luz y discernimiento." },
+  { title: "Custodiar una práctica", text: "Sostén en el tiempo una práctica (meditación, bitácora, servicio) que mantenga viva tu frecuencia." },
+  { title: "Custodiar la Red", text: "Cuida el nodo o la comunidad de la que formas parte: coherencia, respeto y ausencia de fanatismo." },
+]
+const CUSTODIA_TEMPLATE =
+  "MISIONES DE CUSTODIA\n\n" +
+  CUSTODIA_MISIONES.map((m) => `• ${m.title}: ${m.text}\n`).join("\n") +
+  "\n— Elige tu misión de custodia y registra tus pasos, señales y aprendizajes —\n"
+
+// ── Integración Solar ──
+const SOLAR_QUESTIONS = [
+  "¿Qué se ordena en mí cuando me expongo conscientemente a la luz del Sol?",
+  "¿Qué relación tengo con el fuego interior: voluntad, propósito, coraje?",
+  "¿Qué archivo solar (disco solar, memoria de fuego) siento más cercano?",
+  "¿Qué necesito quemar, transmutar o encender para servir mejor?",
+]
+const SOLAR_TEMPLATE =
+  "INTEGRACIÓN SOLAR\n\n" +
+  SOLAR_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
+  "\n— Registra tus prácticas solares, meditaciones de fuego y comprensiones —\n"
 
 export function Season5Portal({ open, onClose, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -251,6 +290,13 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
                   <h3 className={styles.sealTitle}>{o.title}</h3>
                   <p className={styles.sealPhrase}>{o.phrase}</p>
                   <p className={styles.sealText}>{o.text}</p>
+                  <button
+                    type="button"
+                    className={styles.sealAction}
+                    onClick={() => goForo(FORUM_TITLES.objetivos)}
+                  >
+                    <MessageSquare size={13} /> Reflexionar en el foro
+                  </button>
                 </div>
               </article>
             ))}
@@ -307,6 +353,113 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
               Esta misión territorial se realizará con el apoyo de la Hermandad Blanca, los retiros interiores y la
               red de conciencia de Los 144.000.
             </p>
+          </div>
+        </section>
+
+        {/* ── MI HISTORIA PERSONAL ── */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <p className={styles.kicker}>Tu raíz</p>
+          <h2 className={styles.sectionTitle}>MI HISTORIA PERSONAL</h2>
+          <p className={styles.sectionIntro}>
+            Antes de custodiar el territorio, reconoce tu propia historia. <strong>El linaje también es un archivo.</strong>
+          </p>
+          <div className={styles.questionCard} style={{ marginTop: "1.4rem" }}>
+            <p className={styles.questionCardTitle}>Preguntas para recordar tu historia</p>
+            <ul className={styles.questionList}>
+              {HISTORIA_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
+            </ul>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
+              <button
+                type="button"
+                className={styles.cta}
+                style={{ margin: 0 }}
+                onClick={() => setJournal({
+                  key: "historia_personal",
+                  title: "Mi Historia Personal",
+                  sub: "Reconoce tu linaje, tus heridas, tus dones y tu punto de giro en el camino.",
+                  template: HISTORIA_TEMPLATE,
+                })}
+              >
+                <ScrollText size={15} /> Escribir mi historia
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── MISIONES DE CUSTODIA ── */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <p className={styles.kicker}>Servicio concreto</p>
+          <h2 className={styles.sectionTitle}>MISIONES DE CUSTODIA</h2>
+          <p className={styles.sectionIntro}>
+            Ser guardián no es poseer: es escuchar, cuidar y sostener. <strong>Elige una custodia y hazla viva.</strong>
+          </p>
+          <div className={styles.howGrid}>
+            {CUSTODIA_MISIONES.map((m, i) => (
+              <article key={m.title} className={styles.howCard}>
+                <span className={styles.howNum}><Shield size={16} /> {String(i + 1).padStart(2, "0")}</span>
+                <h3 className={styles.howName}>{m.title}</h3>
+                <p className={styles.howText}>{m.text}</p>
+              </article>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", justifyContent: "center", marginTop: "1.8rem" }}>
+            <button
+              type="button"
+              className={styles.cta}
+              style={{ margin: 0 }}
+              onClick={() => setJournal({
+                key: "custodia",
+                title: "Misiones de Custodia",
+                sub: "Elige tu misión de custodia y registra tus pasos, señales y compromisos.",
+                template: CUSTODIA_TEMPLATE,
+              })}
+            >
+              <Shield size={15} /> Registrar mi custodia
+            </button>
+            <button
+              type="button"
+              className={styles.cta}
+              style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
+              onClick={() => goForo(FORUM_TITLES.nodos)}
+            >
+              <MessageSquare size={15} /> Compartir en la Red
+            </button>
+          </div>
+        </section>
+
+        {/* ── INTEGRACIÓN SOLAR ── */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <p className={styles.kicker}>Archivos del Sol</p>
+          <h2 className={styles.sectionTitle}>INTEGRACIÓN SOLAR</h2>
+          <div className={styles.territory}>
+            <span className={styles.territoryGlow} aria-hidden />
+            <p>
+              El Sol no es solo una estrella física: es una puerta de memoria y voluntad. La Integración Solar es la
+              práctica de ordenar el fuego interior —propósito, coraje, dirección— y sintonizar con los archivos
+              solares que sostienen el Plan.
+            </p>
+            <p className={styles.territoryHi}>Recibir la luz también es una responsabilidad.</p>
+            <div className={styles.questionCard}>
+              <p className={styles.questionCardTitle}>Bitácora solar · preguntas guía</p>
+              <ul className={styles.questionList}>
+                {SOLAR_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
+              </ul>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
+                <button
+                  type="button"
+                  className={styles.cta}
+                  style={{ margin: 0, borderColor: "var(--s5-gold)" }}
+                  onClick={() => setJournal({
+                    key: "integracion_solar",
+                    title: "Integración Solar",
+                    sub: "Registra tus prácticas solares, meditaciones de fuego y comprensiones sobre la voluntad.",
+                    template: SOLAR_TEMPLATE,
+                  })}
+                >
+                  <Sun size={15} /> Abrir mi bitácora solar
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 

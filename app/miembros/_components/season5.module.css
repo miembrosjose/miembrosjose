@@ -496,6 +496,30 @@
   color: #c4c9e4;
 }
 
+.sealAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.1rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid rgba(167, 139, 202, 0.4);
+  border-radius: 999px;
+  background: rgba(167, 139, 202, 0.1);
+  color: var(--s5-gold-soft);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.sealAction:hover {
+  border-color: var(--s5-gold);
+  background: rgba(217, 184, 102, 0.14);
+  color: #fff;
+}
+
 /* ── 4. MISIÓN TERRITORIAL ────────────────────────────────────────── */
 .territory {
   position: relative;
