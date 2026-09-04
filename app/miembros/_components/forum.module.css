@@ -664,3 +664,81 @@
   0% { box-shadow: 0 0 0 2px rgba(217, 184, 102, 0.9), 0 0 42px -4px rgba(217, 184, 102, 0.7); }
   100% { box-shadow: 0 0 0 0 rgba(217, 184, 102, 0); }
 }
+
+/* ── Buscador + filtro por categoría (Fase 5) ─────────────────────────── */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0 0 1.2rem;
+}
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--gold, #d9b866);
+  pointer-events: none;
+  opacity: 0.9;
+}
+.searchInput {
+  width: 100%;
+  padding: 0.7rem 2.2rem 0.7rem 2.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 184, 102, 0.28);
+  background: rgba(10, 11, 26, 0.55);
+  color: #eef1fb;
+  font-family: var(--font-body, inherit);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.searchInput::placeholder { color: #6a6f92; }
+.searchInput:focus {
+  border-color: var(--gold, #d9b866);
+  box-shadow: 0 0 0 3px rgba(217, 184, 102, 0.14);
+}
+.searchClear {
+  position: absolute;
+  right: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: #a8a8c0;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.searchClear:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.tagBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.tagChip {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.35);
+  background: transparent;
+  color: #a8a8c0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.tagChip:hover { color: #F3F6FA; border-color: rgba(167, 139, 202, 0.6); }
+.tagChipActive {
+  border-color: var(--gold, #d9b866);
+  background: linear-gradient(135deg, rgba(230, 207, 149, 0.18), rgba(217, 184, 102, 0.1));
+  color: var(--gold-soft, #e6cf95);
+}

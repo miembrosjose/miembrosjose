@@ -31,8 +31,32 @@ export function ForumFeed() {
   const [hasMore, setHasMore] = useState(false)
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
+  // Búsqueda + filtro por categoría (tag). El input se "debounce" 350ms para
+  // no disparar un fetch por tecla.
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [activeTag, setActiveTag] = useState<string | null>(null)
+  const [knownTags, setKnownTags] = useState<string[]>([])
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
+
+  const filtering = debouncedSearch.trim().length > 0 || !!activeTag
+
+  // Construye el query string del feed con búsqueda + tag (y cursor opcional).
+  const buildQuery = useCallback((before?: string | null) => {
+    const p = new URLSearchParams()
+    if (before) p.set("before", before)
+    if (debouncedSearch.trim()) p.set("q", debouncedSearch.trim())
+    if (activeTag) p.set("tag", activeTag)
+    const s = p.toString()
+    return s ? `/api/forum/posts?${s}` : "/api/forum/posts"
+  }, [debouncedSearch, activeTag])
+
+  // Debounce del input de búsqueda.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(t)
+  }, [search])
 
   // Scroll + resalta el post cuyo título coincide (navegación desde portales).
   const scrollToTitle = useCallback((title: string) => {
@@ -75,10 +99,16 @@ export function ForumFeed() {
     setLoading(true)
     setError(null)
     try {
-      const data = await api<FeedResponse>("/api/forum/posts")
+      const data = await api<FeedResponse>(buildQuery())
       setPosts(data.posts || [])
       setCursor(data.nextCursor)
       setHasMore(!!data.nextCursor)
+      // Acumula tags conocidas (para las chips de categoría) sin perderlas al filtrar.
+      setKnownTags((prev) => {
+        const set = new Set(prev)
+        for (const p of data.posts || []) for (const t of p.tags ?? []) set.add(t)
+        return Array.from(set).sort()
+      })
     } catch (e) {
       setPosts([])
       setHasMore(false)
@@ -87,16 +117,14 @@ export function ForumFeed() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [buildQuery])
 
   // Próxima página — append na lista
   const fetchMore = useCallback(async () => {
     if (!cursor || loadingMore) return
     setLoadingMore(true)
     try {
-      const data = await api<FeedResponse>(
-        `/api/forum/posts?before=${encodeURIComponent(cursor)}`,
-      )
+      const data = await api<FeedResponse>(buildQuery(cursor))
       setPosts((prev) => [...prev, ...(data.posts || [])])
       setCursor(data.nextCursor)
       setHasMore(!!data.nextCursor)
@@ -105,7 +133,7 @@ export function ForumFeed() {
     } finally {
       setLoadingMore(false)
     }
-  }, [cursor, loadingMore])
+  }, [cursor, loadingMore, buildQuery])
 
   useEffect(() => {
     fetchInitial()
@@ -246,6 +274,47 @@ export function ForumFeed() {
     <div ref={feedRef}>
       <ForumComposer onCreate={handleCreate} />
 
+      {/* Buscador + filtro por categoría (tags). Acento dorado sutil. */}
+      <div className={styles.toolbar}>
+        <div className={styles.searchWrap}>
+          <svg className={styles.searchIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar en el foro…"
+            className={styles.searchInput}
+            aria-label="Buscar publicaciones"
+          />
+          {search && (
+            <button type="button" className={styles.searchClear} onClick={() => setSearch("")} aria-label="Limpiar búsqueda">×</button>
+          )}
+        </div>
+        {knownTags.length > 0 && (
+          <div className={styles.tagBar}>
+            <button
+              type="button"
+              className={`${styles.tagChip} ${!activeTag ? styles.tagChipActive : ""}`}
+              onClick={() => setActiveTag(null)}
+            >
+              Todas
+            </button>
+            {knownTags.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`${styles.tagChip} ${activeTag === t ? styles.tagChipActive : ""}`}
+                onClick={() => setActiveTag((cur) => (cur === t ? null : t))}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {loading && (
         <div className={styles.empty}>
           <p className={styles.emptyKicker}>Cargando...</p>
@@ -261,8 +330,12 @@ export function ForumFeed() {
 
       {!loading && !error && posts.length === 0 && (
         <div className={styles.empty}>
-          <p className={styles.emptyKicker}>Aún no hay publicaciones</p>
-          <p className={styles.emptyMsg}>Sé el primero en abrir una conversación.</p>
+          <p className={styles.emptyKicker}>{filtering ? "Sin resultados" : "Aún no hay publicaciones"}</p>
+          <p className={styles.emptyMsg}>
+            {filtering
+              ? "Probá con otras palabras o quitá el filtro de categoría."
+              : "Sé el primero en abrir una conversación."}
+          </p>
         </div>
       )}
 

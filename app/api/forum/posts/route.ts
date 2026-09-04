@@ -37,6 +37,11 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100)
   const before = searchParams.get("before")
+  // Búsqueda (q) y filtro por categoría/tag. Sanitiza para no romper el
+  // filtro PostgREST `.or` (comas, paréntesis y comodines rompen la sintaxis).
+  const rawQ = (searchParams.get("q") || "").trim().slice(0, 80)
+  const q = rawQ.replace(/[,()%*\\]/g, " ").replace(/\s+/g, " ").trim()
+  const tag = (searchParams.get("tag") || "").trim().slice(0, 30).toUpperCase()
 
   let query = supabase
     .from("forum_posts")
@@ -50,6 +55,9 @@ export async function GET(req: NextRequest) {
     // duplicariam aqui (created_at antigo poderia bater no cursor).
     query = query.lt("created_at", before).eq("pinned", false)
   }
+  // Filtros: buscan en título + cuerpo (q) y por tag exacto (categoría).
+  if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`)
+  if (tag) query = query.contains("tags", [tag])
 
   const { data: posts, error } = await query
   if (error) {
