@@ -44,6 +44,22 @@ export function SeasonsCarousel({
   onOpenIngreso,
   onOpenObjetivos,
 }: Props) {
+  // Videos de portada de los portales (Ingreso/Objetivos), gestionados desde
+  // admin vía site_texts. Se usan como cover de la tarjeta en el carrusel.
+  const [portalMedia, setPortalMedia] = useState<{ ingreso?: string; objetivos?: string }>({})
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/site-texts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.overrides) return
+        const ov = d.overrides as Record<string, string>
+        setPortalMedia({ ingreso: ov["portal.ingreso.video"] || "", objetivos: ov["portal.objetivos.video"] || "" })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   // Hidrata progresso só no client (localStorage não existe no server)
   const [progress, setProgress] = useState<EpisodeProgress>({})
   useEffect(() => {
@@ -160,6 +176,7 @@ export function SeasonsCarousel({
     gradient: string
     metaA: string
     metaB: string
+    media?: string
     onClick?: () => void
   }) {
     const variantClass =
@@ -172,7 +189,9 @@ export function SeasonsCarousel({
         onClick={cfg.variant === "soon" ? undefined : cfg.onClick}
       >
         <div className={styles.thumb} style={{ background: cfg.gradient }}>
-          <span className={styles.thumbEmoji}>{cfg.emoji}</span>
+          {cfg.media
+            ? <SeasonVideo src={cfg.media} />
+            : <span className={styles.thumbEmoji}>{cfg.emoji}</span>}
           <span className={`${styles.badge} ${styles.portalBadge} ${cfg.badgeGold ? styles.portalBadgeGold : ""}`}>
             {cfg.badge}
           </span>
@@ -202,7 +221,7 @@ export function SeasonsCarousel({
       {renderPortalCard({
         key: "ingreso", badge: "PORTAL", epLabel: "PORTAL DE INGRESO",
         name: "Antes del Llamado", emoji: "🚪", gradient: violet,
-        metaA: "Ceremonia", metaB: "Entrar", onClick: onOpenIngreso,
+        metaA: "Ceremonia", metaB: "Entrar", media: portalMedia.ingreso, onClick: onOpenIngreso,
       })}
 
       {s1 && renderSeasonCard(s1)}
@@ -214,7 +233,7 @@ export function SeasonsCarousel({
         key: "objetivos", variant: "gold", badge: "MISIÓN", badgeGold: true,
         epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
         emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
-        onClick: onOpenObjetivos,
+        media: portalMedia.objetivos, onClick: onOpenObjetivos,
       })}
 
       {renderPortalCard({
