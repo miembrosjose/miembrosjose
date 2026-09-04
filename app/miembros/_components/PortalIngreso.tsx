@@ -33,8 +33,9 @@ const INVOCATION = [
 const HOW = [
   { n: 1, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No las recorras con prisa. Cada transmisión contiene una llave." },
   { n: 2, name: "INTEGRA LO RECIBIDO", text: "Entre temporadas encontrarás portales de integración. Ahí la información deja de ser teoría y comienza a tocar tu vida." },
-  { n: 3, name: "REGISTRA TU PROCESO", text: "Usa la bitácora para escribir sueños, señales, comprensiones, resistencias, emociones y cambios interiores." },
-  { n: 4, name: "RESPONDE AL LLAMADO", text: "El camino no termina en aprender. Conduce a misión, territorio, comunidad, servicio y preparación para el contacto." },
+  { n: 3, name: "REGISTRA TU PROCESO", text: "Usa Mi Gran Bitácora para escribir sueños, señales, comprensiones, resistencias, emociones y cambios interiores. Todo queda guardado y es privado." },
+  { n: 4, name: "HABITA TU TERRITORIO", text: "El camino no es solo interior. Reconoce el lugar donde vives, tu linaje y tu comunidad: ahí es donde la memoria se vuelve servicio." },
+  { n: 5, name: "RESPONDE AL LLAMADO", text: "El camino no termina en aprender. Conduce a misión, territorio, comunidad, servicio y preparación para el contacto." },
 ]
 
 const INGRESO_QUESTIONS = [
@@ -50,6 +51,7 @@ const INGRESO_TEMPLATE =
 
 export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const aperturaRef = useRef<HTMLDivElement>(null)
   const howRef = useRef<HTMLDivElement>(null)
   const [journal, setJournal] = useState<JournalDef | null>(null)
   // Video de fondo del hero (opcional, gestionado desde admin vía site_texts).
@@ -110,6 +112,10 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
     return () => { io.disconnect(); clearTimeout(t) }
   }, [open])
 
+  const scrollToApertura = useCallback(() => {
+    aperturaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
+
   const scrollToHow = useCallback(() => {
     howRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
@@ -148,17 +154,22 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
             <br /><br />
             <strong>No entres buscando solamente información. Entra dispuesto a recordar, integrar y responder.</strong>
           </div>
-          <button type="button" className={styles.cta} onClick={scrollToHow}>
+          <button type="button" className={styles.cta} onClick={scrollToApertura}>
             Comenzar el Camino <ArrowDown size={15} />
           </button>
           <div className={styles.scrollHint} aria-hidden />
           </div>
         </header>
 
-        {/* LA GRAN INVOCACIÓN */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Invocación sagrada</p>
-          <h2 className={styles.sectionTitle}>LA GRAN INVOCACIÓN</h2>
+        {/* APERTURA DEL ESPACIO — La Gran Invocación */}
+        <section className={`${styles.section} ${styles.reveal}`} ref={aperturaRef}>
+          <p className={styles.kicker}>Apertura del Espacio</p>
+          <h2 className={styles.sectionTitle}>APERTURA DEL ESPACIO</h2>
+          <div className={styles.heroLead} style={{ margin: "0 auto 0.4rem", textAlign: "center" }}>
+            <span className={styles.heroLeadHi}>Antes de recorrer el camino, abrimos el espacio.</span>
+            No entramos a Los 144.000 con prisa ni con la mente dispersa. Nos detenemos, respiramos y pronunciamos
+            —en voz alta o en silencio— la Gran Invocación. Deja que cada línea te ordene por dentro.
+          </div>
           <div className={styles.invocation}>
             <div className={styles.invocationRule} aria-hidden />
             {INVOCATION.map((stanza, i) => (
@@ -168,6 +179,11 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
                 ))}
               </p>
             ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: "2.2rem" }}>
+            <button type="button" className={styles.cta} style={{ margin: 0 }} onClick={scrollToHow}>
+              Continuar <ArrowDown size={15} />
+            </button>
           </div>
         </section>
 

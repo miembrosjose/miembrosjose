@@ -4,7 +4,8 @@
 // Troca de view via useView() — sem reload, igual aplicativo.
 
 import { useEffect, useState } from "react"
-import { Menu, X, MessageSquare } from "lucide-react"
+import { Menu, X, MessageSquare, BookOpen } from "lucide-react"
+import { openGrandJournal } from "../_lib/journal-registry"
 import { useAuth } from "../_lib/auth-context"
 import { useView, type ViewKey, type Anchor } from "../_lib/view-context"
 import { useUnreadDM } from "../_lib/unread-dm"
@@ -151,6 +152,24 @@ export function Navbar() {
       </ul>
 
       <div className={styles.actions}>
+        {/* Mi Gran Bitácora — archivo personal (abre modal vía evento global) */}
+        <button
+          type="button"
+          onClick={() => openGrandJournal()}
+          aria-label="Abrir mi bitácora"
+          title="Abrir mi bitácora"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 36,
+            height: 36,
+            color: "#c9a86b",
+            transition: "color 0.2s",
+          }}
+        >
+          <BookOpen size={18} />
+        </button>
         {/* Mensajes — botão com badge de unread em tempo real */}
         <a
           href="/miembros/mensajes"

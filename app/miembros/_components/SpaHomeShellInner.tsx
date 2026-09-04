@@ -13,6 +13,8 @@ import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
+import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
+import { GrandJournal } from "./GrandJournal"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
@@ -135,6 +137,13 @@ export function SpaHomeShellInner() {
   // Camino iniciático: Portal de Ingreso + Portales de Integración (1|2|3).
   const [ingresoOpen, setIngresoOpen] = useState(false)
   const [integrationId, setIntegrationId] = useState<1 | 2 | 3 | null>(null)
+  // Mi Gran Bitácora (se abre desde el navbar / portales vía evento global).
+  const [journalOpen, setJournalOpen] = useState(false)
+  useEffect(() => {
+    const open = () => setJournalOpen(true)
+    window.addEventListener(OPEN_JOURNAL_EVENT, open)
+    return () => window.removeEventListener(OPEN_JOURNAL_EVENT, open)
+  }, [])
   // Episodio a abrir automáticamente al entrar a la temporada (solo "Continuar
   // viendo" → reanuda el último episodio). null = abrir la lista normal.
   const [continueTo, setContinueTo] = useState<number | null>(null)
@@ -395,6 +404,8 @@ export function SpaHomeShellInner() {
         onAdvance={(num) => { setIntegrationId(null); openSeasonByNum(num) }}
         onGoToForo={(title) => goToForo(title)}
       />
+      {/* Mi Gran Bitácora — archivo personal (privado) */}
+      <GrandJournal open={journalOpen} onClose={() => setJournalOpen(false)} />
       {introMounted && <Intro onSkip={handleIntroSkip} onComplete={handleIntroComplete} />}
 
       {/* Hero PERSISTENTE — sempre renderizado pra ref do vídeo existir antes
