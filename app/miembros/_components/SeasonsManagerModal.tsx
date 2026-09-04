@@ -116,7 +116,12 @@ export function SeasonsManagerModal({ open, onClose }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* Videos de fondo gestionables (upload): Portal de Ingreso y Objetivos */}
+          {/* Videos de fondo gestionables (upload): Banner principal, Portal y Objetivos */}
+          <PortalIngresoBannerManager
+            storeKey="hero.video"
+            title="Banner principal (Inicio) — Video"
+            hint="Video grande del inicio (Hero). Se muestra en loop. Reemplaza al que estaba fijo en el código."
+          />
           <PortalIngresoBannerManager
             storeKey="portal.ingreso.video"
             title="Portal de Ingreso — Video de fondo"

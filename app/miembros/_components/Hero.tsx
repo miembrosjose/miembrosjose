@@ -13,7 +13,7 @@
 //    re-toca ao voltar.
 
 import { Play } from "lucide-react"
-import { forwardRef, useEffect, useRef } from "react"
+import { forwardRef, useEffect, useRef, useState } from "react"
 import { HERO_VIDEO_URL } from "../_lib/hero-media"
 import styles from "./hero.module.css"
 
@@ -52,6 +52,29 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
     if (typeof ref === "function") ref(el)
     else if (ref) ref.current = el
   }
+
+  // Video del banner gestionable desde admin (site_texts "hero.video").
+  // Fallback a HERO_VIDEO_URL si no hay override → nunca queda vacío.
+  const [heroVideo, setHeroVideo] = useState("")
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/site-texts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.overrides) {
+          setHeroVideo((d.overrides as Record<string, string>)["hero.video"] || "")
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+  // Cuando llega una URL gestionada distinta, recarga el <video> y reproduce.
+  useEffect(() => {
+    const v = localVideoRef.current
+    if (!v || !heroVideo) return
+    try { v.load(); v.muted = true; v.play().catch(() => {}) } catch { /* ignora */ }
+  }, [heroVideo])
+  const effectiveVideo = heroVideo || HERO_VIDEO_URL
 
   useEffect(() => {
     const video = localVideoRef.current
@@ -170,7 +193,7 @@ export const Hero = forwardRef<HTMLVideoElement, HeroProps>(function Hero(
         >
           {/* #t=0.1 → iOS usa esse frame como poster quando o autoplay é
               bloqueado (Bajo Consumo/embebido), evitando fundo preto. */}
-          <source src={`${HERO_VIDEO_URL}#t=0.1`} type="video/mp4" />
+          <source src={`${effectiveVideo}#t=0.1`} type="video/mp4" />
         </video>
       </div>
 
