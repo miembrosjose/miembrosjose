@@ -17,13 +17,17 @@ import {
   type Season,
   type EpisodeProgress,
 } from "../_lib/seasons"
-import { useSeasons } from "../_lib/use-seasons"
-import { useSeasonAccess } from "../_lib/use-season-access"
 import { openExternal } from "../_lib/url-helpers"
 import { unlockAchievement } from "../_lib/achievements-unlock"
 import styles from "./seasons.module.css"
 
+type SeasonLike = Season & { id?: string; is_locked?: boolean; checkout_url?: string | null }
+
 type Props = {
+  // Temporadas + acceso vienen del shell (una sola instancia de useSeasons /
+  // useSeasonAccess en toda la home → evita fetches duplicados al Worker).
+  seasons: SeasonLike[]
+  hasAccess: (id?: string | null) => boolean
   onOpenSeason?: (season: Season) => void
   onLockedClick?: (season: Season) => void
   // Portales del camino: ingreso (antes de T1) y objetivos (tras T4). Las
@@ -32,20 +36,14 @@ type Props = {
   onOpenObjetivos?: () => void
 }
 
-type SeasonLike = Season & { id?: string; is_locked?: boolean; checkout_url?: string | null }
-
 export function SeasonsCarousel({
+  seasons,
+  hasAccess,
   onOpenSeason,
   onLockedClick,
   onOpenIngreso,
   onOpenObjetivos,
 }: Props) {
-  // Temporadas vêm do banco via useSeasons (fallback no array estático
-  // SEASONS quando user não está logado ou banco vazio). Re-fetcha
-  // automaticamente quando admin cria/edita/remove via modal.
-  const { seasons } = useSeasons()
-  const { hasAccess } = useSeasonAccess()
-
   // Hidrata progresso só no client (localStorage não existe no server)
   const [progress, setProgress] = useState<EpisodeProgress>({})
   useEffect(() => {

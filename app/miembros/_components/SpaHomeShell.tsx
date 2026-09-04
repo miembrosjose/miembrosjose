@@ -426,6 +426,7 @@ export function SpaHomeShell() {
                 onOpenIngreso={() => setIngresoOpen(true)}
                 onOpenObjetivos={() => setPortalOpen(true)}
                 seasons={dbSeasons}
+                hasSeasonAccess={hasAccess}
                 owned={owned}
               />
             )}
@@ -502,6 +503,7 @@ function ViewInicio({
   onOpenIngreso,
   onOpenObjetivos,
   seasons,
+  hasSeasonAccess,
   owned,
 }: {
   onOpenSeason: (s: Season) => void
@@ -509,6 +511,7 @@ function ViewInicio({
   onOpenIngreso: () => void
   onOpenObjetivos: () => void
   seasons: Season[]
+  hasSeasonAccess: (id?: string | null) => boolean
   owned: OwnedProduct[]
 }) {
   const { isAdmin } = useAuth()
@@ -561,6 +564,8 @@ function ViewInicio({
           onOpenObjetivos={onOpenObjetivos}
         />
         <SeasonsCarousel
+          seasons={seasons}
+          hasAccess={hasSeasonAccess}
           onOpenSeason={onOpenSeason}
           onOpenIngreso={onOpenIngreso}
           onOpenObjetivos={onOpenObjetivos}
