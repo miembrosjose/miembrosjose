@@ -228,6 +228,17 @@ export async function middleware(req: NextRequest) {
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
   res.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=*, fullscreen=*")
 
+  // Evita que Cloudflare cachee el HTML de la app (documentos) con TTL largo.
+  // Sin esto, tras cada deploy el edge seguía sirviendo HTML viejo que apuntaba
+  // a chunks JS ya inexistentes → 404 → "Tuvimos un inconveniente" (había que
+  // purgar el caché a mano en cada deploy). Los assets _next/static quedan
+  // excluidos por el `matcher`, así que esto solo afecta a los documentos HTML;
+  // /api mantiene su propio comportamiento.
+  if (!pathname.startsWith("/api")) {
+    res.headers.set("CDN-Cache-Control", "no-store")
+    res.headers.set("Cloudflare-CDN-Cache-Control", "no-store")
+  }
+
   return res
 }
 

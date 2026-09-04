@@ -175,6 +175,11 @@ export function SpaHomeShellInner() {
   }
   // Lleva al foro (opcionalmente a un tema concreto por título).
   function goToForo(title?: string) {
+    // Cierra cualquier overlay de portal abierto ANTES de ir al foro, si no
+    // el portal (fixed, z alto) queda tapando la vista de comunidad.
+    setIngresoOpen(false)
+    setIntegrationId(null)
+    setPortalOpen(false)
     setForumTarget(title ?? null)
     setView("comunidad")
   }
