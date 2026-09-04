@@ -156,5 +156,27 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 })
   }
 
+  // Cascada a los snapshots de identidad en el foro (y comentarios), igual que
+  // featured-badge. Sin esto, los posts/respuestas viejos siguen mostrando el
+  // nombre/username anterior. No bloquea la respuesta si algo falla.
+  try {
+    const admin = getSupabaseAdmin()
+    const cascades: PromiseLike<unknown>[] = []
+    if (typeof update.full_name === "string") {
+      const n = update.full_name
+      cascades.push(admin.from("forum_posts").update({ author_name: n }).eq("user_id", user.id))
+      cascades.push(admin.from("forum_replies").update({ author_name: n }).eq("user_id", user.id))
+      cascades.push(admin.from("episode_comments").update({ author_name: n }).eq("user_id", user.id))
+    }
+    if ("username" in update) {
+      const u = update.username // string | null
+      cascades.push(admin.from("forum_posts").update({ author_username: u }).eq("user_id", user.id))
+      cascades.push(admin.from("forum_replies").update({ author_username: u }).eq("user_id", user.id))
+    }
+    if (cascades.length) await Promise.allSettled(cascades)
+  } catch (e) {
+    console.warn("[/api/profile/update] cascade snapshot falló:", e instanceof Error ? e.message : e)
+  }
+
   return NextResponse.json({ ok: true, updated: update })
 }

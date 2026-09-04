@@ -295,6 +295,9 @@ export function ProfileForm({
         setAvatar(data.avatar_url)
         setPreviewUrl(data.avatar_url)
         setAvatarState({ type: "success", msg: "Foto actualizada" })
+        // Refleja el avatar nuevo al instante en navbar/posts/online sin F5
+        patchMetadata({ avatar_url: data.avatar_url })
+        refreshAuth().catch(() => {})
       } catch (e) {
         setAvatarState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }
@@ -320,6 +323,8 @@ export function ProfileForm({
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
         setNameState({ type: "success", msg: "Nombre actualizado" })
+        patchMetadata({ full_name: trimmed })
+        refreshAuth().catch(() => {})
       } catch (e) {
         setNameState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }
@@ -375,6 +380,8 @@ export function ProfileForm({
           setInstagramUrl(data.updated.instagram_url)
         }
         setAboutState({ type: "success", msg: "Perfil actualizado" })
+        patchMetadata({ username: cleanUsername || null })
+        refreshAuth().catch(() => {})
       } catch (e) {
         setAboutState({ type: "error", msg: e instanceof Error ? e.message : "Error" })
       }

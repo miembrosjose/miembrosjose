@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getCloudflareContext } from "@opennextjs/cloudflare"
 
 export const dynamic = "force-dynamic"
@@ -78,6 +79,18 @@ export async function POST(req: NextRequest) {
   if (updateError) {
     console.error("[/api/profile/avatar] updateUser error:", updateError)
     return NextResponse.json({ error: "Profile update failed" }, { status: 500 })
+  }
+
+  // Cascada del avatar a los snapshots del foro/comentarios (posts viejos).
+  try {
+    const admin = getSupabaseAdmin()
+    await Promise.allSettled([
+      admin.from("forum_posts").update({ author_avatar_url: avatarUrl }).eq("user_id", user.id),
+      admin.from("forum_replies").update({ author_avatar_url: avatarUrl }).eq("user_id", user.id),
+      admin.from("episode_comments").update({ author_avatar_url: avatarUrl }).eq("user_id", user.id),
+    ])
+  } catch (e) {
+    console.warn("[/api/profile/avatar] cascade snapshot falló:", e instanceof Error ? e.message : e)
   }
 
   return NextResponse.json({ avatar_url: avatarUrl })
