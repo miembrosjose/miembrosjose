@@ -71,6 +71,28 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
     return () => window.removeEventListener("keydown", onKey)
   }, [open, journal, onClose])
 
+  // Reveal on scroll: las secciones arrancan en opacity:0 (.reveal) y necesitan
+  // que se les agregue .revealIn para aparecer. Sin esto quedaban INVISIBLES
+  // (bug: La Gran Invocación no se veía). Con fallback: si el observer no
+  // dispara, se revela todo igual a los 800ms → nunca queda contenido oculto.
+  useEffect(() => {
+    if (!open) return
+    const root = rootRef.current
+    if (!root) return
+    const els = Array.from(root.querySelectorAll<HTMLElement>(`.${styles.reveal}`))
+    const revealAll = () => els.forEach((el) => el.classList.add(styles.revealIn))
+    if (typeof IntersectionObserver === "undefined") { revealAll(); return }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add(styles.revealIn); io.unobserve(e.target) }
+      }),
+      { root, threshold: 0.12 },
+    )
+    els.forEach((el) => io.observe(el))
+    const t = setTimeout(revealAll, 800)
+    return () => { io.disconnect(); clearTimeout(t) }
+  }, [open])
+
   const scrollToHow = useCallback(() => {
     howRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
