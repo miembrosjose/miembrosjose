@@ -12,6 +12,7 @@ import { Lock } from "lucide-react"
 import {
   getEpisodeProgress,
   isSeasonUnlocked,
+  isSeasonComplete,
   getWatchedCount,
   PROGRESS_CHANGED_EVENT,
   type Season,
@@ -34,6 +35,12 @@ type Props = {
   // integraciones NO son cards: se disparan al entrar a la siguiente temporada.
   onOpenIngreso?: () => void
   onOpenObjetivos?: () => void
+  // Umbral del Contacto — última puerta (tras completar T4, si el admin la publicó).
+  onOpenUmbral?: () => void
+  // Mensaje informativo al tocar una tarjeta bloqueada del camino (Misión / Umbral).
+  onLockedInfo?: (msg: string) => void
+  // El admin puede abrir Misión/Umbral aunque no haya completado T4 (preview/gestión).
+  isAdmin?: boolean
 }
 
 export function SeasonsCarousel({
@@ -43,10 +50,17 @@ export function SeasonsCarousel({
   onLockedClick,
   onOpenIngreso,
   onOpenObjetivos,
+  onOpenUmbral,
+  onLockedInfo,
+  isAdmin = false,
 }: Props) {
   // Videos de portada de los portales (Ingreso/Objetivos), gestionados desde
   // admin vía site_texts. Se usan como cover de la tarjeta en el carrusel.
-  const [portalMedia, setPortalMedia] = useState<{ ingreso?: string; objetivos?: string }>({})
+  const [portalMedia, setPortalMedia] = useState<{ ingreso?: string; objetivos?: string; umbral?: string }>({})
+  // Config del Umbral del Contacto gestionada por el admin (site_texts).
+  const [umbral, setUmbral] = useState<{ enabled: boolean; badge: string; name: string }>({
+    enabled: false, badge: "DISPONIBLE", name: "El Umbral del Contacto",
+  })
   useEffect(() => {
     let cancelled = false
     fetch("/api/site-texts", { credentials: "include" })
@@ -54,7 +68,17 @@ export function SeasonsCarousel({
       .then((d) => {
         if (cancelled || !d?.overrides) return
         const ov = d.overrides as Record<string, string>
-        setPortalMedia({ ingreso: ov["portal.ingreso.video"] || "", objetivos: ov["portal.objetivos.video"] || "" })
+        setPortalMedia({
+          ingreso: ov["portal.ingreso.video"] || "",
+          objetivos: ov["portal.objetivos.video"] || "",
+          umbral: ov["portal.umbral.video"] || ov["umbral.video"] || "",
+        })
+        const enabled = (ov["umbral.enabled"] || "").trim().toLowerCase()
+        setUmbral({
+          enabled: enabled === "si" || enabled === "sí" || enabled === "1" || enabled === "true",
+          badge: (ov["umbral.badge"] || "").trim() || "DISPONIBLE",
+          name: (ov["umbral.title"] || "").trim() || "El Umbral del Contacto",
+        })
       })
       .catch(() => {})
     return () => { cancelled = true }
@@ -186,7 +210,7 @@ export function SeasonsCarousel({
         key={cfg.key}
         type="button"
         className={`${styles.card} ${styles.portalCard} ${variantClass}`}
-        onClick={cfg.variant === "soon" ? undefined : cfg.onClick}
+        onClick={cfg.onClick}
       >
         <div className={styles.thumb} style={{ background: cfg.gradient }}>
           {cfg.media
@@ -216,6 +240,15 @@ export function SeasonsCarousel({
 
   const s1 = bySeason(1), s2 = bySeason(2), s3 = bySeason(3), s4 = bySeason(4)
 
+  // Gate del camino: Misión (Objetivos) y Umbral se abren al COMPLETAR la
+  // Temporada 4. Si T4 no existe o aún no tiene episodios configurados, el gate
+  // no aplica (fallback seguro → se comportan como antes). El admin siempre
+  // puede abrirlos (preview / gestión).
+  const gateReady = !!s4 && s4.episodes > 0
+  const t4Done = !gateReady || (s4 ? isSeasonComplete(s4, progress) : true)
+  const canMision = t4Done || isAdmin
+  const canUmbral = (t4Done && umbral.enabled) || isAdmin
+
   return (
     <div className={styles.carousel}>
       {renderPortalCard({
@@ -229,18 +262,40 @@ export function SeasonsCarousel({
       {s3 && renderSeasonCard(s3)}
       {s4 && renderSeasonCard(s4)}
 
-      {renderPortalCard({
-        key: "objetivos", variant: "gold", badge: "MISIÓN", badgeGold: true,
-        epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
-        emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
-        media: portalMedia.objetivos, onClick: onOpenObjetivos,
-      })}
+      {canMision
+        ? renderPortalCard({
+            key: "objetivos", variant: "gold", badge: "MISIÓN", badgeGold: true,
+            epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
+            emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
+            media: portalMedia.objetivos, onClick: onOpenObjetivos,
+          })
+        : renderPortalCard({
+            key: "objetivos", variant: "soon", badge: "COMPLETA LA T4",
+            epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
+            emoji: "🔒", gradient: dim, metaA: "Tras la Temporada 4", metaB: "Bloqueado",
+            onClick: () => onLockedInfo?.("Completa la Temporada 4 para abrir el Portal de Misión."),
+          })}
 
-      {renderPortalCard({
-        key: "umbral", variant: "soon", badge: "PRÓXIMAMENTE", epLabel: "EL SIGUIENTE UMBRAL",
-        name: "El Umbral del Contacto", emoji: "🔒", gradient: dim,
-        metaA: "En preparación", metaB: "Pronto",
-      })}
+      {canUmbral
+        ? renderPortalCard({
+            key: "umbral", variant: "gold", badge: umbral.enabled ? umbral.badge : "BORRADOR", badgeGold: true,
+            epLabel: "EL SIGUIENTE UMBRAL", name: umbral.name,
+            emoji: "✷", gradient: gold, metaA: "El Umbral", metaB: "Entrar",
+            media: portalMedia.umbral, onClick: onOpenUmbral,
+          })
+        : renderPortalCard({
+            key: "umbral", variant: "soon",
+            badge: t4Done ? "EN PREPARACIÓN" : "PRÓXIMAMENTE",
+            epLabel: "EL SIGUIENTE UMBRAL", name: "El Umbral del Contacto",
+            emoji: "🔒", gradient: dim,
+            metaA: t4Done ? "En preparación" : "Tras la Temporada 4",
+            metaB: "Pronto",
+            onClick: () => onLockedInfo?.(
+              t4Done
+                ? "El Umbral del Contacto se abrirá muy pronto."
+                : "Completa la Temporada 4 para acercarte al Umbral del Contacto.",
+            ),
+          })}
     </div>
   )
 }

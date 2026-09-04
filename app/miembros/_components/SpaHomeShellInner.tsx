@@ -45,6 +45,10 @@ const PortalIngreso = dynamic(
   () => import("./PortalIngreso").then((m) => m.PortalIngreso),
   { ssr: false },
 )
+const UmbralPortal = dynamic(
+  () => import("./UmbralPortal").then((m) => m.UmbralPortal),
+  { ssr: false },
+)
 const IntegrationPortal = dynamic(
   () => import("./IntegrationPortal").then((m) => m.IntegrationPortal),
   { ssr: false },
@@ -134,6 +138,7 @@ export function SpaHomeShellInner() {
   const [openSeason, setOpenSeason] = useState<Season | null>(null)
   // Temporada 5 = Portal de Misión (overlay propio, no drawer de episodios).
   const [portalOpen, setPortalOpen] = useState(false)
+  const [umbralOpen, setUmbralOpen] = useState(false)
   // Camino iniciático: Portal de Ingreso + Portales de Integración (1|2|3).
   const [ingresoOpen, setIngresoOpen] = useState(false)
   const [integrationId, setIntegrationId] = useState<1 | 2 | 3 | null>(null)
@@ -397,6 +402,12 @@ export function SpaHomeShellInner() {
         onEnterT1={() => { setIngresoOpen(false); openSeasonByNum(1) }}
         onGoToForo={(title) => goToForo(title)}
       />
+      {/* Camino iniciático — El Umbral del Contacto (tras la Temporada 4) */}
+      <UmbralPortal
+        open={umbralOpen}
+        onClose={() => setUmbralOpen(false)}
+        onGoToForo={(title) => goToForo(title)}
+      />
       {/* Camino iniciático — Portales de Integración (antes de entrar a T2/T3/T4) */}
       <IntegrationPortal
         portal={integrationId ? getIntegrationPortal(integrationId) ?? null : null}
@@ -440,6 +451,7 @@ export function SpaHomeShellInner() {
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 onOpenIngreso={() => setIngresoOpen(true)}
                 onOpenObjetivos={() => setPortalOpen(true)}
+                onOpenUmbral={() => setUmbralOpen(true)}
                 seasons={dbSeasons}
                 hasSeasonAccess={hasAccess}
                 owned={owned}
@@ -517,6 +529,7 @@ function ViewInicio({
   onOpenSalespage,
   onOpenIngreso,
   onOpenObjetivos,
+  onOpenUmbral,
   seasons,
   hasSeasonAccess,
   owned,
@@ -525,6 +538,7 @@ function ViewInicio({
   onOpenSalespage: (p: PremiumProduct) => void
   onOpenIngreso: () => void
   onOpenObjetivos: () => void
+  onOpenUmbral: () => void
   seasons: Season[]
   hasSeasonAccess: (id?: string | null) => boolean
   owned: OwnedProduct[]
@@ -575,9 +589,12 @@ function ViewInicio({
         <SeasonsCarousel
           seasons={seasons}
           hasAccess={hasSeasonAccess}
+          isAdmin={isAdmin}
           onOpenSeason={onOpenSeason}
           onOpenIngreso={onOpenIngreso}
           onOpenObjetivos={onOpenObjetivos}
+          onOpenUmbral={onOpenUmbral}
+          onLockedInfo={(msg) => { if (typeof window !== "undefined") window.alert(msg) }}
           onLockedClick={(s) => {
             if (typeof window !== "undefined") {
               window.alert(
