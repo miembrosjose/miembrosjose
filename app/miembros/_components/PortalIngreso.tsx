@@ -5,12 +5,44 @@
 // de la Temporada 1.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowDown, ArrowRight, PenLine, MessageSquare } from "lucide-react"
+import { X, ArrowDown, ArrowRight, MessageSquare, Check } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
-import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { FORUM_TITLES } from "../_lib/portals-data"
+import { readAnswer, upsertAnswer } from "../_lib/journal-store"
+
+// Campo de la Bitácora de Ingreso — autoguarda PRIVADO en MI CAMINO.
+function IngresoField({ prompt }: { prompt: string }) {
+  const [value, setValue] = useState("")
+  const [saved, setSaved] = useState(true)
+  const dirty = useRef(false)
+  useEffect(() => { setValue(readAnswer("ingreso", prompt)); setSaved(true); dirty.current = false }, [prompt])
+  useEffect(() => {
+    if (!dirty.current) return
+    const t = setTimeout(() => {
+      upsertAnswer({ category: "camino", source: "ingreso", sourceLabel: "Portal de Ingreso", prompt, answer: value, isPrivate: true })
+      setSaved(true)
+    }, 600)
+    return () => clearTimeout(t)
+  }, [value, prompt])
+  return (
+    <div className={styles.jField}>
+      <label className={styles.jFieldLabel}>
+        <span>{prompt}</span>
+        <span className={styles.jSaved} style={{ color: value.trim() ? (saved ? "#7ee0a8" : "var(--s5-gold)") : "#6a6f92" }}>
+          {value.trim() ? (saved ? <><Check size={11} /> Guardado</> : "Guardando…") : "Privado"}
+        </span>
+      </label>
+      <textarea
+        className={styles.jFieldArea}
+        value={value}
+        placeholder="Escribe aquí… (privado, solo en tu bitácora)"
+        onChange={(e) => { setValue(e.target.value); setSaved(false); dirty.current = true }}
+      />
+    </div>
+  )
+}
 
 type Props = {
   open: boolean
@@ -31,29 +63,23 @@ const INVOCATION = [
 ]
 
 const HOW = [
-  { n: 1, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No las recorras con prisa. Cada transmisión contiene una llave." },
-  { n: 2, name: "INTEGRA LO RECIBIDO", text: "Entre temporadas encontrarás portales de integración. Ahí la información deja de ser teoría y comienza a tocar tu vida." },
-  { n: 3, name: "REGISTRA TU PROCESO", text: "Usa Mi Gran Bitácora para escribir sueños, señales, comprensiones, resistencias, emociones y cambios interiores. Todo queda guardado y es privado." },
-  { n: 4, name: "HABITA TU TERRITORIO", text: "El camino no es solo interior. Reconoce el lugar donde vives, tu linaje y tu comunidad: ahí es donde la memoria se vuelve servicio." },
-  { n: 5, name: "RESPONDE AL LLAMADO", text: "El camino no termina en aprender. Conduce a misión, territorio, comunidad, servicio y preparación para el contacto." },
+  { n: 1, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No avances con prisa. Cada transmisión contiene una llave." },
+  { n: 2, name: "INTEGRA LO RECIBIDO", text: "Entre temporadas encontrarás portales de integración. Allí la información deja de ser teoría y comienza a tocar tu historia, tus heridas, tus creencias y tu propósito." },
+  { n: 3, name: "REGISTRA TU PROCESO", text: "La bitácora no es una tarea. Es tu archivo personal. Allí quedará la huella de lo que despertó en ti." },
+  { n: 4, name: "RECONOCE TUS PATRONES", text: "El camino también abre procesos de desprogramación: creencias heredadas, heridas familiares, memorias de abandono, escasez, abuso, miedo, no pertenencia y desconexión." },
+  { n: 5, name: "RESPONDE DESDE TU TERRITORIO", text: "Más adelante comprenderás que tu misión no ocurre lejos. Comienza en el lugar donde vives, en tu linaje, en tu ciudad y en la memoria de la Tierra que te rodea." },
 ]
 
 const INGRESO_QUESTIONS = [
   "¿Por qué siento que llegué a este camino?",
   "¿Qué busco realmente al entrar en Los 144.000?",
-  "¿Estoy dispuesto a recibir información sin perder discernimiento?",
+  "¿Estoy dispuesto a recibir información sin perder el discernimiento?",
 ]
-
-const INGRESO_TEMPLATE =
-  "BITÁCORA DE INGRESO\n\n" +
-  INGRESO_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
-  "\n— Escribe aquí tu punto de partida —\n"
 
 export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const aperturaRef = useRef<HTMLDivElement>(null)
   const howRef = useRef<HTMLDivElement>(null)
-  const [journal, setJournal] = useState<JournalDef | null>(null)
   // Video de fondo del hero (opcional, gestionado desde admin vía site_texts).
   const [bannerVideo, setBannerVideo] = useState<string>("")
 
@@ -82,13 +108,11 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "Escape") return
-      if (journal) setJournal(null)
-      else onClose()
+      if (e.key === "Escape") onClose()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, journal, onClose])
+  }, [open, onClose])
 
   // Reveal on scroll: las secciones arrancan en opacity:0 (.reveal) y necesitan
   // que se les agregue .revealIn para aparecer. Sin esto quedaban INVISIBLES
@@ -166,9 +190,10 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
           <p className={styles.kicker}>Apertura del Espacio</p>
           <h2 className={styles.sectionTitle}>APERTURA DEL ESPACIO</h2>
           <div className={styles.heroLead} style={{ margin: "0 auto 0.4rem", textAlign: "center" }}>
-            <span className={styles.heroLeadHi}>Antes de recorrer el camino, abrimos el espacio.</span>
-            No entramos a Los 144.000 con prisa ni con la mente dispersa. Nos detenemos, respiramos y pronunciamos
-            —en voz alta o en silencio— la Gran Invocación. Deja que cada línea te ordene por dentro.
+            <span className={styles.heroLeadHi}>Antes de iniciar este camino, abrimos el espacio desde un estado de presencia, respeto y conciencia.</span>
+            La Gran Invocación es una oración sagrada con la que aperturamos el uso de esta plataforma. No se recita
+            como una fórmula externa, sino como una apertura interior para recibir la memoria con discernimiento,
+            humildad y responsabilidad.
           </div>
           <div className={styles.invocation}>
             <div className={styles.invocationRule} aria-hidden />
@@ -221,24 +246,11 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
           <p className={styles.kicker}>Punto de partida</p>
           <h2 className={styles.sectionTitle}>BITÁCORA DE INGRESO</h2>
           <div className={styles.questionCard} style={{ marginTop: "1.4rem" }}>
-            <p className={styles.questionCardTitle}>Antes de entrar, responde para ti</p>
-            <ul className={styles.questionList}>
-              {INGRESO_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
-            </ul>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
-              <button
-                type="button"
-                className={styles.cta}
-                style={{ margin: 0 }}
-                onClick={() => setJournal({
-                  key: "ingreso",
-                  title: "Bitácora de Ingreso",
-                  sub: "Tu punto de partida en el camino. Se guarda en este dispositivo.",
-                  template: INGRESO_TEMPLATE,
-                })}
-              >
-                <PenLine size={15} /> Abrir mi bitácora
-              </button>
+            <p className={styles.questionCardTitle}>Antes de entrar, responde para ti · se guarda privado en tu bitácora</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", marginTop: "1rem" }}>
+              {INGRESO_QUESTIONS.map((q) => <IngresoField key={q} prompt={q} />)}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.4rem" }}>
               <button
                 type="button"
                 className={styles.cta}
@@ -263,8 +275,6 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
           </div>
         </section>
       </div>
-
-      {journal && <PortalJournal def={journal} onClose={() => setJournal(null)} />}
     </div>
   )
 }

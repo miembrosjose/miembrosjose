@@ -14,6 +14,7 @@ import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
+import { hasSeal, unlockSeal } from "../_lib/seals"
 import { GrandJournal } from "./GrandJournal"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
@@ -141,7 +142,7 @@ export function SpaHomeShellInner() {
   const [umbralOpen, setUmbralOpen] = useState(false)
   // Camino iniciático: Portal de Ingreso + Portales de Integración (1|2|3).
   const [ingresoOpen, setIngresoOpen] = useState(false)
-  const [integrationId, setIntegrationId] = useState<1 | 2 | 3 | null>(null)
+  const [integrationId, setIntegrationId] = useState<1 | 2 | 3 | 4 | null>(null)
   // Mi Gran Bitácora (se abre desde el navbar / portales vía evento global).
   const [journalOpen, setJournalOpen] = useState(false)
   useEffect(() => {
@@ -183,8 +184,14 @@ export function SpaHomeShellInner() {
       setIntegrationId((season.num - 1) as 1 | 2 | 3)
       return
     }
-    if (season.num === 5) { setPortalOpen(true); return }
+    if (season.num === 5) { openObjetivos(); return }
     setOpenSeason(season)
+  }
+  // Objetivos: si completó T4 pero aún no integró la Alquimia Solar, muestra
+  // ese portal primero (Revelación → perdón → misión); luego abre Objetivos.
+  function openObjetivos() {
+    if (!hasSeal("perdon_solar")) { setIntegrationId(4); return }
+    setPortalOpen(true)
   }
   // Lleva al foro (opcionalmente a un tema concreto por título).
   function goToForo(title?: string) {
@@ -399,7 +406,7 @@ export function SpaHomeShellInner() {
       <PortalIngreso
         open={ingresoOpen}
         onClose={() => setIngresoOpen(false)}
-        onEnterT1={() => { setIngresoOpen(false); openSeasonByNum(1) }}
+        onEnterT1={() => { unlockSeal("ingreso"); setIngresoOpen(false); openSeasonByNum(1) }}
         onGoToForo={(title) => goToForo(title)}
       />
       {/* Camino iniciático — El Umbral del Contacto (tras la Temporada 4) */}
@@ -412,7 +419,7 @@ export function SpaHomeShellInner() {
       <IntegrationPortal
         portal={integrationId ? getIntegrationPortal(integrationId) ?? null : null}
         onClose={() => setIntegrationId(null)}
-        onAdvance={(num) => { setIntegrationId(null); openSeasonByNum(num) }}
+        onAdvance={(num) => { setIntegrationId(null); if (num >= 5) setPortalOpen(true); else openSeasonByNum(num) }}
         onGoToForo={(title) => goToForo(title)}
       />
       {/* Mi Gran Bitácora — archivo personal (privado) */}
@@ -450,7 +457,7 @@ export function SpaHomeShellInner() {
                 onOpenSeason={(s) => enterSeason(s)}
                 onOpenSalespage={(p) => setSalespageProduct(p)}
                 onOpenIngreso={() => setIngresoOpen(true)}
-                onOpenObjetivos={() => setPortalOpen(true)}
+                onOpenObjetivos={openObjetivos}
                 onOpenUmbral={() => setUmbralOpen(true)}
                 seasons={dbSeasons}
                 hasSeasonAccess={hasAccess}
