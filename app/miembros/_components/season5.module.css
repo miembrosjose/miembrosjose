@@ -233,9 +233,12 @@
 .bannerVeil {
   position: absolute;
   inset: 0;
+  /* Velo moderado: el video queda visible detrás de TODO el contenido
+   * (texto + botón), y sólo el borde inferior se funde con el fondo oscuro
+   * de las secciones siguientes (sin costura). Legibilidad vía text-shadow. */
   background:
-    radial-gradient(120% 90% at 50% 20%, rgba(5, 6, 15, 0.30) 0%, rgba(5, 6, 15, 0.68) 68%, rgba(5, 6, 15, 0.92) 100%),
-    linear-gradient(180deg, rgba(5, 6, 15, 0.30) 0%, rgba(5, 6, 15, 0.55) 55%, #05060f 100%);
+    radial-gradient(130% 100% at 50% 32%, rgba(5, 6, 15, 0.20) 0%, rgba(5, 6, 15, 0.45) 62%, rgba(5, 6, 15, 0.70) 100%),
+    linear-gradient(180deg, rgba(5, 6, 15, 0.30) 0%, rgba(5, 6, 15, 0.35) 55%, rgba(5, 6, 15, 0.62) 88%, #05060f 100%);
 }
 .heroTitle {
   font-family: var(--font-display, "Orbitron", sans-serif);
@@ -264,7 +267,8 @@
   max-width: 60ch;
   font-size: clamp(0.98rem, 1.6vw, 1.12rem);
   line-height: 1.75;
-  color: #cfd4ec;
+  color: #eef1fb;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
 }
 .heroLead strong {
   color: #fff;
