@@ -20,6 +20,7 @@ import {
   type Season,
 } from "../_lib/seasons"
 import { useEpisodes, type DbEpisode } from "../_lib/use-episodes"
+import { useAuth } from "../_lib/auth-context"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
 import EpisodioArchivo from "@/components/EpisodioArchivo"
@@ -48,6 +49,7 @@ type Props = {
 }
 
 export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSeason, onOpenCheckout, ownedProductNames }: Props) {
+  const { isAdmin } = useAuth()
   const [progress, setProgress] = useState<EpisodeProgress>({})
   const [playingEp, setPlayingEp] = useState<Episode | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null)
@@ -280,7 +282,8 @@ export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSe
                   <div className={styles.episodesList}>
                     {episodes.map((ep) => {
                       const watchedThis = !!progress[`s${season.num}_e${ep.num}`]
-                      const unlocked = isEpisodeUnlocked(season.num, ep.num, progress)
+                      // Admin: todos los episodios desbloqueados (revisión/gestión).
+                      const unlocked = isAdmin || isEpisodeUnlocked(season.num, ep.num, progress)
                       const isNew = ep.isNew && unlocked && !watchedThis
                       return (
                         <button

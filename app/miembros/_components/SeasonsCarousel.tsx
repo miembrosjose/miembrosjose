@@ -111,6 +111,12 @@ export function SeasonsCarousel({
       openExternal(season.redirectUrl)
       return
     }
+    // Admin: acceso total. Puede abrir cualquier temporada sin importar el gate
+    // de progreso ni el bloqueo comercial (para revisar y gestionar contenido).
+    if (isAdmin) {
+      onOpenSeason?.(season)
+      return
+    }
     // Bloqueio admin (configurável): se a temporada está bloqueada E o user
     // não tem acesso liberado, redireciona pro checkout configurado.
     if (season.is_locked && !hasAccess(season.id) && season.checkout_url) {
@@ -126,11 +132,12 @@ export function SeasonsCarousel({
 
   // Card de una temporada real (T1-T4): mantiene el diseño de video/episodios.
   function renderSeasonCard(season: SeasonLike) {
-    const unlocked = isSeasonUnlocked(season, progress, seasons)
+    // Admin ve todo desbloqueado (puede abrir cualquier temporada).
+    const unlocked = isAdmin || isSeasonUnlocked(season, progress, seasons)
     const watched = getWatchedCount(season, progress)
     const total = season.episodes
     const pct = total > 0 ? Math.round((watched / total) * 100) : 0
-    const isCommerciallyLocked = !!season.is_locked && !hasAccess(season.id)
+    const isCommerciallyLocked = !isAdmin && !!season.is_locked && !hasAccess(season.id)
     const epLabel = season.external
       ? `TEMPORADA ${season.num} · COMUNIDAD`
       : `TEMPORADA ${season.num} · ${total} EPS`
