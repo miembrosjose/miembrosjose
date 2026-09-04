@@ -51,6 +51,22 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const howRef = useRef<HTMLDivElement>(null)
   const [journal, setJournal] = useState<JournalDef | null>(null)
+  // Video de fondo del hero (opcional, gestionado desde admin vía site_texts).
+  const [bannerVideo, setBannerVideo] = useState<string>("")
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    fetch("/api/site-texts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.overrides) return
+        const v = (d.overrides as Record<string, string>)["portal.ingreso.video"] || ""
+        setBannerVideo(v)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -110,6 +126,27 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
       <div className={styles.inner}>
         {/* HERO */}
         <header className={styles.hero}>
+          {bannerVideo && (
+            <>
+              {/\.(mp4|webm|mov)(\?|$)/i.test(bannerVideo) ? (
+                <video
+                  className={styles.heroVideo}
+                  src={bannerVideo}
+                  muted
+                  loop
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  {...{ "webkit-playsinline": "true" }}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className={styles.heroVideo} src={bannerVideo} alt="" />
+              )}
+              <span className={styles.heroVeil} aria-hidden />
+            </>
+          )}
+          <div className={styles.heroInner}>
           <p className={styles.kicker}>Portal de Ingreso · Antes del Llamado</p>
           <h1 className={styles.heroTitle}>PORTAL DE INGRESO</h1>
           <p className={styles.heroSub}>Antes del Llamado</p>
@@ -128,6 +165,7 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
             Comenzar el Camino <ArrowDown size={15} />
           </button>
           <div className={styles.scrollHint} aria-hidden />
+          </div>
         </header>
 
         {/* LA GRAN INVOCACIÓN */}

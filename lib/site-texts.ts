@@ -30,6 +30,11 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   { key: "section.seasons.subtitle", default: "Mi Biblioteca", label: "Sección Temporadas — Subtítulo", group: "Secciones" },
   { key: "section.seasons.title", default: "Temporadas", label: "Sección Temporadas — Título", group: "Secciones" },
 
+  // ── PORTAL DE INGRESO ──
+  // Guarda la URL (R2) del video de fondo del Portal de Ingreso ("Antes del
+  // Llamado"). Se gestiona con upload desde "Gestionar temporadas" (admin).
+  { key: "portal.ingreso.video", default: "", label: "Portal de Ingreso — Video de fondo (URL)", group: "Portal de Ingreso" },
+
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },
   { key: "section.owned.title", default: "Otros Productos", label: "Sección Otros Productos — Título", group: "Secciones" },
 

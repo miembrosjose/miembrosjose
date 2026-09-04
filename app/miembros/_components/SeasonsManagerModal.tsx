@@ -13,6 +13,7 @@ import { Upload, Trash2, Plus, X, Loader2, ListVideo, MoveUp, MoveDown, Lock, Un
 import { useSeasons, type ManagedSeason } from "../_lib/use-seasons"
 import { uploadMedia } from "../_lib/media-upload"
 import { EpisodesManagerModal } from "./EpisodesManagerModal"
+import { PortalIngresoBannerManager } from "./PortalIngresoBannerManager"
 
 type Props = {
   open: boolean
@@ -115,6 +116,9 @@ export function SeasonsManagerModal({ open, onClose }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
+          {/* Video de fondo del Portal de Ingreso (gestión con upload) */}
+          <PortalIngresoBannerManager />
+
           {err && (
             <div className="mb-4 border border-[#6D4A9B]/60 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#a78bca] [font-family:var(--font-geist-sans)]"
                  style={{ borderRadius: 8 }}>
