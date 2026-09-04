@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { X, ArrowDown, ArrowRight, PenLine, MessageSquare } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
+import { BannerVideo } from "./BannerVideo"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { FORUM_TITLES } from "../_lib/portals-data"
 
@@ -118,6 +119,12 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   return (
     <div className={styles.overlay} ref={rootRef} role="dialog" aria-label="Portal de Ingreso">
       <CosmicField />
+      {bannerVideo && (
+        <div className={styles.bannerLayer} aria-hidden>
+          <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
+          <span className={styles.bannerVeil} />
+        </div>
+      )}
 
       <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar portal">
         <X size={20} />
@@ -126,26 +133,6 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
       <div className={styles.inner}>
         {/* HERO */}
         <header className={styles.hero}>
-          {bannerVideo && (
-            <>
-              {/\.(mp4|webm|mov)(\?|$)/i.test(bannerVideo) ? (
-                <video
-                  className={styles.heroVideo}
-                  src={bannerVideo}
-                  muted
-                  loop
-                  playsInline
-                  autoPlay
-                  preload="auto"
-                  {...{ "webkit-playsinline": "true" }}
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img className={styles.heroVideo} src={bannerVideo} alt="" />
-              )}
-              <span className={styles.heroVeil} aria-hidden />
-            </>
-          )}
           <div className={styles.heroInner}>
           <p className={styles.kicker}>Portal de Ingreso · Antes del Llamado</p>
           <h1 className={styles.heroTitle}>PORTAL DE INGRESO</h1>

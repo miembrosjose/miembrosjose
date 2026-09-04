@@ -116,8 +116,17 @@ export function SeasonsManagerModal({ open, onClose }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* Video de fondo del Portal de Ingreso (gestión con upload) */}
-          <PortalIngresoBannerManager />
+          {/* Videos de fondo gestionables (upload): Portal de Ingreso y Objetivos */}
+          <PortalIngresoBannerManager
+            storeKey="portal.ingreso.video"
+            title="Portal de Ingreso — Video de fondo"
+            hint="Banner del “Antes del Llamado”. Loop, silenciado, con velo oscuro para legibilidad."
+          />
+          <PortalIngresoBannerManager
+            storeKey="portal.objetivos.video"
+            title="Objetivos de Los 144000 — Video de fondo"
+            hint="Banner del portal de misión “Objetivos de Los 144000”. Loop, silenciado, con velo oscuro."
+          />
 
           {err && (
             <div className="mb-4 border border-[#6D4A9B]/60 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#a78bca] [font-family:var(--font-geist-sans)]"

@@ -210,6 +210,33 @@
   align-items: center;
   width: 100%;
 }
+/* Banner de video a pantalla completa (primer viewport), detrás del contenido.
+   Absolute dentro del overlay (que es el contenedor de scroll) → hace de banner
+   del hero. z-index 1: por encima del fondo cósmico (.field z0) y por debajo del
+   contenido (.inner z2). */
+.bannerLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100svh;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bannerMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bannerVeil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 20%, rgba(5, 6, 15, 0.30) 0%, rgba(5, 6, 15, 0.68) 68%, rgba(5, 6, 15, 0.92) 100%),
+    linear-gradient(180deg, rgba(5, 6, 15, 0.30) 0%, rgba(5, 6, 15, 0.55) 55%, #05060f 100%);
+}
 .heroTitle {
   font-family: var(--font-display, "Orbitron", sans-serif);
   font-weight: 800;

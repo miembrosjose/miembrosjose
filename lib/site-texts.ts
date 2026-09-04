@@ -34,6 +34,7 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   // Guarda la URL (R2) del video de fondo del Portal de Ingreso ("Antes del
   // Llamado"). Se gestiona con upload desde "Gestionar temporadas" (admin).
   { key: "portal.ingreso.video", default: "", label: "Portal de Ingreso — Video de fondo (URL)", group: "Portal de Ingreso" },
+  { key: "portal.objetivos.video", default: "", label: "Objetivos de Los 144000 — Video de fondo (URL)", group: "Portal de Ingreso" },
 
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },
   { key: "section.owned.title", default: "Otros Productos", label: "Sección Otros Productos — Título", group: "Secciones" },

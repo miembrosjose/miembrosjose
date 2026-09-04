@@ -12,6 +12,7 @@ import {
 import styles from "./season5.module.css"
 import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { CosmicField } from "./CosmicField"
+import { BannerVideo } from "./BannerVideo"
 import { FORUM_TITLES } from "../_lib/portals-data"
 
 type Props = {
@@ -97,6 +98,7 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const objetivosRef = useRef<HTMLDivElement>(null)
   const [journal, setJournal] = useState<JournalDef | null>(null)
+  const [bannerVideo, setBannerVideo] = useState<string>("")
 
   // Bloqueo de scroll del body + reset scroll al abrir
   useEffect(() => {
@@ -105,6 +107,20 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     document.body.style.overflow = "hidden"
     rootRef.current?.scrollTo({ top: 0 })
     return () => { document.body.style.overflow = prev }
+  }, [open])
+
+  // Video de fondo (opcional, gestionado desde admin vía site_texts)
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    fetch("/api/site-texts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.overrides) return
+        setBannerVideo((d.overrides as Record<string, string>)["portal.objetivos.video"] || "")
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
   }, [open])
 
   // Esc cierra (primero la bitácora, luego el portal)
@@ -156,6 +172,12 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     <div className={styles.overlay} ref={rootRef} role="dialog" aria-label="Objetivos de los 144.000">
       {/* Fondo cósmico */}
       <CosmicField />
+      {bannerVideo && (
+        <div className={styles.bannerLayer} aria-hidden>
+          <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
+          <span className={styles.bannerVeil} />
+        </div>
+      )}
 
       <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar portal">
         <X size={20} />

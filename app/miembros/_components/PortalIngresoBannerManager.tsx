@@ -9,9 +9,16 @@ import { useEffect, useRef, useState } from "react"
 import { Upload, Trash2, Loader2, Film } from "lucide-react"
 import { uploadMedia } from "../_lib/media-upload"
 
-const KEY = "portal.ingreso.video"
-
-export function PortalIngresoBannerManager() {
+export function PortalIngresoBannerManager({
+  storeKey = "portal.ingreso.video",
+  title = "Portal de Ingreso — Video de fondo",
+  hint = "Banner del “Antes del Llamado”. Se muestra en loop, silenciado y con un velo oscuro para que el texto se lea.",
+}: {
+  storeKey?: string
+  title?: string
+  hint?: string
+} = {}) {
+  const KEY = storeKey
   const [url, setUrl] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -34,7 +41,7 @@ export function PortalIngresoBannerManager() {
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [])
+  }, [KEY])
 
   async function handleFile(file: File) {
     setBusy(true); setErr(null)
@@ -81,10 +88,10 @@ export function PortalIngresoBannerManager() {
   return (
     <div className="mb-5 border border-[#6D4A9B]/40 bg-[#6D4A9B]/5 p-4" style={{ borderRadius: 12 }}>
       <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#F3F6FA] [font-family:var(--font-cinzel)]">
-        <Film size={16} className="text-[#a78bca]" /> Portal de Ingreso — Video de fondo
+        <Film size={16} className="text-[#a78bca]" /> {title}
       </div>
       <p className="mb-3 text-xs text-[#a8a8c0] [font-family:var(--font-geist-sans)]">
-        Banner del &ldquo;Antes del Llamado&rdquo;. Se muestra en loop, silenciado y con un velo oscuro para que el texto se lea.
+        {hint}
       </p>
 
       {err && (
