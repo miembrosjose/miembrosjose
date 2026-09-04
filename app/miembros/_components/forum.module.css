@@ -742,3 +742,75 @@
   background: linear-gradient(135deg, rgba(230, 207, 149, 0.18), rgba(217, 184, 102, 0.1));
   color: var(--gold-soft, #e6cf95);
 }
+
+/* ── Composer: modos + reportes + categorías ─────────────────────────── */
+.modeRow { display: flex; gap: 0.5rem; margin-bottom: 0.2rem; }
+.modeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.35);
+  background: transparent;
+  color: #a8a8c0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.modeBtn:hover { color: #F3F6FA; }
+.modeBtnOn {
+  border-color: var(--gold, #d9b866);
+  background: linear-gradient(135deg, rgba(230,207,149,0.18), rgba(217,184,102,0.1));
+  color: var(--gold-soft, #e6cf95);
+}
+.reportNote {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 184, 102, 0.3);
+  border-left: 3px solid var(--gold, #d9b866);
+  background: rgba(217, 184, 102, 0.07);
+  color: #c4c9e4;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.reportNote svg { color: var(--gold-soft, #e6cf95); flex-shrink: 0; margin-top: 2px; }
+.catPick { display: flex; flex-direction: column; gap: 0.4rem; }
+.catPickLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #8b90b4;
+}
+.catPickChips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.reportFields { display: flex; flex-direction: column; gap: 0.7rem; }
+.reportIntro { margin: 0.2rem 0 0.2rem; font-size: 0.82rem; line-height: 1.5; color: #a8adc9; }
+.reportIntro strong { color: var(--gold-soft, #e6cf95); }
+.reportField { display: flex; flex-direction: column; gap: 0.3rem; }
+.reportField span {
+  font-size: 0.82rem;
+  color: #d9dced;
+}
+.reportField textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(167, 139, 202, 0.25);
+  background: rgba(4, 5, 12, 0.5);
+  color: #eef1fb;
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  outline: none;
+}
+.reportField textarea:focus { border-color: var(--gold, #d9b866); }

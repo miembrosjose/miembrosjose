@@ -14,6 +14,7 @@ import { ForumComposer } from "./ForumComposer"
 import { EditModal, type EditTarget } from "./EditModal"
 import { ReportModal, type ReportTarget } from "./ReportModal"
 import { consumeForumTarget, FORUM_GOTO_EVENT } from "../_lib/forum-nav"
+import { FORUM_CATEGORIES } from "../_lib/report-types"
 import styles from "./forum.module.css"
 
 type FeedResponse = {
@@ -36,7 +37,6 @@ export function ForumFeed() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [activeTag, setActiveTag] = useState<string | null>(null)
-  const [knownTags, setKnownTags] = useState<string[]>([])
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
 
@@ -103,12 +103,6 @@ export function ForumFeed() {
       setPosts(data.posts || [])
       setCursor(data.nextCursor)
       setHasMore(!!data.nextCursor)
-      // Acumula tags conocidas (para las chips de categoría) sin perderlas al filtrar.
-      setKnownTags((prev) => {
-        const set = new Set(prev)
-        for (const p of data.posts || []) for (const t of p.tags ?? []) set.add(t)
-        return Array.from(set).sort()
-      })
     } catch (e) {
       setPosts([])
       setHasMore(false)
@@ -292,27 +286,25 @@ export function ForumFeed() {
             <button type="button" className={styles.searchClear} onClick={() => setSearch("")} aria-label="Limpiar búsqueda">×</button>
           )}
         </div>
-        {knownTags.length > 0 && (
-          <div className={styles.tagBar}>
+        <div className={styles.tagBar}>
+          <button
+            type="button"
+            className={`${styles.tagChip} ${!activeTag ? styles.tagChipActive : ""}`}
+            onClick={() => setActiveTag(null)}
+          >
+            Todas
+          </button>
+          {FORUM_CATEGORIES.map((c) => (
             <button
+              key={c.tag}
               type="button"
-              className={`${styles.tagChip} ${!activeTag ? styles.tagChipActive : ""}`}
-              onClick={() => setActiveTag(null)}
+              className={`${styles.tagChip} ${activeTag === c.tag ? styles.tagChipActive : ""}`}
+              onClick={() => setActiveTag((cur) => (cur === c.tag ? null : c.tag))}
             >
-              Todas
+              {c.label}
             </button>
-            {knownTags.map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={`${styles.tagChip} ${activeTag === t ? styles.tagChipActive : ""}`}
-                onClick={() => setActiveTag((cur) => (cur === t ? null : t))}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {loading && (
