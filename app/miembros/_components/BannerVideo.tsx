@@ -47,18 +47,20 @@ export function BannerVideo({ src, className }: { src: string; className?: strin
     return <img src={src} alt="" className={className} />
   }
 
-  const posterSrc = src.includes("#") ? src : `${src}#t=0.1`
+  // src DIRECTO + autoPlay (idéntico a la previsualización del admin y a los
+  // banners de temporada que sí se ven). Nada de <source> con fragmento #t=,
+  // que era lo que no cargaba.
   return (
     <video
       ref={ref}
       className={className}
+      src={src}
       muted
       loop
       playsInline
+      autoPlay
       preload="auto"
       {...{ "webkit-playsinline": "true" }}
-    >
-      <source src={posterSrc} />
-    </video>
+    />
   )
 }
