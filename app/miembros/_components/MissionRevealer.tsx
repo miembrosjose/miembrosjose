@@ -9,10 +9,10 @@ import { useCallback, useState } from "react"
 import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, RotateCcw, BookOpen } from "lucide-react"
 import styles from "./season5.module.css"
 import { analyzeMission, reportToText, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
-import { upsertAnswer } from "../_lib/journal-store"
+import { upsertAnswer, loadEntries } from "../_lib/journal-store"
 import { openGrandJournal } from "../_lib/journal-registry"
 
-type Phase = "idle" | "consent" | "result" | "insufficient"
+type Phase = "idle" | "consent" | "loading" | "result" | "insufficient"
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
 
@@ -53,14 +53,38 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
   const [phase, setPhase] = useState<Phase>("idle")
   const [analysis, setAnalysis] = useState<MissionAnalysis | null>(null)
   const [saved, setSaved] = useState(false)
+  const [source, setSource] = useState<"ia" | "local" | null>(null)
 
   const reveal = useCallback(() => {
-    const a = analyzeMission()
-    setAnalysis(a)
-    setPhase(a.sufficient ? "consent" : "insufficient")
+    const entries = loadEntries().filter((e) => e.answer.trim())
+    if (entries.length < 4) { setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return }
+    setPhase("consent")
   }, [])
 
-  const confirm = useCallback(() => setPhase("result"), [])
+  const confirm = useCallback(async () => {
+    setPhase("loading")
+    const entries = loadEntries()
+      .filter((e) => e.answer.trim())
+      .map((e) => ({ category: e.category, sourceLabel: e.sourceLabel, prompt: e.prompt, answer: e.answer }))
+    try {
+      const res = await fetch("/api/mission/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ entries }),
+      })
+      const data = await res.json().catch(() => null)
+      if (data?.configured && data?.sufficient && data?.report) {
+        setAnalysis({ sufficient: true, entryCount: entries.length, report: data.report as MissionReport })
+        setSource("ia"); setPhase("result"); return
+      }
+      if (data?.configured && data?.sufficient === false) {
+        setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return
+      }
+    } catch { /* red / proveedor caído → análisis local */ }
+    const local = analyzeMission()
+    setAnalysis(local); setSource("local"); setPhase(local.sufficient ? "result" : "insufficient")
+  }, [])
 
   const save = useCallback(() => {
     if (!analysis || !analysis.sufficient) return
@@ -104,7 +128,7 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
           <div>
             <div className={styles.cautionBox} style={{ marginTop: 0 }}>
               <ShieldCheck size={16} />
-              <p>Tu bitácora contiene información personal. Este análisis se realiza de forma <strong>privada, en tu propio dispositivo</strong>: tus respuestas no se envían a ningún servidor ni se publican en el foro. Se usan solo para crear tu lectura de misión.</p>
+              <p>Tu bitácora contiene información personal. Para generar este análisis, tus respuestas se enviarán de forma segura a la inteligencia de análisis, <strong>únicamente</strong> con el propósito de crear tu lectura de misión. Nada se publica en el foro sin tu autorización. Si el análisis con IA no está disponible, se hará una lectura local en tu dispositivo.</p>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.8rem", justifyContent: "center", marginTop: "1.4rem" }}>
               <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={confirm}>
@@ -112,6 +136,13 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
               </button>
               <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.2rem" }} onClick={reset}>Cancelar</button>
             </div>
+          </div>
+        )}
+
+        {phase === "loading" && (
+          <div style={{ textAlign: "center", padding: "1.4rem 0" }}>
+            <div className={styles.revealerFrase} style={{ fontSize: "1rem" }}>Leyendo tu bitácora…</div>
+            <p className={styles.revealerHint} style={{ marginTop: "0.8rem" }}>Reconociendo el patrón entre tu historia, tu linaje y tu territorio.</p>
           </div>
         )}
 
@@ -166,6 +197,11 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
                 <RotateCcw size={12} /> No guardar
               </button>
             </div>
+            <p className={styles.revealerHint} style={{ textAlign: "center", marginTop: "1.1rem" }}>
+              {source === "ia"
+                ? "Lectura generada con inteligencia de análisis · privada, no publicada."
+                : "Lectura generada localmente en tu dispositivo."}
+            </p>
           </div>
         )}
       </div>
