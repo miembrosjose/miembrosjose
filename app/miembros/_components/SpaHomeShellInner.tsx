@@ -401,6 +401,7 @@ export function SpaHomeShellInner() {
         open={portalOpen}
         onClose={() => setPortalOpen(false)}
         onGoToForo={(title) => goToForo(title)}
+        onOpenUmbral={() => setUmbralOpen(true)}
       />
       {/* Camino iniciático — Portal de Ingreso (antes de la Temporada 1) */}
       <PortalIngreso

@@ -1213,3 +1213,50 @@
   text-transform: uppercase;
   color: #7ee0a8;
 }
+
+/* ── Misiones de Custodia (Objetivos) ───────────────────────────────── */
+.stateChip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.35);
+  background: transparent;
+  color: #a8adc9;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.stateChip:hover { color: #F3F6FA; border-color: rgba(167, 139, 202, 0.6); }
+.missionResult {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--s5-gold-soft);
+  border: 1px dashed rgba(217, 184, 102, 0.4);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+}
+.missionShare {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.4);
+  background: rgba(167, 139, 202, 0.1);
+  color: #c4c9e4;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.missionShare:hover { border-color: var(--s5-gold); color: #fff; }

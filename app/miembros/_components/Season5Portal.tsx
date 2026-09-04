@@ -1,145 +1,255 @@
 "use client"
 
-// TEMPORADA 5 — Portal de Misión "Objetivos de los 144.000".
-// NO es un layout de episodios: es una experiencia tipo portal iniciático /
-// manifiesto / mapa de misión. Se abre como overlay fullscreen desde el
-// carrusel de temporadas cuando el usuario entra a la Temporada 5.
+// OBJETIVOS DE LOS 144.000 — portal de misión. Conecta la sanación personal
+// con la misión territorial y planetaria: Declaración → Mapa de mi Misión →
+// 7 Objetivos (con acción) → Misiones de Custodia (con estados y sellos).
+// Todo lo que la persona escribe se autoguarda PRIVADO en Mi Gran Bitácora.
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  X, ArrowDown, BookOpen, Map as MapIcon, MessageSquare, Share2, Lock, Check,
-  Sun, Shield, ScrollText,
+  X, ArrowDown, ArrowRight, MessageSquare, Check, Compass, Shield, ShieldCheck,
 } from "lucide-react"
 import styles from "./season5.module.css"
-import { PortalJournal, type JournalDef } from "./PortalJournal"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
 import { FORUM_TITLES } from "../_lib/portals-data"
+import { readAnswer, upsertAnswer, type JournalCategory } from "../_lib/journal-store"
+import {
+  getMissionState, setMissionState, MISSION_STATE_LABELS, MISSIONS_CHANGED_EVENT,
+  type MissionState,
+} from "../_lib/missions"
+import { unlockSeal, type SealId } from "../_lib/seals"
 
 type Props = {
   open: boolean
   onClose: () => void
-  /** Navega al foro (cierra el portal); opcionalmente a un tema concreto. */
   onGoToForo?: (title?: string) => void
+  onOpenUmbral?: () => void
+}
+
+// ── Campo editable que autoguarda PRIVADO en la bitácora ────────────────
+function JournalField({
+  source, sourceLabel, category, prompt, minH = 56,
+}: {
+  source: string; sourceLabel: string; category: JournalCategory; prompt: string; minH?: number
+}) {
+  const [value, setValue] = useState("")
+  const [saved, setSaved] = useState(true)
+  const dirty = useRef(false)
+  useEffect(() => { setValue(readAnswer(source, prompt)); setSaved(true); dirty.current = false }, [source, prompt])
+  useEffect(() => {
+    if (!dirty.current) return
+    const t = setTimeout(() => {
+      upsertAnswer({ category, source, sourceLabel, prompt, answer: value, isPrivate: true })
+      setSaved(true)
+    }, 600)
+    return () => clearTimeout(t)
+  }, [value, category, source, sourceLabel, prompt])
+  return (
+    <div className={styles.jField}>
+      <label className={styles.jFieldLabel}>
+        <span>{prompt}</span>
+        <span className={styles.jSaved} style={{ color: value.trim() ? (saved ? "#7ee0a8" : "var(--s5-gold)") : "#6a6f92" }}>
+          {value.trim() ? (saved ? <><Check size={11} /> Guardado</> : "Guardando…") : "Privado"}
+        </span>
+      </label>
+      <textarea
+        className={styles.jFieldArea}
+        style={{ minHeight: minH }}
+        value={value}
+        placeholder="Escribe aquí… (privado, solo en tu bitácora)"
+        onChange={(e) => { setValue(e.target.value); setSaved(false); dirty.current = true }}
+      />
+    </div>
+  )
 }
 
 // ── Los 7 objetivos ──────────────────────────────────────────────────
-const OBJETIVOS = [
+type ObjAction = "foro_nodos" | "foro_objetivos" | "misiones" | "umbral"
+const OBJETIVOS: { n: number; title: string; phrase: string; text: string; actionLabel: string; act: ObjAction }[] = [
   {
-    n: 1,
-    title: "FORMAR COMUNIDAD DE BASE",
+    n: 1, title: "FORMAR COMUNIDAD DE BASE",
     phrase: "El llamado se fortalece cuando varias conciencias sostienen una misma frecuencia.",
-    text:
-      "Formar comunidad de base significa crear grupos de sintonía, afinidad y propósito. Una comunidad puede ser física, virtual o mental. Nace cuando varias personas estudian, meditan, registran, sirven y visualizan un mismo objetivo. Aquí comienzan los nodos de Los 144.000: puntos vivos de conciencia reunidos para sostener memoria, practicar discernimiento, compartir experiencias y servir al despertar humano sin fanatismo, superioridad ni dependencia.",
+    text: "Crear grupos de sintonía, afinidad y propósito —físicos, virtuales o mentales— donde varias personas estudian, meditan, registran y sirven a un mismo objetivo. Aquí nacen los nodos de Los 144.000.",
+    actionLabel: "Crear o buscar un nodo", act: "foro_nodos",
   },
   {
-    n: 2,
-    title: "IRRADIAR LA CLAVE DEL RECUERDO",
+    n: 2, title: "IRRADIAR LA CLAVE DEL RECUERDO",
     phrase: "Quien recuerda se convierte en punto de irradiación.",
-    text:
-      "La Clave del Recuerdo fue activada a través del camino recorrido en las temporadas anteriores. Ahora debe irradiarse. Irradiar la memoria significa transmitir la información, compartir los archivos, hablar del Plan Cósmico, recordar la verdadera historia de la Tierra y hacerlo desde coherencia, servicio y responsabilidad. El miembro de Los 144.000 no impone. Irradia.",
+    text: "La Clave del Recuerdo se activó en las temporadas anteriores. Ahora debe irradiarse: transmitir, compartir los archivos, recordar la verdadera historia de la Tierra desde coherencia y servicio. El miembro no impone. Irradia.",
+    actionLabel: "Compartir una enseñanza sin imponer", act: "foro_objetivos",
   },
   {
-    n: 3,
-    title: "REDESCUBRIR LA HISTORIA SAGRADA DEL TERRITORIO",
+    n: 3, title: "REDESCUBRIR LA HISTORIA SAGRADA DEL TERRITORIO",
     phrase: "Cada lugar guarda una parte de la memoria planetaria.",
-    text:
-      "Los miembros están llamados a mirar su territorio con nuevos ojos. Cada montaña, río, valle, ciudad, templo, cueva, desierto, lago o antiguo camino puede guardar memorias de pueblos, linajes, pactos, heridas, custodias y misiones olvidadas. Redescubrir la historia del territorio significa estudiar la memoria visible e invisible del lugar donde cada uno vive. La verdadera historia de la humanidad no está solamente en los grandes archivos cósmicos: también está escrita en la tierra que pisamos.",
+    text: "Mirar el propio territorio con nuevos ojos: montañas, ríos, ciudades, templos, cuevas, linajes y misiones olvidadas. La verdadera historia también está escrita en la tierra que pisamos.",
+    actionLabel: "Crear mi ficha de territorio", act: "misiones",
   },
   {
-    n: 4,
-    title: "CONVERTIRSE EN GUARDIANES DEL LUGAR",
+    n: 4, title: "CONVERTIRSE EN GUARDIÁN DEL LUGAR",
     phrase: "La misión planetaria comienza donde cada alma fue sembrada.",
-    text:
-      "Ser guardián del territorio no significa poseer un lugar. Significa escucharlo, respetarlo, limpiarlo, recordarlo y servirlo. Cada miembro puede convertirse en un punto de custodia: alguien que ora, medita, investiga, protege, honra y sostiene luz en su propio entorno. La Hermandad Blanca trabaja desde los retiros interiores, pero necesita seres conscientes en la superficie que actúen como puentes entre la memoria interna de la Tierra y la vida cotidiana de la humanidad.",
+    text: "Ser guardián no es poseer un lugar: es escucharlo, respetarlo, limpiarlo, recordarlo y servirlo. Cada miembro puede ser un punto de custodia que sostiene luz en su entorno.",
+    actionLabel: "Elegir mi punto de custodia", act: "misiones",
   },
   {
-    n: 5,
-    title: "ATRAVESAR LA CATASTRO-FE",
+    n: 5, title: "ATRAVESAR LA CATASTRO-FE",
     phrase: "La gran prueba será sostener fe y discernimiento en medio del caos.",
-    text:
-      "La catastro-fe representa la evaluación de la fe frente a la confusión, el miedo, la sobreinformación, las falsas señales y las distorsiones espirituales. En este tiempo habrá mucha información disponible, pero no toda será verdadera. Muchas personas se extraviarán siguiendo mensajes atractivos, promesas rápidas o señales que alimentan expectativas personales. El miembro de Los 144.000 debe aprender a sostener centro, voluntad, fe y discernimiento cuando el mundo se llene de ruido.",
+    text: "En un tiempo de sobreinformación, falsas señales y distorsiones, el miembro aprende a sostener centro, voluntad, fe y discernimiento cuando el mundo se llena de ruido.",
+    actionLabel: "Aplicar filtro de discernimiento", act: "misiones",
   },
   {
-    n: 6,
-    title: "PREPARARSE PARA EL CONTACTO CON LOS GUÍAS",
+    n: 6, title: "PREPARARSE PARA EL CONTACTO CON LOS GUÍAS",
     phrase: "El contacto maduro comienza cuando la intención se ordena hacia el servicio.",
-    text:
-      "El contacto con Guías, Instructores, civilizaciones estelares y la Hermandad Blanca requiere preparación interior: limpiar intención, ordenar la mente, abrir el corazón, fortalecer discernimiento, sanar miedo, evitar dependencia y comprender que toda experiencia auténtica debe conducir a mayor servicio. El contacto no es una experiencia para alimentar identidad espiritual. Es una responsabilidad dentro del Plan.",
+    text: "Limpiar intención, ordenar la mente, abrir el corazón, fortalecer discernimiento y sanar el miedo. El contacto no alimenta la identidad espiritual: es una responsabilidad dentro del Plan.",
+    actionLabel: "Entrar al Umbral del Contacto", act: "umbral",
   },
   {
-    n: 7,
-    title: "REENCONTRARSE CON LA HERMANDAD BLANCA Y CUSTODIAR LOS ARCHIVOS",
+    n: 7, title: "REENCONTRARSE CON LA HERMANDAD BLANCA Y CUSTODIAR LOS ARCHIVOS",
     phrase: "La memoria vuelve cuando existe una red capaz de custodiarla.",
-    text:
-      "El objetivo mayor es preparar a la humanidad para reencontrarse conscientemente con la Gran Hermandad Blanca de los Retiros Interiores. Este encuentro representa el ingreso de la humanidad a una nueva responsabilidad: ocupar simbólicamente el lugar de la civilización número 33, primero como discípula de la Hermandad Blanca y luego como instructora del Nuevo Tiempo. Se vincula con el Libro de las Vestiduras Blancas: el retorno de la verdadera historia de la Tierra y los archivos preservados después de Atlántida. Recibir los archivos significa custodiar la memoria sin convertirla en poder, dogma, ego espiritual o separación.",
+    text: "Preparar a la humanidad para reencontrarse conscientemente con la Gran Hermandad Blanca de los Retiros Interiores y custodiar la memoria sin convertirla en poder, dogma o separación.",
+    actionLabel: "Registrar mi compromiso con los archivos", act: "misiones",
   },
 ]
 
-const TERRITORY_QUESTIONS = [
-  "¿Cuál es la historia ancestral de mi territorio?",
-  "¿Qué pueblos lo habitaron?",
-  "¿Qué lugares sagrados existen cerca?",
-  "¿Qué heridas colectivas guarda esta tierra?",
-  "¿Qué símbolos, mitos o relatos antiguos siguen presentes?",
-  "¿Qué puedo hacer para honrar, sanar o custodiar este espacio?",
+// ── Mapa de mi Misión ──────────────────────────────────────────────────
+const MAPA_QUESTIONS = [
+  "¿Qué vine a sanar en mí?",
+  "¿Qué patrón vine a cortar en mi linaje?",
+  "¿Qué herida se repite en mi familia?",
+  "¿Qué memoria de abuso, abandono, escasez, culpa, miedo, rechazo, silencio, control o no merecimiento reconozco en mi historia?",
+  "¿Qué parte de mi vida puede convertirse en servicio?",
+  "¿Qué territorio vine a custodiar?",
+  "¿Qué herida colectiva reconozco en el lugar donde vivo?",
+  "¿Qué medicina puedo ofrecer a la Red?",
+  "¿Qué misión concreta puedo iniciar en este momento?",
 ]
 
-const UNLOCKS = [
-  "Razas primordiales", "Ciudades intraterrenas", "Discos solares",
-  "Numerología cósmica", "Sanación extraterrestre", "Lugares de contacto",
+// ── Misiones de Custodia ────────────────────────────────────────────────
+type CustodiaMision = {
+  id: string; n: number; title: string; text: string; action: string
+  fields: string[]; result: string; sealId?: SealId; foro?: string
+}
+const CUSTODIA: CustodiaMision[] = [
+  {
+    id: "m1_historia", n: 1, title: "MI HISTORIA ANTES DEL TERRITORIO",
+    text: "Antes de investigar la historia del lugar, reconozco la historia que vive en mí.",
+    action: "Completa el Mapa de mi Misión (arriba) y sintetiza aquí lo esencial.",
+    fields: ["Mi síntesis personal:"], result: "Primera síntesis personal.",
+  },
+  {
+    id: "m2_territorio", n: 2, title: "ESCUCHAR EL TERRITORIO",
+    text: "El territorio no es un escenario. Es un archivo vivo.",
+    action: "Investiga historia ancestral, pueblos antiguos, lugares sagrados y heridas colectivas del lugar donde vivo.",
+    fields: ["Lugar / territorio:", "Pueblos antiguos y sitios sagrados:", "Herida colectiva que reconozco:"],
+    result: "Ficha de territorio.", sealId: "territorio", foro: FORUM_TITLES.territorio,
+  },
+  {
+    id: "m3_linaje", n: 3, title: "RECONOCER EL LINAJE",
+    text: "El árbol familiar muestra patrones que la Red pide transformar.",
+    action: "Registra una creencia heredada, una herida repetida y una nueva decisión consciente.",
+    fields: ["Creencia heredada:", "Herida repetida:", "Nueva decisión consciente:"],
+    result: "Reporte privado de linaje.",
+  },
+  {
+    id: "m4_punto", n: 4, title: "IDENTIFICAR UN PUNTO DE CUSTODIA",
+    text: "Cada guardián necesita reconocer un lugar concreto donde sostener presencia.",
+    action: "Elige un río, montaña, árbol, iglesia antigua, cueva, parque, cerro, lago, volcán, plaza o punto natural cercano.",
+    fields: ["Mi punto de custodia:", "Por qué lo elijo:"], result: "Punto de custodia elegido.",
+  },
+  {
+    id: "m5_sanar", n: 5, title: "SANAR UNA HERIDA DEL LUGAR",
+    text: "La custodia comienza cuando el recuerdo se convierte en acto.",
+    action: "Realiza una oración, meditación, limpieza, ofrenda sencilla, investigación, acto de perdón, servicio o cuidado del espacio.",
+    fields: ["Acción de custodia realizada:", "Comprensión recibida:"],
+    result: "Reporte de custodia.", sealId: "guardian", foro: FORUM_TITLES.territorio,
+  },
+  {
+    id: "m6_irradiar", n: 6, title: "IRRADIAR LA CLAVE DEL RECUERDO",
+    text: "Quien recuerda se convierte en punto de irradiación.",
+    action: "Comparte una enseñanza de Los 144.000 a una persona, grupo o red social desde humildad y claridad.",
+    fields: ["A quién / dónde compartí:", "Qué enseñanza irradié:"], result: "Registro de irradiación.",
+    foro: FORUM_TITLES.objetivos,
+  },
+  {
+    id: "m7_nodo", n: 7, title: "FORMAR O ACTIVAR UN NODO",
+    text: "La Red se fortalece cuando la memoria deja de estar aislada.",
+    action: "Invita a dos o más personas a una lectura, meditación, conversación consciente o práctica en común.",
+    fields: ["Ciudad o territorio:", "Práctica realizada y participantes:", "Próximo paso:"],
+    result: "Reporte de nodo.", sealId: "nodo", foro: FORUM_TITLES.nodos,
+  },
 ]
 
-const TERRITORY_TEMPLATE =
-  "BITÁCORA DEL TERRITORIO\n\n" +
-  TERRITORY_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
-  "\n— Escribe aquí tus hallazgos, señales y compromisos con tu lugar —\n"
+function MissionCard({ m, onGoToForo }: { m: CustodiaMision; onGoToForo?: (t?: string) => void }) {
+  const [state, setState] = useState<MissionState>("no_iniciada")
+  useEffect(() => { setState(getMissionState(m.id)) }, [m.id])
 
-// ── Mi Historia Personal ──
-const HISTORIA_QUESTIONS = [
-  "¿De qué linaje vengo y qué historias me marcaron?",
-  "¿Qué heridas familiares siento que vine a sanar?",
-  "¿Qué dones, oficios o memorias se repiten en mi sangre?",
-  "¿En qué momento de mi vida sentí por primera vez el Llamado?",
-  "¿Qué parte de mi historia se transforma al entrar en Los 144.000?",
-]
-const HISTORIA_TEMPLATE =
-  "MI HISTORIA PERSONAL\n\n" +
-  HISTORIA_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
-  "\n— Escribe aquí tu historia, tu linaje y tu punto de giro —\n"
+  const change = useCallback((next: MissionState) => {
+    setMissionState(m.id, next)
+    setState(next)
+    if (next === "integrada" && m.sealId) unlockSeal(m.sealId)
+  }, [m.id, m.sealId])
 
-// ── Misiones de Custodia ──
-const CUSTODIA_MISIONES = [
-  { title: "Custodiar un lugar", text: "Elige un punto de tu territorio (un cerro, un río, un templo, una esquina) y sostenlo con oración, limpieza y presencia consciente." },
-  { title: "Custodiar una memoria", text: "Recupera y registra una historia, un símbolo o un relato ancestral de tu tierra que esté por perderse." },
-  { title: "Custodiar a una persona", text: "Acompaña conscientemente a alguien que despierta: sin imponer, sin depender, sosteniendo luz y discernimiento." },
-  { title: "Custodiar una práctica", text: "Sostén en el tiempo una práctica (meditación, bitácora, servicio) que mantenga viva tu frecuencia." },
-  { title: "Custodiar la Red", text: "Cuida el nodo o la comunidad de la que formas parte: coherencia, respeto y ausencia de fanatismo." },
-]
-const CUSTODIA_TEMPLATE =
-  "MISIONES DE CUSTODIA\n\n" +
-  CUSTODIA_MISIONES.map((m) => `• ${m.title}: ${m.text}\n`).join("\n") +
-  "\n— Elige tu misión de custodia y registra tus pasos, señales y aprendizajes —\n"
+  const source = `custodia_${m.id}`
+  const sourceLabel = `Misión de Custodia · ${m.title}`
+  const stateColor = state === "integrada" ? "#7ee0a8" : state === "en_proceso" ? "var(--s5-gold)" : "#8b90b4"
 
-// ── Integración Solar ──
-const SOLAR_QUESTIONS = [
-  "¿Qué se ordena en mí cuando me expongo conscientemente a la luz del Sol?",
-  "¿Qué relación tengo con el fuego interior: voluntad, propósito, coraje?",
-  "¿Qué archivo solar (disco solar, memoria de fuego) siento más cercano?",
-  "¿Qué necesito quemar, transmutar o encender para servir mejor?",
-]
-const SOLAR_TEMPLATE =
-  "INTEGRACIÓN SOLAR\n\n" +
-  SOLAR_QUESTIONS.map((q) => `• ${q}\n`).join("\n") +
-  "\n— Registra tus prácticas solares, meditaciones de fuego y comprensiones —\n"
+  return (
+    <article className={styles.actionCard}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.8rem" }}>
+        <p className={styles.actionCardKicker}><Shield size={12} style={{ verticalAlign: "middle" }} /> Misión {String(m.n).padStart(2, "0")}</p>
+        <span className={styles.jSaved} style={{ color: stateColor }}>
+          {state === "integrada" ? <><Check size={11} /> Integrada</> : MISSION_STATE_LABELS[state]}
+        </span>
+      </div>
+      <h4 className={styles.actionCardName}>{m.title}</h4>
+      <p className={styles.actionCardText}>{m.text}</p>
+      <p className={styles.actionCardText} style={{ color: "var(--s5-gold-soft)" }}><strong>Acción:</strong> {m.action}</p>
 
-export function Season5Portal({ open, onClose, onGoToForo }: Props) {
+      <div style={{ marginTop: "0.8rem", display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+        {m.fields.map((f) => (
+          <JournalField key={f} source={source} sourceLabel={sourceLabel} category="misiones" prompt={f} />
+        ))}
+      </div>
+
+      {/* Estado de la misión */}
+      <div style={{ marginTop: "1rem", display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+        <span className={styles.jSaved} style={{ color: "#8b90b4" }}>Estado:</span>
+        {(["no_iniciada", "en_proceso", "integrada"] as MissionState[]).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => change(s)}
+            className={styles.stateChip}
+            style={state === s
+              ? { borderColor: "var(--s5-gold)", background: "rgba(217,184,102,0.14)", color: "var(--s5-gold-soft)" }
+              : undefined}
+          >
+            {MISSION_STATE_LABELS[s]}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ marginTop: "0.9rem", display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+        {m.result && (
+          <span className={styles.missionResult}>{m.result}{m.sealId && state === "integrada" ? " · sello desbloqueado" : ""}</span>
+        )}
+        {m.foro && (
+          <button type="button" className={styles.missionShare} onClick={() => onGoToForo?.(m.foro)}>
+            <MessageSquare size={12} /> Compartir como reporte (opcional)
+          </button>
+        )}
+      </div>
+    </article>
+  )
+}
+
+export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const objetivosRef = useRef<HTMLDivElement>(null)
-  const [journal, setJournal] = useState<JournalDef | null>(null)
+  const mapaRef = useRef<HTMLDivElement>(null)
+  const misionesRef = useRef<HTMLDivElement>(null)
   const [bannerVideo, setBannerVideo] = useState<string>("")
 
-  // Bloqueo de scroll del body + reset scroll al abrir
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -148,7 +258,6 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     return () => { document.body.style.overflow = prev }
   }, [open])
 
-  // Video de fondo (opcional, gestionado desde admin vía site_texts)
   useEffect(() => {
     if (!open) return
     let cancelled = false
@@ -162,62 +271,62 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     return () => { cancelled = true }
   }, [open])
 
-  // Esc cierra (primero la bitácora, luego el portal)
   useEffect(() => {
     if (!open) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== "Escape") return
-      if (journal) setJournal(null)
-      else onClose()
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose() }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, journal, onClose])
+  }, [open, onClose])
 
-  // Reveal on scroll
+  // Re-render al cambiar estados de misión (para reflejar sellos, etc.)
+  const [, force] = useState(0)
+  useEffect(() => {
+    if (!open) return
+    const h = () => force((n) => n + 1)
+    window.addEventListener(MISSIONS_CHANGED_EVENT, h)
+    return () => window.removeEventListener(MISSIONS_CHANGED_EVENT, h)
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     const root = rootRef.current
     if (!root) return
     const els = Array.from(root.querySelectorAll(`.${styles.reveal}`))
-    if (typeof IntersectionObserver === "undefined") {
-      els.forEach((el) => el.classList.add(styles.revealIn))
-      return
-    }
+    const revealAll = () => els.forEach((el) => el.classList.add(styles.revealIn))
+    if (typeof IntersectionObserver === "undefined") { revealAll(); return }
     const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) { e.target.classList.add(styles.revealIn); io.unobserve(e.target) }
-        })
-      },
-      { root, threshold: 0.12 },
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add(styles.revealIn); io.unobserve(e.target) } }),
+      { root, threshold: 0.1 },
     )
     els.forEach((el) => io.observe(el))
-    return () => io.disconnect()
+    const t = setTimeout(revealAll, 900)
+    return () => { io.disconnect(); clearTimeout(t) }
   }, [open])
 
-  const scrollToObjetivos = useCallback(() => {
-    objetivosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  const scrollTo = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
 
-  const goForo = useCallback((title?: string) => {
-    onClose()
-    onGoToForo?.(title)
-  }, [onClose, onGoToForo])
+  const goForo = useCallback((title?: string) => { onClose(); onGoToForo?.(title) }, [onClose, onGoToForo])
+
+  const handleObjAction = useCallback((act: ObjAction) => {
+    if (act === "foro_nodos") goForo(FORUM_TITLES.nodos)
+    else if (act === "foro_objetivos") goForo(FORUM_TITLES.objetivos)
+    else if (act === "umbral") { onClose(); onOpenUmbral?.() }
+    else scrollTo(misionesRef)
+  }, [goForo, onClose, onOpenUmbral, scrollTo])
 
   if (!open) return null
 
   return (
     <div className={styles.overlay} ref={rootRef} role="dialog" aria-label="Objetivos de los 144.000">
-      {/* Fondo cósmico */}
       <CosmicField />
-
       <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar portal">
         <X size={20} />
       </button>
 
       <div className={styles.inner}>
-        {/* ── 1. HERO ── */}
+        {/* HERO */}
         <header className={styles.hero}>
           {bannerVideo && (
             <div className={styles.bannerLayer} aria-hidden>
@@ -228,74 +337,67 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
           <div className={styles.heroInner}>
             <p className={styles.kicker}>Portal de Misión · Los 144.000</p>
             <h1 className={styles.heroTitle}>OBJETIVOS DE<br />LOS 144.000</h1>
-            <p className={styles.heroSub}>Misión planetaria · territorio · memoria sagrada</p>
+            <p className={styles.heroSub}>Misión planetaria, territorio y memoria sagrada</p>
             <div className={styles.heroLead}>
               <span className={styles.heroLeadHi}>Has recibido la memoria. Ahora comienza la misión.</span>
-              Las primeras cuatro temporadas abrieron el recuerdo del Plan Cósmico, la estructura del universo,
-              los orígenes ocultos de la Tierra y los archivos preservados después de Atlántida.
-              Esta nueva etapa no se recorre como una serie de episodios. <strong>Se atraviesa como una decisión interior.</strong>
+              Pero la misión no empieza lejos. Empieza en ti. En tu historia. En tu herida. En tu linaje. En el
+              territorio donde fuiste sembrado.
               <br /><br />
-              Los 144.000 existen para sostener una red de conciencia, custodiar la memoria de la Tierra,
-              irradiar la Clave del Recuerdo y preparar a la humanidad para un contacto más elevado con los Guías,
-              la Hermandad Blanca y los archivos del Plan.
+              Nadie puede limpiar la Red desde afuera si no reconoce lo que la Red le mostró dentro de su propia vida.
             </div>
-            <button type="button" className={styles.cta} onClick={scrollToObjetivos}>
-              Entrar a los Objetivos <ArrowDown size={15} />
+            <blockquote className={styles.portalFrase} style={{ marginTop: "1.4rem" }}>
+              <span>LO QUE VINE A SANAR EN MÍ</span>
+              <span>REVELA QUÉ PARTE DE LA RED VINE A LIMPIAR.</span>
+            </blockquote>
+            <button type="button" className={styles.cta} onClick={() => scrollTo(mapaRef)}>
+              Trazar mi mapa <ArrowDown size={15} />
             </button>
-            <div className={styles.scrollHint} aria-hidden />
           </div>
         </header>
 
-        {/* ── 2. DECLARACIÓN ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
+        {/* MAPA DE MI MISIÓN */}
+        <section className={`${styles.section} ${styles.reveal}`} ref={mapaRef}>
+          <p className={styles.kicker}>El centro</p>
+          <h2 className={styles.sectionTitle}><Compass size={20} style={{ verticalAlign: "-3px", marginRight: 8, color: "var(--s5-gold)" }} />MAPA DE MI MISIÓN</h2>
+          <p className={styles.sectionIntro}>
+            Antes de servir al territorio, reconoce tu propio mapa interior. La misión no se inventa: se revela cuando
+            miras con honestidad qué herida se repitió, qué patrón heredaste, qué memoria carga tu territorio y qué
+            medicina puedes entregar. Todo aquí es <strong>privado</strong>.
+          </p>
+          <div className={styles.mirrorBlock} style={{ marginTop: "1.4rem" }}>
+            {MAPA_QUESTIONS.map((q) => (
+              <JournalField key={q} source="mapa_mision" sourceLabel="Mapa de mi Misión" category="misiones" prompt={q} />
+            ))}
+          </div>
+        </section>
+
+        {/* DECLARACIÓN */}
+        <section className={`${styles.section} ${styles.reveal}`} style={{ paddingTop: 0 }}>
           <p className={styles.kicker}>Manifiesto</p>
           <h2 className={styles.sectionTitle}>DECLARACIÓN DE LOS 144.000</h2>
           <div className={styles.declaration}>
             <p>Los 144.000 no representan una élite separada de la humanidad.</p>
             <p className={styles.declBig}>Representan una frecuencia de responsabilidad.</p>
-            <p>
-              Cada miembro es llamado a recordar, sostener, irradiar y servir. Su tarea no termina al comprender
-              la historia cósmica de la Tierra. También debe redescubrir la memoria sagrada de su propio territorio,
-              de sus ancestros, de sus montañas, ríos, ciudades, templos, linajes y heridas colectivas.
-            </p>
-            <p>El Plan Cósmico no actúa solamente en las estrellas.</p>
-            <p className={styles.declLedger}>
-              Actúa en la Tierra. Actúa en los pueblos. Actúa en la memoria de los lugares. Actúa en la sangre.
-              Actúa en la historia que cada territorio aún guarda.
-            </p>
-            <p>
-              Con el apoyo de la Hermandad Blanca de la Tierra, los miembros de Los 144.000 son llamados a
-              convertirse en guardianes conscientes de su lugar: seres capaces de estudiar, meditar, servir,
-              escuchar la memoria profunda del planeta y sostener una red de luz allí donde han sido sembrados.
-            </p>
+            <p>Cada miembro es llamado a recordar, sostener, irradiar y servir. Su tarea no termina al comprender la historia cósmica de la Tierra: también debe redescubrir la memoria sagrada de su territorio, sus ancestros y sus heridas colectivas.</p>
           </div>
         </section>
 
-        {/* ── 3. LOS 7 OBJETIVOS ── */}
-        <section className={styles.section} ref={objetivosRef}>
-          <div className={styles.reveal}>
-            <p className={styles.kicker}>Código de Misión</p>
-            <h2 className={styles.sectionTitle}>LOS 7 OBJETIVOS DE LOS 144.000</h2>
-            <p className={styles.sectionIntro}>
-              Las temporadas anteriores activaron la memoria. <strong>Estos objetivos muestran cómo esa memoria se convierte en misión.</strong>
-            </p>
-          </div>
-
+        {/* LOS 7 OBJETIVOS */}
+        <section className={`${styles.section} ${styles.reveal}`} ref={objetivosRef} style={{ paddingTop: 0 }}>
+          <p className={styles.kicker}>Código de Misión</p>
+          <h2 className={styles.sectionTitle}>LOS 7 OBJETIVOS DE LOS 144.000</h2>
+          <p className={styles.sectionIntro}>Las temporadas activaron la memoria. <strong>Estos objetivos muestran cómo esa memoria se convierte en misión.</strong></p>
           <div className={styles.constellation}>
             {OBJETIVOS.map((o) => (
-              <article key={o.n} className={`${styles.seal} ${styles.reveal}`}>
+              <article key={o.n} className={styles.seal}>
                 <div className={styles.sealMedal}><span>{o.n}</span></div>
                 <div className={styles.sealBody}>
                   <div className={styles.sealNum}>Objetivo {String(o.n).padStart(2, "0")}</div>
                   <h3 className={styles.sealTitle}>{o.title}</h3>
                   <p className={styles.sealPhrase}>{o.phrase}</p>
                   <p className={styles.sealText}>{o.text}</p>
-                  <button
-                    type="button"
-                    className={styles.sealAction}
-                    onClick={() => goForo(FORUM_TITLES.objetivos)}
-                  >
-                    <MessageSquare size={13} /> Reflexionar en el foro
+                  <button type="button" className={styles.sealAction} onClick={() => handleObjAction(o.act)}>
+                    <ArrowRight size={13} /> {o.actionLabel}
                   </button>
                 </div>
               </article>
@@ -303,257 +405,33 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
           </div>
         </section>
 
-        {/* ── 4. MISIÓN TERRITORIAL ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Primer acto práctico</p>
-          <h2 className={styles.sectionTitle}>MISIÓN TERRITORIAL</h2>
-          <div className={styles.territory}>
-            <span className={styles.territoryGlow} aria-hidden />
-            <p>
-              Cada miembro de Los 144.000 debe comenzar por su lugar. Antes de buscar grandes señales en el cielo,
-              debe aprender a escuchar la tierra donde vive. Allí hay una memoria que necesita ser reconocida:
-              los pueblos que caminaron antes, las heridas que quedaron abiertas, los lugares sagrados olvidados,
-              las aguas contaminadas, los cerros custodiados, los templos destruidos, los linajes silenciados y las
-              señales que aún permanecen activas.
-            </p>
-            <p className={styles.territoryHi}>La misión planetaria no comienza lejos. Comienza en el territorio.</p>
-            <p>Por eso cada miembro será invitado a crear una bitácora de su lugar:</p>
-
-            <div className={styles.questionCard}>
-              <p className={styles.questionCardTitle}>Bitácora del territorio · preguntas guía</p>
-              <ul className={styles.questionList}>
-                {TERRITORY_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
-              </ul>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
-                <button
-                  type="button"
-                  className={styles.cta}
-                  style={{ margin: 0 }}
-                  onClick={() => setJournal({
-                    key: "territorio",
-                    title: "Bitácora del Territorio",
-                    sub: "Investiga y registra la historia sagrada del lugar donde vives: ancestros, símbolos, heridas, puntos de poder y memorias planetarias.",
-                    template: TERRITORY_TEMPLATE,
-                  })}
-                >
-                  <MapIcon size={15} /> Abrir mi bitácora del territorio
-                </button>
-                <button
-                  type="button"
-                  className={styles.cta}
-                  style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
-                  onClick={() => goForo(FORUM_TITLES.territorio)}
-                >
-                  <MessageSquare size={15} /> Compartir mi territorio en el foro
-                </button>
-              </div>
-            </div>
-
-            <p style={{ marginTop: "1.6rem" }}>
-              Esta misión territorial se realizará con el apoyo de la Hermandad Blanca, los retiros interiores y la
-              red de conciencia de Los 144.000.
-            </p>
+        {/* MISIONES DE CUSTODIA */}
+        <section className={`${styles.section} ${styles.reveal}`} ref={misionesRef} style={{ paddingTop: 0 }}>
+          <p className={styles.kicker}>De la memoria al acto</p>
+          <h2 className={styles.sectionTitle}><ShieldCheck size={20} style={{ verticalAlign: "-3px", marginRight: 8, color: "var(--s5-gold)" }} />MISIONES DE CUSTODIA</h2>
+          <p className={styles.sectionIntro}>
+            No son tareas. Son actos de custodia que puedes atravesar a tu ritmo. Cada una tiene un estado
+            —<em>No iniciada · En proceso · Integrada</em>— y algunas encienden un sello. Registra en privado; comparte solo si lo decides.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", marginTop: "1.4rem" }}>
+            {CUSTODIA.map((m) => <MissionCard key={m.id} m={m} onGoToForo={goForo} />)}
           </div>
         </section>
 
-        {/* ── MI HISTORIA PERSONAL ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Tu raíz</p>
-          <h2 className={styles.sectionTitle}>MI HISTORIA PERSONAL</h2>
-          <p className={styles.sectionIntro}>
-            Antes de custodiar el territorio, reconoce tu propia historia. <strong>El linaje también es un archivo.</strong>
-          </p>
-          <div className={styles.questionCard} style={{ marginTop: "1.4rem" }}>
-            <p className={styles.questionCardTitle}>Preguntas para recordar tu historia</p>
-            <ul className={styles.questionList}>
-              {HISTORIA_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
-            </ul>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
-              <button
-                type="button"
-                className={styles.cta}
-                style={{ margin: 0 }}
-                onClick={() => setJournal({
-                  key: "historia_personal",
-                  title: "Mi Historia Personal",
-                  sub: "Reconoce tu linaje, tus heridas, tus dones y tu punto de giro en el camino.",
-                  template: HISTORIA_TEMPLATE,
-                })}
-              >
-                <ScrollText size={15} /> Escribir mi historia
+        {/* UMBRAL */}
+        <section className={styles.reveal}>
+          <div className={styles.umbral}>
+            <p className={styles.kicker} style={{ display: "inline-block" }}>El siguiente umbral</p>
+            <h2 className={styles.sectionTitle}>EL UMBRAL DEL CONTACTO</h2>
+            <p>El contacto no comienza mirando al cielo. Comienza cuando la intención se ordena, la mente se aquieta, el corazón se limpia y el servicio se vuelve más importante que la experiencia.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", justifyContent: "center", marginTop: "1.6rem" }}>
+              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={() => { onClose(); onOpenUmbral?.() }}>
+                Entrar al Umbral del Contacto <ArrowRight size={15} />
               </button>
             </div>
           </div>
         </section>
-
-        {/* ── MISIONES DE CUSTODIA ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Servicio concreto</p>
-          <h2 className={styles.sectionTitle}>MISIONES DE CUSTODIA</h2>
-          <p className={styles.sectionIntro}>
-            Ser guardián no es poseer: es escuchar, cuidar y sostener. <strong>Elige una custodia y hazla viva.</strong>
-          </p>
-          <div className={styles.howGrid}>
-            {CUSTODIA_MISIONES.map((m, i) => (
-              <article key={m.title} className={styles.howCard}>
-                <span className={styles.howNum}><Shield size={16} /> {String(i + 1).padStart(2, "0")}</span>
-                <h3 className={styles.howName}>{m.title}</h3>
-                <p className={styles.howText}>{m.text}</p>
-              </article>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", justifyContent: "center", marginTop: "1.8rem" }}>
-            <button
-              type="button"
-              className={styles.cta}
-              style={{ margin: 0 }}
-              onClick={() => setJournal({
-                key: "custodia",
-                title: "Misiones de Custodia",
-                sub: "Elige tu misión de custodia y registra tus pasos, señales y compromisos.",
-                template: CUSTODIA_TEMPLATE,
-              })}
-            >
-              <Shield size={15} /> Registrar mi custodia
-            </button>
-            <button
-              type="button"
-              className={styles.cta}
-              style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
-              onClick={() => goForo(FORUM_TITLES.nodos)}
-            >
-              <MessageSquare size={15} /> Compartir en la Red
-            </button>
-          </div>
-        </section>
-
-        {/* ── INTEGRACIÓN SOLAR ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Archivos del Sol</p>
-          <h2 className={styles.sectionTitle}>INTEGRACIÓN SOLAR</h2>
-          <div className={styles.territory}>
-            <span className={styles.territoryGlow} aria-hidden />
-            <p>
-              El Sol no es solo una estrella física: es una puerta de memoria y voluntad. La Integración Solar es la
-              práctica de ordenar el fuego interior —propósito, coraje, dirección— y sintonizar con los archivos
-              solares que sostienen el Plan.
-            </p>
-            <p className={styles.territoryHi}>Recibir la luz también es una responsabilidad.</p>
-            <div className={styles.questionCard}>
-              <p className={styles.questionCardTitle}>Bitácora solar · preguntas guía</p>
-              <ul className={styles.questionList}>
-                {SOLAR_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
-              </ul>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", marginTop: "1.6rem" }}>
-                <button
-                  type="button"
-                  className={styles.cta}
-                  style={{ margin: 0, borderColor: "var(--s5-gold)" }}
-                  onClick={() => setJournal({
-                    key: "integracion_solar",
-                    title: "Integración Solar",
-                    sub: "Registra tus prácticas solares, meditaciones de fuego y comprensiones sobre la voluntad.",
-                    template: SOLAR_TEMPLATE,
-                  })}
-                >
-                  <Sun size={15} /> Abrir mi bitácora solar
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 5. ÁREA DE INTEGRACIÓN ── */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Comunidad activa</p>
-          <h2 className={styles.sectionTitle}>ÁREA DE INTEGRACIÓN</h2>
-          <p className={styles.sectionIntro}>
-            El inicio de una red viva. No es contenido de temporada: es el espacio donde la misión se practica.
-          </p>
-
-          <div className={styles.integrationGrid}>
-            <button
-              type="button"
-              className={styles.intCard}
-              onClick={() => setJournal({
-                key: "personal",
-                title: "Bitácora Personal",
-                sub: "Registra comprensiones, sueños, señales, meditaciones, resistencias y cambios interiores.",
-              })}
-            >
-              <span className={styles.intIcon}><BookOpen size={22} /></span>
-              <span className={styles.intName}>Bitácora Personal</span>
-              <span className={styles.intDesc}>Espacio para registrar comprensiones, sueños, señales, meditaciones, resistencias y cambios interiores.</span>
-              <span className={`${styles.intTag} ${styles.intTagLive}`}>Disponible</span>
-            </button>
-
-            <button
-              type="button"
-              className={styles.intCard}
-              onClick={() => setJournal({
-                key: "territorio",
-                title: "Bitácora del Territorio",
-                sub: "Investiga y registra la historia sagrada del lugar donde vives: ancestros, símbolos, heridas, puntos de poder y memorias planetarias.",
-                template: TERRITORY_TEMPLATE,
-              })}
-            >
-              <span className={styles.intIcon}><MapIcon size={22} /></span>
-              <span className={styles.intName}>Bitácora del Territorio</span>
-              <span className={styles.intDesc}>Investiga y registra la historia sagrada del lugar donde vives: ancestros, símbolos, heridas, puntos de poder y memorias planetarias.</span>
-              <span className={`${styles.intTag} ${styles.intTagLive}`}>Disponible</span>
-            </button>
-
-            <button type="button" className={styles.intCard} onClick={() => goForo(FORUM_TITLES.objetivos)}>
-              <span className={styles.intIcon}><MessageSquare size={22} /></span>
-              <span className={styles.intName}>Foro de la Red</span>
-              <span className={styles.intDesc}>Comparte experiencias con otros miembros desde respeto, discernimiento y claridad.</span>
-              <span className={`${styles.intTag} ${styles.intTagLive}`}>Ir al foro</span>
-            </button>
-
-            <button type="button" className={styles.intCard} onClick={() => goForo(FORUM_TITLES.nodos)}>
-              <span className={styles.intIcon}><Share2 size={22} /></span>
-              <span className={styles.intName}>Nodos 144.000</span>
-              <span className={styles.intDesc}>Encuentra o forma tu comunidad de base (física, virtual o mental) con otros miembros cercanos.</span>
-              <span className={`${styles.intTag} ${styles.intTagLive}`}>Encontrar mi nodo</span>
-            </button>
-
-            <div className={styles.intCard} data-soon="true">
-              <span className={styles.intIcon}><Lock size={22} /></span>
-              <span className={styles.intName}>Desbloqueos Futuros</span>
-              <span className={styles.intDesc}>Archivos especiales que se abrirán con el tiempo.</span>
-              <ul className={styles.unlockList}>
-                {UNLOCKS.map((u) => <li key={u}>{u}</li>)}
-              </ul>
-              <span className={`${styles.intTag} ${styles.intTagSoon}`}>Próximamente</span>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 6. UMBRAL ── */}
-        <section className={styles.reveal}>
-          <div className={styles.umbral}>
-            <p className={styles.kicker} style={{ display: "inline-block" }}>El siguiente umbral</p>
-            <h2 className={styles.sectionTitle}>EL SIGUIENTE UMBRAL</h2>
-            <p>
-              Cuando una persona comprende los objetivos de Los 144.000, puede comenzar su preparación práctica.
-              El siguiente espacio no será una temporada de videos. Será un umbral: un camino de prácticas,
-              meditaciones, bitácora y preparación interior para que el contacto deje de ser una idea y se convierta
-              en una responsabilidad sostenida.
-            </p>
-            <blockquote className={styles.finalQuote}>
-              <span>La memoria fue entregada.</span>
-              <span>El territorio debe ser recordado.</span>
-              <span>La Red debe sostenerse.</span>
-              <span>El contacto vendrá cuando la conciencia pueda responder.</span>
-            </blockquote>
-            <div className={styles.umbralBtn}>
-              <Check size={14} /> Próximamente: El Umbral del Contacto
-            </div>
-          </div>
-        </section>
       </div>
-
-      {journal && <PortalJournal def={journal} onClose={() => setJournal(null)} />}
     </div>
   )
 }
