@@ -119,12 +119,6 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   return (
     <div className={styles.overlay} ref={rootRef} role="dialog" aria-label="Portal de Ingreso">
       <CosmicField />
-      {bannerVideo && (
-        <div className={styles.bannerLayer} aria-hidden>
-          <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
-          <span className={styles.bannerVeil} />
-        </div>
-      )}
 
       <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar portal">
         <X size={20} />
@@ -133,6 +127,12 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
       <div className={styles.inner}>
         {/* HERO */}
         <header className={styles.hero}>
+          {bannerVideo && (
+            <div className={styles.bannerLayer} aria-hidden>
+              <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
+              <span className={styles.bannerVeil} />
+            </div>
+          )}
           <div className={styles.heroInner}>
           <p className={styles.kicker}>Portal de Ingreso · Antes del Llamado</p>
           <h1 className={styles.heroTitle}>PORTAL DE INGRESO</h1>

@@ -210,17 +210,18 @@
   align-items: center;
   width: 100%;
 }
-/* Banner de video a pantalla completa (primer viewport), detrás del contenido.
-   Absolute dentro del overlay (que es el contenedor de scroll) → hace de banner
-   del hero. z-index 1: por encima del fondo cósmico (.field z0) y por debajo del
-   contenido (.inner z2). */
+/* Banner de video que cubre TODO el hero (sea cual sea su alto → el texto y el
+   botón siempre quedan dentro del video, en web y celular). Full-bleed a 100vw
+   aunque el hero viva dentro de .inner (1080px). z-index 0: detrás del
+   contenido (.heroInner z2). */
 .bannerLayer {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 100svh;
-  z-index: 1;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 100%;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
 }

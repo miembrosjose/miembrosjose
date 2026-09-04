@@ -172,12 +172,6 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
     <div className={styles.overlay} ref={rootRef} role="dialog" aria-label="Objetivos de los 144.000">
       {/* Fondo cósmico */}
       <CosmicField />
-      {bannerVideo && (
-        <div className={styles.bannerLayer} aria-hidden>
-          <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
-          <span className={styles.bannerVeil} />
-        </div>
-      )}
 
       <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar portal">
         <X size={20} />
@@ -186,23 +180,31 @@ export function Season5Portal({ open, onClose, onGoToForo }: Props) {
       <div className={styles.inner}>
         {/* ── 1. HERO ── */}
         <header className={styles.hero}>
-          <p className={styles.kicker}>Portal de Misión · Los 144.000</p>
-          <h1 className={styles.heroTitle}>OBJETIVOS DE<br />LOS 144.000</h1>
-          <p className={styles.heroSub}>Misión planetaria · territorio · memoria sagrada</p>
-          <div className={styles.heroLead}>
-            <span className={styles.heroLeadHi}>Has recibido la memoria. Ahora comienza la misión.</span>
-            Las primeras cuatro temporadas abrieron el recuerdo del Plan Cósmico, la estructura del universo,
-            los orígenes ocultos de la Tierra y los archivos preservados después de Atlántida.
-            Esta nueva etapa no se recorre como una serie de episodios. <strong>Se atraviesa como una decisión interior.</strong>
-            <br /><br />
-            Los 144.000 existen para sostener una red de conciencia, custodiar la memoria de la Tierra,
-            irradiar la Clave del Recuerdo y preparar a la humanidad para un contacto más elevado con los Guías,
-            la Hermandad Blanca y los archivos del Plan.
+          {bannerVideo && (
+            <div className={styles.bannerLayer} aria-hidden>
+              <BannerVideo src={bannerVideo} className={styles.bannerMedia} />
+              <span className={styles.bannerVeil} />
+            </div>
+          )}
+          <div className={styles.heroInner}>
+            <p className={styles.kicker}>Portal de Misión · Los 144.000</p>
+            <h1 className={styles.heroTitle}>OBJETIVOS DE<br />LOS 144.000</h1>
+            <p className={styles.heroSub}>Misión planetaria · territorio · memoria sagrada</p>
+            <div className={styles.heroLead}>
+              <span className={styles.heroLeadHi}>Has recibido la memoria. Ahora comienza la misión.</span>
+              Las primeras cuatro temporadas abrieron el recuerdo del Plan Cósmico, la estructura del universo,
+              los orígenes ocultos de la Tierra y los archivos preservados después de Atlántida.
+              Esta nueva etapa no se recorre como una serie de episodios. <strong>Se atraviesa como una decisión interior.</strong>
+              <br /><br />
+              Los 144.000 existen para sostener una red de conciencia, custodiar la memoria de la Tierra,
+              irradiar la Clave del Recuerdo y preparar a la humanidad para un contacto más elevado con los Guías,
+              la Hermandad Blanca y los archivos del Plan.
+            </div>
+            <button type="button" className={styles.cta} onClick={scrollToObjetivos}>
+              Entrar a los Objetivos <ArrowDown size={15} />
+            </button>
+            <div className={styles.scrollHint} aria-hidden />
           </div>
-          <button type="button" className={styles.cta} onClick={scrollToObjetivos}>
-            Entrar a los Objetivos <ArrowDown size={15} />
-          </button>
-          <div className={styles.scrollHint} aria-hidden />
         </header>
 
         {/* ── 2. DECLARACIÓN ── */}
