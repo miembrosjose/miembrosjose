@@ -7,10 +7,10 @@
 // es editable, se puede marcar privada/compartible y borrar.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { X, BookOpen, Check, Trash2, Lock, Unlock } from "lucide-react"
+import { X, BookOpen, Check, Trash2, Lock } from "lucide-react"
 import {
   JOURNAL_CATEGORIES, type JournalCategory, type JournalEntry,
-  entriesByCategory, countByCategory, upsertAnswer, deleteEntry, setEntryPrivate,
+  entriesByCategory, countByCategory, upsertAnswer, deleteEntry,
   migrateLegacyJournal, JOURNAL_CHANGED_EVENT,
 } from "../_lib/journal-store"
 import { SEALS, getUnlockedSeals, SEALS_CHANGED_EVENT } from "../_lib/seals"
@@ -223,17 +223,12 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
       <div className="mt-1 flex items-center justify-between gap-2">
         <span className="text-[0.56rem] uppercase tracking-[0.12em] text-[#6a6f92] [font-family:var(--font-mono)]">{fecha}</span>
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setEntryPrivate(entry.id, !entry.private)}
-            title={entry.private
-              ? "Privada — solo tú la ves. Tocá para marcarla como compartible."
-              : "Marcada como compartible. No se publica sola: se comparte desde el foro. Tocá para volverla privada."}
-            className="inline-flex items-center gap-1 px-1 py-0.5 text-[0.56rem] uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors hover:opacity-80"
-            style={{ color: entry.private ? "#a8a8c0" : "#7ee0a8" }}
+          <span
+            title="Privada — solo tú la ves. Nada se comparte al foro sin tu decisión."
+            className="inline-flex items-center gap-1 text-[0.56rem] uppercase tracking-[0.12em] text-[#8b90b4] [font-family:var(--font-mono)]"
           >
-            {entry.private ? <><Lock size={11} /> Privada</> : <><Unlock size={11} /> Compartible</>}
-          </button>
+            <Lock size={11} /> Privada
+          </span>
           <button
             type="button"
             onClick={() => { if (confirm("¿Borrar este registro? Esta acción no se puede deshacer.")) deleteEntry(entry.id) }}

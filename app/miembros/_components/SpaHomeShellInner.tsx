@@ -256,29 +256,32 @@ export function SpaHomeShellInner() {
     [],
   )
 
-  // Áudio do banner principal (biblioteca cósmica): ao ENTRAR numa temporada faz
-  // DESAPARIÇÃO progressiva do som em 1s e pausa; ao fechar e voltar pra
-  // biblioteca faz APARIÇÃO progressiva em 1s. Sem isto o áudio do hero seguia
-  // tocando por baixo do drawer/player (bug reportado).
+  // Áudio do banner principal (biblioteca cósmica). Regra: SÓ toca quando o
+  // usuário está realmente na home (view inicio) e NENHUM overlay/janela está
+  // aberto. Ao abrir qualquer coisa (temporada, bitácora, portais, umbral,
+  // integração, ficha da série, checkout) ou sair de Inicio → fade-out e pausa.
+  // Ao voltar à home sem nada aberto → fade-in.
+  const anyOverlayOpen =
+    !!openSeason || ingresoOpen || portalOpen || umbralOpen || journalOpen ||
+    integrationId != null || seriesInfoOpen || !!salespageProduct
   useEffect(() => {
     const v = heroVideoRef.current
     if (!v) return
-    if (openSeason) {
-      // fade-out 1s → pausa
-      fadeHeroAudio(0, 1000, { pauseAtEnd: true })
-    } else if (introDone && view === "inicio") {
-      if (v.muted) {
-        // Áudio ainda travado (sem gesture) → só toca em mudo.
-        v.play().catch(() => {})
-      } else {
-        // Reanuda com fade-in 1s.
-        v.volume = 0
-        v.play()
-          .then(() => fadeHeroAudio(1, 1000))
-          .catch(() => {})
-      }
+    const shouldPlay = introDone && view === "inicio" && !anyOverlayOpen
+    if (!shouldPlay) {
+      // fade-out rápido → pausa (deja de sonar al abrir cualquier ventana)
+      fadeHeroAudio(0, 600, { pauseAtEnd: true })
+    } else if (v.muted) {
+      // Áudio ainda travado (sem gesture do usuário) → só toca em mudo.
+      v.play().catch(() => {})
+    } else {
+      // Reanuda com fade-in 1s.
+      v.volume = 0
+      v.play()
+        .then(() => fadeHeroAudio(1, 1000))
+        .catch(() => {})
     }
-  }, [openSeason, introDone, view, fadeHeroAudio])
+  }, [anyOverlayOpen, introDone, view, fadeHeroAudio])
 
   // Boot: ping login (incrementa unique_login_days 1×/dia) + welcome achievement
   // (idempotente — só desbloqueia primeira vez) + hidrata window.NOTIF_PREFS
