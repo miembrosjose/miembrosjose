@@ -416,6 +416,7 @@ export function SpaHomeShellInner() {
         initialEpisodeNum={continueTo}
         onClose={() => { setOpenSeason(null); setContinueTo(null) }}
         onAdvanceSeason={(next) => { enterSeason(next) }}
+        onOpenIntegration={(id) => { setOpenSeason(null); setContinueTo(null); setIntegrationId(id as 1 | 2 | 3 | 4) }}
         onOpenCheckout={(p) => setSalespageProduct(p)}
         ownedProductNames={owned.map((o) => o.name)}
       />

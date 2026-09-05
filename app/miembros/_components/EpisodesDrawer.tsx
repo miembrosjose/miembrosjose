@@ -11,7 +11,6 @@ import {
   type Episode,
 } from "../_lib/episodes"
 import {
-  SEASONS,
   getEpisodeProgress,
   isEpisodeUnlocked,
   markEpisodeWatched,
@@ -44,11 +43,13 @@ type Props = {
   initialEpisodeNum?: number | null
   onClose: () => void
   onAdvanceSeason?: (nextSeason: Season) => void
+  /** Abre el portal de integración (1..4) de ESTA temporada al terminar el último ep. */
+  onOpenIntegration?: (id: number) => void
   onOpenCheckout?: (p: PremiumProduct) => void
   ownedProductNames?: string[]
 }
 
-export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSeason, onOpenCheckout, ownedProductNames }: Props) {
+export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onOpenIntegration, onOpenCheckout, ownedProductNames }: Props) {
   const { isAdmin } = useAuth()
   const [progress, setProgress] = useState<EpisodeProgress>({})
   const [playingEp, setPlayingEp] = useState<Episode | null>(null)
@@ -185,23 +186,26 @@ export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSe
   // Pode oferecer "próxima temporada" quando está no último ep da T1/T2/T3.
   // T4 → T5 não conta porque T5 é grupo de WhatsApp externo.
   const isLastEpOfSeason = playingEp != null && nextEp == null && episodes.length > 0
-  const nextSeasonForAdvance: Season | null =
-    isLastEpOfSeason && season && season.num < 4
-      ? SEASONS.find((s) => s.num === season.num + 1) || null
-      : null
-  const canAdvanceSeason = !!nextSeasonForAdvance && !nextSeasonForAdvance.external
+  // Nombre del portal de integración de cada temporada.
+  const INTEGRATION_NAME: Record<number, string> = {
+    1: "Portal del Compromiso",
+    2: "Portal de la Desprogramación Cósmica",
+    3: "Portal de la Memoria y la Dignidad",
+    4: "Portal de la Alquimia Solar",
+  }
+  // Al terminar el último episodio de T1–T4, el botón lleva a la INTEGRACIÓN de
+  // esta temporada (ya no a la siguiente temporada).
+  const showIntegrationBtn = isLastEpOfSeason && !!season && season.num >= 1 && season.num <= 4 && !!onOpenIntegration
 
-  function handleAdvanceSeason() {
-    if (!playingEp || !season || !nextSeasonForAdvance) return
-    // Marca episódio atual como assistido (libera próxima temporada via
-    // PROGRESS_CHANGED_EVENT que o SeasonsCarousel escuta).
+  function handleGoIntegration() {
+    if (!playingEp || !season) return
+    // Marca el último episodio como visto (completa la temporada → habilita la
+    // integración y desbloquea Misión/Contacto al llegar a T4).
     markEpisodeWatched(season.num, playingEp.num)
     setProgress(getEpisodeProgress())
     checkEpisodeAchievements(season.num, episodes)
     setPlayingEp(null)
-    if (onAdvanceSeason) {
-      onAdvanceSeason(nextSeasonForAdvance)
-    }
+    onOpenIntegration?.(season.num)
   }
 
   return (
@@ -518,18 +522,18 @@ export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onAdvanceSe
                         : "— inicio de temporada —"}
                     </span>
                   </button>
-                  {canAdvanceSeason && nextSeasonForAdvance ? (
+                  {showIntegrationBtn && season ? (
                     <button
                       type="button"
                       className={`${styles.playerNavBtn} ${styles.playerNavBtnAdvance}`}
-                      onClick={handleAdvanceSeason}
+                      onClick={handleGoIntegration}
                       style={{ textAlign: "right" }}
                     >
                       <small style={{ textAlign: "right" }}>
-                        Próxima temporada <ArrowRight size={12} style={{ display: "inline-block", verticalAlign: "middle" }} />
+                        Pasar a la integración <ArrowRight size={12} style={{ display: "inline-block", verticalAlign: "middle" }} />
                       </small>
                       <span>
-                        TEMPORADA {nextSeasonForAdvance.num} · {nextSeasonForAdvance.name}
+                        {INTEGRATION_NAME[season.num]}
                       </span>
                     </button>
                   ) : (
