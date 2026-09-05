@@ -88,7 +88,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
             </div>
             <div className="flex items-center gap-2">
               <JournalPdfExportButton
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors"
                 style={{ border: "1px solid rgba(217,184,102,0.5)", background: "linear-gradient(135deg,rgba(230,207,149,0.18),rgba(217,184,102,0.1))", color: "#e6cf95" }}
               />
               <button type="button" onClick={onClose} aria-label="Cerrar"
@@ -125,8 +125,8 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
         </div>
 
-        {/* Tabs (7 secciones) */}
-        <div className="flex gap-1 overflow-x-auto border-b border-[rgba(167,139,202,0.15)] px-3 py-2 sm:px-4">
+        {/* Tabs (7 secciones) — se acomodan en varias líneas; sin scroll horizontal */}
+        <div className="flex flex-wrap gap-1.5 border-b border-[rgba(167,139,202,0.15)] px-3 py-2.5 sm:px-4">
           {JOURNAL_CATEGORIES.map((c) => {
             const n = counts?.[c.id] ?? 0
             return (
@@ -226,14 +226,13 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
           <button
             type="button"
             onClick={() => setEntryPrivate(entry.id, !entry.private)}
-            title={entry.private ? "Privada — solo tú la ves" : "Marcada como compartible"}
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.54rem] uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors"
-            style={{
-              border: `1px solid ${entry.private ? "rgba(167,139,202,0.35)" : "rgba(126,224,168,0.5)"}`,
-              color: entry.private ? "#a8a8c0" : "#7ee0a8",
-            }}
+            title={entry.private
+              ? "Privada — solo tú la ves. Tocá para marcarla como compartible."
+              : "Marcada como compartible. No se publica sola: se comparte desde el foro. Tocá para volverla privada."}
+            className="inline-flex items-center gap-1 px-1 py-0.5 text-[0.56rem] uppercase tracking-[0.12em] [font-family:var(--font-mono)] transition-colors hover:opacity-80"
+            style={{ color: entry.private ? "#a8a8c0" : "#7ee0a8" }}
           >
-            {entry.private ? <><Lock size={10} /> Privada</> : <><Unlock size={10} /> Compartible</>}
+            {entry.private ? <><Lock size={11} /> Privada</> : <><Unlock size={11} /> Compartible</>}
           </button>
           <button
             type="button"
