@@ -275,25 +275,28 @@ export function SeasonsCarousel({
   function renderLockedPortal(cfg: {
     key: string; category: string; title: string; subtitle: string; media?: string; message: string
   }) {
+    // Mismo contenedor que las temporadas (.seasonCol) para que la tarjeta
+    // calcule idéntica altura y el candado quede exactamente a la misma altura.
     return (
-      <button
-        key={cfg.key}
-        type="button"
-        className={`${styles.card} ${styles.locked}`}
-        style={{ cursor: "pointer" }}
-        onClick={() => onLockedInfo?.(cfg.message)}
-      >
-        <div className={styles.thumb} style={{ background: dim }}>
-          {cfg.media ? <SeasonVideo src={cfg.media} /> : <span className={styles.thumbEmoji}>✵</span>}
-          <div className={styles.lockOverlay}><Lock size={34} /></div>
-        </div>
-        <div className={styles.info}>
-          <div className={styles.epNum}>{cfg.category}</div>
-          <div className={styles.name}>{cfg.title}</div>
-          <div className={styles.divider} />
-          <div className={styles.meta}><span>{cfg.subtitle}</span></div>
-        </div>
-      </button>
+      <div key={cfg.key} className={styles.seasonCol}>
+        <button
+          type="button"
+          className={`${styles.card} ${styles.locked}`}
+          style={{ width: "100%", cursor: "pointer" }}
+          onClick={() => onLockedInfo?.(cfg.message)}
+        >
+          <div className={styles.thumb} style={{ background: dim }}>
+            {cfg.media ? <SeasonVideo src={cfg.media} /> : <span className={styles.thumbEmoji}>✵</span>}
+            <div className={styles.lockOverlay}><Lock size={34} /></div>
+          </div>
+          <div className={styles.info}>
+            <div className={styles.epNum}>{cfg.category}</div>
+            <div className={styles.name}>{cfg.title}</div>
+            <div className={styles.divider} />
+            <div className={styles.meta}><span>{cfg.subtitle}</span></div>
+          </div>
+        </button>
+      </div>
     )
   }
 
