@@ -154,6 +154,8 @@ export function SeasonsCarousel({
       4: "Portal de la Alquimia Solar",
     }
     const showIntegration = !season.external && season.num >= 1 && season.num <= 4 && !!onOpenIntegration
+    // La integración se habilita SOLO al completar la temporada al 100% (admin bypass).
+    const seasonDone = isAdmin || (total > 0 && isSeasonComplete(season, progress))
 
     return (
       <div key={season.id || season.num} className={styles.seasonCol}>
@@ -207,11 +209,16 @@ export function SeasonsCarousel({
       {showIntegration && (
         <button
           type="button"
-          className={styles.integrateBtn}
-          title={`Integrar Temporada ${season.num} · ${intName[season.num]}`}
-          onClick={() => onOpenIntegration?.(season.num)}
+          className={`${styles.integrateBtn} ${seasonDone ? "" : styles.integrateBtnLocked}`}
+          title={seasonDone
+            ? `Integrar Temporada ${season.num} · ${intName[season.num]}`
+            : `Completa la Temporada ${season.num} al 100% para abrir su integración`}
+          onClick={() => {
+            if (seasonDone) onOpenIntegration?.(season.num)
+            else onLockedInfo?.(`Completa la Temporada ${season.num} al 100% para abrir su integración: ${intName[season.num]}.`)
+          }}
         >
-          <Sparkles size={12} /> Integrar Temporada {season.num}
+          {seasonDone ? <Sparkles size={12} /> : <Lock size={11} />} Integrar Temporada {season.num}
         </button>
       )}
       </div>

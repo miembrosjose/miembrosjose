@@ -322,24 +322,38 @@
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.6rem 0.7rem;
+  padding: 0.62rem 0.7rem;
   border-radius: 8px;
-  border: 1px solid rgba(217, 184, 102, 0.45);
-  background: linear-gradient(135deg, rgba(230, 207, 149, 0.14), rgba(217, 184, 102, 0.06));
-  color: #e6cf95;
+  border: 1px solid transparent;
+  /* Color vivo: dorado brillante con texto oscuro para que resalte. */
+  background: linear-gradient(135deg, #f2d68a 0%, #e0b64f 55%, #d9a53a 100%);
+  color: #1a1408;
   font-family: var(--font-mono, monospace);
-  font-size: 0.62rem;
-  font-weight: 600;
+  font-size: 0.63rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+  box-shadow: 0 4px 16px -4px rgba(224, 182, 79, 0.55);
+  transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .integrateBtn:hover {
-  border-color: var(--gold, #d9b866);
-  background: linear-gradient(135deg, rgba(230, 207, 149, 0.22), rgba(217, 184, 102, 0.12));
-  color: #fff;
+  filter: brightness(1.08);
   transform: translateY(-1px);
+  box-shadow: 0 8px 22px -6px rgba(224, 182, 79, 0.7);
+}
+/* Bloqueado: hasta completar la temporada al 100% */
+.integrateBtnLocked {
+  background: rgba(120, 120, 140, 0.14);
+  border-color: rgba(167, 139, 202, 0.28);
+  color: #8b90b4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.integrateBtnLocked:hover {
+  filter: none;
+  transform: none;
+  box-shadow: none;
 }
 @media (max-width: 480px) {
   .seasonCol { flex: 0 0 min(82vw, 240px); }
