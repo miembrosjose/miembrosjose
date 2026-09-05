@@ -205,32 +205,31 @@ export function SpaHomeShellInner() {
   // nao completaram o perfil.
   const profileMeta = (user?.user_metadata as Record<string, unknown> | undefined) || null
 
-  // Reset de avance solicitado por admin: si la metadata trae un
-  // progress_reset_at más nuevo que el aplicado en este dispositivo, limpiamos
-  // el avance local (el servidor ya fue borrado por el endpoint admin) antes de
-  // cualquier sincronización, y así no se repuebla. Corre cuando llega la metadata.
-  const resetAt = typeof profileMeta?.progress_reset_at === "string" ? (profileMeta.progress_reset_at as string) : ""
+  // Reset de avance solicitado por admin: preguntamos al servidor (marca fresca,
+  // no el JWT que puede estar viejo). Si hay una marca nueva sin aplicar en este
+  // dispositivo, limpiamos el avance local, re-borramos el avance propio en el
+  // servidor (por si una sync lo repobló) y recargamos una vez → todo en cero.
   useEffect(() => {
-    if (!resetAt || typeof window === "undefined") return
-    let applied: string | null = null
-    try { applied = localStorage.getItem("los144k_reset_applied") } catch { return }
-    if (applied === resetAt) return
+    if (typeof window === "undefined") return
     let cancelled = false
     ;(async () => {
       try {
-        // 1) Limpia el avance guardado en este dispositivo.
+        const res = await fetch("/api/profile/reset-status", { credentials: "include", cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json().catch(() => null) as { reset_at?: string } | null
+        const resetAt = data?.reset_at
+        if (!resetAt) return
+        if (localStorage.getItem("los144k_reset_applied") === resetAt) return
         Object.keys(localStorage)
           .filter((k) => k.startsWith("app_episode_progress") || k.startsWith("los144k_"))
           .forEach((k) => { if (k !== "los144k_reset_applied") localStorage.removeItem(k) })
-        // 2) Re-borra el avance propio en el servidor (por si una sync lo repobló).
         await fetch("/api/profile/reset-progress", { method: "POST", credentials: "include" }).catch(() => {})
-        // 3) Marca aplicado y recarga una vez → local + servidor quedan en cero.
         localStorage.setItem("los144k_reset_applied", resetAt)
         if (!cancelled) window.location.reload()
-      } catch { /* modo privado / sin storage */ }
+      } catch { /* modo privado / sin red */ }
     })()
     return () => { cancelled = true }
-  }, [resetAt])
+  }, [])
   const profileOk = !user || isProfileComplete(profileMeta)
 
   // Onde o user vai retomar — recalcula sempre que volta pra view inicio (caso
