@@ -325,23 +325,22 @@
   padding: 0.62rem 0.7rem;
   border-radius: 8px;
   border: 1px solid rgba(167, 139, 202, 0.5);
-  /* Contorno violeta con texto violeta (paleta de portal, no dorado). */
-  background: rgba(109, 74, 155, 0.12);
-  color: #a78bca;
+  /* Contorno violeta con TEXTO BLANCO (limpio, buen contraste, sin dorado). */
+  background: rgba(109, 74, 155, 0.18);
+  color: #F3F6FA;
   font-family: var(--font-mono, monospace);
   font-size: 0.63rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .integrateBtn:hover {
   border-color: #a78bca;
-  background: rgba(109, 74, 155, 0.22);
-  color: #F3F6FA;
+  background: rgba(109, 74, 155, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px -6px rgba(138, 99, 184, 0.75);
+  box-shadow: 0 6px 20px -6px rgba(138, 99, 184, 0.7);
 }
 /* Bloqueado: hasta completar la temporada al 100% */
 .integrateBtnLocked {

@@ -292,9 +292,6 @@ export function SeasonsCarousel({
           <div className={styles.name}>{cfg.title}</div>
           <div className={styles.divider} />
           <div className={styles.meta}><span>{cfg.subtitle}</span></div>
-          <div className={styles.meta} style={{ marginTop: "0.3rem", color: "var(--accent-gold)" }}>
-            <span>Bloqueado hasta completar Los Archivos del Sol.</span>
-          </div>
         </div>
       </button>
     )
