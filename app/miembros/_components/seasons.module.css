@@ -324,23 +324,23 @@
   width: 100%;
   padding: 0.62rem 0.7rem;
   border-radius: 8px;
-  border: 1px solid transparent;
-  /* Color vivo: dorado brillante con texto oscuro para que resalte. */
-  background: linear-gradient(135deg, #f2d68a 0%, #e0b64f 55%, #d9a53a 100%);
-  color: #1a1408;
+  border: 1px solid rgba(167, 139, 202, 0.55);
+  /* Color vivo dentro de la paleta: violeta de marca con letras claras. */
+  background: linear-gradient(135deg, #6D4A9B 0%, #8a63b8 100%);
+  color: #F3F6FA;
   font-family: var(--font-mono, monospace);
   font-size: 0.63rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 4px 16px -4px rgba(224, 182, 79, 0.55);
+  box-shadow: 0 4px 16px -5px rgba(109, 74, 155, 0.7);
   transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .integrateBtn:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.12);
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px -6px rgba(224, 182, 79, 0.7);
+  box-shadow: 0 8px 24px -6px rgba(138, 99, 184, 0.85);
 }
 /* Bloqueado: hasta completar la temporada al 100% */
 .integrateBtnLocked {
