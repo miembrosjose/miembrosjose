@@ -3,6 +3,11 @@
 
 .carousel {
   display: flex;
+  /* Alinea las tarjetas ARRIBA (no estirar): así todas las portadas quedan a la
+   * misma altura y el candado se ve centrado igual en temporadas y portales.
+   * El botón "Integrar" de las temporadas cuelga debajo sin afectar la altura
+   * de las demás tarjetas. */
+  align-items: flex-start;
   gap: 1rem;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
