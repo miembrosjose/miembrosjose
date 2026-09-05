@@ -270,6 +270,36 @@ export function SeasonsCarousel({
     )
   }
 
+  // Tarjeta de portal BLOQUEADA con el mismo look que una temporada bloqueada:
+  // portada en blanco y negro, oscurecida, candado violeta y texto de lo que viene.
+  function renderLockedPortal(cfg: {
+    key: string; category: string; title: string; subtitle: string; media?: string; message: string
+  }) {
+    return (
+      <button
+        key={cfg.key}
+        type="button"
+        className={`${styles.card} ${styles.locked}`}
+        style={{ cursor: "pointer" }}
+        onClick={() => onLockedInfo?.(cfg.message)}
+      >
+        <div className={styles.thumb} style={{ background: dim }}>
+          {cfg.media ? <SeasonVideo src={cfg.media} /> : <span className={styles.thumbEmoji}>✵</span>}
+          <div className={styles.lockOverlay}><Lock size={34} /></div>
+        </div>
+        <div className={styles.info}>
+          <div className={styles.epNum}>{cfg.category}</div>
+          <div className={styles.name}>{cfg.title}</div>
+          <div className={styles.divider} />
+          <div className={styles.meta}><span>{cfg.subtitle}</span></div>
+          <div className={styles.meta} style={{ marginTop: "0.3rem", color: "var(--accent-gold)" }}>
+            <span>Bloqueado hasta completar Los Archivos del Sol.</span>
+          </div>
+        </div>
+      </button>
+    )
+  }
+
   const bySeason = (n: number) => seasons.find((s) => s.num === n) as SeasonLike | undefined
   const violet = "linear-gradient(135deg, #14142a 0%, #6D4A9B 100%)"
   const gold = "linear-gradient(135deg, #1a1608 0%, #6D4A9B 55%, #c9a86b 100%)"
@@ -306,11 +336,11 @@ export function SeasonsCarousel({
             emoji: "✵", gradient: gold, metaA: "7 Objetivos", metaB: "Entrar",
             media: portalMedia.objetivos, onClick: onOpenObjetivos,
           })
-        : renderPortalCard({
-            key: "objetivos", variant: "soon", badge: "COMPLETA LA T4",
-            epLabel: "PORTAL DE MISIÓN", name: "Objetivos de Los 144.000",
-            emoji: "🔒", gradient: dim, metaA: "Tras la Temporada 4", metaB: "Bloqueado",
-            onClick: () => onLockedInfo?.("Completa la Temporada 4 para abrir el Portal de Misión."),
+        : renderLockedPortal({
+            key: "objetivos", category: "MISIÓN", title: "Objetivos de Los 144.000",
+            subtitle: "Misión planetaria, territorio y memoria sagrada",
+            media: portalMedia.objetivos,
+            message: "Bloqueado hasta completar Los Archivos del Sol (Temporada 4). Al completarla se abre el Portal de Misión.",
           })}
 
       {canUmbral
@@ -320,18 +350,13 @@ export function SeasonsCarousel({
             emoji: "✷", gradient: gold, metaA: "El Umbral", metaB: "Entrar",
             media: portalMedia.umbral, onClick: onOpenUmbral,
           })
-        : renderPortalCard({
-            key: "umbral", variant: "soon",
-            badge: t4Done ? "EN PREPARACIÓN" : "PRÓXIMAMENTE",
-            epLabel: "EL SIGUIENTE UMBRAL", name: "El Umbral del Contacto",
-            emoji: "🔒", gradient: dim,
-            metaA: t4Done ? "En preparación" : "Tras la Temporada 4",
-            metaB: "Pronto",
-            onClick: () => onLockedInfo?.(
-              t4Done
-                ? "El Umbral del Contacto se abrirá muy pronto."
-                : "Completa la Temporada 4 para acercarte al Umbral del Contacto.",
-            ),
+        : renderLockedPortal({
+            key: "umbral", category: "CONTACTO", title: "Umbral del Contacto",
+            subtitle: "Preparación interior, práctica y discernimiento",
+            media: portalMedia.umbral,
+            message: t4Done
+              ? "El Umbral del Contacto se abrirá muy pronto."
+              : "Bloqueado hasta completar Los Archivos del Sol (Temporada 4). Al completarla se abre el Umbral del Contacto.",
           })}
     </div>
   )

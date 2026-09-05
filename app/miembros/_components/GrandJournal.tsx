@@ -78,14 +78,20 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-2 sm:p-6"
-      style={{ background: "rgba(4,5,12,0.88)", backdropFilter: "blur(6px)" }}
+      className="fixed inset-0 z-[300] flex items-start justify-center sm:items-center"
+      style={{
+        background: "rgba(4,5,12,0.88)",
+        backdropFilter: "blur(6px)",
+        padding: "calc(env(safe-area-inset-top, 0px) + 16px) 12px calc(env(safe-area-inset-bottom, 0px) + 16px)",
+        overscrollBehavior: "contain",
+      }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="relative flex max-h-[95vh] w-[min(880px,97vw)] flex-col overflow-hidden"
+        className="relative flex w-[min(880px,calc(100vw-24px))] flex-col overflow-hidden"
         style={{
-          borderRadius: 20,
+          maxHeight: "calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px)",
+          borderRadius: 18,
           border: "1px solid rgba(217,184,102,0.28)",
           background: "linear-gradient(160deg, rgba(18,20,44,0.98), rgba(8,9,20,0.98))",
           boxShadow: "0 40px 90px -20px rgba(0,0,0,0.9)",
@@ -144,7 +150,11 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         {/* Body */}
-        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div
+          ref={bodyRef}
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5"
+          style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+        >
           {activeCat && (
             <p className="mb-4 text-[0.78rem] leading-relaxed text-[#8b90b4] [font-family:var(--font-geist-sans)]">{activeCat.hint}</p>
           )}
