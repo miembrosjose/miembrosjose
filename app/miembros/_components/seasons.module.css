@@ -320,7 +320,10 @@
   gap: 0.55rem;
   scroll-snap-align: start;
 }
-.seasonCol .card { flex: 1 1 auto; }
+/* Dentro de la columna (flex vertical), la tarjeta NO debe tomar su alto del
+ * flex-basis heredado (280px). Que use su aspect-ratio (misma altura que las
+ * tarjetas de portal) → el candado queda a la misma altura. */
+.seasonCol .card { flex: none; width: 100%; }
 .integrateBtn {
   display: inline-flex;
   align-items: center;
