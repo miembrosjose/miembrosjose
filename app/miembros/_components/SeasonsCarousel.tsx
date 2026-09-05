@@ -37,6 +37,9 @@ type Props = {
   onOpenObjetivos?: () => void
   // Umbral del Contacto — última puerta (tras completar T4, si el admin la publicó).
   onOpenUmbral?: () => void
+  // Abre un portal de integración como acceso propio (1..4). No intercepta la
+  // navegación: es una tarjeta aparte del camino.
+  onOpenIntegration?: (id: number) => void
   // Mensaje informativo al tocar una tarjeta bloqueada del camino (Misión / Umbral).
   onLockedInfo?: (msg: string) => void
   // El admin puede abrir Misión/Umbral aunque no haya completado T4 (preview/gestión).
@@ -51,6 +54,7 @@ export function SeasonsCarousel({
   onOpenIngreso,
   onOpenObjetivos,
   onOpenUmbral,
+  onOpenIntegration,
   onLockedInfo,
   isAdmin = false,
 }: Props) {
@@ -247,6 +251,14 @@ export function SeasonsCarousel({
 
   const s1 = bySeason(1), s2 = bySeason(2), s3 = bySeason(3), s4 = bySeason(4)
 
+  // Tarjeta de integración (acceso propio, no intercepta la navegación).
+  const intCard = (n: number, name: string) => renderPortalCard({
+    key: `int${n}`, badge: `INTEGRAR T${n}`,
+    epLabel: `INTEGRAR TEMPORADA ${n}`, name,
+    emoji: "✦", gradient: violet, metaA: "Integración", metaB: "Abrir",
+    onClick: () => onOpenIntegration?.(n),
+  })
+
   // Gate del camino: Misión (Objetivos) y Umbral se abren al COMPLETAR la
   // Temporada 4. Si T4 no existe o aún no tiene episodios configurados, el gate
   // no aplica (fallback seguro → se comportan como antes). El admin siempre
@@ -265,9 +277,13 @@ export function SeasonsCarousel({
       })}
 
       {s1 && renderSeasonCard(s1)}
+      {s1 && intCard(1, "Portal del Compromiso")}
       {s2 && renderSeasonCard(s2)}
+      {s2 && intCard(2, "Portal de la Desprogramación Cósmica")}
       {s3 && renderSeasonCard(s3)}
+      {s3 && intCard(3, "Portal de la Memoria y la Dignidad")}
       {s4 && renderSeasonCard(s4)}
+      {s4 && intCard(4, "Portal de la Alquimia Solar")}
 
       {canMision
         ? renderPortalCard({

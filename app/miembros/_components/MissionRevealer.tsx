@@ -1,18 +1,29 @@
 "use client"
 
-// REVELADOR DE MISIÓN — dentro de Objetivos de Los 144.000.
-// Analiza (en el dispositivo, privado) Mi Gran Bitácora y devuelve una lectura
-// de misión. No es un chatbot: es un espejo. Nada se envía a servidores ni se
-// publica en el foro.
+// REVELADOR DE MISIÓN — primer bloque de Objetivos de Los 144.000.
+// Analiza (con IA de Claude si está configurada, o localmente en el dispositivo)
+// la bitácora del usuario y devuelve una lectura de su misión. Muestra el
+// progreso real de la bitácora para motivar a completarla. Español neutral.
 
 import { useCallback, useState } from "react"
 import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, RotateCcw, BookOpen } from "lucide-react"
 import styles from "./season5.module.css"
-import { analyzeMission, reportToText, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
+import { analyzeMission, reportToText, saveLastRevelation, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
 import { upsertAnswer, loadEntries } from "../_lib/journal-store"
 import { openGrandJournal } from "../_lib/journal-registry"
+import { bankProgress, totalAnswered } from "../_lib/question-bank"
+import { recommendedMissions } from "../_lib/objetivos-data"
+import { setMissionState } from "../_lib/missions"
 
 type Phase = "idle" | "consent" | "loading" | "result" | "insufficient"
+
+const PROGRESS_CATS: { id: string; label: string }[] = [
+  { id: "historia", label: "Historia personal" },
+  { id: "linaje", label: "Linaje" },
+  { id: "territorio", label: "Territorio" },
+  { id: "acciones", label: "Acciones alquímicas" },
+  { id: "misiones", label: "Misiones" },
+]
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
 
@@ -41,12 +52,12 @@ h2{font-size:14px;color:#b8934a;letter-spacing:1px;margin:22px 0 4px;}p{font-siz
 const SECTION_DEFS: { key: keyof MissionReport | "pasos"; n: number; title: string }[] = [
   { key: "patternText", n: 1, title: "Patrón central detectado" },
   { key: "herida", n: 2, title: "Herida que se está transformando" },
-  { key: "medicina", n: 3, title: "Medicina que puedes ofrecer" },
-  { key: "territorio", n: 4, title: "Territorio que te llama" },
+  { key: "medicina", n: 3, title: "Medicina que puedes ofrecer a la Red" },
+  { key: "territorio", n: 4, title: "Territorio o campo que te llama" },
   { key: "objetivo", n: 5, title: "Objetivo de Los 144.000 más activo en ti" },
   { key: "primeraMision", n: 6, title: "Primera misión recomendada" },
   { key: "frase", n: 7, title: "Frase de misión personal" },
-  { key: "pasos", n: 8, title: "Siguientes 3 pasos" },
+  { key: "pasos", n: 8, title: "Siguientes tres pasos" },
 ]
 
 export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => void }) {
@@ -54,84 +65,114 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
   const [analysis, setAnalysis] = useState<MissionAnalysis | null>(null)
   const [saved, setSaved] = useState(false)
   const [source, setSource] = useState<"ia" | "local" | null>(null)
+  const [started, setStarted] = useState<Set<string>>(new Set())
+  const [prog, setProg] = useState(() => bankProgress())
+
+  const refreshProgress = useCallback(() => setProg(bankProgress()), [])
 
   const reveal = useCallback(() => {
-    const entries = loadEntries().filter((e) => e.answer.trim())
-    if (entries.length < 4) { setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return }
+    refreshProgress()
+    if (totalAnswered() < 4) {
+      setAnalysis({ sufficient: false, entryCount: totalAnswered() })
+      setPhase("insufficient")
+      return
+    }
     setPhase("consent")
-  }, [])
+  }, [refreshProgress])
 
-  const confirm = useCallback(async () => {
-    setPhase("loading")
-    const entries = loadEntries()
-      .filter((e) => e.answer.trim())
+  const runAnalysis = useCallback(async () => {
+    setPhase("loading"); setSaved(false)
+    const entries = loadEntries().filter((e) => e.answer.trim())
       .map((e) => ({ category: e.category, sourceLabel: e.sourceLabel, prompt: e.prompt, answer: e.answer }))
     try {
       const res = await fetch("/api/mission/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ entries }),
       })
       const data = await res.json().catch(() => null)
       if (data?.configured && data?.sufficient && data?.report) {
-        setAnalysis({ sufficient: true, entryCount: entries.length, report: data.report as MissionReport })
-        setSource("ia"); setPhase("result"); return
+        const rep = data.report as MissionReport
+        setAnalysis({ sufficient: true, entryCount: entries.length, report: rep })
+        saveLastRevelation(rep); setSource("ia"); setPhase("result"); return
       }
       if (data?.configured && data?.sufficient === false) {
         setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return
       }
-    } catch { /* red / proveedor caído → análisis local */ }
+    } catch { /* proveedor caído → local */ }
     const local = analyzeMission()
-    setAnalysis(local); setSource("local"); setPhase(local.sufficient ? "result" : "insufficient")
+    setAnalysis(local); setSource("local")
+    if (local.sufficient) { saveLastRevelation(local.report); setPhase("result") } else setPhase("insufficient")
   }, [])
 
   const save = useCallback(() => {
     if (!analysis || !analysis.sufficient) return
     const fecha = new Date().toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" })
     upsertAnswer({
-      category: "revelaciones",
-      source: "revelador_mision",
-      sourceLabel: "Revelador de Misión",
-      prompt: `Lectura de misión · ${fecha}`,
-      answer: reportToText(analysis.report),
-      isPrivate: true,
+      category: "revelaciones", source: "revelador_mision", sourceLabel: "Revelador de Misión",
+      prompt: `Lectura de misión · ${fecha}`, answer: reportToText(analysis.report), isPrivate: true,
     })
     setSaved(true)
   }, [analysis])
 
-  const reset = useCallback(() => { setPhase("idle"); setSaved(false) }, [])
+  const startMission = useCallback((id: string) => {
+    setMissionState(id, "en_proceso")
+    setStarted((prev) => new Set(prev).add(id))
+    onGoToMisiones?.()
+  }, [onGoToMisiones])
+
+  const reset = useCallback(() => { setPhase("idle"); setSaved(false); refreshProgress() }, [refreshProgress])
 
   const report = analysis && analysis.sufficient ? analysis.report : null
+  const recos = report ? recommendedMissions(report.objetivo) : []
 
   return (
-    <section className={`${styles.section} ${styles.reveal}`} style={{ paddingTop: 0 }}>
+    <section className={`${styles.section} ${styles.reveal}`}>
       <p className={styles.kicker}>Inteligencia de misión</p>
       <h2 className={styles.sectionTitle}><Sparkles size={20} style={{ verticalAlign: "-3px", marginRight: 8, color: "var(--s5-gold)" }} />REVELADOR DE MISIÓN</h2>
       <p className={styles.sectionIntro}>
-        La misión no se inventa. Se revela cuando tu historia, tu linaje, tus heridas, tu territorio y tus acciones
-        comienzan a mostrar un mismo patrón. El Revelador analiza tu bitácora personal para ayudarte a comprender qué
-        parte de la Red estás llamado a sanar, custodiar o fortalecer.
+        Inteligencia de análisis para reconocer tu servicio dentro de la Red. La misión no se inventa: se revela cuando
+        tu historia, tu linaje, tu territorio y tus acciones comienzan a mostrar un mismo patrón. Este análisis lee tu
+        bitácora personal para ayudarte a comprender qué parte de la Red puedes sanar, custodiar o fortalecer.
       </p>
 
       <div className={styles.revealerBox}>
+        {(phase === "idle" || phase === "consent") && (
+          <>
+            <p className={styles.revealerBody} style={{ textAlign: "center", marginBottom: "1.2rem" }}>
+              Tu bitácora está en proceso. Mientras más completes tu historia personal, tu linaje, tu territorio y tus
+              acciones alquímicas, más precisa será la revelación de tu misión en la Red.
+            </p>
+            <div className={styles.progressGrid}>
+              {PROGRESS_CATS.map((c) => {
+                const p = prog[c.id] || { answered: 0, total: 0, pct: 0 }
+                return (
+                  <div key={c.id} className={styles.progressRow}>
+                    <span className={styles.progressLabel}>{c.label}</span>
+                    <span className={styles.progressTrack}><span className={styles.progressFill} style={{ width: `${p.pct}%` }} /></span>
+                    <span className={styles.progressPct}>{p.pct}%</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
         {phase === "idle" && (
-          <div style={{ textAlign: "center" }}>
-            <p className={styles.revealerHint}>Subtítulo: inteligencia de análisis para reconocer tu servicio dentro de la Red.</p>
-            <button type="button" className={styles.cta} style={{ margin: "0.4rem auto 0", borderColor: "var(--s5-gold)" }} onClick={reveal}>
+          <div style={{ textAlign: "center", marginTop: "1.6rem" }}>
+            <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={reveal}>
               <Sparkles size={16} /> Revelar mi misión en la Red
             </button>
           </div>
         )}
 
         {phase === "consent" && (
-          <div>
+          <div style={{ marginTop: "1.4rem" }}>
             <div className={styles.cautionBox} style={{ marginTop: 0 }}>
               <ShieldCheck size={16} />
-              <p>Tu bitácora contiene información personal. Para generar este análisis, tus respuestas se enviarán de forma segura a la inteligencia de análisis, <strong>únicamente</strong> con el propósito de crear tu lectura de misión. Nada se publica en el foro sin tu autorización. Si el análisis con IA no está disponible, se hará una lectura local en tu dispositivo.</p>
+              <p>Tu bitácora contiene información personal. Para generar este análisis, tus respuestas se envían de forma segura a la inteligencia de análisis, únicamente con el propósito de crear tu lectura de misión. Nada se publica en el foro sin tu autorización. Si el análisis con IA no está disponible, la lectura se realiza localmente en tu dispositivo.</p>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.8rem", justifyContent: "center", marginTop: "1.4rem" }}>
-              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={confirm}>
+              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={runAnalysis}>
                 Acepto y revelar mi misión <ArrowRight size={15} />
               </button>
               <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.2rem" }} onClick={reset}>Cancelar</button>
@@ -147,31 +188,30 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
         )}
 
         {phase === "insufficient" && (
-          <div>
+          <div style={{ marginTop: "1.2rem" }}>
             <p className={styles.revealerBody}>
               Aún no existe suficiente información en tu bitácora para revelar con claridad tu misión dentro de la Red.
-              Para activar este análisis, completa primero algunos registros en: <strong>Integración del Llamado, Desprogramación Cósmica, Memoria y Dignidad, Alquimia Solar, Mi Historia Personal y Mi Territorio.</strong>
+              La misión no se inventa: se revela cuando tu historia, tu linaje, tu territorio y tus acciones comienzan a
+              mostrar un mismo patrón. Completa más registros en tu historia personal, tu linaje, tu territorio y tus
+              acciones alquímicas.
             </p>
-            <p className={styles.revealerBody} style={{ fontStyle: "italic", color: "var(--s5-gold-soft)" }}>La misión se revela cuando tu historia deja huellas suficientes para ser leída.</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.8rem", justifyContent: "center", marginTop: "1.2rem" }}>
-              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={() => openGrandJournal()}>
-                <BookOpen size={15} /> Completar mi bitácora
-              </button>
-              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.2rem" }} onClick={reset}>Volver</button>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", justifyContent: "center", marginTop: "1.2rem" }}>
+              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={() => openGrandJournal("historia")}><BookOpen size={14} /> Completar mi historia personal</button>
+              <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal("linaje")}>Completar mi linaje</button>
+              <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal("territorio")}>Completar mi territorio</button>
+              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal()}>Abrir mi bitácora</button>
             </div>
           </div>
         )}
 
         {phase === "result" && report && (
-          <div>
+          <div style={{ marginTop: "0.4rem" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {SECTION_DEFS.map((s) => (
                 <div key={s.n} className={styles.revealerCard}>
                   <div className={styles.revealerCardNum}>{String(s.n).padStart(2, "0")} · {s.title}</div>
                   {s.key === "pasos" ? (
-                    <ol className={styles.revealerSteps}>
-                      {report.pasos.map((p, i) => <li key={i}>{p}</li>)}
-                    </ol>
+                    <ol className={styles.revealerSteps}>{report.pasos.map((p, i) => <li key={i}>{p}</li>)}</ol>
                   ) : s.key === "frase" ? (
                     <p className={styles.revealerFrase}>“{report.frase}”</p>
                   ) : (
@@ -181,26 +221,41 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
               ))}
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", justifyContent: "center", marginTop: "1.6rem" }}>
+            {recos.length > 0 && (
+              <div style={{ marginTop: "1.8rem" }}>
+                <p className={styles.kicker} style={{ marginBottom: "0.8rem" }}>Misiones recomendadas para ti</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                  {recos.map((m) => (
+                    <div key={m.id} className={styles.revealerCard} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                      <div>
+                        <div className={styles.revealerCardNum} style={{ marginBottom: 2 }}>Misión de Custodia</div>
+                        <div style={{ color: "#eef1fb", fontWeight: 600 }}>{m.title}</div>
+                      </div>
+                      <button type="button" className={styles.cta} style={{ margin: 0, padding: "0.6rem 1.1rem", borderColor: "var(--s5-gold)" }}
+                        onClick={() => startMission(m.id)} disabled={started.has(m.id)}>
+                        {started.has(m.id) ? <>Iniciada</> : <>Iniciar esta misión <ArrowRight size={14} /></>}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", justifyContent: "center", marginTop: "1.8rem" }}>
               <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={save} disabled={saved}>
                 <Save size={15} /> {saved ? "Guardado en tu bitácora" : "Guardar en mi bitácora"}
               </button>
               <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => downloadReport(report)}>
                 <FileDown size={13} /> Descargar análisis
               </button>
-              {onGoToMisiones && (
-                <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={onGoToMisiones}>
-                  <ShieldCheck size={13} /> Crear misión de custodia
-                </button>
-              )}
-              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.1rem" }} onClick={reset}>
-                <RotateCcw size={12} /> No guardar
+              <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={runAnalysis}>
+                <RotateCcw size={13} /> Actualizar revelación
               </button>
+              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.1rem" }} onClick={reset}>Cerrar</button>
             </div>
             <p className={styles.revealerHint} style={{ textAlign: "center", marginTop: "1.1rem" }}>
-              {source === "ia"
-                ? "Lectura generada con inteligencia de análisis · privada, no publicada."
-                : "Lectura generada localmente en tu dispositivo."}
+              {source === "ia" ? "Lectura generada con inteligencia de análisis · privada, no publicada." : "Lectura generada localmente en tu dispositivo."}
+              {"  "}Mientras más completa esté tu bitácora, más clara será la lectura de tu misión.
             </p>
           </div>
         )}

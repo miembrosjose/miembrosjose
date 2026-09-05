@@ -14,7 +14,7 @@ import { TiendaCarousel } from "./TiendaCarousel"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
-import { hasSeal, unlockSeal } from "../_lib/seals"
+import { unlockSeal } from "../_lib/seals"
 import { GrandJournal } from "./GrandJournal"
 import { useSeasons } from "../_lib/use-seasons"
 import { useSeasonAccess } from "../_lib/use-season-access"
@@ -176,21 +176,15 @@ export function SpaHomeShellInner() {
     const fallback = SEASONS.find((s) => s.num === num) ?? SEASONS[0]
     tryOpenSeasonByNum(num, fallback)
   }
-  // Entra a una temporada; para T2-T4 muestra primero su portal de integración.
+  // Entra directamente a los episodios de la temporada (las integraciones YA NO
+  // interceptan la navegación: son accesos propios en el carrusel).
   function enterSeason(season: Season) {
     setContinueTo(null)
-    if (season.num >= 2 && season.num <= 4) {
-      setOpenSeason(null)
-      setIntegrationId((season.num - 1) as 1 | 2 | 3)
-      return
-    }
     if (season.num === 5) { openObjetivos(); return }
     setOpenSeason(season)
   }
-  // Objetivos: si completó T4 pero aún no integró la Alquimia Solar, muestra
-  // ese portal primero (Revelación → perdón → misión); luego abre Objetivos.
+  // Objetivos abre directamente su página (no la integración de la T4).
   function openObjetivos() {
-    if (!hasSeal("perdon_solar")) { setIntegrationId(4); return }
     setPortalOpen(true)
   }
   // Lleva al foro (opcionalmente a un tema concreto por título).
@@ -463,6 +457,7 @@ export function SpaHomeShellInner() {
                 onOpenIngreso={() => setIngresoOpen(true)}
                 onOpenObjetivos={openObjetivos}
                 onOpenUmbral={() => setUmbralOpen(true)}
+                onOpenIntegration={(id) => setIntegrationId(id as 1 | 2 | 3 | 4)}
                 seasons={dbSeasons}
                 hasSeasonAccess={hasAccess}
                 owned={owned}
@@ -541,6 +536,7 @@ function ViewInicio({
   onOpenIngreso,
   onOpenObjetivos,
   onOpenUmbral,
+  onOpenIntegration,
   seasons,
   hasSeasonAccess,
   owned,
@@ -550,6 +546,7 @@ function ViewInicio({
   onOpenIngreso: () => void
   onOpenObjetivos: () => void
   onOpenUmbral: () => void
+  onOpenIntegration: (id: number) => void
   seasons: Season[]
   hasSeasonAccess: (id?: string | null) => boolean
   owned: OwnedProduct[]
@@ -605,6 +602,7 @@ function ViewInicio({
           onOpenIngreso={onOpenIngreso}
           onOpenObjetivos={onOpenObjetivos}
           onOpenUmbral={onOpenUmbral}
+          onOpenIntegration={onOpenIntegration}
           onLockedInfo={(msg) => { if (typeof window !== "undefined") window.alert(msg) }}
           onLockedClick={(s) => {
             if (typeof window !== "undefined") {

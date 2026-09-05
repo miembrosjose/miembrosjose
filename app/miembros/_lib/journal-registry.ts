@@ -25,8 +25,18 @@ export const JOURNAL_STORAGE_PREFIX = "los144k_bitacora_"
 // (navbar, portales, objetivos). El shell lo escucha y abre el modal.
 export const OPEN_JOURNAL_EVENT = "app:open-bitacora"
 
-export function openGrandJournal(): void {
+// Pestaña pendiente al abrir la bitácora (para "Completar mi historia", etc.).
+let pendingTab: string | null = null
+
+export function openGrandJournal(tab?: string): void {
+  pendingTab = tab ?? null
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(OPEN_JOURNAL_EVENT))
+}
+
+export function consumeJournalTab(): string | null {
+  const t = pendingTab
+  pendingTab = null
+  return t
 }
 
 export function journalStorageKey(key: string): string {

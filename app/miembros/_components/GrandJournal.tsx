@@ -1,34 +1,34 @@
 "use client"
 
 // MI GRAN BITÁCORA — archivo vivo de transformación.
-// Organiza en 7 secciones todo lo que la persona escribió en portales,
-// integraciones, acciones y misiones (journal-store, localStorage).
-// PRIVADO POR DEFECTO: nada se comparte al foro automáticamente. Cada entrada
-// es editable, se puede marcar privada/compartible y borrar.
+// Muestra TODAS las preguntas del camino (respondidas y PENDIENTES), agrupadas
+// en 6 secciones y por origen (temporada / portal), para que la persona pueda
+// volver y completar antes de usar el Revelador de Misión.
+// Privado por defecto; nada se comparte al foro sin decisión.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { X, BookOpen, Check, Trash2, Lock } from "lucide-react"
 import {
-  JOURNAL_CATEGORIES, type JournalCategory, type JournalEntry,
-  entriesByCategory, countByCategory, upsertAnswer, deleteEntry,
+  type JournalCategory, type JournalEntry,
+  entriesByCategory, upsertAnswer, readAnswer, deleteEntry,
   migrateLegacyJournal, JOURNAL_CHANGED_EVENT,
 } from "../_lib/journal-store"
+import { BANK_CATEGORIES, bankByCategory, type BankQuestion } from "../_lib/question-bank"
 import { SEALS, getUnlockedSeals, SEALS_CHANGED_EVENT } from "../_lib/seals"
 import { JournalPdfExportButton } from "./JournalPdfExportButton"
+import { consumeJournalTab } from "../_lib/journal-registry"
 
 export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [tab, setTab] = useState<JournalCategory>("camino")
-  const [rev, setRev] = useState(0) // fuerza recomputar listas al cambiar el store
+  const [tab, setTab] = useState<JournalCategory>("historia")
+  const [rev, setRev] = useState(0)
   const refresh = useCallback(() => setRev((n) => n + 1), [])
   const bodyRef = useRef<HTMLDivElement>(null)
-
-  // Al cambiar de pestaña, el contenido vuelve al inicio (no queda scrolleado
-  // tapando el título de la sección).
-  useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [tab])
 
   useEffect(() => {
     if (!open) return
     migrateLegacyJournal()
+    const target = consumeJournalTab()
+    if (target && BANK_CATEGORIES.some((c) => c.id === target)) setTab(target as JournalCategory)
     refresh()
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
@@ -44,22 +44,36 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
     }
   }, [open, onClose, refresh])
 
-  const counts = useMemo(() => (open ? countByCategory() : null), [open, rev])
-  const entries = useMemo(() => (open ? entriesByCategory(tab) : []), [open, tab, rev])
-  const unlockedSeals = useMemo(() => (open ? new Set(getUnlockedSeals().map((s) => s.id)) : new Set<string>()), [open, rev])
-  const activeCat = JOURNAL_CATEGORIES.find((c) => c.id === tab)
+  useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [tab])
 
-  // Agrupa por origen (portal/temporada) para que el archivo se lea como un camino.
+  const unlockedSeals = useMemo(() => (open ? new Set(getUnlockedSeals().map((s) => s.id)) : new Set<string>()), [open, rev])
+
+  const bankQs = useMemo(() => (open ? bankByCategory(tab) : []), [open, tab, rev])
+  const extras = useMemo(() => {
+    if (!open) return []
+    const ids = new Set(bankQs.map((q) => q.id))
+    return entriesByCategory(tab).filter((e) => !ids.has(e.id))
+  }, [open, tab, rev, bankQs])
+
+  // Preguntas del banco agrupadas por origen (temporada/portal).
   const groups = useMemo(() => {
-    const map = new Map<string, JournalEntry[]>()
-    for (const e of entries) {
-      const arr = map.get(e.sourceLabel) || []
-      arr.push(e)
-      map.set(e.sourceLabel, arr)
+    const map = new Map<string, BankQuestion[]>()
+    for (const q of bankQs) {
+      const arr = map.get(q.originLabel) || []
+      arr.push(q); map.set(q.originLabel, arr)
     }
     return Array.from(map.entries())
-  }, [entries])
+  }, [bankQs])
 
+  // Conteo respondidas por pestaña.
+  const tabCount = useCallback((cat: JournalCategory) => {
+    const qs = bankByCategory(cat)
+    const answered = qs.filter((q) => readAnswer(q.source, q.prompt).trim()).length
+    const extraCount = entriesByCategory(cat).filter((e) => !qs.some((q) => q.id === e.id)).length
+    return { answered: answered + (cat === "revelaciones" ? extraCount : 0), total: qs.length }
+  }, [])
+
+  const activeCat = BANK_CATEGORIES.find((c) => c.id === tab)
   if (!open) return null
 
   return (
@@ -69,7 +83,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="relative flex max-h-[95vh] w-[min(860px,97vw)] flex-col overflow-hidden"
+        className="relative flex max-h-[95vh] w-[min(880px,97vw)] flex-col overflow-hidden"
         style={{
           borderRadius: 20,
           border: "1px solid rgba(217,184,102,0.28)",
@@ -97,27 +111,17 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
               </button>
             </div>
           </div>
-          {/* Botón PDF visible también en mobile */}
           <JournalPdfExportButton
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] [font-family:var(--font-mono)] transition-colors sm:hidden"
             style={{ border: "1px solid rgba(217,184,102,0.5)", background: "linear-gradient(135deg,rgba(230,207,149,0.18),rgba(217,184,102,0.1))", color: "#e6cf95" }}
           />
-
-          {/* Sellos iniciáticos */}
           <div className="mt-3 flex flex-wrap gap-1.5">
             {SEALS.map((s) => {
               const on = unlockedSeals.has(s.id)
               return (
-                <span
-                  key={s.id}
-                  title={`${s.name} — ${on ? "desbloqueado" : s.condition}`}
+                <span key={s.id} title={`${s.name} — ${on ? "desbloqueado" : s.condition}`}
                   className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.62rem] [font-family:var(--font-mono)]"
-                  style={{
-                    border: `1px solid ${on ? "rgba(217,184,102,0.6)" : "rgba(120,120,140,0.28)"}`,
-                    background: on ? "rgba(217,184,102,0.12)" : "transparent",
-                    color: on ? "#e6cf95" : "#5a5f80",
-                  }}
-                >
+                  style={{ border: `1px solid ${on ? "rgba(217,184,102,0.6)" : "rgba(120,120,140,0.28)"}`, background: on ? "rgba(217,184,102,0.12)" : "transparent", color: on ? "#e6cf95" : "#5a5f80" }}>
                   <span aria-hidden style={{ opacity: on ? 1 : 0.5 }}>{s.glyph}</span>
                 </span>
               )
@@ -125,23 +129,15 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
         </div>
 
-        {/* Tabs (7 secciones) — se acomodan en varias líneas; sin scroll horizontal */}
+        {/* Tabs (6 secciones) */}
         <div className="flex flex-wrap gap-1.5 border-b border-[rgba(167,139,202,0.15)] px-3 py-2.5 sm:px-4">
-          {JOURNAL_CATEGORIES.map((c) => {
-            const n = counts?.[c.id] ?? 0
+          {BANK_CATEGORIES.map((c) => {
+            const { answered, total } = tabCount(c.id)
             return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setTab(c.id)}
-                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] transition-colors [font-family:var(--font-mono)] ${
-                  tab === c.id ? "text-[#050510]" : "text-[#a8a8c0] hover:text-[#F3F6FA]"
-                }`}
-                style={tab === c.id
-                  ? { background: "linear-gradient(135deg,#e6cf95,#c9a86b)", borderRadius: 999 }
-                  : { borderRadius: 999 }}
-              >
-                {c.label}{n > 0 ? ` · ${n}` : ""}
+              <button key={c.id} type="button" onClick={() => setTab(c.id)}
+                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] transition-colors [font-family:var(--font-mono)] ${tab === c.id ? "text-[#050510]" : "text-[#a8a8c0] hover:text-[#F3F6FA]"}`}
+                style={tab === c.id ? { background: "linear-gradient(135deg,#e6cf95,#c9a86b)", borderRadius: 999 } : { borderRadius: 999 }}>
+                {c.label}{total > 0 ? ` · ${answered}/${total}` : answered > 0 ? ` · ${answered}` : ""}
               </button>
             )
           })}
@@ -150,23 +146,33 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
         {/* Body */}
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {activeCat && (
-            <p className="mb-3 text-[0.78rem] leading-relaxed text-[#8b90b4] [font-family:var(--font-geist-sans)]">{activeCat.hint}</p>
+            <p className="mb-4 text-[0.78rem] leading-relaxed text-[#8b90b4] [font-family:var(--font-geist-sans)]">{activeCat.hint}</p>
           )}
 
-          {groups.length === 0 ? (
+          {groups.length === 0 && extras.length === 0 ? (
             <p className="py-10 text-center text-sm text-[#8b90b4] [font-family:var(--font-geist-sans)]">
-              Todavía no hay registros en esta sección. A medida que atravieses los portales del camino, tus respuestas aparecerán aquí.
+              Aún no hay registros en esta sección. A medida que avanzas en el camino, tus respuestas aparecerán aquí como parte de tu archivo personal.
             </p>
           ) : (
-            <div className="flex flex-col gap-5">
-              {groups.map(([label, items]) => (
-                <div key={label}>
-                  <div className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#a78bca] [font-family:var(--font-mono)]">{label}</div>
-                  <div className="flex flex-col gap-2.5">
-                    {items.map((e) => <EntryCard key={e.id} entry={e} />)}
+            <div className="flex flex-col gap-6">
+              {groups.map(([origin, items]) => (
+                <div key={origin}>
+                  <div className="mb-2.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#a78bca] [font-family:var(--font-mono)]">{origin}</div>
+                  <div className="flex flex-col gap-3">
+                    {items.map((q) => <BankQuestionCard key={q.id} q={q} />)}
                   </div>
                 </div>
               ))}
+              {extras.length > 0 && (
+                <div>
+                  <div className="mb-2.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#a78bca] [font-family:var(--font-mono)]">
+                    {tab === "revelaciones" ? "Revelaciones guardadas" : "Otros registros"}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {extras.map((e) => <StoredCard key={e.id} entry={e} />)}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -182,62 +188,91 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
   )
 }
 
-function EntryCard({ entry }: { entry: JournalEntry }) {
-  const [value, setValue] = useState(entry.answer)
+// Card de una pregunta del banco (respondida o pendiente).
+function BankQuestionCard({ q }: { q: BankQuestion }) {
+  const [value, setValue] = useState(() => readAnswer(q.source, q.prompt))
   const [saved, setSaved] = useState(true)
   const dirty = useRef(false)
 
-  // Re-seed solo si cambia la entrada (no mientras se escribe).
-  useEffect(() => { setValue(entry.answer); setSaved(true); dirty.current = false }, [entry.id])
+  useEffect(() => { setValue(readAnswer(q.source, q.prompt)); setSaved(true); dirty.current = false }, [q.id])
+
+  const persist = useCallback(() => {
+    upsertAnswer({ category: q.category, source: q.source, sourceLabel: q.originLabel, prompt: q.prompt, answer: value, isPrivate: true })
+    setSaved(true)
+  }, [q, value])
 
   useEffect(() => {
     if (!dirty.current) return
-    const t = setTimeout(() => {
-      upsertAnswer({
-        category: entry.category, source: entry.source, sourceLabel: entry.sourceLabel,
-        prompt: entry.prompt, answer: value, isPrivate: entry.private,
-      })
-      setSaved(true)
-    }, 600)
+    const t = setTimeout(persist, 700)
     return () => clearTimeout(t)
-  }, [value, entry])
+  }, [value, persist])
 
-  const fecha = new Date(entry.updatedAt).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" })
+  const completed = value.trim().length > 0
 
   return (
-    <div style={{ border: "1px solid rgba(167,139,202,0.18)", borderRadius: 12, background: "rgba(10,11,26,0.5)", padding: "0.7rem 0.85rem" }}>
-      <div className="mb-1 flex items-start justify-between gap-2">
-        <div className="text-[0.86rem] font-medium leading-snug text-[#eef1fb] [font-family:var(--font-geist-sans)]">{entry.prompt}</div>
+    <div style={{ border: "1px solid rgba(167,139,202,0.18)", borderRadius: 12, background: "rgba(10,11,26,0.5)", padding: "0.8rem 0.9rem" }}>
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <div className="text-[0.9rem] font-medium leading-snug text-[#eef1fb] [font-family:var(--font-geist-sans)]">{q.prompt}</div>
         <span className="flex-shrink-0 text-[0.54rem] uppercase tracking-[0.14em] [font-family:var(--font-mono)]"
-          style={{ color: saved ? "#7ee0a8" : "#c9a86b" }}>
-          {saved ? <span className="inline-flex items-center gap-1"><Check size={10} /> Guardado</span> : "Guardando…"}
+          style={{ color: completed ? "#7ee0a8" : "#c99a6b" }}>
+          {completed ? <span className="inline-flex items-center gap-1"><Check size={10} /> Completado</span> : "Pendiente"}
         </span>
       </div>
       <textarea
         value={value}
-        onChange={(ev) => { setValue(ev.target.value); setSaved(false); dirty.current = true }}
+        onChange={(e) => { setValue(e.target.value); setSaved(false); dirty.current = true }}
         className="w-full resize-y bg-transparent text-[0.92rem] leading-relaxed text-[#e6e9f7] outline-none placeholder:text-[#5a5f80] [font-family:var(--font-geist-sans)]"
-        style={{ minHeight: 52 }}
+        style={{ minHeight: 54, border: "1px solid rgba(167,139,202,0.15)", borderRadius: 8, padding: "0.5rem 0.65rem" }}
+        placeholder="Escribe aquí… (privado, solo en tu bitácora)"
+      />
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1 text-[0.54rem] uppercase tracking-[0.12em] text-[#6a6f92] [font-family:var(--font-mono)]"><Lock size={10} /> Privada</span>
+        <button type="button" onClick={persist} disabled={saved}
+          className="rounded-md px-3 py-1 text-[0.56rem] font-semibold uppercase tracking-[0.14em] [font-family:var(--font-mono)] transition-colors disabled:opacity-40"
+          style={{ border: "1px solid rgba(217,184,102,0.45)", color: "#e6cf95" }}>
+          {saved ? "Guardado" : "Guardar respuesta"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Card de un registro guardado que NO está en el banco (revelaciones, etc.).
+function StoredCard({ entry }: { entry: JournalEntry }) {
+  const [value, setValue] = useState(entry.answer)
+  const [saved, setSaved] = useState(true)
+  const dirty = useRef(false)
+  useEffect(() => { setValue(entry.answer); setSaved(true); dirty.current = false }, [entry.id])
+  useEffect(() => {
+    if (!dirty.current) return
+    const t = setTimeout(() => {
+      upsertAnswer({ category: entry.category, source: entry.source, sourceLabel: entry.sourceLabel, prompt: entry.prompt, answer: value, isPrivate: entry.private })
+      setSaved(true)
+    }, 700)
+    return () => clearTimeout(t)
+  }, [value, entry])
+  const fecha = new Date(entry.updatedAt).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" })
+  return (
+    <div style={{ border: "1px solid rgba(167,139,202,0.18)", borderRadius: 12, background: "rgba(10,11,26,0.5)", padding: "0.8rem 0.9rem" }}>
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <div className="text-[0.9rem] font-medium leading-snug text-[#eef1fb] [font-family:var(--font-geist-sans)]">{entry.prompt}</div>
+        <span className="flex-shrink-0 text-[0.54rem] uppercase tracking-[0.14em] [font-family:var(--font-mono)]" style={{ color: saved ? "#7ee0a8" : "#c99a6b" }}>
+          {saved ? "Guardado" : "Guardando…"}
+        </span>
+      </div>
+      <textarea
+        value={value}
+        onChange={(e) => { setValue(e.target.value); setSaved(false); dirty.current = true }}
+        className="w-full resize-y bg-transparent text-[0.92rem] leading-relaxed text-[#e6e9f7] outline-none placeholder:text-[#5a5f80] [font-family:var(--font-geist-sans)]"
+        style={{ minHeight: 54, border: "1px solid rgba(167,139,202,0.15)", borderRadius: 8, padding: "0.5rem 0.65rem" }}
         placeholder="Escribe o edita…"
       />
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <span className="text-[0.56rem] uppercase tracking-[0.12em] text-[#6a6f92] [font-family:var(--font-mono)]">{fecha}</span>
-        <div className="flex items-center gap-1">
-          <span
-            title="Privada — solo tú la ves. Nada se comparte al foro sin tu decisión."
-            className="inline-flex items-center gap-1 text-[0.56rem] uppercase tracking-[0.12em] text-[#8b90b4] [font-family:var(--font-mono)]"
-          >
-            <Lock size={11} /> Privada
-          </span>
-          <button
-            type="button"
-            onClick={() => { if (confirm("¿Borrar este registro? Esta acción no se puede deshacer.")) deleteEntry(entry.id) }}
-            aria-label="Borrar registro"
-            className="rounded-full p-1.5 text-[#6a6f92] transition-colors hover:bg-[#2a1f24] hover:text-[#e88]"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <span className="text-[0.54rem] uppercase tracking-[0.12em] text-[#6a6f92] [font-family:var(--font-mono)]">{fecha}</span>
+        <button type="button" onClick={() => { if (confirm("¿Borrar este registro? No se puede deshacer.")) deleteEntry(entry.id) }}
+          aria-label="Borrar registro" className="rounded-full p-1.5 text-[#6a6f92] transition-colors hover:bg-[#2a1f24] hover:text-[#e88]">
+          <Trash2 size={13} />
+        </button>
       </div>
     </div>
   )

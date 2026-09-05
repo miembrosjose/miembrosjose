@@ -5,29 +5,8 @@
 // bitácora privada del usuario; nunca contenido del foro.
 
 import { FileDown } from "lucide-react"
-import { loadEntries, type JournalEntry } from "../_lib/journal-store"
-
-type Section = { title: string; match: (e: JournalEntry) => boolean }
-
-// Prefijos de origen que pertenecen a un portal (para no duplicar en las
-// secciones temáticas 6–11).
-const PORTAL_PREFIXES = ["ingreso", "legacy_ingreso", "t1_", "legacy_portal_compromiso",
-  "t2_", "legacy_portal_mapa_cosmico", "t3_", "legacy_portal_memoria_terrestre", "t4_"]
-const isPortalEntry = (e: JournalEntry) => PORTAL_PREFIXES.some((p) => e.source === p || e.source.startsWith(p))
-
-const SECTIONS: Section[] = [
-  { title: "1 · Portal de Ingreso", match: (e) => e.source === "ingreso" || e.source === "legacy_ingreso" },
-  { title: "2 · Integración Temporada 1 · El Llamado", match: (e) => e.source.startsWith("t1_") || e.source === "legacy_portal_compromiso" },
-  { title: "3 · Integración Temporada 2 · Desprogramación Cósmica", match: (e) => e.source.startsWith("t2_") || e.source === "legacy_portal_mapa_cosmico" },
-  { title: "4 · Integración Temporada 3 · Memoria y Dignidad", match: (e) => e.source.startsWith("t3_") || e.source === "legacy_portal_memoria_terrestre" },
-  { title: "5 · Integración Temporada 4 · Alquimia Solar", match: (e) => e.source.startsWith("t4_") },
-  { title: "6 · Mi Historia Personal", match: (e) => e.category === "historia" && !isPortalEntry(e) },
-  { title: "7 · Mi Linaje", match: (e) => e.category === "linaje" && !isPortalEntry(e) },
-  { title: "8 · Mi Territorio", match: (e) => e.category === "territorio" && !isPortalEntry(e) },
-  { title: "9 · Mis Acciones Alquímicas", match: (e) => e.category === "acciones" && !isPortalEntry(e) },
-  { title: "10 · Mis Misiones", match: (e) => e.category === "misiones" && !isPortalEntry(e) },
-  { title: "11 · Mis Revelaciones", match: (e) => e.category === "revelaciones" && !isPortalEntry(e) },
-]
+import { loadEntries, readAnswer, entriesByCategory, type JournalCategory } from "../_lib/journal-store"
+import { BANK_CATEGORIES, bankByCategory } from "../_lib/question-bank"
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -39,20 +18,31 @@ function fmtDate(iso: string): string {
 }
 
 export function buildReportHtml(): string {
-  const all = loadEntries()
+  loadEntries()
   const today = new Date().toLocaleDateString("es", { day: "2-digit", month: "long", year: "numeric" })
 
-  const sectionsHtml = SECTIONS.map((sec) => {
-    const items = all.filter(sec.match)
-    const body = items.length === 0
-      ? `<p class="empty">Esta sección aún no ha sido completada.</p>`
-      : items.map((e) => `
-          <div class="entry">
-            <div class="q">${esc(e.prompt)}</div>
-            <div class="a">${esc(e.answer).replace(/\n/g, "<br/>")}</div>
-            <div class="meta">${esc(e.sourceLabel)}${e.updatedAt ? " · " + fmtDate(e.updatedAt) : ""}</div>
-          </div>`).join("")
-    return `<section><h2>${esc(sec.title)}</h2>${body}</section>`
+  const sectionsHtml = BANK_CATEGORIES.map((cat, i) => {
+    const qs = bankByCategory(cat.id as JournalCategory)
+    const bankIds = new Set(qs.map((q) => q.id))
+    const extras = entriesByCategory(cat.id as JournalCategory).filter((e) => !bankIds.has(e.id))
+
+    const bankHtml = qs.map((q) => {
+      const ans = readAnswer(q.source, q.prompt).trim()
+      return `<div class="entry">
+        <div class="q">${esc(q.prompt)}</div>
+        <div class="${ans ? "a" : "pend"}">${ans ? esc(ans).replace(/\n/g, "<br/>") : "Pendiente de completar."}</div>
+        <div class="meta">${esc(q.originLabel)}</div>
+      </div>`
+    }).join("")
+
+    const extrasHtml = extras.map((e) => `<div class="entry">
+        <div class="q">${esc(e.prompt)}</div>
+        <div class="a">${esc(e.answer).replace(/\n/g, "<br/>")}</div>
+        <div class="meta">${esc(e.sourceLabel)}${e.updatedAt ? " · " + fmtDate(e.updatedAt) : ""}</div>
+      </div>`).join("")
+
+    const inner = (bankHtml + extrasHtml) || `<p class="empty">Esta sección aún no ha sido completada.</p>`
+    return `<section><h2>${i + 1} · ${esc(cat.label)}</h2>${inner}</section>`
   }).join("")
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
@@ -72,6 +62,7 @@ export function buildReportHtml(): string {
   .entry { margin: 0 0 14px; padding: 0 0 12px; border-bottom: 1px solid #eee; page-break-inside: avoid; }
   .q { font-weight: bold; font-size: 13px; color: #2a2a3a; }
   .a { font-size: 13px; margin: 4px 0 5px; white-space: normal; }
+  .pend { font-size: 12px; margin: 4px 0 5px; color: #b9863b; font-style: italic; }
   .meta { font-size: 10px; color: #999; letter-spacing: 0.5px; }
   .empty { font-size: 12px; color: #aaa; font-style: italic; }
 </style></head>

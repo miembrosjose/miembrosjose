@@ -181,6 +181,26 @@ export function analyzeMission(): MissionAnalysis {
   }
 }
 
+// Última revelación (para el "Mapa Revelado de mi Misión" en Objetivos).
+const LAST_KEY = "los144k_last_revelation"
+export const REVELATION_CHANGED_EVENT = "app:revelation-changed"
+
+export function saveLastRevelation(r: MissionReport): void {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(LAST_KEY, JSON.stringify({ report: r, at: new Date().toISOString() }))
+    window.dispatchEvent(new CustomEvent(REVELATION_CHANGED_EVENT))
+  } catch { /* ignora */ }
+}
+
+export function getLastRevelation(): { report: MissionReport; at: string } | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(LAST_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
 /** Texto plano del informe (para guardar en bitácora o descargar). */
 export function reportToText(r: MissionReport): string {
   return [
