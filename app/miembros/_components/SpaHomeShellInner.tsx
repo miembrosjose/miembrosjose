@@ -204,6 +204,33 @@ export function SpaHomeShellInner() {
   // Vale pra novos users no 1o login E pra users existentes que ainda
   // nao completaram o perfil.
   const profileMeta = (user?.user_metadata as Record<string, unknown> | undefined) || null
+
+  // Reset de avance solicitado por admin: si la metadata trae un
+  // progress_reset_at más nuevo que el aplicado en este dispositivo, limpiamos
+  // el avance local (el servidor ya fue borrado por el endpoint admin) antes de
+  // cualquier sincronización, y así no se repuebla. Corre cuando llega la metadata.
+  const resetAt = typeof profileMeta?.progress_reset_at === "string" ? (profileMeta.progress_reset_at as string) : ""
+  useEffect(() => {
+    if (!resetAt || typeof window === "undefined") return
+    let applied: string | null = null
+    try { applied = localStorage.getItem("los144k_reset_applied") } catch { return }
+    if (applied === resetAt) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        // 1) Limpia el avance guardado en este dispositivo.
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith("app_episode_progress") || k.startsWith("los144k_"))
+          .forEach((k) => { if (k !== "los144k_reset_applied") localStorage.removeItem(k) })
+        // 2) Re-borra el avance propio en el servidor (por si una sync lo repobló).
+        await fetch("/api/profile/reset-progress", { method: "POST", credentials: "include" }).catch(() => {})
+        // 3) Marca aplicado y recarga una vez → local + servidor quedan en cero.
+        localStorage.setItem("los144k_reset_applied", resetAt)
+        if (!cancelled) window.location.reload()
+      } catch { /* modo privado / sin storage */ }
+    })()
+    return () => { cancelled = true }
+  }, [resetAt])
   const profileOk = !user || isProfileComplete(profileMeta)
 
   // Onde o user vai retomar — recalcula sempre que volta pra view inicio (caso

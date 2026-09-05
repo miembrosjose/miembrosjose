@@ -16,6 +16,7 @@ import {
   Mail,
   CreditCard,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react"
 
 type Tab =
@@ -26,6 +27,7 @@ type Tab =
   | "access"
   | "messages"
   | "subs"
+  | "resetprogress"
 
 const GrantProduct = dynamic(
   () => import("./_tabs/GrantProduct").then((m) => m.GrantProduct),
@@ -53,6 +55,10 @@ const MessagesModeration = dynamic(
 )
 const Subscriptions = dynamic(
   () => import("./_tabs/Subscriptions").then((m) => m.Subscriptions),
+  { ssr: false },
+)
+const ResetProgress = dynamic(
+  () => import("./_tabs/ResetProgress").then((m) => m.ResetProgress),
   { ssr: false },
 )
 
@@ -106,6 +112,12 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Mensagens Diretas",
         description: "Moderação de DMs entre membros",
         icon: MessageSquare,
+      },
+      {
+        id: "resetprogress",
+        label: "Reiniciar Avance",
+        description: "Reiniciar el avance de un usuario (pruebas)",
+        icon: RotateCcw,
       },
     ],
   },
@@ -287,6 +299,7 @@ export function AdminPanel() {
           {tab === "reports" && <ReportsModeration />}
           {tab === "access" && <RevokedAccess />}
           {tab === "messages" && <MessagesModeration />}
+          {tab === "resetprogress" && <ResetProgress />}
         </div>
       </main>
     </div>
