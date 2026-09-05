@@ -287,7 +287,7 @@ export function SeasonsCarousel({
         >
           <div className={styles.thumb} style={{ background: dim }}>
             {cfg.media ? <SeasonVideo src={cfg.media} /> : <span className={styles.thumbEmoji}>✵</span>}
-            <div className={styles.lockOverlay}><Lock size={34} /></div>
+            <div className={styles.lockOverlay}><Lock size={32} /></div>
           </div>
           <div className={styles.info}>
             <div className={styles.epNum}>{cfg.category}</div>
