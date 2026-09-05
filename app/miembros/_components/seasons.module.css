@@ -306,3 +306,41 @@
     padding-bottom: 0.5rem;
   }
 }
+
+/* Columna: tarjeta de temporada + botón de integración pegado debajo */
+.seasonCol {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  scroll-snap-align: start;
+}
+.seasonCol .card { flex: 1 1 auto; }
+.integrateBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(217, 184, 102, 0.45);
+  background: linear-gradient(135deg, rgba(230, 207, 149, 0.14), rgba(217, 184, 102, 0.06));
+  color: #e6cf95;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+}
+.integrateBtn:hover {
+  border-color: var(--gold, #d9b866);
+  background: linear-gradient(135deg, rgba(230, 207, 149, 0.22), rgba(217, 184, 102, 0.12));
+  color: #fff;
+  transform: translateY(-1px);
+}
+@media (max-width: 480px) {
+  .seasonCol { flex: 0 0 min(82vw, 240px); }
+}

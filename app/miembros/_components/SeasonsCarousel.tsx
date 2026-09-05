@@ -8,7 +8,7 @@
 // Click em temporada bloqueada → toast informando.
 
 import { useEffect, useRef, useState } from "react"
-import { Lock } from "lucide-react"
+import { Lock, Sparkles } from "lucide-react"
 import {
   getEpisodeProgress,
   isSeasonUnlocked,
@@ -146,17 +146,25 @@ export function SeasonsCarousel({
       ? `TEMPORADA ${season.num} · COMUNIDAD`
       : `TEMPORADA ${season.num} · ${total} EPS`
 
+    // Nombre del portal de integración correspondiente a esta temporada.
+    const intName: Record<number, string> = {
+      1: "Portal del Compromiso",
+      2: "Portal de la Desprogramación Cósmica",
+      3: "Portal de la Memoria y la Dignidad",
+      4: "Portal de la Alquimia Solar",
+    }
+    const showIntegration = !season.external && season.num >= 1 && season.num <= 4 && !!onOpenIntegration
+
     return (
+      <div key={season.id || season.num} className={styles.seasonCol}>
       <button
-        key={season.id || season.num}
         type="button"
         data-num={String(season.num).padStart(2, "0")}
         className={`${styles.card} ${unlocked ? "" : styles.locked}`}
-        style={
-          isCommerciallyLocked
-            ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" }
-            : undefined
-        }
+        style={{
+          width: "100%",
+          ...(isCommerciallyLocked ? { filter: "grayscale(1) brightness(0.7)", cursor: "pointer" } : {}),
+        }}
         onClick={() => handleClick(season)}
       >
         <div
@@ -196,6 +204,17 @@ export function SeasonsCarousel({
           )}
         </div>
       </button>
+      {showIntegration && (
+        <button
+          type="button"
+          className={styles.integrateBtn}
+          title={`Integrar Temporada ${season.num} · ${intName[season.num]}`}
+          onClick={() => onOpenIntegration?.(season.num)}
+        >
+          <Sparkles size={12} /> Integrar Temporada {season.num}
+        </button>
+      )}
+      </div>
     )
   }
 
@@ -251,14 +270,6 @@ export function SeasonsCarousel({
 
   const s1 = bySeason(1), s2 = bySeason(2), s3 = bySeason(3), s4 = bySeason(4)
 
-  // Tarjeta de integración (acceso propio, no intercepta la navegación).
-  const intCard = (n: number, name: string) => renderPortalCard({
-    key: `int${n}`, badge: `INTEGRAR T${n}`,
-    epLabel: `INTEGRAR TEMPORADA ${n}`, name,
-    emoji: "✦", gradient: violet, metaA: "Integración", metaB: "Abrir",
-    onClick: () => onOpenIntegration?.(n),
-  })
-
   // Gate del camino: Misión (Objetivos) y Umbral se abren al COMPLETAR la
   // Temporada 4. Si T4 no existe o aún no tiene episodios configurados, el gate
   // no aplica (fallback seguro → se comportan como antes). El admin siempre
@@ -277,13 +288,9 @@ export function SeasonsCarousel({
       })}
 
       {s1 && renderSeasonCard(s1)}
-      {s1 && intCard(1, "Portal del Compromiso")}
       {s2 && renderSeasonCard(s2)}
-      {s2 && intCard(2, "Portal de la Desprogramación Cósmica")}
       {s3 && renderSeasonCard(s3)}
-      {s3 && intCard(3, "Portal de la Memoria y la Dignidad")}
       {s4 && renderSeasonCard(s4)}
-      {s4 && intCard(4, "Portal de la Alquimia Solar")}
 
       {canMision
         ? renderPortalCard({
