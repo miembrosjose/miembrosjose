@@ -8,7 +8,6 @@
 // + Misiones de Custodia (objetivos-data), para no duplicar textos.
 
 import { INTEGRATION_PORTALS } from "./portals-data"
-import { CUSTODIA } from "./objetivos-data"
 import { entryId, readAnswer, type JournalCategory } from "./journal-store"
 
 export type BankQuestion = {
@@ -27,7 +26,6 @@ export const BANK_CATEGORIES: { id: JournalCategory; label: string; hint: string
   { id: "linaje", label: "Mi Linaje", hint: "Creencias heredadas, patrones familiares, silencios." },
   { id: "territorio", label: "Mi Territorio", hint: "Historia del lugar, heridas colectivas, memoria ancestral." },
   { id: "acciones", label: "Acciones Alquímicas", hint: "Cartas, actos simbólicos, reparación." },
-  { id: "misiones", label: "Mis Misiones", hint: "Custodia, territorio, nodos, irradiación." },
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Lecturas del Revelador de Misión." },
 ]
 
@@ -66,11 +64,6 @@ function build(): BankQuestion[] {
     }
   }
 
-  // Misiones de Custodia → Mis Misiones
-  for (const m of CUSTODIA) {
-    for (const f of m.fields) push("misiones", `custodia_${m.id}`, f, `Misión de Custodia · ${m.title}`, 5)
-  }
-
   return out
 }
 
@@ -83,7 +76,7 @@ export function bankByCategory(cat: JournalCategory): BankQuestion[] {
 export type CategoryProgress = { answered: number; total: number; pct: number }
 
 export function bankProgress(): Record<string, CategoryProgress> {
-  const cats: JournalCategory[] = ["historia", "linaje", "territorio", "acciones", "misiones"]
+  const cats: JournalCategory[] = ["historia", "linaje", "territorio", "acciones"]
   const out: Record<string, CategoryProgress> = {}
   for (const c of cats) {
     const qs = bankByCategory(c)
