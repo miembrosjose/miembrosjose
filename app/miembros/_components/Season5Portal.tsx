@@ -1,21 +1,16 @@
 "use client"
 
 // OBJETIVOS DE LOS 144.000 — portal de misión.
-// Estructura limpia y automática, centrada en la Revelación de Misión y en los
-// 4 planos de sanación: Personal · Ancestral (linaje) · Territorio · Red.
-// La idea: vivir en coherencia, ser sol en la Tierra y sanar la memoria.
+// Estructura: Hero → REVELADOR DE MISIÓN (persistente; contiene la revelación,
+// los 4 pilares, cómo se activan los 5 objetivos, punto de entrada y acciones)
+// → LOS OBJETIVOS DE LOS 144.000 (los 5, COLECTIVOS) → Manifiesto → Umbral.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowDown, ArrowRight, Heart, GitBranch, Mountain, Share2 } from "lucide-react"
+import { X, ArrowDown, ArrowRight } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
-import { FORUM_TITLES } from "../_lib/portals-data"
-import { entriesByCategory, type JournalCategory } from "../_lib/journal-store"
-import { openGrandJournal } from "../_lib/journal-registry"
-import { getLastRevelation, REVELATION_CHANGED_EVENT, type MissionReport } from "../_lib/mission-analysis"
-import { recommendedMissions } from "../_lib/objetivos-data"
-import { setMissionState } from "../_lib/missions"
+import { OBJETIVOS_5 } from "../_lib/objetivos-data"
 import { MissionRevealer } from "./MissionRevealer"
 
 type Props = {
@@ -25,114 +20,15 @@ type Props = {
   onOpenUmbral?: () => void
 }
 
-function firstAnswer(cat: JournalCategory): string {
-  const e = entriesByCategory(cat).find((x) => x.answer.trim())
-  if (!e) return ""
-  const a = e.answer.trim()
-  return a.length > 180 ? a.slice(0, 180) + "…" : a
-}
-
-// Los 4 planos de la misión — reflejan lo que YA salió de la bitácora + una
-// acción concreta. El plano Red usa la síntesis de la Revelación.
-function PlanosMision({
-  reveal, onScrollRevealer, onGoToForo, onClose,
-}: {
-  reveal: MissionReport | null
-  onScrollRevealer: () => void
-  onGoToForo?: (t?: string) => void
-  onClose: () => void
-}) {
-  const historia = firstAnswer("historia")
-  const linaje = firstAnswer("linaje")
-  const territorio = firstAnswer("territorio")
-
-  const planos = [
-    {
-      id: "personal", icon: <Heart size={18} />, title: "Sanar mi memoria personal",
-      intent: "Lo que vine a sanar en mí.",
-      desc: "Todo servicio verdadero empieza por casa. Aquello que aprendiste a atravesar en tu propia historia —la herida, el miedo, el olvido— se convierte en la primera medicina que puedes ofrecer. Nadie sana la Red desde afuera si no reconoció antes su propio proceso.",
-      content: reveal?.planoPersonal || historia,
-      empty: "Aún no has registrado tu historia personal. Ábrela y escribe: ahí comienza tu mapa.",
-      actionLabel: "Profundizar mi historia", action: () => openGrandJournal("historia"),
-    },
-    {
-      id: "ancestral", icon: <GitBranch size={18} />, title: "Sanar la memoria de mi linaje",
-      intent: "El patrón que vine a transformar en mi árbol.",
-      desc: "No cargas solo tu historia: cargas la de tu árbol. Investigar tu linaje —sus silencios, sus creencias heredadas, sus heridas repetidas, pero también sus dones— es liberar aquello que llevaba generaciones esperando ser mirado. Lo que termina en ti, ya no se hereda.",
-      content: reveal?.planoLinaje || linaje,
-      empty: "Gran parte ya la trabajaste en las integraciones. Abre tu bitácora de linaje e investiga qué patrón vino a terminar contigo.",
-      actionLabel: "Investigar mi linaje", action: () => openGrandJournal("linaje"),
-    },
-    {
-      id: "territorio", icon: <Mountain size={18} />, title: "Sanar la memoria del territorio",
-      intent: "La tierra que vine a custodiar.",
-      desc: "El lugar donde vives es un archivo vivo. Custodiar empieza por conocer: averigua los pueblos que caminaron antes, sus aguas y cerros, los lugares sagrados y las heridas colectivas que aún laten. Abre una bitácora de investigación y trae claridad sobre tu tierra.",
-      content: reveal?.planoTerritorio || territorio,
-      empty: "Abre tu bitácora de territorio e investiga: qué pueblos lo habitaron, qué lugares sagrados existen cerca y qué herida colectiva pide ser honrada.",
-      actionLabel: "Investigar mi territorio", action: () => openGrandJournal("territorio"),
-    },
-    {
-      id: "red", icon: <Share2 size={18} />, title: "Ser sol en la Tierra · servir a la Red",
-      intent: "La medicina que puedo ofrecer.",
-      desc: "Aquí tu historia personal se vuelve servicio. La medicina que naciste para ofrecer no se inventa: se revela cuando los otros tres planos empiezan a sanar. Ser sol en la Tierra es irradiar, desde tu propio proceso, lo que otros aún buscan.",
-      content: reveal ? (reveal.planoRed || `${reveal.medicina}${reveal.objetivo ? `\n\nTu objetivo más activo: ${reveal.objetivo}.` : ""}`) : "",
-      empty: "Revela tu misión para descubrir cuál es tu servicio concreto dentro de la Red.",
-      actionLabel: reveal ? "Iniciar mi servicio" : "Revelar mi misión",
-      action: () => {
-        if (!reveal) { onScrollRevealer(); return }
-        const m = recommendedMissions(reveal.objetivo)[0]
-        if (m) { setMissionState(m.id, "en_proceso"); openGrandJournal("misiones") }
-        else { onClose(); onGoToForo?.(FORUM_TITLES.nodos) }
-      },
-    },
-  ]
-
-  return (
-    <section className={`${styles.section} ${styles.reveal}`}>
-      <p className={styles.kicker}>El mapa de tu misión</p>
-      <h2 className={styles.sectionTitle}>LOS 4 PLANOS DE LA MISIÓN</h2>
-      <p className={styles.sectionIntro}>
-        La misión no se inventa: se revela cuando tu historia, tu linaje, tu territorio y tu servicio muestran un mismo
-        hilo. Aquí se refleja lo que ya vive en tu bitácora, en cuatro planos que se sanan juntos.
-      </p>
-      <div className={styles.planoGrid}>
-        {planos.map((p) => (
-          <article key={p.id} className={styles.actionCard}>
-            <p className={styles.actionCardKicker}>{p.icon} {p.intent}</p>
-            <h4 className={styles.actionCardName}>{p.title}</h4>
-            <p className={styles.actionCardText}>{p.desc}</p>
-            {p.content ? (
-              <div className={styles.planoReveal}>
-                {p.content.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
-              </div>
-            ) : (
-              <p className={styles.actionCardText} style={{ color: "#8b90b4", fontStyle: "italic" }}>{p.empty}</p>
-            )}
-            <button type="button" className={styles.sealAction} style={{ marginTop: "1rem" }} onClick={p.action}>
-              <ArrowRight size={13} /> {p.actionLabel}
-            </button>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props) {
+export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const revealerRef = useRef<HTMLDivElement>(null)
   const [bannerVideo, setBannerVideo] = useState<string>("")
-  const [reveal, setReveal] = useState<MissionReport | null>(null)
-  // onClose puede cambiar de identidad en cada render del shell; lo guardamos en
-  // un ref para que el efecto de abrir NO se re-ejecute (eso reseteaba el scroll).
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
-    setReveal(getLastRevelation()?.report ?? null)
-    const onRev = () => setReveal(getLastRevelation()?.report ?? null)
-    window.addEventListener(REVELATION_CHANGED_EVENT, onRev)
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     rootRef.current?.scrollTo({ top: 0 })
@@ -141,7 +37,6 @@ export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener("keydown", onKey)
-      window.removeEventListener(REVELATION_CHANGED_EVENT, onRev)
     }
   }, [open])
 
@@ -202,15 +97,46 @@ export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props
           </div>
         </header>
 
-        {/* REVELADOR DE MISIÓN (corazón, persistente) */}
+        {/* REVELADOR DE MISIÓN (persistente) */}
         <div ref={revealerRef}>
           <MissionRevealer />
         </div>
 
-        {/* LOS 4 PLANOS DE LA MISIÓN */}
-        <PlanosMision reveal={reveal} onScrollRevealer={scrollToRevealer} onGoToForo={onGoToForo} onClose={onClose} />
+        {/* LOS OBJETIVOS DE LOS 144.000 (colectivos) */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <p className={styles.kicker}>Arquitectura de misión</p>
+          <h2 className={styles.sectionTitle}>LOS OBJETIVOS DE LOS 144.000</h2>
+          <p className={styles.sectionIntro}>
+            Estos objetivos son <strong>colectivos</strong>: no son opcionales, no son caminos separados, no son
+            etiquetas individuales. Son la arquitectura de misión de todos los miembros de la Red.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", marginTop: "1.6rem" }}>
+            {OBJETIVOS_5.map((o) => (
+              <article key={o.id} className={styles.actionCard}>
+                <p className={styles.actionCardKicker}>Objetivo {o.n}</p>
+                <h4 className={styles.actionCardName}>{o.title}</h4>
+                <p className={styles.sealPhrase} style={{ margin: "0.2rem 0 0.7rem" }}>{o.frase}</p>
+                {o.texto.map((p, i) => <p key={i} className={styles.actionCardText}>{p}</p>)}
+              </article>
+            ))}
+          </div>
 
-        {/* DECLARACIÓN — vivir en coherencia, ser sol en la Tierra */}
+          {/* Bloque destacado: todos participan */}
+          <div className={styles.declaration} style={{ marginTop: "1.8rem" }}>
+            <p className={styles.declBig}>Todos los miembros participan de los cinco objetivos.</p>
+            <p>
+              La Revelación de Misión no asigna un único objetivo a la persona. Todos los miembros de Los 144.000 están
+              llamados a formar comunidad, irradiar la memoria, sanar territorio, prepararse para el contacto y custodiar
+              los archivos del Plan.
+            </p>
+            <p>
+              Lo que la Revelación muestra es <strong>por dónde comienza el servicio</strong> de cada persona, qué herida
+              se está transformando en medicina y cómo esa medicina puede aportar a la Red.
+            </p>
+          </div>
+        </section>
+
+        {/* MANIFIESTO — ser sol en la Tierra */}
         <section className={`${styles.section} ${styles.reveal}`}>
           <p className={styles.kicker}>Manifiesto</p>
           <h2 className={styles.sectionTitle}>SER SOL EN LA TIERRA</h2>

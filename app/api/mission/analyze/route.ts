@@ -38,27 +38,45 @@ PROFUNDIDAD DE LA LECTURA. No te quedes en lo genérico. Estudia de verdad lo qu
 - MEMORIA TRANSGENERACIONAL: qué lealtad o patrón del árbol se está transformando en la persona.
 - ESTUDIO DE LOS LUGARES MENCIONADOS: si la persona nombra una ciudad, país, río, cerro, pueblo o región, habla de su memoria histórica y espiritual (pueblos originarios, heridas de conquista, aguas, sitios sagrados) y de qué pide ser recordado o custodiado ahí. Si no menciona un lugar concreto, invítala a investigarlo.
 
-La pieza central es "sintesis": una GRAN SÍNTESIS integradora, un solo texto de EXACTAMENTE 2 párrafos. Teje, como una sola lectura fluida y elevada: qué vino a sanar (la herida/el veneno), cómo se transmuta en conciencia, y qué medicina nace para la Red. Prosa de guía espiritual, cálida, en segunda persona ("tú"), citando algo de lo que escribió. Sin encabezados ni viñetas.
+La lectura se basa en la frase central: LO QUE VINE A SANAR EN MÍ REVELA QUÉ PARTE DE LA RED VINE A LIMPIAR.
 
-Además, escribe una lectura EXTENSA y reveladora para cada uno de los 4 planos (planoPersonal, planoLinaje, planoTerritorio, planoRed), de 4 a 6 frases cada una, guiando desde ese pilar específico (no repitas la síntesis: profundiza distinto en cada plano).
-
-Los campos de apoyo son cortos: "objetivo" (uno exacto), "primeraMision" (1-2 frases), "frase" (una línea memorable), "pasos" (3 pasos concretos).
+MUY IMPORTANTE — NO asignes UN ÚNICO objetivo a la persona. Todos los miembros de Los 144.000 participan de los mismos CINCO objetivos colectivos:
+1) Formar Comunidad de Base. 2) Irradiar la Clave del Recuerdo. 3) Sanar y custodiar el territorio. 4) Prepararse para la Catastro-fe y el Contacto. 5) Reencontrarse con la Hermandad Blanca y custodiar los archivos.
+Tu tarea NO es decir cuál objetivo le corresponde, sino revelar desde dónde COMIENZA su servicio (su punto de entrada), qué medicina nace de su herida y cómo puede participar en los cinco objetivos desde su proceso.
 
 Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin texto extra) con exactamente estas claves:
 {
-  "sintesis": "Gran Síntesis: 2 párrafos (herida/veneno → conciencia → medicina). Guía íntima, elevada, con biodescodificación.",
-  "planoPersonal": "PLANO PERSONAL (4-6 frases): sanar la memoria personal. Biodescodificación de la herida, cómo vive en el cuerpo/emoción, el don que esconde.",
-  "planoLinaje": "PLANO DEL LINAJE (4-6 frases): memoria transgeneracional, lealtades del árbol, patrón que termina en la persona, don heredado.",
-  "planoTerritorio": "PLANO DEL TERRITORIO (4-6 frases): estudio del lugar mencionado (o invitación a investigarlo): pueblos, aguas, heridas colectivas, qué custodiar.",
-  "planoRed": "PLANO DE LA RED (4-6 frases): cómo su proceso se vuelve servicio concreto, ser sol en la Tierra, irradiar la medicina.",
-  "herida": "1-2 frases: la herida central, por si se necesita aparte.",
-  "medicina": "1-2 frases: la medicina/servicio, por si se necesita aparte.",
-  "territorio": "1-2 frases: qué territorio le llama.",
-  "objetivo": "UNO de los 7 objetivos, con su nombre EXACTO: Formar Comunidad de Base | Irradiar la Clave del Recuerdo | Redescubrir la Historia Sagrada del Territorio | Convertirse en Guardián del Lugar | Atravesar la Catastro-fe | Prepararse para el Contacto con los Guías | Reencontrarse con la Hermandad Blanca y custodiar los archivos.",
-  "primeraMision": "Una primera misión concreta y realizable (1-2 frases).",
+  "sintesis": "MENSAJE PRINCIPAL DE REVELACIÓN: un texto desarrollado de 180 a 350 palabras, tono de guía. No repitas la bitácora ni suene a diagnóstico. Interpreta patrones y revela cómo el veneno puede convertirse en medicina para la Red, tejiendo lo que vino a sanar + lo que su linaje le mostró + lo que su territorio refleja + lo que puede ofrecer.",
+  "codigos": [{ "nombre": "nombre corto del código", "veneno": "el veneno", "medicina": "la medicina", "servicio": "el servicio que nace" }],
+  "planoPersonal": "PILAR PERSONAL (4-6 frases): sanación, perdón y medicina interior. Biodescodificación de la herida, cómo vive en el cuerpo/emoción, el don que esconde.",
+  "planoLinaje": "PILAR DEL LINAJE (4-6 frases): árbol genealógico, patrones heredados, lealtades transgeneracionales y nueva generación que empieza en la persona.",
+  "planoTerritorio": "PILAR DEL TERRITORIO (4-6 frases): raíz, lugar, memoria ancestral y custodia. Estudia el lugar mencionado (pueblos, aguas, heridas colectivas) o invita a investigarlo.",
+  "planoRed": "PILAR DE LA RED (4-6 frases): comunidad, transmisión, servicio y preparación para el contacto; cómo su proceso se vuelve servicio.",
+  "objetivos5": [
+    { "id": "comunidad", "label": "Formar Comunidad de Base", "texto": "Cómo ESTA persona puede aportar a comunidad desde su medicina." },
+    { "id": "irradiar", "label": "Irradiar la Clave del Recuerdo", "texto": "Qué información, palabra o presencia puede transmitir sin imponer." },
+    { "id": "territorio", "label": "Sanar y custodiar el territorio", "texto": "Qué relación aparece entre su historia personal, su linaje y el territorio." },
+    { "id": "catastrofe", "label": "Prepararse para la Catastro-fe y el Contacto", "texto": "Qué debe fortalecer en discernimiento, estabilidad y preparación." },
+    { "id": "hermandad", "label": "Reencontrarse con la Hermandad Blanca y custodiar los archivos", "texto": "Qué actitud de humildad, custodia y responsabilidad desarrollar." }
+  ],
+  "puntoEntrada": "PUNTO DE ENTRADA A TU SERVICIO: identifica una PUERTA inicial (no un objetivo único). Ej: presencia y comunidad, palabra y transmisión, territorio y raíz, perdón y linaje, dignidad y límites, discernimiento y protección, servicio y archivo. Aclara que no limita su misión.",
+  "acciones5": [
+    { "objetivo": "Comunidad de Base", "accion": "acción concreta" },
+    { "objetivo": "Irradiar la Clave", "accion": "acción concreta" },
+    { "objetivo": "Territorio", "accion": "acción concreta" },
+    { "objetivo": "Discernimiento y Contacto", "accion": "acción concreta" },
+    { "objetivo": "Custodia de Archivos", "accion": "acción concreta" }
+  ],
   "frase": "Una frase de misión personal, breve, profunda y memorable, en primera persona.",
-  "pasos": ["Paso 1 concreto", "Paso 2 concreto", "Paso 3 concreto"]
-}`
+  "pasos": ["Paso 1 concreto", "Paso 2 concreto", "Paso 3 concreto"],
+  "herida": "1-2 frases (apoyo).",
+  "medicina": "1-2 frases (apoyo).",
+  "territorio": "1-2 frases (apoyo).",
+  "objetivo": "",
+  "primeraMision": "1-2 frases (apoyo)."
+}
+
+Reglas de estilo: NO digas "tu misión definitiva es", "tu único objetivo es", "tienes trauma de", "debes", "esto significa con certeza". USA "Según lo registrado en tu bitácora…", "Tu proceso parece mostrar…", "Una posible línea de servicio sería…", "El punto de entrada que aparece con más fuerza es…". Inspira, ordena y profundiza; no impongas.`
 
 export async function POST(req: Request) {
   const supabase = await getSupabaseServer()
@@ -127,9 +145,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ configured: false, providerError: true })
     }
 
-    // Normaliza: pasos como array de 3 strings.
+    // Normaliza arrays.
     const pasos = Array.isArray(report.pasos)
       ? (report.pasos as unknown[]).map((p) => String(p)).filter(Boolean).slice(0, 5)
+      : []
+    const codigos = Array.isArray(report.codigos)
+      ? (report.codigos as Record<string, unknown>[]).slice(0, 7).map((c) => ({
+          nombre: String(c?.nombre || ""), veneno: String(c?.veneno || ""),
+          medicina: String(c?.medicina || ""), servicio: String(c?.servicio || ""),
+        })).filter((c) => c.nombre)
+      : []
+    const objetivos5 = Array.isArray(report.objetivos5)
+      ? (report.objetivos5 as Record<string, unknown>[]).slice(0, 5).map((o) => ({
+          id: String(o?.id || ""), label: String(o?.label || ""), texto: String(o?.texto || ""),
+        })).filter((o) => o.label && o.texto)
+      : []
+    const acciones5 = Array.isArray(report.acciones5)
+      ? (report.acciones5 as Record<string, unknown>[]).slice(0, 6).map((a) => ({
+          objetivo: String(a?.objetivo || ""), accion: String(a?.accion || ""),
+        })).filter((a) => a.accion)
       : []
 
     return NextResponse.json({
@@ -143,13 +177,17 @@ export async function POST(req: Request) {
         planoLinaje: String(report.planoLinaje || ""),
         planoTerritorio: String(report.planoTerritorio || ""),
         planoRed: String(report.planoRed || ""),
+        codigos,
+        objetivos5,
+        puntoEntrada: String(report.puntoEntrada || ""),
+        acciones5,
         herida: String(report.herida || ""),
         medicina: String(report.medicina || ""),
         territorio: String(report.territorio || ""),
         objetivo: String(report.objetivo || ""),
         primeraMision: String(report.primeraMision || ""),
         frase: String(report.frase || ""),
-        pasos: pasos.length ? pasos : ["Completar el Mapa de mi Misión.", "Elegir un punto de custodia.", "Registrar una acción de reparación."],
+        pasos: pasos.length ? pasos : ["Completar mi historia personal.", "Investigar mi territorio.", "Iniciar una acción de servicio."],
       },
     })
   } catch (e) {

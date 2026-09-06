@@ -143,3 +143,60 @@ export function recommendedMissions(objetivo: string): CustodiaMision[] {
   const ids = OBJETIVO_TO_MISIONES[objetivo] || ["m1_historia", "m2_territorio"]
   return ids.map(getCustodia).filter(Boolean) as CustodiaMision[]
 }
+
+// ── Los 5 objetivos COLECTIVOS de Los 144.000 ───────────────────────────
+// Son de todos los miembros (no "uno por persona"). La Revelación muestra
+// desde dónde empieza el servicio y cómo se activan los 5 en cada quien.
+export type Objetivo5 = { id: string; n: number; title: string; frase: string; texto: string[] }
+
+export const OBJETIVOS_5: Objetivo5[] = [
+  {
+    id: "comunidad", n: 1, title: "FORMAR COMUNIDAD DE BASE",
+    frase: "El llamado se sostiene cuando varias conciencias se reúnen en una misma frecuencia.",
+    texto: [
+      "Los 144.000 están llamados a formar comunidades de base: grupos físicos, virtuales o mentales que sostienen memoria, práctica, discernimiento, servicio y propósito común.",
+      "Una comunidad de base no nace para crear separación ni superioridad espiritual. Nace para que el recuerdo no quede aislado en individuos dispersos.",
+      "Aquí comienzan los nodos de la Red.",
+    ],
+  },
+  {
+    id: "irradiar", n: 2, title: "IRRADIAR LA CLAVE DEL RECUERDO",
+    frase: "Quien recuerda se convierte en punto de irradiación.",
+    texto: [
+      "Irradiar la Clave del Recuerdo significa transmitir la información recibida, compartir los archivos, despertar preguntas, abrir conciencia y recordar la verdadera historia de la humanidad sin imponer, sin fanatismo y sin crear dependencia.",
+      "La información no se entrega para acumular conocimiento, sino para que otros puedan recordar su lugar dentro del Plan.",
+    ],
+  },
+  {
+    id: "territorio", n: 3, title: "SANAR Y CUSTODIAR EL TERRITORIO",
+    frase: "La misión planetaria comienza en el lugar donde cada alma fue sembrada.",
+    texto: [
+      "Los 144.000 no solo recuerdan una historia cósmica. También están llamados a redescubrir la memoria de la Tierra, de sus pueblos, de sus ciudades, de sus montañas, ríos, linajes, heridas y lugares sagrados.",
+      "Sanar el territorio empieza por reconocer la propia historia personal y familiar. No puedo custodiar un territorio si no conozco mi propia historia.",
+      "Lo que vine a sanar en mí revela qué parte de la Red vine a limpiar.",
+    ],
+  },
+  {
+    id: "catastrofe", n: 4, title: "PREPARARSE PARA LA CATASTRO-FE Y EL CONTACTO",
+    frase: "El contacto maduro requiere discernimiento, estabilidad interior y servicio.",
+    texto: [
+      "La catastro-fe representa la prueba de la fe frente al caos, la confusión, el miedo, la sobreinformación, las falsas señales y las distorsiones espirituales.",
+      "Los miembros de Los 144.000 deben prepararse interiormente para atravesar ese tiempo con claridad.",
+      "El contacto con los Guías, Instructores, civilizaciones estelares y la Hermandad Blanca no debe buscarse como espectáculo. Debe sostenerse como responsabilidad.",
+    ],
+  },
+  {
+    id: "hermandad", n: 5, title: "REENCONTRARSE CON LA HERMANDAD BLANCA Y CUSTODIAR LOS ARCHIVOS",
+    frase: "La memoria vuelve cuando existe una red capaz de custodiarla.",
+    texto: [
+      "El objetivo mayor es preparar a la humanidad para reencontrarse conscientemente con la Gran Hermandad Blanca de los Retiros Interiores, recibir los archivos del Plan y custodiar la verdadera historia de la Tierra sin convertirla en poder, dogma, ego espiritual o separación.",
+      "Este objetivo abre el camino hacia la humanidad como civilización número 33 y hacia los Instructores del Nuevo Tiempo.",
+    ],
+  },
+]
+
+/** Etiquetas cortas de los 5 objetivos (para el análisis y las acciones). */
+export const OBJETIVOS_5_LABELS: { id: string; label: string }[] = OBJETIVOS_5.map((o) => ({
+  id: o.id,
+  label: o.title.charAt(0) + o.title.slice(1).toLowerCase(),
+}))

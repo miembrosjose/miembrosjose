@@ -1374,3 +1374,47 @@
   color: var(--s5-gold);
 }
 .sintesisBody p:last-child { margin-bottom: 0; }
+
+/* Revelador: códigos detectados + pilares */
+.codigoRow {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  border-left: 2px solid var(--s5-gold);
+  border-radius: 10px;
+  background: rgba(10, 11, 26, 0.4);
+}
+.codigoNombre {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--s5-gold-soft);
+  margin-bottom: 0.25rem;
+}
+.codigoFlow { font-size: 0.9rem; line-height: 1.6; color: #d9dced; }
+.codigoFlow strong { color: #fff; }
+.codigoFlow em { color: #a8adc9; font-style: italic; }
+.pilarLabel {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--s5-gold);
+}
+.pilarLink {
+  margin-top: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--s5-violet);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pilarLink:hover { color: #fff; }

@@ -19,11 +19,19 @@ export type MissionReport = {
   primeraMision: string
   frase: string
   pasos: string[]
-  /** Lecturas EXTENSAS por plano (se actualizan con cada revelación). */
+  /** Los 4 pilares del servicio (personal, linaje, territorio, red). */
   planoPersonal: string
   planoLinaje: string
   planoTerritorio: string
   planoRed: string
+  /** Códigos detectados en la bitácora: veneno → medicina → servicio. */
+  codigos: { nombre: string; veneno: string; medicina: string; servicio: string }[]
+  /** Cómo se activan los 5 objetivos colectivos en esta persona. */
+  objetivos5: { id: string; label: string; texto: string }[]
+  /** Puerta inicial del servicio (NO un objetivo único). */
+  puntoEntrada: string
+  /** Acciones recomendadas, una por cada uno de los 5 objetivos. */
+  acciones5: { objetivo: string; accion: string }[]
 }
 
 export type MissionAnalysis =
@@ -45,7 +53,11 @@ const KEYWORDS: Record<PatternId, string[]> = {
   servicio_palabra: ["enseñar", "ensenar", "escribir", "hablar", "compartir", "palabra", "comunidad", "servir", "servicio", "nodo", "irradiar"],
 }
 
-const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText" | "sintesis" | "planoPersonal" | "planoLinaje" | "planoTerritorio" | "planoRed">> = {
+type ProfileFields = Omit<MissionReport,
+  "territorio" | "patternText" | "sintesis" | "planoPersonal" | "planoLinaje" |
+  "planoTerritorio" | "planoRed" | "codigos" | "objetivos5" | "puntoEntrada" | "acciones5">
+
+const PROFILES: Record<PatternId, ProfileFields> = {
   abandono: {
     patternLabel: "Abandono y no pertenencia",
     herida: "En tus palabras late una memoria antigua: la de no pertenecer, la de sentirte de paso en un mundo que no terminó de reconocerte. Esa herida no vino a quebrarte, vino a enseñarte de qué está hecho un verdadero hogar. Lo que un día te faltó —ser visto, ser acogido, ser esperado— es exactamente lo que tu alma aprendió a nombrar con precisión. Ya no es un vacío: es una brújula.",
@@ -152,6 +164,38 @@ const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternTex
   },
 }
 
+// Código (veneno → medicina → servicio) por patrón, para la sección "Códigos".
+const CODIGO_BY_PATTERN: Record<PatternId, { nombre: string; veneno: string; medicina: string; servicio: string }> = {
+  abandono: { nombre: "No pertenencia", veneno: "sentirte de paso, fuera de lugar, excluido", medicina: "crear hogar y pertenencia", servicio: "sostener comunidad y acoger a otros" },
+  escasez: { nombre: "Escasez", veneno: "no merecer, temer que no alcance", medicina: "confianza y abundancia consciente", servicio: "abrir caminos de merecimiento" },
+  abuso_voz: { nombre: "Voz silenciada", veneno: "invasión de límites, sometimiento", medicina: "dignidad y límite sano", servicio: "custodiar la dignidad de otros" },
+  silencio: { nombre: "Silencio del linaje", veneno: "secretos y vergüenza heredada", medicina: "palabra que sana", servicio: "irradiar verdad con cuidado" },
+  miedo_poder: { nombre: "Miedo al poder", veneno: "culpa, achicarse, entregar la voluntad", medicina: "voluntad al servicio", servicio: "sostener discernimiento en el caos" },
+  desconexion_territorio: { nombre: "Desarraigo", veneno: "desconexión con el lugar y las raíces", medicina: "reconexión y custodia", servicio: "ser puente con la memoria de la Tierra" },
+  perdon: { nombre: "Herida no perdonada", veneno: "resentimiento y culpa que encadenan", medicina: "perdón que libera", servicio: "acompañar la transformación del dolor" },
+  servicio_palabra: { nombre: "Vocación de reunir", veneno: "dispersión y aislamiento", medicina: "palabra y comunidad", servicio: "tejer y custodiar la memoria" },
+}
+
+const PUERTA_BY_PATTERN: Record<PatternId, string> = {
+  abandono: "presencia y comunidad",
+  escasez: "confianza y merecimiento",
+  abuso_voz: "dignidad y límites",
+  silencio: "palabra y transmisión",
+  miedo_poder: "discernimiento y protección",
+  desconexion_territorio: "territorio y raíz",
+  perdon: "perdón y linaje",
+  servicio_palabra: "servicio y archivo",
+}
+
+// Acciones recomendadas (una por cada objetivo colectivo) — base fallback.
+const ACCIONES_5_BASE: { objetivo: string; accion: string }[] = [
+  { objetivo: "Comunidad de Base", accion: "Invita a una persona a compartir una lectura, meditación o conversación consciente." },
+  { objetivo: "Irradiar la Clave", accion: "Comparte una enseñanza de Los 144.000 sin imponer, desde una experiencia real." },
+  { objetivo: "Sanar y custodiar el territorio", accion: "Investiga una herida o memoria del lugar donde vives y relaciónala con tu propia historia." },
+  { objetivo: "Discernimiento y Contacto", accion: "Completa una práctica de silencio, observación o discernimiento antes de buscar señales externas." },
+  { objetivo: "Custodia de los Archivos", accion: "Guarda una revelación o escribe una síntesis que aporte a la memoria colectiva de la Red." },
+]
+
 function normalize(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
 }
@@ -240,15 +284,39 @@ export function analyzeMission(): MissionAnalysis {
   const planoTerritorio = territorio
 
   const planoRed =
-    `Aquí tu proceso se vuelve servicio concreto. Tu objetivo más activo hoy es “${profile.objetivo}”: por ahí empieza tu forma de ser sol en la Tierra. ` +
-    `Ser sol no es brillar por encima de nadie: es irradiar calor donde antes hubo frío —precisamente el frío que tú aprendiste a atravesar—. ` +
+    `Aquí tu proceso se vuelve servicio concreto. Ser sol en la Tierra no es brillar por encima de nadie: es irradiar calor donde antes hubo frío —precisamente el frío que tú aprendiste a atravesar—. ` +
     `No sirves a la Red desde la teoría ni desde lo que aún no resolviste, sino ofreciendo lo que ya destilaste en tu propia vida. ` +
     `Empieza pequeño y sostenido: una persona, un círculo, un gesto real esta semana. Eso ya es Red.`
+
+  // Códigos detectados (patrones con resonancia; incluye el dominante).
+  const codigoIds = scores.filter((s) => s.score > 0).map((s) => s.id)
+  const idsForCodigos = (codigoIds.length ? codigoIds : [dominant]).slice(0, 4)
+  const codigos = idsForCodigos.map((id) => CODIGO_BY_PATTERN[id])
+
+  // Punto de entrada (puerta), NO objetivo único.
+  const puerta = PUERTA_BY_PATTERN[dominant]
+  const puntoEntrada =
+    `Según lo registrado en tu bitácora, tu servicio parece comenzar por la puerta de ${puerta}. ` +
+    `No es tu único objetivo ni reemplaza los objetivos de Los 144.000: solo muestra desde qué herida, medicina o capacidad empieza tu servicio en este momento. Todos los objetivos siguen siendo tuyos.`
+
+  // Cómo se activan los 5 objetivos colectivos en esta persona.
+  const med = CODIGO_BY_PATTERN[dominant].medicina
+  const objetivos5 = [
+    { id: "comunidad", label: "Formar Comunidad de Base", texto: `Desde ${med}, puedes sostener un espacio donde otros dejen de estar aislados. Aunque empiece con una sola persona, ahí ya hay comunidad de base.` },
+    { id: "irradiar", label: "Irradiar la Clave del Recuerdo", texto: `Tu forma de irradiar no es imponer, sino compartir desde lo vivido: la comprensión que ganaste al transformar tu propia herida es la enseñanza más honesta que puedes transmitir.` },
+    { id: "territorio", label: "Sanar y custodiar el territorio", texto: `Lo que reconociste en tu historia personal y en tu linaje es la llave para leer el lugar donde vives. Empieza por conocer su memoria: pueblos, aguas, heridas colectivas y sitios sagrados.` },
+    { id: "catastrofe", label: "Prepararse para la Catastro-fe y el Contacto", texto: `Tu proceso te pide fortalecer el centro y el discernimiento: sostener claridad cuando el mundo se llene de ruido, y acercarte al contacto como responsabilidad, no como espectáculo.` },
+    { id: "hermandad", label: "Reencontrarse con la Hermandad Blanca y custodiar los archivos", texto: `Custodiar es servir sin apropiarse. Guardar tus revelaciones y aportarlas a la Red con humildad ya es una forma de custodiar los archivos del Plan.` },
+  ]
 
   return {
     sufficient: true,
     entryCount,
-    report: { ...profile, patternText, territorio, sintesis, planoPersonal, planoLinaje, planoTerritorio, planoRed },
+    report: {
+      ...profile, patternText, territorio, sintesis,
+      planoPersonal, planoLinaje, planoTerritorio, planoRed,
+      codigos, objetivos5, puntoEntrada, acciones5: ACCIONES_5_BASE,
+    },
   }
 }
 
@@ -290,11 +358,20 @@ export function reportToText(r: MissionReport): string {
     `FRASE DE MISIÓN PERSONAL\n“${r.frase}”`,
     `OBJETIVO DE LOS 144.000 MÁS ACTIVO EN TI\n${r.objetivo}`,
   ]
-  if (r.planoPersonal) parts.push(`PLANO PERSONAL\n${r.planoPersonal}`)
-  if (r.planoLinaje) parts.push(`PLANO DEL LINAJE\n${r.planoLinaje}`)
-  if (r.planoTerritorio) parts.push(`PLANO DEL TERRITORIO\n${r.planoTerritorio}`)
-  if (r.planoRed) parts.push(`PLANO DE LA RED\n${r.planoRed}`)
-  parts.push(`PRIMERA MISIÓN RECOMENDADA\n${r.primeraMision}`)
+  if (r.codigos?.length) {
+    parts.push(`CÓDIGOS DETECTADOS\n${r.codigos.map((c) => `• ${c.nombre} — veneno: ${c.veneno}; medicina: ${c.medicina}; servicio: ${c.servicio}`).join("\n")}`)
+  }
+  if (r.planoPersonal) parts.push(`PILAR PERSONAL\n${r.planoPersonal}`)
+  if (r.planoLinaje) parts.push(`PILAR DEL LINAJE\n${r.planoLinaje}`)
+  if (r.planoTerritorio) parts.push(`PILAR DEL TERRITORIO\n${r.planoTerritorio}`)
+  if (r.planoRed) parts.push(`PILAR DE LA RED\n${r.planoRed}`)
+  if (r.objetivos5?.length) {
+    parts.push(`CÓMO SE ACTIVAN LOS 5 OBJETIVOS\n${r.objetivos5.map((o) => `• ${o.label}: ${o.texto}`).join("\n\n")}`)
+  }
+  if (r.puntoEntrada) parts.push(`PUNTO DE ENTRADA A TU SERVICIO\n${r.puntoEntrada}`)
+  if (r.acciones5?.length) {
+    parts.push(`ACCIONES DE MISIÓN\n${r.acciones5.map((a) => `• ${a.objetivo}: ${a.accion}`).join("\n")}`)
+  }
   parts.push(`SIGUIENTES PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`)
   return parts.join("\n\n")
 }

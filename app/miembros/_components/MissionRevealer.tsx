@@ -12,8 +12,6 @@ import { analyzeMission, reportToText, saveLastRevelation, getLastRevelation, ty
 import { upsertAnswer, loadEntries } from "../_lib/journal-store"
 import { openGrandJournal } from "../_lib/journal-registry"
 import { bankProgress, totalAnswered } from "../_lib/question-bank"
-import { recommendedMissions } from "../_lib/objetivos-data"
-import { setMissionState } from "../_lib/missions"
 
 type Phase = "idle" | "consent" | "loading" | "result" | "insufficient"
 
@@ -120,17 +118,19 @@ export function MissionRevealer() {
     setSaved(true)
   }, [analysis])
 
-  const startMission = useCallback((id: string) => {
-    setMissionState(id, "en_proceso")
-    setStarted((prev) => new Set(prev).add(id))
-    // Abre la bitácora en "Mis Misiones" para registrar la misión iniciada.
+  // Registra una acción de misión en la bitácora (sección Mis Misiones) y la abre.
+  const registerAction = useCallback((objetivo: string, accion: string, idx: number) => {
+    upsertAnswer({
+      category: "misiones", source: `accion_revelador_${idx}`, sourceLabel: `Acción de misión · ${objetivo}`,
+      prompt: objetivo, answer: accion, isPrivate: true,
+    })
+    setStarted((prev) => new Set(prev).add(String(idx)))
     openGrandJournal("misiones")
   }, [])
 
   const reset = useCallback(() => { setPhase("idle"); setSaved(false); refreshProgress() }, [refreshProgress])
 
   const report = analysis && analysis.sufficient ? analysis.report : null
-  const recos = report ? recommendedMissions(report.objetivo) : []
 
   return (
     <section className={`${styles.section} ${styles.reveal}`}>
@@ -206,7 +206,7 @@ export function MissionRevealer() {
               <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={() => openGrandJournal("historia")}><BookOpen size={14} /> Completar mi historia personal</button>
               <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal("linaje")}>Completar mi linaje</button>
               <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal("territorio")}>Completar mi territorio</button>
-              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal()}>Abrir mi bitácora</button>
+              <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => openGrandJournal("acciones")}>Completar acciones alquímicas</button>
             </div>
           </div>
         )}
@@ -220,7 +220,7 @@ export function MissionRevealer() {
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {/* La Gran Síntesis — lectura integrada (herida → veneno → medicina) */}
+              {/* 1 · Mensaje principal de revelación */}
               <div className={styles.revealerCard}>
                 <div className={styles.revealerCardNum}>La revelación</div>
                 <div className={styles.sintesisBody}>
@@ -229,36 +229,92 @@ export function MissionRevealer() {
                 </div>
               </div>
 
-              {/* Frase de misión personal */}
+              {/* 2 · Códigos detectados */}
+              {report.codigos?.length > 0 && (
+                <div className={styles.revealerCard}>
+                  <div className={styles.revealerCardNum}>Códigos detectados en tu bitácora</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "0.3rem" }}>
+                    {report.codigos.map((c, i) => (
+                      <div key={i} className={styles.codigoRow}>
+                        <span className={styles.codigoNombre}>{c.nombre}</span>
+                        <span className={styles.codigoFlow}><em>{c.veneno}</em> → <strong>{c.medicina}</strong> → {c.servicio}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3 · Los 4 pilares de tu servicio */}
+              {(report.planoPersonal || report.planoLinaje || report.planoTerritorio || report.planoRed) && (
+                <div className={styles.revealerCard}>
+                  <div className={styles.revealerCardNum}>Los 4 pilares de tu servicio</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", marginTop: "0.4rem" }}>
+                    {[
+                      { l: "Misión personal — sanación, perdón y medicina interior", t: report.planoPersonal, tab: "historia" },
+                      { l: "Misión con el linaje — árbol, patrones heredados y nueva generación", t: report.planoLinaje, tab: "linaje" },
+                      { l: "Misión con el territorio — raíz, memoria ancestral y custodia", t: report.planoTerritorio, tab: "territorio" },
+                      { l: "Misión con la Red — comunidad, transmisión, servicio y contacto", t: report.planoRed, tab: "" },
+                    ].filter((p) => p.t).map((p, i) => (
+                      <div key={i}>
+                        <p className={styles.pilarLabel}>{p.l}</p>
+                        <p className={styles.revealerBody}>{p.t}</p>
+                        {p.tab && (
+                          <button type="button" className={styles.pilarLink} onClick={() => openGrandJournal(p.tab)}>
+                            Profundizar en mi bitácora →
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 4 · Cómo se activan en ti los 5 objetivos */}
+              {report.objetivos5?.length > 0 && (
+                <div className={styles.revealerCard}>
+                  <div className={styles.revealerCardNum}>Cómo se activan en ti los objetivos de Los 144.000</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", marginTop: "0.4rem" }}>
+                    {report.objetivos5.map((o, i) => (
+                      <div key={i}>
+                        <p className={styles.pilarLabel}>{i + 1}. {o.label}</p>
+                        <p className={styles.revealerBody}>{o.texto}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 5 · Punto de entrada a tu servicio */}
+              {report.puntoEntrada && (
+                <div className={styles.revealerCard} style={{ borderLeft: "3px solid var(--s5-gold)" }}>
+                  <div className={styles.revealerCardNum}>Punto de entrada a tu servicio</div>
+                  <p className={styles.revealerBody}>{report.puntoEntrada}</p>
+                </div>
+              )}
+
+              {/* 7 · Frase de misión personal */}
               {report.frase && (
                 <div className={styles.revealerCard}>
                   <div className={styles.revealerCardNum}>Frase de misión personal</div>
                   <p className={styles.revealerFrase}>“{report.frase}”</p>
                 </div>
               )}
-
-              {/* Objetivo más activo */}
-              {report.objetivo && (
-                <div className={styles.revealerCard}>
-                  <div className={styles.revealerCardNum}>Objetivo de Los 144.000 más activo en ti</div>
-                  <p className={styles.revealerBody}>{report.objetivo}</p>
-                </div>
-              )}
             </div>
 
-            {recos.length > 0 && (
+            {/* 6 · Acciones de misión (por los 5 objetivos) */}
+            {report.acciones5?.length > 0 && (
               <div style={{ marginTop: "1.8rem" }}>
-                <p className={styles.kicker} style={{ marginBottom: "0.8rem" }}>Misiones recomendadas para ti</p>
+                <p className={styles.kicker} style={{ marginBottom: "0.8rem" }}>Acciones de misión · próximos actos de servicio</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                  {recos.map((m) => (
-                    <div key={m.id} className={styles.revealerCard} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-                      <div>
-                        <div className={styles.revealerCardNum} style={{ marginBottom: 2 }}>Misión de Custodia</div>
-                        <div style={{ color: "#eef1fb", fontWeight: 600 }}>{m.title}</div>
+                  {report.acciones5.map((a, i) => (
+                    <div key={i} className={styles.revealerCard} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                      <div style={{ flex: "1 1 260px" }}>
+                        <div className={styles.revealerCardNum} style={{ marginBottom: 2 }}>{a.objetivo}</div>
+                        <div style={{ color: "#eef1fb", lineHeight: 1.6 }}>{a.accion}</div>
                       </div>
-                      <button type="button" className={styles.cta} style={{ margin: 0, padding: "0.6rem 1.1rem", borderColor: "var(--s5-gold)" }}
-                        onClick={() => startMission(m.id)} disabled={started.has(m.id)}>
-                        {started.has(m.id) ? <>Iniciada</> : <>Iniciar esta misión <ArrowRight size={14} /></>}
+                      <button type="button" className={styles.missionShare} style={{ padding: "0.6rem 1rem" }}
+                        onClick={() => registerAction(a.objetivo, a.accion, i)} disabled={started.has(String(i))}>
+                        {started.has(String(i)) ? "Registrada" : <>Registrar en mi bitácora <ArrowRight size={13} /></>}
                       </button>
                     </div>
                   ))}
