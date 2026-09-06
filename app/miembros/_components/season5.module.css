@@ -1418,3 +1418,36 @@
   cursor: pointer;
 }
 .pilarLink:hover { color: #fff; }
+
+/* Barra de carga cósmica del Revelador (la nave "viaja" mientras piensa) */
+.loadTrack {
+  position: relative;
+  height: 4px;
+  max-width: 460px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: rgba(167, 139, 202, 0.18);
+  overflow: visible;
+}
+.loadTrail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(167, 139, 202, 0.25), var(--s5-violet), var(--s5-gold));
+  box-shadow: 0 0 14px rgba(217, 184, 102, 0.55);
+  transition: width 0.32s ease;
+}
+.loadRocket {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  color: var(--s5-gold-soft);
+  transition: left 0.32s ease;
+  animation: rocketPulse 1.4s ease-in-out infinite;
+}
+@keyframes rocketPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(230, 207, 149, 0.7)); }
+  50% { filter: drop-shadow(0 0 15px rgba(230, 207, 149, 1)); }
+}

@@ -6,7 +6,7 @@
 // progreso real de la bitácora para motivar a completarla. Español neutral.
 
 import { useCallback, useEffect, useState } from "react"
-import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, BookOpen, RotateCcw } from "lucide-react"
+import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, BookOpen, RotateCcw, Rocket } from "lucide-react"
 import styles from "./season5.module.css"
 import { analyzeMission, reportToText, saveLastRevelation, getLastRevelation, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
 import { upsertAnswer, loadEntries } from "../_lib/journal-store"
@@ -44,6 +44,39 @@ h2{font-size:14px;color:#b8934a;letter-spacing:1px;margin:22px 0 4px;}p{font-siz
   const w = window.open("", "_blank", "width=820,height=1000")
   if (!w) { alert("Permite las ventanas emergentes para descargar tu análisis."); return }
   w.document.open(); w.document.write(html); w.document.close()
+}
+
+const LOADING_MSGS = [
+  "Abriendo tu campo…",
+  "Leyendo tu historia y tus heridas…",
+  "Escuchando la memoria de tu sangre…",
+  "Reconociendo el llamado de tu territorio…",
+  "Tejiendo tu revelación para la Red…",
+]
+
+// Barra de carga cósmica: una nave viaja mientras la conciencia guía "piensa".
+function RevealerLoading() {
+  const [pct, setPct] = useState(6)
+  const [mi, setMi] = useState(0)
+  useEffect(() => {
+    // Avance que se acerca a ~94% y se frena (nunca "completa" hasta que llega
+    // la respuesta), para que se sienta vivo sin mentir que ya terminó.
+    const t = setInterval(() => setPct((p) => Math.min(94, p + Math.max(0.5, (94 - p) * 0.07))), 320)
+    const m = setInterval(() => setMi((i) => (i + 1) % LOADING_MSGS.length), 2600)
+    return () => { clearInterval(t); clearInterval(m) }
+  }, [])
+  return (
+    <div style={{ textAlign: "center", padding: "1.8rem 0 0.6rem" }}>
+      <div className={styles.revealerFrase} style={{ fontSize: "1rem", marginBottom: "1.4rem" }}>{LOADING_MSGS[mi]}</div>
+      <div className={styles.loadTrack}>
+        <span className={styles.loadTrail} style={{ width: `${pct}%` }} />
+        <span className={styles.loadRocket} style={{ left: `${pct}%` }}><Rocket size={22} /></span>
+      </div>
+      <p className={styles.revealerHint} style={{ marginTop: "1.1rem" }}>
+        Una conciencia guía está leyendo tu bitácora. Esto puede tomar unos segundos; permanece en silencio mientras se teje.
+      </p>
+    </div>
+  )
 }
 
 export function MissionRevealer() {
@@ -176,12 +209,7 @@ export function MissionRevealer() {
           </div>
         )}
 
-        {phase === "loading" && (
-          <div style={{ textAlign: "center", padding: "1.4rem 0" }}>
-            <div className={styles.revealerFrase} style={{ fontSize: "1rem" }}>Leyendo tu bitácora…</div>
-            <p className={styles.revealerHint} style={{ marginTop: "0.8rem" }}>Reconociendo el patrón entre tu historia, tu linaje y tu territorio.</p>
-          </div>
-        )}
+        {phase === "loading" && <RevealerLoading />}
 
         {phase === "insufficient" && (
           <div style={{ marginTop: "1.2rem" }}>
