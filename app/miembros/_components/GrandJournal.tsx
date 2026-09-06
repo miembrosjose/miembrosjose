@@ -78,7 +78,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-start justify-center sm:items-center"
+      className="fixed inset-0 z-[600] flex items-start justify-center sm:items-center"
       style={{
         background: "rgba(4,5,12,0.88)",
         backdropFilter: "blur(6px)",

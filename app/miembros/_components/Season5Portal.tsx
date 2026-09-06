@@ -6,7 +6,7 @@
 // La idea: vivir en coherencia, ser sol en la Tierra y sanar la memoria.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowDown, ArrowRight, Heart, GitBranch, Mountain, Share2, BookOpen } from "lucide-react"
+import { X, ArrowDown, ArrowRight, Heart, GitBranch, Mountain, Share2 } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
@@ -50,29 +50,33 @@ function PlanosMision({
     {
       id: "personal", icon: <Heart size={18} />, title: "Sanar mi memoria personal",
       intent: "Lo que vine a sanar en mí.",
+      desc: "Todo servicio verdadero empieza por casa. Aquello que aprendiste a atravesar en tu propia historia —la herida, el miedo, el olvido— se convierte en la primera medicina que puedes ofrecer. Nadie sana la Red desde afuera si no reconoció antes su propio proceso.",
       content: reveal?.herida || historia,
-      empty: "Aún no has registrado tu historia. Escríbela en tu bitácora.",
+      empty: "Aún no has registrado tu historia personal. Ábrela y escribe: ahí comienza tu mapa.",
       actionLabel: "Profundizar mi historia", action: () => openGrandJournal("historia"),
     },
     {
       id: "ancestral", icon: <GitBranch size={18} />, title: "Sanar la memoria de mi linaje",
       intent: "El patrón que vine a transformar en mi árbol.",
+      desc: "No cargas solo tu historia: cargas la de tu árbol. Investigar tu linaje —sus silencios, sus creencias heredadas, sus heridas repetidas, pero también sus dones— es liberar aquello que llevaba generaciones esperando ser mirado. Lo que termina en ti, ya no se hereda.",
       content: linaje,
-      empty: "Aún no has registrado tu linaje. Ya lo trabajaste en las integraciones; complétalo en tu bitácora.",
-      actionLabel: "Profundizar mi linaje", action: () => openGrandJournal("linaje"),
+      empty: "Gran parte ya la trabajaste en las integraciones. Abre tu bitácora de linaje e investiga qué patrón vino a terminar contigo.",
+      actionLabel: "Investigar mi linaje", action: () => openGrandJournal("linaje"),
     },
     {
       id: "territorio", icon: <Mountain size={18} />, title: "Sanar la memoria del territorio",
       intent: "La tierra que vine a custodiar.",
+      desc: "El lugar donde vives es un archivo vivo. Custodiar empieza por conocer: averigua los pueblos que caminaron antes, sus aguas y cerros, los lugares sagrados y las heridas colectivas que aún laten. Abre una bitácora de investigación y trae claridad sobre tu tierra.",
       content: reveal?.territorio || territorio,
-      empty: "Aún no has registrado tu territorio. Complétalo en tu bitácora.",
-      actionLabel: "Profundizar mi territorio", action: () => openGrandJournal("territorio"),
+      empty: "Abre tu bitácora de territorio e investiga: qué pueblos lo habitaron, qué lugares sagrados existen cerca y qué herida colectiva pide ser honrada.",
+      actionLabel: "Investigar mi territorio", action: () => openGrandJournal("territorio"),
     },
     {
       id: "red", icon: <Share2 size={18} />, title: "Ser sol en la Tierra · servir a la Red",
       intent: "La medicina que puedo ofrecer.",
-      content: reveal ? `${reveal.medicina}${reveal.objetivo ? `  ·  ${reveal.objetivo}` : ""}` : "",
-      empty: "Revela tu misión para descubrir tu servicio a la Red.",
+      desc: "Aquí tu historia personal se vuelve servicio. La medicina que naciste para ofrecer no se inventa: se revela cuando los otros tres planos empiezan a sanar. Ser sol en la Tierra es irradiar, desde tu propio proceso, lo que otros aún buscan.",
+      content: reveal ? `${reveal.medicina}${reveal.objetivo ? `\n\nTu objetivo más activo: ${reveal.objetivo}.` : ""}` : "",
+      empty: "Revela tu misión para descubrir cuál es tu servicio concreto dentro de la Red.",
       actionLabel: reveal ? "Iniciar mi servicio" : "Revelar mi misión",
       action: () => {
         if (!reveal) { onScrollRevealer(); return }
@@ -96,10 +100,15 @@ function PlanosMision({
           <article key={p.id} className={styles.actionCard}>
             <p className={styles.actionCardKicker}>{p.icon} {p.intent}</p>
             <h4 className={styles.actionCardName}>{p.title}</h4>
-            <p className={styles.actionCardText} style={p.content ? undefined : { color: "#8b90b4", fontStyle: "italic" }}>
-              {p.content || p.empty}
-            </p>
-            <button type="button" className={styles.sealAction} style={{ marginTop: "0.9rem" }} onClick={p.action}>
+            <p className={styles.actionCardText}>{p.desc}</p>
+            {p.content ? (
+              <div className={styles.planoReveal}>
+                {p.content.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+              </div>
+            ) : (
+              <p className={styles.actionCardText} style={{ color: "#8b90b4", fontStyle: "italic" }}>{p.empty}</p>
+            )}
+            <button type="button" className={styles.sealAction} style={{ marginTop: "1rem" }} onClick={p.action}>
               <ArrowRight size={13} /> {p.actionLabel}
             </button>
           </article>
@@ -114,6 +123,10 @@ export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props
   const revealerRef = useRef<HTMLDivElement>(null)
   const [bannerVideo, setBannerVideo] = useState<string>("")
   const [reveal, setReveal] = useState<MissionReport | null>(null)
+  // onClose puede cambiar de identidad en cada render del shell; lo guardamos en
+  // un ref para que el efecto de abrir NO se re-ejecute (eso reseteaba el scroll).
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
@@ -123,14 +136,14 @@ export function Season5Portal({ open, onClose, onGoToForo, onOpenUmbral }: Props
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     rootRef.current?.scrollTo({ top: 0 })
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose() }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onCloseRef.current() }
     window.addEventListener("keydown", onKey)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener("keydown", onKey)
       window.removeEventListener(REVELATION_CHANGED_EVENT, onRev)
     }
-  }, [open, onClose])
+  }, [open])
 
   useEffect(() => {
     if (!open) return

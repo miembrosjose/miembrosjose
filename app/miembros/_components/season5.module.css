@@ -1346,3 +1346,14 @@
   gap: 1.1rem;
   margin-top: 1.6rem;
 }
+
+/* Contenido revelado dentro de cada plano de la misión */
+.planoReveal {
+  margin-top: 0.8rem;
+  padding: 0.9rem 1rem;
+  border-left: 2px solid var(--s5-gold);
+  border-radius: 8px;
+  background: rgba(217, 184, 102, 0.06);
+}
+.planoReveal p { margin: 0 0 0.6rem; font-size: 0.95rem; line-height: 1.7; color: #e6e9f7; }
+.planoReveal p:last-child { margin-bottom: 0; }

@@ -41,75 +41,107 @@ const KEYWORDS: Record<PatternId, string[]> = {
 const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText">> = {
   abandono: {
     patternLabel: "Abandono y no pertenencia",
-    herida: "La herida de no pertenecer —de sentirse fuera de lugar— parece estar convirtiéndose en la capacidad de crear el hogar que no tuviste.",
-    medicina: "Quien ha atravesado el abandono puede sostener comunidad: hacer sentir a otros que pertenecen.",
+    herida: "En tus palabras late una memoria antigua: la de no pertenecer, la de sentirte de paso en un mundo que no terminó de reconocerte. Esa herida no vino a quebrarte, vino a enseñarte de qué está hecho un verdadero hogar. Lo que un día te faltó —ser visto, ser acogido, ser esperado— es exactamente lo que tu alma aprendió a nombrar con precisión. Ya no es un vacío: es una brújula.",
+    medicina: "Quien ha caminado el abandono conoce el mapa del que llega solo, y por eso puede recibir a otros como nadie. Tu medicina es la pertenencia: crear círculos, nodos, espacios donde el que se sentía extranjero por fin descansa. No sanas dando lo que te sobra, sino ofreciendo el hogar que aprendiste a construir dentro de ti.",
     objetivo: "Formar Comunidad de Base",
-    primeraMision: "Formar o activar un nodo: invita a dos o más personas a una práctica en común.",
-    frase: "Mi misión comienza cuando transformo la herida de no pertenencia en una comunidad que acoge.",
-    pasos: ["Completar el Mapa de mi Misión.", "Invitar a una primera persona a una conversación consciente.", "Registrar un Reporte de Nodo."],
+    primeraMision: "Reúne a dos o más personas en un primer nodo —una lectura, una meditación, una conversación consciente— y sostén ahí la frecuencia de acogida que a ti te faltó.",
+    frase: "Mi misión comienza cuando transformo la herida de no pertenencia en un hogar donde otros por fin pertenecen.",
+    pasos: [
+      "Nombra en tu bitácora el primer momento en que te sentiste fuera de lugar, y agradécele lo que te enseñó.",
+      "Invita a una sola persona a una conversación consciente esta semana.",
+      "Da forma a un pequeño nodo y registra tu primer Reporte de Nodo.",
+    ],
   },
   escasez: {
     patternLabel: "Escasez y no merecimiento",
-    herida: "El programa de escasez y no merecimiento parece estar transformándose en confianza y dignidad.",
-    medicina: "Quien sanó la escasez puede abrir caminos de confianza y merecimiento para otros.",
+    herida: "Hay en tu historia una voz que aprendió a medir, a temer que no alcance, a creer que recibir es peligroso o que no lo mereces. Esa voz casi nunca nació contigo: la heredaste, la respiraste en tu casa, la sostuviste para no defraudar a nadie. Reconocerla ya es empezar a devolverla. La escasez que atravesaste te vuelve experto en un tesoro invisible: saber cuándo el miedo habla disfrazado de prudencia.",
+    medicina: "Tu medicina es la confianza. Quien desmontó su propia escasez puede abrir caminos de merecimiento en otros: mostrar, con su vida, que la abundancia no es acumular sino permitir que la vida circule. Enseñas a recibir sin culpa y a dar sin vaciarse.",
     objetivo: "Irradiar la Clave del Recuerdo",
-    primeraMision: "Compartir una enseñanza desde la abundancia de lo que recordaste, sin imponer.",
-    frase: "Mi misión comienza cuando transformo la escasez heredada en confianza al servicio de la Red.",
-    pasos: ["Nombrar una creencia heredada de escasez en tu bitácora.", "Escribir la nueva instrucción consciente.", "Compartir una enseñanza en el foro."],
+    primeraMision: "Comparte una enseñanza de Los 144.000 desde lo que ya transformaste —sin imponer, sin vender—, como quien reparte pan y no doctrina.",
+    frase: "Mi misión comienza cuando transformo la escasez heredada en un manantial de confianza para la Red.",
+    pasos: [
+      "Escribe la frase de escasez que más se repitió en tu casa y, debajo, su nueva instrucción consciente.",
+      "Realiza un acto pequeño de merecimiento esta semana (recibir, pedir, agradecer).",
+      "Comparte una enseñanza en el foro desde tu propia experiencia.",
+    ],
   },
   abuso_voz: {
-    patternLabel: "Abuso, control y pérdida de la voz",
-    herida: "La memoria de invasión de límites y voz silenciada parece estar convirtiéndose en dignidad recuperada.",
-    medicina: "Quien recuperó su voz y sus límites puede custodiar la dignidad y los límites de otros.",
+    patternLabel: "Abuso, control y recuperación de la voz",
+    herida: "En tu memoria hay lugares donde el poder se usó contra ti, donde tus límites fueron invadidos o tu voz fue silenciada para sobrevivir. Tu cuerpo aprendió a cerrarse, a anticipar, a callar. Nada de eso fue debilidad: fue inteligencia para resistir. Y hoy esa misma sensibilidad —que sabe exactamente dónde se cruza una línea— se está convirtiendo en tu mayor fuerza: la dignidad que vuelve.",
+    medicina: "Quien recuperó su voz y sus límites se vuelve guardián de la dignidad de otros. Tu medicina es el límite sano y la palabra verdadera: sostener espacios donde nadie es invadido, donde el poder se pone al servicio y no encima. Enseñas que decir “no” también es un acto de amor.",
     objetivo: "Convertirse en Guardián del Lugar",
-    primeraMision: "Escribir una carta para recuperar tu voz y elegir un punto de custodia donde sostener dignidad.",
+    primeraMision: "Recupera por escrito una verdad que no pudiste decir y elige un punto concreto de tu territorio donde empezar a sostener presencia y dignidad.",
     frase: "Mi misión comienza cuando transformo el silencio impuesto en dignidad custodiada.",
-    pasos: ["Completar la acción “Recuperar mi voz”.", "Elegir un punto de custodia.", "Registrar un Reporte de Custodia."],
+    pasos: [
+      "Completa la acción “Recuperar mi voz” en tu bitácora.",
+      "Define un límite claro que vas a sostener esta semana.",
+      "Elige tu punto de custodia y registra tu primer Reporte de Custodia.",
+    ],
   },
   silencio: {
-    patternLabel: "Silencio familiar",
-    herida: "El silencio y los secretos del linaje parecen estar transformándose en palabra consciente.",
-    medicina: "Quien sanó el silencio puede irradiar palabra y verdad con cuidado.",
+    patternLabel: "Silencio y secretos del linaje",
+    herida: "Tu árbol guarda silencios: historias que no se contaron, dolores que se taparon con vergüenza, verdades que se heredaron a media voz. Ese silencio pesó en ti aunque no fuera tuyo. Pero algo en tu proceso está listo para hablar con cuidado y sin traición: no para exponer a nadie, sino para que la línea familiar por fin respire.",
+    medicina: "Tu medicina es la palabra que sana. Quien atravesó el silencio puede irradiar verdad con delicadeza: poner nombre a lo que otros no pudieron, y así liberar patrones que llevaban generaciones repitiéndose. Hablas para desatar, no para acusar.",
     objetivo: "Irradiar la Clave del Recuerdo",
-    primeraMision: "Registrar un Reporte de Linaje: nombrar el silencio y la nueva decisión consciente.",
+    primeraMision: "Registra un Reporte de Linaje: nombra el silencio que reconociste y la nueva decisión consciente que empieza contigo.",
     frase: "Mi misión comienza cuando transformo el silencio heredado en palabra consciente al servicio de la Red.",
-    pasos: ["Nombrar un silencio familiar en tu bitácora.", "Escribir la nueva decisión consciente.", "Compartir, si lo deseas, un Reporte de Linaje."],
+    pasos: [
+      "Nombra un silencio o secreto de tu familia en tu bitácora de linaje.",
+      "Escribe: “En mi linaje termina… En mí comienza…”.",
+      "Si lo sientes, comparte un Reporte de Linaje cuidado para la Red.",
+    ],
   },
   miedo_poder: {
-    patternLabel: "Miedo a ocupar el poder",
-    herida: "La relación con el miedo, la culpa y el poder parece estar madurando hacia el servicio.",
-    medicina: "Quien ordenó su relación con el poder puede ponerlo al servicio y sostener discernimiento en el caos.",
+    patternLabel: "Miedo a ocupar tu poder",
+    herida: "Aparece en tu historia una relación tensa con el poder: lo temes, lo rechazas o lo entregas para no incomodar. Quizá viste el poder herir y decidiste, sin saberlo, no tenerlo nunca. Esa decisión te protegió, pero también te achicó. Hoy tu proceso madura hacia otra cosa: un poder que no aplasta, sino que sostiene.",
+    medicina: "Tu medicina es la voluntad al servicio y el discernimiento en medio del ruido. Quien ordenó su miedo puede mantener centro cuando otros se pierden en falsas señales. Enseñas que ocupar el propio lugar no es dominar: es responsabilizarse.",
     objetivo: "Atravesar la Catastro-fe",
-    primeraMision: "Aplicar el filtro de discernimiento ante una señal o información reciente.",
-    frase: "Mi misión comienza cuando transformo el miedo al poder en voluntad al servicio.",
-    pasos: ["Registrar una situación donde el miedo dirigió una decisión.", "Aplicar discernimiento por escrito.", "Elegir una acción con responsabilidad, no culpa."],
+    primeraMision: "Aplica el filtro de discernimiento a una señal, mensaje o información reciente: pregúntate si conduce a servicio o solo a expectativa.",
+    frase: "Mi misión comienza cuando transformo el miedo a mi poder en voluntad al servicio.",
+    pasos: [
+      "Registra una situación donde el miedo tomó una decisión por ti.",
+      "Escribe qué habrías hecho desde tu centro, sin culpa.",
+      "Toma una decisión pequeña esta semana ocupando tu lugar con responsabilidad.",
+    ],
   },
   desconexion_territorio: {
-    patternLabel: "Desconexión del territorio",
-    herida: "La desconexión con el lugar y las raíces parece estar convirtiéndose en custodia consciente.",
-    medicina: "Quien reconectó con su territorio puede servir como puente entre la memoria de la Tierra y la comunidad.",
+    patternLabel: "Desconexión con el territorio y las raíces",
+    herida: "Hay en ti una raíz que quedó suelta: una relación distante, dolida o pendiente con el lugar donde naciste o donde vives. Migraciones, desarraigos, historias que te hicieron sentir de ninguna parte. Esa desconexión no es un defecto: es la señal de un guardián que aún no reconoció su tierra. La nostalgia que sientes es, en realidad, una vocación.",
+    medicina: "Tu medicina es ser puente entre la memoria de la Tierra y la comunidad. Quien vuelve a habitar su territorio puede escuchar lo que ese lugar guarda —sus pueblos, sus aguas, sus heridas— y sostenerlo con presencia. No sanas la Tierra desde lejos: la sanas volviendo a pertenecerle.",
     objetivo: "Redescubrir la Historia Sagrada del Territorio",
-    primeraMision: "Crear tu ficha de territorio: pueblos antiguos, sitios sagrados y heridas colectivas.",
-    frase: "Mi misión comienza cuando transformo la desconexión en custodia de la memoria de mi tierra.",
-    pasos: ["Investigar una herida colectiva de tu lugar.", "Crear tu ficha de territorio.", "Elegir un punto de custodia."],
+    primeraMision: "Investiga la historia viva de tu lugar y crea tu ficha de territorio: pueblos antiguos, sitios sagrados, aguas, y una herida colectiva que pida ser recordada.",
+    frase: "Mi misión comienza cuando transformo la desconexión en custodia consciente de la memoria de mi tierra.",
+    pasos: [
+      "Investiga una herida colectiva o una memoria olvidada del lugar donde vives.",
+      "Crea tu ficha de territorio en la bitácora de misión.",
+      "Elige un punto de custodia concreto (un río, un cerro, una plaza, un templo).",
+    ],
   },
   perdon: {
-    patternLabel: "Necesidad de perdón y reparación",
-    herida: "El dolor que gobernaba desde el resentimiento parece estar transformándose en medicina.",
-    medicina: "Quien atravesó el perdón puede acompañar a otros a transformar el veneno en medicina.",
+    patternLabel: "Perdón, reparación y alquimia de la herida",
+    herida: "Cargas un dolor que aún gobierna desde el resentimiento, la culpa o una historia antigua que se repite. No viniste a negarlo ni a justificarlo. Viniste a hacer con él una alquimia: tomar el veneno que te ató y devolverlo a la vida convertido en conciencia. Ese es el trabajo más difícil y el más sagrado, y tu proceso ya lo empezó.",
+    medicina: "Tu medicina es la transformación del veneno en medicina. Quien perdonó sin justificar puede acompañar a otros a soltar lo que los encadena, y mostrar que el perdón no borra la historia: la libera. Tu presencia recuerda que ninguna herida es el final del camino.",
     objetivo: "Prepararse para el Contacto con los Guías",
-    primeraMision: "Escribir una carta de perdón consciente y un acto de reparación.",
-    frase: "Mi misión comienza cuando transformo el veneno de la herida en medicina para la Red.",
-    pasos: ["Completar la carta de perdón consciente.", "Elegir un acto de reparación concreto.", "Registrar la medicina que nace de la herida."],
+    primeraMision: "Escribe una carta de perdón consciente (hacia ti, tu linaje o tu historia) y define un acto concreto de reparación que no repita el patrón.",
+    frase: "Mi misión comienza cuando transformo el veneno de mi herida en medicina para la Red.",
+    pasos: [
+      "Completa la carta de perdón consciente en tu bitácora.",
+      "Elige un acto de reparación concreto y una fecha para realizarlo.",
+      "Registra la medicina que nace de esa herida.",
+    ],
   },
   servicio_palabra: {
-    patternLabel: "Servicio a través de la palabra y la comunidad",
-    herida: "Tu proceso parece mostrar una vocación de irradiar y reunir que ya está lista para el servicio.",
-    medicina: "Puedes irradiar la Clave del Recuerdo y custodiar los archivos junto a otros.",
+    patternLabel: "Vocación de irradiar y reunir",
+    herida: "Tu proceso muestra algo poco común: una parte tuya ya está lista para servir. No porque lo tengas todo resuelto, sino porque aprendiste a sostener a otros mientras te sostenías. Esa capacidad de reunir, de dar palabra, de hacer red, es la huella de quien vino a custodiar memoria en tiempos de olvido.",
+    medicina: "Tu medicina es irradiar la Clave del Recuerdo y tejer comunidad. Puedes poner palabra donde hay confusión y reunir a los dispersos alrededor de un mismo propósito, sin fanatismo ni superioridad. Custodias la memoria compartiéndola.",
     objetivo: "Reencontrarse con la Hermandad Blanca y custodiar los archivos",
-    primeraMision: "Registrar tu compromiso con los archivos y formar un pequeño nodo.",
+    primeraMision: "Registra tu compromiso con los archivos y da el primer paso para formar o activar un nodo donde la memoria deje de estar aislada.",
     frase: "Mi misión comienza cuando pongo la palabra recordada al servicio de la Red.",
-    pasos: ["Registrar tu compromiso con los archivos.", "Compartir una enseñanza.", "Formar o activar un nodo."],
+    pasos: [
+      "Escribe tu compromiso con los archivos y la memoria de la Tierra.",
+      "Comparte una enseñanza con una persona o grupo esta semana.",
+      "Da forma a un nodo, aunque empiece con dos personas.",
+    ],
   },
 }
 
@@ -129,12 +161,15 @@ function territorioFromText(rawText: string, territorioEntry: string): string {
     { k: ["familia", "linaje", "arbol", "árbol"], label: "tu linaje familiar" },
   ]
   const hit = hints.find((h) => h.k.some((w) => t.includes(normalize(w))))
-  const base = hit ? hit.label : "el lugar donde vives y su memoria"
+  const base = hit ? hit.label : "el lugar donde vives"
+  const cuerpo =
+    `El territorio no es un escenario: es un archivo vivo. Te llama ${base} —no para observarlo, sino para reconocer su memoria: los pueblos que caminaron antes, las aguas y los cerros, las heridas de conquista o de olvido que aún laten en su tierra. ` +
+    `Tu tarea aquí es investigar y traer claridad: averiguar la historia sagrada de tu lugar, escuchar lo que pide ser recordado y elegir un punto concreto donde empezar a sostener presencia. Ahí tu sanación personal se vuelve custodia.`
   if (territorioEntry.trim()) {
-    const snippet = territorioEntry.trim().slice(0, 140)
-    return `Por lo que escribiste, te llama ${base}. En tus palabras: “${snippet}${territorioEntry.length > 140 ? "…" : ""}”.`
+    const snippet = territorioEntry.trim().slice(0, 160)
+    return `${cuerpo} En tus propias palabras ya aparece una huella: “${snippet}${territorioEntry.length > 160 ? "…" : ""}”. Ese es el hilo por donde empezar.`
   }
-  return `Por los temas que aparecen, te llama ${base}.`
+  return `${cuerpo} Abre tu bitácora de territorio e investiga: qué pueblos lo habitaron, qué lugares sagrados existen cerca y qué herida colectiva pide ser honrada.`
 }
 
 export function analyzeMission(): MissionAnalysis {
@@ -170,9 +205,11 @@ export function analyzeMission(): MissionAnalysis {
     ? PROFILES[second.id].patternLabel.toLowerCase()
     : ""
   const patternText =
-    `Según lo registrado en tu bitácora, aparece con fuerza el patrón de ${profile.patternLabel.toLowerCase()}` +
+    `Al leer lo que has registrado en tu bitácora, un hilo aparece con más fuerza que los demás: ${profile.patternLabel.toLowerCase()}` +
     (secondLabel ? `, entrelazado con ${secondLabel}` : "") +
-    ". Esta lectura puede servirte como espejo, no como imposición."
+    ". No es una casualidad ni un defecto: es el eje alrededor del cual tu historia, tu linaje y tu territorio se ordenan. " +
+    "Reconocerlo es el primer acto de tu misión, porque aquello que aprendiste a atravesar en ti es precisamente lo que puedes ayudar a sanar en la Red. " +
+    "Toma esta lectura como un espejo que acompaña, no como una sentencia que define."
 
   return {
     sufficient: true,
