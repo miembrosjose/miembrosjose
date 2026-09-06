@@ -117,11 +117,13 @@ export async function POST(req: Request) {
     }
 
     const data = (await res.json()) as { content?: { type: string; text?: string }[] }
-    const text = (data.content || []).filter((c) => c.type === "text").map((c) => c.text || "").join("")
+    let text = (data.content || []).filter((c) => c.type === "text").map((c) => c.text || "").join("")
+    // Limpia posibles cercas de código markdown antes de extraer el JSON.
+    text = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "")
     const jsonStr = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)
     let report: Record<string, unknown>
     try { report = JSON.parse(jsonStr) } catch {
-      console.error("[mission/analyze] no se pudo parsear JSON del modelo")
+      console.error("[mission/analyze] no se pudo parsear JSON del modelo. len=", text.length)
       return NextResponse.json({ configured: false, providerError: true })
     }
 
