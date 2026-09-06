@@ -227,10 +227,10 @@ export function analyzeMission(): MissionAnalysis {
   const historiaEntry = entries.find((e) => e.category === "historia")?.answer.trim() ?? ""
 
   const planoPersonal =
-    `${profile.herida}\n\n` +
-    `Mira esta herida también en el cuerpo y en la emoción: lo que un sistema aprende a callar suele guardarse en la garganta, en el pecho o en el vientre. ` +
-    `No es casualidad lo que se repite en ti; es una memoria pidiendo ser vista para dejar de gobernar.` +
-    (historiaEntry ? ` En tus palabras ya asoma: “${historiaEntry.slice(0, 140)}${historiaEntry.length > 140 ? "…" : ""}”.` : "")
+    `Aquí no repetimos la herida: la habitamos. En biodescodificación, lo que un sistema aprende a callar suele guardarse en el cuerpo —en la garganta lo no dicho, en el pecho el afecto negado, en el vientre lo que no se pudo digerir—. ` +
+    `Eso que se repite en ti no es un defecto: es una memoria pidiendo ser vista para dejar de gobernarte desde la sombra. ` +
+    `Tu trabajo en este plano es darle nombre, edad y lugar a esa parte de ti, y devolverle la pertenencia que le faltó: escríbele, escúchala, acompáñala.` +
+    (historiaEntry ? ` En tus palabras ya asoma el hilo por donde entrar: “${historiaEntry.slice(0, 140)}${historiaEntry.length > 140 ? "…" : ""}”.` : " Abre tu bitácora personal y escríbele una carta a esa parte de ti.")
 
   const planoLinaje =
     `Lo que atraviesas no empezó contigo: viene de tu árbol. En biodescodificación, muchos síntomas y repeticiones son lealtades invisibles a quienes vinieron antes —silencios, duelos no llorados, exclusiones, deudas—. ` +
@@ -240,9 +240,10 @@ export function analyzeMission(): MissionAnalysis {
   const planoTerritorio = territorio
 
   const planoRed =
-    `${profile.medicina}\n\n` +
-    `Ser sol en la Tierra es irradiar, desde tu propio proceso, exactamente lo que otros aún buscan. Tu objetivo más activo hoy es “${profile.objetivo}”: por ahí empieza tu servicio concreto a la Red. ` +
-    `No sanas a la Red desde la teoría, sino ofreciendo la medicina que ya destilaste en tu propia vida.`
+    `Aquí tu proceso se vuelve servicio concreto. Tu objetivo más activo hoy es “${profile.objetivo}”: por ahí empieza tu forma de ser sol en la Tierra. ` +
+    `Ser sol no es brillar por encima de nadie: es irradiar calor donde antes hubo frío —precisamente el frío que tú aprendiste a atravesar—. ` +
+    `No sirves a la Red desde la teoría ni desde lo que aún no resolviste, sino ofreciendo lo que ya destilaste en tu propia vida. ` +
+    `Empieza pequeño y sostenido: una persona, un círculo, un gesto real esta semana. Eso ya es Red.`
 
   return {
     sufficient: true,
