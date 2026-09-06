@@ -24,26 +24,45 @@ const PROGRESS_CATS: { id: string; label: string }[] = [
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
 
+function paras(s: string): string {
+  return s.split(/\n\n+/).map((p) => `<p>${esc(p).replace(/\n/g, "<br/>")}</p>`).join("")
+}
+
+// Exporta EXACTAMENTE lo que muestra el Revelador: La revelación + los 4 pilares
+// + la frase de misión.
 function downloadReport(r: MissionReport) {
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>Revelador de Misión — Los 144.000</title>
-<style>@page{margin:22mm 18mm;}body{font-family:Georgia,serif;color:#1a1a24;line-height:1.65;}
+  const sintesis = r.sintesis || [r.herida, r.medicina].filter(Boolean).join("\n\n")
+  const pilares = [
+    { l: "Pilar personal — el alma que recuerda", t: r.planoPersonal },
+    { l: "Pilar del linaje — la sangre y su memoria", t: r.planoLinaje },
+    { l: "Pilar del territorio — la Tierra que te sostiene", t: r.planoTerritorio },
+    { l: "Pilar de la Red — el tejido de conciencias", t: r.planoRed },
+  ].filter((p) => p.t)
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>Revelación de Misión — Los 144.000</title>
+<style>@page{margin:22mm 18mm;}body{font-family:Georgia,serif;color:#1a1a24;line-height:1.7;}
 h1{font-size:24px;letter-spacing:1px;color:#6d4a9b;border-bottom:2px solid #c9a86b;padding-bottom:8px;}
-h2{font-size:14px;color:#b8934a;letter-spacing:1px;margin:22px 0 4px;}p{font-size:13px;margin:0 0 6px;}
-.frase{font-style:italic;font-size:15px;color:#6d4a9b;}</style></head><body>
-<h1>Revelador de Misión · Los 144.000</h1>
-<h2>1 · Patrón central detectado</h2><p>${esc(r.patternText)}</p>
-<h2>2 · Herida que se está transformando</h2><p>${esc(r.herida)}</p>
-<h2>3 · Medicina que puedes ofrecer</h2><p>${esc(r.medicina)}</p>
-<h2>4 · Territorio que te llama</h2><p>${esc(r.territorio)}</p>
-<h2>5 · Objetivo más activo en ti</h2><p>${esc(r.objetivo)}</p>
-<h2>6 · Primera misión recomendada</h2><p>${esc(r.primeraMision)}</p>
-<h2>7 · Frase de misión personal</h2><p class="frase">“${esc(r.frase)}”</p>
-<h2>8 · Siguientes 3 pasos</h2><p>${r.pasos.map((p, i) => `${i + 1}. ${esc(p)}`).join("<br/>")}</p>
+h2{font-size:13px;color:#b8934a;letter-spacing:1px;text-transform:uppercase;margin:22px 0 6px;}
+p{font-size:13px;margin:0 0 8px;}.frase{font-style:italic;font-size:16px;color:#6d4a9b;}</style></head><body>
+<h1>Revelación de Misión · Los 144.000</h1>
+<h2>La revelación</h2>${paras(sintesis)}
+<h2>Los 4 pilares de tu servicio</h2>
+${pilares.map((p) => `<p><strong>${esc(p.l)}</strong></p>${paras(p.t)}`).join("")}
+${r.frase ? `<h2>Frase de misión personal</h2><p class="frase">“${esc(r.frase)}”</p>` : ""}
 <script>window.onload=function(){setTimeout(function(){window.print();},250);};</script>
 </body></html>`
   const w = window.open("", "_blank", "width=820,height=1000")
   if (!w) { alert("Permite las ventanas emergentes para descargar tu análisis."); return }
   w.document.open(); w.document.write(html); w.document.close()
+}
+
+// Guarda la revelación en Mi Gran Bitácora → "Mis Revelaciones". Idempotente
+// por día: la lectura del día se reescribe; días distintos quedan como historial.
+function persistRevelation(rep: MissionReport) {
+  const fecha = new Date().toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" })
+  upsertAnswer({
+    category: "revelaciones", source: "revelador_mision", sourceLabel: "Revelador de Misión",
+    prompt: `Lectura de misión · ${fecha}`, answer: reportToText(rep), isPrivate: true,
+  })
 }
 
 const LOADING_MSGS = [
@@ -126,7 +145,8 @@ export function MissionRevealer() {
         const rep = data.report as MissionReport
         setAnalysis({ sufficient: true, entryCount: entries.length, report: rep })
         saveLastRevelation(rep, { answered: totalAnswered(), source: "ia" })
-        setSource("ia"); setChanged(false); setPhase("result"); return
+        persistRevelation(rep)
+        setSource("ia"); setChanged(false); setSaved(true); setPhase("result"); return
       }
       if (data?.configured && data?.sufficient === false) {
         setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return
@@ -136,17 +156,14 @@ export function MissionRevealer() {
     setAnalysis(local); setSource("local")
     if (local.sufficient) {
       saveLastRevelation(local.report, { answered: totalAnswered(), source: "local" })
-      setChanged(false); setPhase("result")
+      persistRevelation(local.report)
+      setChanged(false); setSaved(true); setPhase("result")
     } else setPhase("insufficient")
   }, [])
 
   const save = useCallback(() => {
     if (!analysis || !analysis.sufficient) return
-    const fecha = new Date().toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" })
-    upsertAnswer({
-      category: "revelaciones", source: "revelador_mision", sourceLabel: "Revelador de Misión",
-      prompt: `Lectura de misión · ${fecha}`, answer: reportToText(analysis.report), isPrivate: true,
-    })
+    persistRevelation(analysis.report)
     setSaved(true)
   }, [analysis])
 
