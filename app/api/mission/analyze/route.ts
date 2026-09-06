@@ -33,16 +33,27 @@ REGLAS ESTRICTAS:
 
 Escribe como un GUÍA ESPIRITUAL sabio y cálido, no como un resumen. Habla en segunda persona ("tú"), con imágenes, hondura y precisión. Cada texto debe REVELAR algo, no solo describir: nombra la herida con dignidad, muestra su sentido y ábrela hacia el servicio. Evita frases genéricas y clichés de autoayuda. Cita o parafrasea de vez en cuando lo que la persona escribió, para que se sienta vista.
 
-La pieza central es "sintesis": una GRAN SÍNTESIS integradora, un solo texto de EXACTAMENTE 2 párrafos (sepáralos con un renglón en blanco). Debe tejer, como una sola lectura fluida y reveladora: qué vino a sanar la persona (su herida / el veneno que la gobernó), cómo eso atravesado se transmuta en conciencia, y qué medicina nace de ahí para ofrecer a la Red. Es prosa de guía espiritual, evocadora, cálida y en segunda persona ("tú"), no una lista. Que se sienta escrita para esa persona: parafrasea algo de lo que escribió. NO uses encabezados ni viñetas dentro de "sintesis".
+PROFUNDIDAD DE LA LECTURA. No te quedes en lo genérico. Estudia de verdad lo que la persona escribió y aplica:
+- BIODESCODIFICACIÓN: decodifica el sentido emocional/biológico de la herida y de lo que se repite (conflictos de desvalorización, abandono, territorio, protección, silencio; cómo el cuerpo o los síntomas guardan la memoria; lealtades familiares invisibles). Con cuidado, sin diagnosticar ni alarmar.
+- MEMORIA TRANSGENERACIONAL: qué lealtad o patrón del árbol se está transformando en la persona.
+- ESTUDIO DE LOS LUGARES MENCIONADOS: si la persona nombra una ciudad, país, río, cerro, pueblo o región, habla de su memoria histórica y espiritual (pueblos originarios, heridas de conquista, aguas, sitios sagrados) y de qué pide ser recordado o custodiado ahí. Si no menciona un lugar concreto, invítala a investigarlo.
 
-Los demás campos son cortos y de apoyo (no repiten la síntesis): "objetivo" (uno exacto), "primeraMision" (1-2 frases), "frase" (una línea memorable), "pasos" (3 pasos concretos).
+La pieza central es "sintesis": una GRAN SÍNTESIS integradora, un solo texto de EXACTAMENTE 2 párrafos. Teje, como una sola lectura fluida y elevada: qué vino a sanar (la herida/el veneno), cómo se transmuta en conciencia, y qué medicina nace para la Red. Prosa de guía espiritual, cálida, en segunda persona ("tú"), citando algo de lo que escribió. Sin encabezados ni viñetas.
+
+Además, escribe una lectura EXTENSA y reveladora para cada uno de los 4 planos (planoPersonal, planoLinaje, planoTerritorio, planoRed), de 4 a 6 frases cada una, guiando desde ese pilar específico (no repitas la síntesis: profundiza distinto en cada plano).
+
+Los campos de apoyo son cortos: "objetivo" (uno exacto), "primeraMision" (1-2 frases), "frase" (una línea memorable), "pasos" (3 pasos concretos).
 
 Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin texto extra) con exactamente estas claves:
 {
-  "sintesis": "La Gran Síntesis: 2 párrafos (herida/veneno → conciencia → medicina para la Red). Prosa de guía, íntima y reveladora.",
+  "sintesis": "Gran Síntesis: 2 párrafos (herida/veneno → conciencia → medicina). Guía íntima, elevada, con biodescodificación.",
+  "planoPersonal": "PLANO PERSONAL (4-6 frases): sanar la memoria personal. Biodescodificación de la herida, cómo vive en el cuerpo/emoción, el don que esconde.",
+  "planoLinaje": "PLANO DEL LINAJE (4-6 frases): memoria transgeneracional, lealtades del árbol, patrón que termina en la persona, don heredado.",
+  "planoTerritorio": "PLANO DEL TERRITORIO (4-6 frases): estudio del lugar mencionado (o invitación a investigarlo): pueblos, aguas, heridas colectivas, qué custodiar.",
+  "planoRed": "PLANO DE LA RED (4-6 frases): cómo su proceso se vuelve servicio concreto, ser sol en la Tierra, irradiar la medicina.",
   "herida": "1-2 frases: la herida central, por si se necesita aparte.",
   "medicina": "1-2 frases: la medicina/servicio, por si se necesita aparte.",
-  "territorio": "1-2 frases: qué territorio le llama a investigar/custodiar.",
+  "territorio": "1-2 frases: qué territorio le llama.",
   "objetivo": "UNO de los 7 objetivos, con su nombre EXACTO: Formar Comunidad de Base | Irradiar la Clave del Recuerdo | Redescubrir la Historia Sagrada del Territorio | Convertirse en Guardián del Lugar | Atravesar la Catastro-fe | Prepararse para el Contacto con los Guías | Reencontrarse con la Hermandad Blanca y custodiar los archivos.",
   "primeraMision": "Una primera misión concreta y realizable (1-2 frases).",
   "frase": "Una frase de misión personal, breve, profunda y memorable, en primera persona.",
@@ -92,7 +103,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-        max_tokens: 2400,
+        max_tokens: 3600,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
       }),
@@ -126,6 +137,10 @@ export async function POST(req: Request) {
         patternLabel: "",
         patternText: String(report.patternText || ""),
         sintesis: String(report.sintesis || [report.herida, report.medicina].filter(Boolean).join("\n\n")),
+        planoPersonal: String(report.planoPersonal || ""),
+        planoLinaje: String(report.planoLinaje || ""),
+        planoTerritorio: String(report.planoTerritorio || ""),
+        planoRed: String(report.planoRed || ""),
         herida: String(report.herida || ""),
         medicina: String(report.medicina || ""),
         territorio: String(report.territorio || ""),

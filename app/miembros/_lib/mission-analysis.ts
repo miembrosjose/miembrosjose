@@ -19,6 +19,11 @@ export type MissionReport = {
   primeraMision: string
   frase: string
   pasos: string[]
+  /** Lecturas EXTENSAS por plano (se actualizan con cada revelación). */
+  planoPersonal: string
+  planoLinaje: string
+  planoTerritorio: string
+  planoRed: string
 }
 
 export type MissionAnalysis =
@@ -40,7 +45,7 @@ const KEYWORDS: Record<PatternId, string[]> = {
   servicio_palabra: ["enseñar", "ensenar", "escribir", "hablar", "compartir", "palabra", "comunidad", "servir", "servicio", "nodo", "irradiar"],
 }
 
-const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText" | "sintesis">> = {
+const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText" | "sintesis" | "planoPersonal" | "planoLinaje" | "planoTerritorio" | "planoRed">> = {
   abandono: {
     patternLabel: "Abandono y no pertenencia",
     herida: "En tus palabras late una memoria antigua: la de no pertenecer, la de sentirte de paso en un mundo que no terminó de reconocerte. Esa herida no vino a quebrarte, vino a enseñarte de qué está hecho un verdadero hogar. Lo que un día te faltó —ser visto, ser acogido, ser esperado— es exactamente lo que tu alma aprendió a nombrar con precisión. Ya no es un vacío: es una brújula.",
@@ -217,10 +222,32 @@ export function analyzeMission(): MissionAnalysis {
   // párrafos. Es lo que el Revelador muestra como lectura integrada.
   const sintesis = `${profile.herida}\n\n${profile.medicina}`
 
+  // Lecturas por plano (fallback local; la IA las genera más elevadas).
+  const linajeEntry = entries.find((e) => e.category === "linaje")?.answer.trim() ?? ""
+  const historiaEntry = entries.find((e) => e.category === "historia")?.answer.trim() ?? ""
+
+  const planoPersonal =
+    `${profile.herida}\n\n` +
+    `Mira esta herida también en el cuerpo y en la emoción: lo que un sistema aprende a callar suele guardarse en la garganta, en el pecho o en el vientre. ` +
+    `No es casualidad lo que se repite en ti; es una memoria pidiendo ser vista para dejar de gobernar.` +
+    (historiaEntry ? ` En tus palabras ya asoma: “${historiaEntry.slice(0, 140)}${historiaEntry.length > 140 ? "…" : ""}”.` : "")
+
+  const planoLinaje =
+    `Lo que atraviesas no empezó contigo: viene de tu árbol. En biodescodificación, muchos síntomas y repeticiones son lealtades invisibles a quienes vinieron antes —silencios, duelos no llorados, exclusiones, deudas—. ` +
+    `Tu tarea aquí es reconocer qué patrón se repite (abandono, escasez, sometimiento, silencio) y decidir, conscientemente, que termina en ti. ` +
+    (linajeEntry ? `Ya nombraste una huella: “${linajeEntry.slice(0, 140)}${linajeEntry.length > 140 ? "…" : ""}”. Ese es el hilo por donde tirar.` : "Abre tu bitácora de linaje e investiga tres generaciones: qué se repite, qué se calló, qué don también se hereda.")
+
+  const planoTerritorio = territorio
+
+  const planoRed =
+    `${profile.medicina}\n\n` +
+    `Ser sol en la Tierra es irradiar, desde tu propio proceso, exactamente lo que otros aún buscan. Tu objetivo más activo hoy es “${profile.objetivo}”: por ahí empieza tu servicio concreto a la Red. ` +
+    `No sanas a la Red desde la teoría, sino ofreciendo la medicina que ya destilaste en tu propia vida.`
+
   return {
     sufficient: true,
     entryCount,
-    report: { ...profile, patternText, territorio, sintesis },
+    report: { ...profile, patternText, territorio, sintesis, planoPersonal, planoLinaje, planoTerritorio, planoRed },
   }
 }
 
@@ -255,13 +282,18 @@ export function getLastRevelation(): SavedRevelation | null {
 /** Texto plano del informe (para guardar en bitácora o descargar). */
 export function reportToText(r: MissionReport): string {
   const sintesis = r.sintesis || [r.herida, r.medicina].filter(Boolean).join("\n\n")
-  return [
+  const parts = [
     "REVELADOR DE MISIÓN — Lectura personal",
     "",
     `LA REVELACIÓN\n${sintesis}`,
     `FRASE DE MISIÓN PERSONAL\n“${r.frase}”`,
     `OBJETIVO DE LOS 144.000 MÁS ACTIVO EN TI\n${r.objetivo}`,
-    `PRIMERA MISIÓN RECOMENDADA\n${r.primeraMision}`,
-    `SIGUIENTES PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
-  ].join("\n\n")
+  ]
+  if (r.planoPersonal) parts.push(`PLANO PERSONAL\n${r.planoPersonal}`)
+  if (r.planoLinaje) parts.push(`PLANO DEL LINAJE\n${r.planoLinaje}`)
+  if (r.planoTerritorio) parts.push(`PLANO DEL TERRITORIO\n${r.planoTerritorio}`)
+  if (r.planoRed) parts.push(`PLANO DE LA RED\n${r.planoRed}`)
+  parts.push(`PRIMERA MISIÓN RECOMENDADA\n${r.primeraMision}`)
+  parts.push(`SIGUIENTES PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`)
+  return parts.join("\n\n")
 }
