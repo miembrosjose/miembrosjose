@@ -59,7 +59,7 @@ const SECTION_DEFS: { key: keyof MissionReport | "pasos"; n: number; title: stri
   { key: "pasos", n: 8, title: "Siguientes tres pasos" },
 ]
 
-export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => void }) {
+export function MissionRevealer() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [analysis, setAnalysis] = useState<MissionAnalysis | null>(null)
   const [saved, setSaved] = useState(false)
@@ -134,8 +134,9 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
   const startMission = useCallback((id: string) => {
     setMissionState(id, "en_proceso")
     setStarted((prev) => new Set(prev).add(id))
-    onGoToMisiones?.()
-  }, [onGoToMisiones])
+    // Abre la bitácora en "Mis Misiones" para registrar la misión iniciada.
+    openGrandJournal("misiones")
+  }, [])
 
   const reset = useCallback(() => { setPhase("idle"); setSaved(false); refreshProgress() }, [refreshProgress])
 

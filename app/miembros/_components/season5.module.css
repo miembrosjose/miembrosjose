@@ -1338,3 +1338,11 @@
   background: rgba(217, 184, 102, 0.14) !important;
   color: var(--s5-gold-soft) !important;
 }
+
+/* Grilla de los 4 planos de la misión */
+.planoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.1rem;
+  margin-top: 1.6rem;
+}
