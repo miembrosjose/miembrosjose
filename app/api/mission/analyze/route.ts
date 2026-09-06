@@ -33,14 +33,16 @@ REGLAS ESTRICTAS:
 
 Escribe como un GUÍA ESPIRITUAL sabio y cálido, no como un resumen. Habla en segunda persona ("tú"), con imágenes, hondura y precisión. Cada texto debe REVELAR algo, no solo describir: nombra la herida con dignidad, muestra su sentido y ábrela hacia el servicio. Evita frases genéricas y clichés de autoayuda. Cita o parafrasea de vez en cuando lo que la persona escribió, para que se sienta vista.
 
-Extensión: patternText, herida, medicina y territorio deben tener entre 3 y 5 frases cada uno (párrafos ricos, evocadores). primeraMision, 1-2 frases concretas. frase, una sola línea memorable en primera persona. pasos, 3 pasos concretos y realizables.
+La pieza central es "sintesis": una GRAN SÍNTESIS integradora, un solo texto de EXACTAMENTE 2 párrafos (sepáralos con un renglón en blanco). Debe tejer, como una sola lectura fluida y reveladora: qué vino a sanar la persona (su herida / el veneno que la gobernó), cómo eso atravesado se transmuta en conciencia, y qué medicina nace de ahí para ofrecer a la Red. Es prosa de guía espiritual, evocadora, cálida y en segunda persona ("tú"), no una lista. Que se sienta escrita para esa persona: parafrasea algo de lo que escribió. NO uses encabezados ni viñetas dentro de "sintesis".
+
+Los demás campos son cortos y de apoyo (no repiten la síntesis): "objetivo" (uno exacto), "primeraMision" (1-2 frases), "frase" (una línea memorable), "pasos" (3 pasos concretos).
 
 Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin texto extra) con exactamente estas claves:
 {
-  "patternText": "Patrón central detectado: el hilo que aparece con más fuerza atravesando historia, linaje y territorio. Explica por qué es el eje de su misión (3-5 frases).",
-  "herida": "La herida personal o familiar que se está convirtiendo en conciencia. Nómbrala con respeto y muestra el don que esconde (3-5 frases).",
-  "medicina": "Cómo esa herida atravesada se vuelve medicina y servicio para la Red. Concreta y elevada a la vez (3-5 frases).",
-  "territorio": "Qué territorio o campo le llama y qué debe INVESTIGAR/custodiar (pueblos, aguas, cerros, memorias, heridas colectivas). Misional, no vago (3-5 frases).",
+  "sintesis": "La Gran Síntesis: 2 párrafos (herida/veneno → conciencia → medicina para la Red). Prosa de guía, íntima y reveladora.",
+  "herida": "1-2 frases: la herida central, por si se necesita aparte.",
+  "medicina": "1-2 frases: la medicina/servicio, por si se necesita aparte.",
+  "territorio": "1-2 frases: qué territorio le llama a investigar/custodiar.",
   "objetivo": "UNO de los 7 objetivos, con su nombre EXACTO: Formar Comunidad de Base | Irradiar la Clave del Recuerdo | Redescubrir la Historia Sagrada del Territorio | Convertirse en Guardián del Lugar | Atravesar la Catastro-fe | Prepararse para el Contacto con los Guías | Reencontrarse con la Hermandad Blanca y custodiar los archivos.",
   "primeraMision": "Una primera misión concreta y realizable (1-2 frases).",
   "frase": "Una frase de misión personal, breve, profunda y memorable, en primera persona.",
@@ -123,6 +125,7 @@ export async function POST(req: Request) {
       report: {
         patternLabel: "",
         patternText: String(report.patternText || ""),
+        sintesis: String(report.sintesis || [report.herida, report.medicina].filter(Boolean).join("\n\n")),
         herida: String(report.herida || ""),
         medicina: String(report.medicina || ""),
         territorio: String(report.territorio || ""),

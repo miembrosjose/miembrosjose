@@ -1357,3 +1357,20 @@
 }
 .planoReveal p { margin: 0 0 0.6rem; font-size: 0.95rem; line-height: 1.7; color: #e6e9f7; }
 .planoReveal p:last-child { margin-bottom: 0; }
+
+/* La Gran Síntesis del Revelador — texto integrado, más presencia */
+.sintesisBody p {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: #eef1fb;
+}
+.sintesisBody p:first-child::first-letter {
+  font-family: var(--font-cinzel), serif;
+  font-size: 2.4rem;
+  line-height: 1;
+  float: left;
+  margin: 0.15rem 0.5rem 0 0;
+  color: var(--s5-gold);
+}
+.sintesisBody p:last-child { margin-bottom: 0; }

@@ -48,17 +48,6 @@ h2{font-size:14px;color:#b8934a;letter-spacing:1px;margin:22px 0 4px;}p{font-siz
   w.document.open(); w.document.write(html); w.document.close()
 }
 
-const SECTION_DEFS: { key: keyof MissionReport | "pasos"; n: number; title: string }[] = [
-  { key: "patternText", n: 1, title: "Patrón central detectado" },
-  { key: "herida", n: 2, title: "Herida que se está transformando" },
-  { key: "medicina", n: 3, title: "Medicina que puedes ofrecer a la Red" },
-  { key: "territorio", n: 4, title: "Territorio o campo que te llama" },
-  { key: "objetivo", n: 5, title: "Objetivo de Los 144.000 más activo en ti" },
-  { key: "primeraMision", n: 6, title: "Primera misión recomendada" },
-  { key: "frase", n: 7, title: "Frase de misión personal" },
-  { key: "pasos", n: 8, title: "Siguientes tres pasos" },
-]
-
 export function MissionRevealer() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [analysis, setAnalysis] = useState<MissionAnalysis | null>(null)
@@ -231,18 +220,30 @@ export function MissionRevealer() {
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {SECTION_DEFS.map((s) => (
-                <div key={s.n} className={styles.revealerCard}>
-                  <div className={styles.revealerCardNum}>{String(s.n).padStart(2, "0")} · {s.title}</div>
-                  {s.key === "pasos" ? (
-                    <ol className={styles.revealerSteps}>{report.pasos.map((p, i) => <li key={i}>{p}</li>)}</ol>
-                  ) : s.key === "frase" ? (
-                    <p className={styles.revealerFrase}>“{report.frase}”</p>
-                  ) : (
-                    <p className={styles.revealerBody}>{report[s.key] as string}</p>
-                  )}
+              {/* La Gran Síntesis — lectura integrada (herida → veneno → medicina) */}
+              <div className={styles.revealerCard}>
+                <div className={styles.revealerCardNum}>La revelación</div>
+                <div className={styles.sintesisBody}>
+                  {(report.sintesis || [report.herida, report.medicina].filter(Boolean).join("\n\n"))
+                    .split(/\n\n+/).map((para, i) => <p key={i}>{para}</p>)}
                 </div>
-              ))}
+              </div>
+
+              {/* Frase de misión personal */}
+              {report.frase && (
+                <div className={styles.revealerCard}>
+                  <div className={styles.revealerCardNum}>Frase de misión personal</div>
+                  <p className={styles.revealerFrase}>“{report.frase}”</p>
+                </div>
+              )}
+
+              {/* Objetivo más activo */}
+              {report.objetivo && (
+                <div className={styles.revealerCard}>
+                  <div className={styles.revealerCardNum}>Objetivo de Los 144.000 más activo en ti</div>
+                  <p className={styles.revealerBody}>{report.objetivo}</p>
+                </div>
+              )}
             </div>
 
             {recos.length > 0 && (
@@ -262,6 +263,13 @@ export function MissionRevealer() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {report.pasos.length > 0 && (
+              <div className={styles.revealerCard} style={{ marginTop: "1.4rem" }}>
+                <div className={styles.revealerCardNum}>Siguientes pasos</div>
+                <ol className={styles.revealerSteps}>{report.pasos.map((p, i) => <li key={i}>{p}</li>)}</ol>
               </div>
             )}
 

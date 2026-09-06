@@ -10,6 +10,8 @@ import { loadEntries } from "./journal-store"
 export type MissionReport = {
   patternLabel: string
   patternText: string
+  /** Gran Síntesis: texto integrador (herida → veneno → medicina), 2 párrafos. */
+  sintesis: string
   herida: string
   medicina: string
   territorio: string
@@ -38,7 +40,7 @@ const KEYWORDS: Record<PatternId, string[]> = {
   servicio_palabra: ["enseñar", "ensenar", "escribir", "hablar", "compartir", "palabra", "comunidad", "servir", "servicio", "nodo", "irradiar"],
 }
 
-const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText">> = {
+const PROFILES: Record<PatternId, Omit<MissionReport, "territorio" | "patternText" | "sintesis">> = {
   abandono: {
     patternLabel: "Abandono y no pertenencia",
     herida: "En tus palabras late una memoria antigua: la de no pertenecer, la de sentirte de paso en un mundo que no terminó de reconocerte. Esa herida no vino a quebrarte, vino a enseñarte de qué está hecho un verdadero hogar. Lo que un día te faltó —ser visto, ser acogido, ser esperado— es exactamente lo que tu alma aprendió a nombrar con precisión. Ya no es un vacío: es una brújula.",
@@ -211,10 +213,14 @@ export function analyzeMission(): MissionAnalysis {
     "Reconocerlo es el primer acto de tu misión, porque aquello que aprendiste a atravesar en ti es precisamente lo que puedes ayudar a sanar en la Red. " +
     "Toma esta lectura como un espejo que acompaña, no como una sentencia que define."
 
+  // Gran Síntesis: teje herida (el veneno) → medicina en un solo texto de 2
+  // párrafos. Es lo que el Revelador muestra como lectura integrada.
+  const sintesis = `${profile.herida}\n\n${profile.medicina}`
+
   return {
     sufficient: true,
     entryCount,
-    report: { ...profile, patternText, territorio },
+    report: { ...profile, patternText, territorio, sintesis },
   }
 }
 
@@ -248,16 +254,14 @@ export function getLastRevelation(): SavedRevelation | null {
 
 /** Texto plano del informe (para guardar en bitácora o descargar). */
 export function reportToText(r: MissionReport): string {
+  const sintesis = r.sintesis || [r.herida, r.medicina].filter(Boolean).join("\n\n")
   return [
     "REVELADOR DE MISIÓN — Lectura personal",
     "",
-    `1. PATRÓN CENTRAL DETECTADO\n${r.patternText}`,
-    `2. HERIDA QUE SE ESTÁ TRANSFORMANDO\n${r.herida}`,
-    `3. MEDICINA QUE PUEDES OFRECER\n${r.medicina}`,
-    `4. TERRITORIO QUE TE LLAMA\n${r.territorio}`,
-    `5. OBJETIVO DE LOS 144.000 MÁS ACTIVO EN TI\n${r.objetivo}`,
-    `6. PRIMERA MISIÓN RECOMENDADA\n${r.primeraMision}`,
-    `7. FRASE DE MISIÓN PERSONAL\n“${r.frase}”`,
-    `8. SIGUIENTES 3 PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
+    `LA REVELACIÓN\n${sintesis}`,
+    `FRASE DE MISIÓN PERSONAL\n“${r.frase}”`,
+    `OBJETIVO DE LOS 144.000 MÁS ACTIVO EN TI\n${r.objetivo}`,
+    `PRIMERA MISIÓN RECOMENDADA\n${r.primeraMision}`,
+    `SIGUIENTES PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
   ].join("\n\n")
 }
