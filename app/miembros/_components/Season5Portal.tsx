@@ -11,6 +11,7 @@ import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
 import { OBJETIVOS_5 } from "../_lib/objetivos-data"
+import { getLastRevelation, REVELATION_CHANGED_EVENT, type MissionReport } from "../_lib/mission-analysis"
 import { MissionRevealer } from "./MissionRevealer"
 
 type Props = {
@@ -24,11 +25,15 @@ export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const revealerRef = useRef<HTMLDivElement>(null)
   const [bannerVideo, setBannerVideo] = useState<string>("")
+  const [reveal, setReveal] = useState<MissionReport | null>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
+    setReveal(getLastRevelation()?.report ?? null)
+    const onRev = () => setReveal(getLastRevelation()?.report ?? null)
+    window.addEventListener(REVELATION_CHANGED_EVENT, onRev)
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     rootRef.current?.scrollTo({ top: 0 })
@@ -37,6 +42,7 @@ export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener("keydown", onKey)
+      window.removeEventListener(REVELATION_CHANGED_EVENT, onRev)
     }
   }, [open])
 
@@ -111,14 +117,23 @@ export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
             etiquetas individuales. Son la arquitectura de misión de todos los miembros de la Red.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", marginTop: "1.6rem" }}>
-            {OBJETIVOS_5.map((o) => (
-              <article key={o.id} className={styles.actionCard}>
-                <p className={styles.actionCardKicker}>Objetivo {o.n}</p>
-                <h4 className={styles.actionCardName}>{o.title}</h4>
-                <p className={styles.sealPhrase} style={{ margin: "0.2rem 0 0.7rem" }}>{o.frase}</p>
-                {o.texto.map((p, i) => <p key={i} className={styles.actionCardText}>{p}</p>)}
-              </article>
-            ))}
+            {OBJETIVOS_5.map((o) => {
+              const activacion = reveal?.objetivos5?.find((x) => x.id === o.id)?.texto
+              return (
+                <article key={o.id} className={styles.actionCard}>
+                  <p className={styles.actionCardKicker}>Objetivo {o.n}</p>
+                  <h4 className={styles.actionCardName}>{o.title}</h4>
+                  <p className={styles.sealPhrase} style={{ margin: "0.2rem 0 0.7rem" }}>{o.frase}</p>
+                  {o.texto.map((p, i) => <p key={i} className={styles.actionCardText}>{p}</p>)}
+                  {activacion && (
+                    <div className={styles.planoReveal} style={{ marginTop: "1rem" }}>
+                      <p className={styles.pilarLabel}>Cómo se activa en ti</p>
+                      <p>{activacion}</p>
+                    </div>
+                  )}
+                </article>
+              )
+            })}
           </div>
 
           {/* Bloque destacado: todos participan */}

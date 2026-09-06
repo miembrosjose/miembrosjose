@@ -51,7 +51,6 @@ export function MissionRevealer() {
   const [analysis, setAnalysis] = useState<MissionAnalysis | null>(null)
   const [saved, setSaved] = useState(false)
   const [source, setSource] = useState<"ia" | "local" | null>(null)
-  const [started, setStarted] = useState<Set<string>>(new Set())
   const [prog, setProg] = useState(() => bankProgress())
   const [changed, setChanged] = useState(false) // la bitácora cambió desde la última lectura
 
@@ -117,16 +116,6 @@ export function MissionRevealer() {
     })
     setSaved(true)
   }, [analysis])
-
-  // Registra una acción de misión en la bitácora (sección Mis Misiones) y la abre.
-  const registerAction = useCallback((objetivo: string, accion: string, idx: number) => {
-    upsertAnswer({
-      category: "misiones", source: `accion_revelador_${idx}`, sourceLabel: `Acción de misión · ${objetivo}`,
-      prompt: objetivo, answer: accion, isPrivate: true,
-    })
-    setStarted((prev) => new Set(prev).add(String(idx)))
-    openGrandJournal("misiones")
-  }, [])
 
   const reset = useCallback(() => { setPhase("idle"); setSaved(false); refreshProgress() }, [refreshProgress])
 
@@ -229,31 +218,16 @@ export function MissionRevealer() {
                 </div>
               </div>
 
-              {/* 2 · Códigos detectados */}
-              {report.codigos?.length > 0 && (
-                <div className={styles.revealerCard}>
-                  <div className={styles.revealerCardNum}>Códigos detectados en tu bitácora</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "0.3rem" }}>
-                    {report.codigos.map((c, i) => (
-                      <div key={i} className={styles.codigoRow}>
-                        <span className={styles.codigoNombre}>{c.nombre}</span>
-                        <span className={styles.codigoFlow}><em>{c.veneno}</em> → <strong>{c.medicina}</strong> → {c.servicio}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 3 · Los 4 pilares de tu servicio */}
+              {/* 2 · Los 4 pilares de tu servicio */}
               {(report.planoPersonal || report.planoLinaje || report.planoTerritorio || report.planoRed) && (
                 <div className={styles.revealerCard}>
                   <div className={styles.revealerCardNum}>Los 4 pilares de tu servicio</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", marginTop: "0.4rem" }}>
                     {[
-                      { l: "Misión personal — sanación, perdón y medicina interior", t: report.planoPersonal, tab: "historia" },
-                      { l: "Misión con el linaje — árbol, patrones heredados y nueva generación", t: report.planoLinaje, tab: "linaje" },
-                      { l: "Misión con el territorio — raíz, memoria ancestral y custodia", t: report.planoTerritorio, tab: "territorio" },
-                      { l: "Misión con la Red — comunidad, transmisión, servicio y contacto", t: report.planoRed, tab: "" },
+                      { l: "Pilar personal — el alma que recuerda", t: report.planoPersonal, tab: "historia" },
+                      { l: "Pilar del linaje — la sangre y su memoria", t: report.planoLinaje, tab: "linaje" },
+                      { l: "Pilar del territorio — la Tierra que te sostiene", t: report.planoTerritorio, tab: "territorio" },
+                      { l: "Pilar de la Red — el tejido de conciencias", t: report.planoRed, tab: "" },
                     ].filter((p) => p.t).map((p, i) => (
                       <div key={i}>
                         <p className={styles.pilarLabel}>{p.l}</p>
@@ -269,30 +243,7 @@ export function MissionRevealer() {
                 </div>
               )}
 
-              {/* 4 · Cómo se activan en ti los 5 objetivos */}
-              {report.objetivos5?.length > 0 && (
-                <div className={styles.revealerCard}>
-                  <div className={styles.revealerCardNum}>Cómo se activan en ti los objetivos de Los 144.000</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", marginTop: "0.4rem" }}>
-                    {report.objetivos5.map((o, i) => (
-                      <div key={i}>
-                        <p className={styles.pilarLabel}>{i + 1}. {o.label}</p>
-                        <p className={styles.revealerBody}>{o.texto}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 5 · Punto de entrada a tu servicio */}
-              {report.puntoEntrada && (
-                <div className={styles.revealerCard} style={{ borderLeft: "3px solid var(--s5-gold)" }}>
-                  <div className={styles.revealerCardNum}>Punto de entrada a tu servicio</div>
-                  <p className={styles.revealerBody}>{report.puntoEntrada}</p>
-                </div>
-              )}
-
-              {/* 7 · Frase de misión personal */}
+              {/* 3 · Frase de misión personal */}
               {report.frase && (
                 <div className={styles.revealerCard}>
                   <div className={styles.revealerCardNum}>Frase de misión personal</div>
@@ -300,34 +251,6 @@ export function MissionRevealer() {
                 </div>
               )}
             </div>
-
-            {/* 6 · Acciones de misión (por los 5 objetivos) */}
-            {report.acciones5?.length > 0 && (
-              <div style={{ marginTop: "1.8rem" }}>
-                <p className={styles.kicker} style={{ marginBottom: "0.8rem" }}>Acciones de misión · próximos actos de servicio</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                  {report.acciones5.map((a, i) => (
-                    <div key={i} className={styles.revealerCard} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-                      <div style={{ flex: "1 1 260px" }}>
-                        <div className={styles.revealerCardNum} style={{ marginBottom: 2 }}>{a.objetivo}</div>
-                        <div style={{ color: "#eef1fb", lineHeight: 1.6 }}>{a.accion}</div>
-                      </div>
-                      <button type="button" className={styles.missionShare} style={{ padding: "0.6rem 1rem" }}
-                        onClick={() => registerAction(a.objetivo, a.accion, i)} disabled={started.has(String(i))}>
-                        {started.has(String(i)) ? "Registrada" : <>Registrar en mi bitácora <ArrowRight size={13} /></>}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {report.pasos.length > 0 && (
-              <div className={styles.revealerCard} style={{ marginTop: "1.4rem" }}>
-                <div className={styles.revealerCardNum}>Siguientes pasos</div>
-                <ol className={styles.revealerSteps}>{report.pasos.map((p, i) => <li key={i}>{p}</li>)}</ol>
-              </div>
-            )}
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", justifyContent: "center", marginTop: "1.8rem" }}>
               <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={save} disabled={saved}>

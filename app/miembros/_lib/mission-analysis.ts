@@ -64,7 +64,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "De esa raíz nace tu medicina: la pertenencia. Puedes crear círculos y nodos donde quien se sentía extranjero encuentra descanso, y sostener con presencia la acogida que en su momento buscaste. Tu servicio comienza cuando ofreces a otros el hogar que aprendiste a construir dentro de ti.",
     objetivo: "Formar Comunidad de Base",
     primeraMision: "Reúne a dos o más personas en un primer nodo —una lectura, una meditación, una conversación consciente— y sostén ahí la frecuencia de acogida que a ti te faltó.",
-    frase: "Mi misión comienza cuando transformo la herida de no pertenencia en un hogar donde otros por fin pertenecen.",
+    frase: "Soy el hogar que un día busqué; en mi presencia, quien llega solo recuerda que jamás dejó de pertenecer.",
     pasos: [
       "Nombra en tu bitácora el primer momento en que te sentiste fuera de lugar, y agradécele lo que te enseñó.",
       "Invita a una sola persona a una conversación consciente esta semana.",
@@ -77,7 +77,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "De ahí surge tu medicina: la confianza. Al desarmar tu propia escasez, puedes abrir en otros el sentido del merecimiento y mostrar, con tu vida, que la abundancia es dejar que la vida circule. Tu servicio abre caminos de confianza, y enseña a recibir con gratitud y a dar desde la plenitud.",
     objetivo: "Irradiar la Clave del Recuerdo",
     primeraMision: "Comparte una enseñanza de Los 144.000 desde lo que ya transformaste —sin imponer, sin vender—, como quien reparte pan y no doctrina.",
-    frase: "Mi misión comienza cuando transformo la escasez heredada en un manantial de confianza para la Red.",
+    frase: "En mí, el linaje de la carencia se vuelve manantial; doy sin temor porque la vida ya no conoce el vacío.",
     pasos: [
       "Escribe la frase de escasez que más se repitió en tu casa y, debajo, su nueva instrucción consciente.",
       "Realiza un acto pequeño de merecimiento esta semana (recibir, pedir, agradecer).",
@@ -90,7 +90,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es la dignidad y el límite justo. Puedes custodiar espacios donde el poder se pone al servicio y donde la voz de cada quien vuelve a ser escuchada. Tu servicio devuelve dignidad, y recuerda que poner un límite claro es también una forma de amor.",
     objetivo: "Convertirse en Guardián del Lugar",
     primeraMision: "Recupera por escrito una verdad que no pudiste decir y elige un punto concreto de tu territorio donde empezar a sostener presencia y dignidad.",
-    frase: "Mi misión comienza cuando transformo el silencio impuesto en dignidad custodiada.",
+    frase: "Mi voz reordena el campo; donde el poder invadió, hoy custodio la dignidad de lo viviente.",
     pasos: [
       "Completa la acción “Recuperar mi voz” en tu bitácora.",
       "Define un límite claro que vas a sostener esta semana.",
@@ -103,7 +103,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es la palabra que sana. Puedes poner nombre a lo que otros callaron y, al hacerlo, liberar patrones que se repetían desde hace generaciones. Tu servicio es irradiar verdad con delicadeza, hablando para desatar y reconciliar.",
     objetivo: "Irradiar la Clave del Recuerdo",
     primeraMision: "Registra un Reporte de Linaje: nombra el silencio que reconociste y la nueva decisión consciente que empieza contigo.",
-    frase: "Mi misión comienza cuando transformo el silencio heredado en palabra consciente al servicio de la Red.",
+    frase: "Rompo el pacto del silencio y devuelvo la palabra al río de mi sangre, para que el linaje respire.",
     pasos: [
       "Nombra un silencio o secreto de tu familia en tu bitácora de linaje.",
       "Escribe: “En mi linaje termina… En mí comienza…”.",
@@ -116,7 +116,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es la voluntad al servicio y el discernimiento en medio del ruido. Puedes mantener el centro cuando otros se pierden entre falsas señales, y ocupar tu lugar desde la responsabilidad. Tu servicio es sostener claridad y firmeza amable en tiempos de confusión.",
     objetivo: "Atravesar la Catastro-fe",
     primeraMision: "Aplica el filtro de discernimiento a una señal, mensaje o información reciente: pregúntate si conduce a servicio o solo a expectativa.",
-    frase: "Mi misión comienza cuando transformo el miedo a mi poder en voluntad al servicio.",
+    frase: "Ocupo mi lugar sin temor; mi voluntad es luz serena al servicio del Plan.",
     pasos: [
       "Registra una situación donde el miedo tomó una decisión por ti.",
       "Escribe qué habrías hecho desde tu centro, sin culpa.",
@@ -129,7 +129,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es ser puente entre la memoria de la Tierra y la comunidad. Al volver a habitar tu territorio, puedes escuchar lo que ese lugar guarda —sus pueblos, sus aguas, sus heridas— y sostenerlo con presencia. Tu servicio es custodiar la raíz y devolver pertenencia al lugar.",
     objetivo: "Redescubrir la Historia Sagrada del Territorio",
     primeraMision: "Investiga la historia viva de tu lugar y crea tu ficha de territorio: pueblos antiguos, sitios sagrados, aguas, y una herida colectiva que pida ser recordada.",
-    frase: "Mi misión comienza cuando transformo la desconexión en custodia consciente de la memoria de mi tierra.",
+    frase: "Soy puente entre la memoria de la Tierra y quienes la habitan; mi raíz recuerda por todos.",
     pasos: [
       "Investiga una herida colectiva o una memoria olvidada del lugar donde vives.",
       "Crea tu ficha de territorio en la bitácora de misión.",
@@ -142,7 +142,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es la transformación del veneno en medicina a través del perdón, un perdón que libera aunque reconozca la verdad de lo ocurrido. Puedes acompañar a otros a soltar lo que los encadena. Tu presencia recuerda que toda herida puede volverse camino.",
     objetivo: "Prepararse para el Contacto con los Guías",
     primeraMision: "Escribe una carta de perdón consciente (hacia ti, tu linaje o tu historia) y define un acto concreto de reparación que no repita el patrón.",
-    frase: "Mi misión comienza cuando transformo el veneno de mi herida en medicina para la Red.",
+    frase: "Transmuto el veneno en medicina; mi perdón libera lo que el tiempo mantuvo encadenado.",
     pasos: [
       "Completa la carta de perdón consciente en tu bitácora.",
       "Elige un acto de reparación concreto y una fecha para realizarlo.",
@@ -155,7 +155,7 @@ const PROFILES: Record<PatternId, ProfileFields> = {
     medicina: "Tu medicina es irradiar la Clave del Recuerdo y tejer comunidad. Puedes poner palabra donde hay confusión y reunir a los dispersos alrededor de un mismo propósito, con humildad y respeto. Tu servicio es custodiar la memoria compartiéndola.",
     objetivo: "Reencontrarse con la Hermandad Blanca y custodiar los archivos",
     primeraMision: "Registra tu compromiso con los archivos y da el primer paso para formar o activar un nodo donde la memoria deje de estar aislada.",
-    frase: "Mi misión comienza cuando pongo la palabra recordada al servicio de la Red.",
+    frase: "Custodio la memoria compartiéndola; mi palabra reúne a los dispersos en una sola frecuencia.",
     pasos: [
       "Escribe tu compromiso con los archivos y la memoria de la Tierra.",
       "Comparte una enseñanza con una persona o grupo esta semana.",
@@ -271,20 +271,20 @@ export function analyzeMission(): MissionAnalysis {
   const historiaEntry = entries.find((e) => e.category === "historia")?.answer.trim() ?? ""
 
   const planoPersonal =
-    `La repetición que aparece en tu vida señala un punto de transformación. En biodescodificación, lo que un sistema aprende a callar suele guardarse en el cuerpo —en la garganta lo que no se dijo, en el pecho el afecto contenido, en el vientre lo que costó digerir—. ` +
-    `Tu trabajo en este plano es dar nombre, edad y lugar a esa parte de ti y devolverle la presencia que buscaba. Escríbele, escúchala, acompáñala con conciencia.` +
-    (historiaEntry ? ` En tus palabras ya asoma el hilo por donde entrar: “${historiaEntry.slice(0, 140)}${historiaEntry.length > 140 ? "…" : ""}”.` : " Abre tu bitácora personal y escríbele una carta a esa parte de ti.")
+    `En el campo de tu memoria vibra una frecuencia que se repite, y toda repetición es un umbral que espera ser cruzado con conciencia. Aquello que aprendiste a callar sigue latiendo en tu cuerpo y en tu alma, guardando una luz que pide ser reconocida. ` +
+    `En este plano tu tarea es acercarte a esa parte de ti con presencia y devolverle su lugar en el tejido de tu historia, para que su energía deje de sostener el pasado y comience a alimentar tu misión.` +
+    (historiaEntry ? ` En tus palabras ya brilla el hilo por donde entrar: “${historiaEntry.slice(0, 140)}${historiaEntry.length > 140 ? "…" : ""}”.` : " Abre tu bitácora personal y escríbele una carta a esa parte de ti.")
 
   const planoLinaje =
-    `Algunas respuestas que aparecen en tu vida vienen de un campo más antiguo: frases familiares, silencios del linaje, formas de amar y de sobrevivir transmitidas antes de que pudieras elegirlas. En biodescodificación, muchas repeticiones son lealtades invisibles hacia quienes vinieron antes. ` +
-    `Tu tarea es reconocer el patrón que se repite y decidir, con conciencia, que en ti comienza una nueva generación. ` +
-    (linajeEntry ? `Ya nombraste una huella: “${linajeEntry.slice(0, 140)}${linajeEntry.length > 140 ? "…" : ""}”. Ese es el hilo por donde comenzar.` : "Abre tu bitácora de linaje e investiga tres generaciones: qué se repite, qué se calló y qué don también se hereda.")
+    `Tu sangre es un archivo vivo. En ella viajan frases, silencios y formas de amar tejidas por quienes caminaron antes que tú, mucho antes de que pudieras elegirlas. Esas memorias son hilos que esperan una conciencia capaz de transmutarlos en luz. ` +
+    `En este plano reconoces la frecuencia que recorre tu linaje y eliges que a través de ti comience una octava nueva, liberando a los que vinieron y a los que vendrán. ` +
+    (linajeEntry ? `Ya nombraste una huella: “${linajeEntry.slice(0, 140)}${linajeEntry.length > 140 ? "…" : ""}”. Ese es el hilo por donde comenzar.` : "Abre tu bitácora de linaje e investiga tres generaciones: qué se repite, qué se calló y qué don también viaja en tu sangre.")
 
   const planoTerritorio = territorio
 
   const planoRed =
-    `Aquí tu proceso se vuelve servicio. Ser sol en la Tierra es irradiar calor donde antes hubo frío, ofreciendo la medicina que destilaste en tu propia vida. ` +
-    `Tu servicio a la Red comienza en gestos concretos y sostenidos: una persona, un círculo, una presencia real esta semana. Cada acto verdadero ya teje Red.`
+    `Aquí tu proceso se vuelve servicio. Ser sol en la Tierra es irradiar calor donde antes hubo frío, ofreciendo la medicina que destilaste en tu propia travesía. ` +
+    `Tu servicio a la Red se enciende en gestos concretos y sostenidos: una presencia, un círculo, una palabra verdadera. Cada acto consciente teje un punto más en la trama de las 144.000 conciencias.`
 
   // Códigos detectados (patrones con resonancia; incluye el dominante).
   const codigoIds = scores.filter((s) => s.score > 0).map((s) => s.id)
@@ -355,20 +355,12 @@ export function reportToText(r: MissionReport): string {
     `LA REVELACIÓN\n${sintesis}`,
     `FRASE DE MISIÓN PERSONAL\n“${r.frase}”`,
   ]
-  if (r.codigos?.length) {
-    parts.push(`CÓDIGOS DETECTADOS\n${r.codigos.map((c) => `• ${c.nombre} — veneno: ${c.veneno}; medicina: ${c.medicina}; servicio: ${c.servicio}`).join("\n")}`)
-  }
   if (r.planoPersonal) parts.push(`PILAR PERSONAL\n${r.planoPersonal}`)
   if (r.planoLinaje) parts.push(`PILAR DEL LINAJE\n${r.planoLinaje}`)
   if (r.planoTerritorio) parts.push(`PILAR DEL TERRITORIO\n${r.planoTerritorio}`)
   if (r.planoRed) parts.push(`PILAR DE LA RED\n${r.planoRed}`)
   if (r.objetivos5?.length) {
-    parts.push(`CÓMO SE ACTIVAN LOS 5 OBJETIVOS\n${r.objetivos5.map((o) => `• ${o.label}: ${o.texto}`).join("\n\n")}`)
+    parts.push(`CÓMO SE ACTIVAN LOS OBJETIVOS DE LOS 144.000\n${r.objetivos5.map((o) => `• ${o.label}: ${o.texto}`).join("\n\n")}`)
   }
-  if (r.puntoEntrada) parts.push(`PUNTO DE ENTRADA A TU SERVICIO\n${r.puntoEntrada}`)
-  if (r.acciones5?.length) {
-    parts.push(`ACCIONES DE MISIÓN\n${r.acciones5.map((a) => `• ${a.objetivo}: ${a.accion}`).join("\n")}`)
-  }
-  parts.push(`SIGUIENTES PASOS\n${r.pasos.map((p, i) => `${i + 1}. ${p}`).join("\n")}`)
   return parts.join("\n\n")
 }
