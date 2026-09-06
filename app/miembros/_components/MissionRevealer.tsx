@@ -5,10 +5,10 @@
 // la bitácora del usuario y devuelve una lectura de su misión. Muestra el
 // progreso real de la bitácora para motivar a completarla. Español neutral.
 
-import { useCallback, useState } from "react"
-import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, RotateCcw, BookOpen } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { Sparkles, ShieldCheck, Save, FileDown, ArrowRight, BookOpen, RotateCcw } from "lucide-react"
 import styles from "./season5.module.css"
-import { analyzeMission, reportToText, saveLastRevelation, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
+import { analyzeMission, reportToText, saveLastRevelation, getLastRevelation, type MissionAnalysis, type MissionReport } from "../_lib/mission-analysis"
 import { upsertAnswer, loadEntries } from "../_lib/journal-store"
 import { openGrandJournal } from "../_lib/journal-registry"
 import { bankProgress, totalAnswered } from "../_lib/question-bank"
@@ -17,12 +17,11 @@ import { setMissionState } from "../_lib/missions"
 
 type Phase = "idle" | "consent" | "loading" | "result" | "insufficient"
 
+// Solo las categorías que ALIMENTAN la revelación (lo demás viene después).
 const PROGRESS_CATS: { id: string; label: string }[] = [
   { id: "historia", label: "Historia personal" },
   { id: "linaje", label: "Linaje" },
   { id: "territorio", label: "Territorio" },
-  { id: "acciones", label: "Acciones alquímicas" },
-  { id: "misiones", label: "Misiones" },
 ]
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
@@ -67,8 +66,22 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
   const [source, setSource] = useState<"ia" | "local" | null>(null)
   const [started, setStarted] = useState<Set<string>>(new Set())
   const [prog, setProg] = useState(() => bankProgress())
+  const [changed, setChanged] = useState(false) // la bitácora cambió desde la última lectura
 
   const refreshProgress = useCallback(() => setProg(bankProgress()), [])
+
+  // Al montar: si ya hay una revelación guardada, mostrarla automáticamente
+  // (persiste siempre; no hay que volver a generarla al navegar). Si la bitácora
+  // cambió desde entonces, avisamos para que pueda actualizar.
+  useEffect(() => {
+    const last = getLastRevelation()
+    if (last?.report) {
+      setAnalysis({ sufficient: true, entryCount: 0, report: last.report })
+      setSource(last.source === "ia" ? "ia" : "local")
+      setPhase("result")
+      if (typeof last.answered === "number") setChanged(totalAnswered() !== last.answered)
+    }
+  }, [])
 
   const reveal = useCallback(() => {
     refreshProgress()
@@ -93,7 +106,8 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
       if (data?.configured && data?.sufficient && data?.report) {
         const rep = data.report as MissionReport
         setAnalysis({ sufficient: true, entryCount: entries.length, report: rep })
-        saveLastRevelation(rep); setSource("ia"); setPhase("result"); return
+        saveLastRevelation(rep, { answered: totalAnswered(), source: "ia" })
+        setSource("ia"); setChanged(false); setPhase("result"); return
       }
       if (data?.configured && data?.sufficient === false) {
         setAnalysis({ sufficient: false, entryCount: entries.length }); setPhase("insufficient"); return
@@ -101,7 +115,10 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
     } catch { /* proveedor caído → local */ }
     const local = analyzeMission()
     setAnalysis(local); setSource("local")
-    if (local.sufficient) { saveLastRevelation(local.report); setPhase("result") } else setPhase("insufficient")
+    if (local.sufficient) {
+      saveLastRevelation(local.report, { answered: totalAnswered(), source: "local" })
+      setChanged(false); setPhase("result")
+    } else setPhase("insufficient")
   }, [])
 
   const save = useCallback(() => {
@@ -206,6 +223,12 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
 
         {phase === "result" && report && (
           <div style={{ marginTop: "0.4rem" }}>
+            {changed && (
+              <div className={styles.cautionBox} style={{ marginTop: 0, marginBottom: "1.2rem" }}>
+                <RotateCcw size={16} />
+                <p>Tu bitácora cambió desde esta lectura. Puedes <strong>Actualizar revelación</strong> para reflejar lo nuevo.</p>
+              </div>
+            )}
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {SECTION_DEFS.map((s) => (
                 <div key={s.n} className={styles.revealerCard}>
@@ -248,10 +271,9 @@ export function MissionRevealer({ onGoToMisiones }: { onGoToMisiones?: () => voi
               <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={() => downloadReport(report)}>
                 <FileDown size={13} /> Descargar análisis
               </button>
-              <button type="button" className={styles.missionShare} style={{ padding: "0.7rem 1.1rem" }} onClick={runAnalysis}>
+              <button type="button" className={`${styles.missionShare} ${changed ? styles.missionShareAlert : ""}`} style={{ padding: "0.7rem 1.1rem" }} onClick={runAnalysis}>
                 <RotateCcw size={13} /> Actualizar revelación
               </button>
-              <button type="button" className={styles.stateChip} style={{ padding: "0.7rem 1.1rem" }} onClick={reset}>Cerrar</button>
             </div>
             <p className={styles.revealerHint} style={{ textAlign: "center", marginTop: "1.1rem" }}>
               {source === "ia" ? "Lectura generada con inteligencia de análisis · privada, no publicada." : "Lectura generada localmente en tu dispositivo."}

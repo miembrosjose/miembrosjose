@@ -185,19 +185,27 @@ export function analyzeMission(): MissionAnalysis {
 const LAST_KEY = "los144k_last_revelation"
 export const REVELATION_CHANGED_EVENT = "app:revelation-changed"
 
-export function saveLastRevelation(r: MissionReport): void {
+type SavedRevelation = { report: MissionReport; at: string; answered: number | null; source: string | null }
+
+export function saveLastRevelation(r: MissionReport, meta?: { answered?: number; source?: string }): void {
   if (typeof window === "undefined") return
   try {
-    localStorage.setItem(LAST_KEY, JSON.stringify({ report: r, at: new Date().toISOString() }))
+    const payload: SavedRevelation = {
+      report: r,
+      at: new Date().toISOString(),
+      answered: meta?.answered ?? null,
+      source: meta?.source ?? null,
+    }
+    localStorage.setItem(LAST_KEY, JSON.stringify(payload))
     window.dispatchEvent(new CustomEvent(REVELATION_CHANGED_EVENT))
   } catch { /* ignora */ }
 }
 
-export function getLastRevelation(): { report: MissionReport; at: string } | null {
+export function getLastRevelation(): SavedRevelation | null {
   if (typeof window === "undefined") return null
   try {
     const raw = localStorage.getItem(LAST_KEY)
-    return raw ? JSON.parse(raw) : null
+    return raw ? (JSON.parse(raw) as SavedRevelation) : null
   } catch { return null }
 }
 

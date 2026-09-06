@@ -1331,3 +1331,10 @@
 .mapaItemLabel { font-family: var(--font-mono), monospace; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--s5-gold); margin: 0 0 0.3rem; }
 .mapaItemText { margin: 0; font-size: 0.95rem; line-height: 1.6; color: #d9dced; }
 .mapaEmpty { margin-top: 1.4rem; padding: 1.4rem; border: 1px dashed rgba(167,139,202,0.3); border-radius: 16px; text-align: center; color: #8b90b4; font-size: 0.95rem; line-height: 1.6; }
+
+/* Botón "Actualizar revelación" resaltado cuando la bitácora cambió. */
+.missionShareAlert {
+  border-color: var(--s5-gold) !important;
+  background: rgba(217, 184, 102, 0.14) !important;
+  color: var(--s5-gold-soft) !important;
+}
