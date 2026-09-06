@@ -83,7 +83,7 @@ export const CUSTODIA: CustodiaMision[] = [
   },
   {
     id: "m2_territorio", n: 2, title: "ESCUCHAR EL TERRITORIO",
-    text: "El territorio no es un escenario. Es un archivo vivo.",
+    text: "El territorio guarda memoria y participa del proceso de la Red.",
     action: "Investiga historia ancestral, pueblos antiguos, lugares sagrados y heridas colectivas del lugar donde vives.",
     fields: ["Lugar / territorio:", "Pueblos antiguos y sitios sagrados:", "Herida colectiva que reconozco:"],
     result: "Ficha de territorio.", sealId: "territorio", foro: FORUM_TITLES.territorio,

@@ -135,7 +135,7 @@ export function MissionRevealer() {
   return (
     <section className={`${styles.section} ${styles.reveal}`}>
       <p className={styles.kicker}>Inteligencia de misión</p>
-      <h2 className={styles.sectionTitle}><Sparkles size={20} style={{ verticalAlign: "-3px", marginRight: 8, color: "var(--s5-gold)" }} />REVELADOR DE MISIÓN</h2>
+      <h2 className={styles.sectionTitle}><Sparkles size={20} style={{ verticalAlign: "-3px", marginRight: 8, color: "var(--s5-gold)" }} />REVELACIÓN DE MISIÓN</h2>
       <p className={styles.sectionIntro}>
         Inteligencia de análisis para reconocer tu servicio dentro de la Red. La misión no se inventa: se revela cuando
         tu historia, tu linaje, tu territorio y tus acciones comienzan a mostrar un mismo patrón. Este análisis lee tu
