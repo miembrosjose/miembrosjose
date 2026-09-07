@@ -98,6 +98,13 @@ export function LugaresContacto() {
     })
   }, [places, q, level, cat])
 
+  // Resultados en vivo del buscador del mapa (por nombre, país, ciudad o categoría).
+  const searchMatches = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    if (!needle) return []
+    return places.filter((p) => `${p.name} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${categoryLabel(p.category)} ${p.tags.join(" ")}`.toLowerCase().includes(needle)).slice(0, 8)
+  }, [places, q])
+
   const counters = useMemo(() => ({
     registrados: places.filter((p) => p.status === "published").length,
     oficiales: oficiales.length,
@@ -157,7 +164,8 @@ export function LugaresContacto() {
 
               <div style={{ marginTop: "1.4rem" }}>
                 {(view === "mapa" || view === "oficiales") && (
-                  <Filters q={q} setQ={setQ} level={level} setLevel={setLevel} cat={cat} setCat={setCat} isAdmin={isAdmin} />
+                  <Filters q={q} setQ={setQ} level={level} setLevel={setLevel} cat={cat} setCat={setCat} isAdmin={isAdmin}
+                    matches={searchMatches} onPickMatch={(p) => { setSelected(p); setQ("") }} />
                 )}
                 {loading && places.length === 0 && (
                   <p style={{ marginTop: "1.2rem", textAlign: "center", color: "#8b90b4", fontSize: "0.86rem" }}><Loader2 size={14} className="animate-spin" style={{ display: "inline", verticalAlign: "middle" }} /> Cargando lugares…</p>
@@ -231,20 +239,46 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
   )
 }
 
-function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin }: {
+function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPickMatch }: {
   q: string; setQ: (v: string) => void
   level: "todos" | "official" | "community" | "pending"; setLevel: (v: "todos" | "official" | "community" | "pending") => void
   cat: string; setCat: (v: string) => void; isAdmin: boolean
+  matches: ContactPlace[]; onPickMatch: (p: ContactPlace) => void
 }) {
+  const [focused, setFocused] = useState(false)
   const levels: { id: typeof level; label: string }[] = [
     { id: "todos", label: "Todos" }, { id: "official", label: "Oficiales" }, { id: "community", label: "Comunidad" },
     ...(isAdmin ? [{ id: "pending" as const, label: "Pendientes" }] : []),
   ]
+  const showList = focused && q.trim().length >= 1
   return (
     <div>
       <div style={{ position: "relative" }}>
         <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6a6f92" }} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar lugar, país, ciudad o etiqueta…" style={{ width: "100%", padding: "0.65rem 0.85rem 0.65rem 2.2rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.9rem", outline: "none" }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setTimeout(() => setFocused(false), 150)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (matches[0]) onPickMatch(matches[0]) } }}
+          placeholder="Buscar lugar, país, ciudad o categoría…" style={{ width: "100%", padding: "0.65rem 0.85rem 0.65rem 2.2rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.9rem", outline: "none" }} />
+        {showList && (
+          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 30, maxHeight: 260, overflowY: "auto", borderRadius: 10, border: "1px solid rgba(167,139,202,0.3)", background: "#14122c", boxShadow: "0 12px 34px rgba(0,0,0,0.65)" }}>
+            {matches.length === 0 ? (
+              <div style={{ padding: "0.6rem 0.8rem", fontSize: "0.76rem", color: "#6a6f92" }}>Sin coincidencias</div>
+            ) : matches.map((p) => {
+              const col = categoryColor(p.category)
+              return (
+                <button key={p.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onPickMatch(p)}
+                  style={{ display: "flex", alignItems: "center", gap: "0.55rem", width: "100%", textAlign: "left", padding: "0.55rem 0.8rem", background: "transparent", border: "none", borderBottom: "1px solid rgba(167,139,202,0.12)", cursor: "pointer" }}>
+                  <i style={{ width: 9, height: 9, borderRadius: "50%", background: col, boxShadow: `0 0 5px ${col}`, flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", color: "#eef1fb", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <span style={{ display: "block", color: "#8b90b4", fontSize: "0.66rem", fontFamily: "var(--font-mono,monospace)" }}>{p.country}{p.region ? ` · ${p.region}` : ""} · {categoryLabel(p.category).split(" / ")[0]}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.7rem" }}>
         {levels.map((l) => <button key={l.id} type="button" onClick={() => setLevel(l.id)} style={chip(level === l.id)}>{l.label}</button>)}
