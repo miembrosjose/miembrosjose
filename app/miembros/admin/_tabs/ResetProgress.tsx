@@ -4,9 +4,10 @@ import { useState, useTransition } from "react"
 import { inputCls, labelCls } from "./_shared"
 
 // Reinicia el avance de un usuario (por email) — pensado para pruebas.
-// Borra en el servidor su progreso de episodios, meditaciones, insignias y XP,
-// y marca su cuenta para que, en su próximo ingreso, su navegador limpie el
-// avance local (episodios, bitácora, sellos, misiones) y recargue una vez.
+// Borra en el servidor su progreso de episodios, meditaciones, insignias, XP y
+// las compras/desbloqueos de productos (user_product_access), y marca su cuenta
+// para que, en su próximo ingreso, su navegador limpie el avance local
+// (episodios, bitácora, sellos, misiones) y recargue una vez.
 export function ResetProgress() {
   const [email, setEmail] = useState("")
   const [confirm, setConfirm] = useState(false)
@@ -44,9 +45,9 @@ export function ResetProgress() {
           Reiniciar avance de un usuario
         </h2>
         <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-          Pensado para pruebas. Borra en el servidor el progreso de episodios, meditaciones, insignias y XP del usuario,
-          y marca su cuenta para que su navegador limpie el avance local (episodios, bitácora, sellos y misiones) en su
-          próximo ingreso. Esta acción no se puede deshacer.
+          Pensado para pruebas. Borra en el servidor el progreso de episodios, meditaciones, insignias, XP y las compras
+          o desbloqueos de productos (Biblioteca/Tienda) del usuario, y marca su cuenta para que su navegador limpie el
+          avance local (episodios, bitácora, sellos y misiones) en su próximo ingreso. Esta acción no se puede deshacer.
         </p>
       </div>
 

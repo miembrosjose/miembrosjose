@@ -11,7 +11,13 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const TABLES = ["user_episode_progress", "user_meditation_progress", "user_unlocked_achievements", "user_xp"]
+const TABLES = [
+  "user_episode_progress",
+  "user_meditation_progress",
+  "user_unlocked_achievements",
+  "user_xp",
+  "user_product_access", // compras/desbloqueos de productos (Biblioteca/Tienda) — pruebas
+]
 
 export async function POST(req: Request) {
   const auth = await requireAdmin()
