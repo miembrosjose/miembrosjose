@@ -20,7 +20,7 @@ import {
 import { upsertAnswer, entriesByCategory } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
-import { ProductCheckoutModal } from "./ProductCheckoutModal"
+import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
 
 const GOLD = "#e6cf95"
@@ -67,7 +67,6 @@ export function NumerologiaCosmica() {
   const [result, setResult] = useState<NumerologiaResultado | null>(null)
   const [hasSaved, setHasSaved] = useState(false)
   const [deep, setDeep] = useState<LecturaProfunda | null>(null)
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [manualUnlock, setManualUnlock] = useState(false)
 
   // form fields
@@ -79,7 +78,12 @@ export function NumerologiaCosmica() {
   const { products } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
   const numProduct = useMemo(() => findNumerologiaProduct(products), [products])
-  const unlocked = isAdminOverride || manualUnlock || (numProduct ? hasAccess(numProduct.id) : false)
+  // Para admin, hasAccess() devuelve TODO desbloqueado (override global). Eso
+  // impide probar el ciclo compra→reinicio, así que al admin lo tratamos como
+  // bloqueado por defecto y solo desbloquea con el botón manual (que el reinicio
+  // limpia). El usuario real depende de su compra en user_product_access.
+  const realOwned = numProduct ? hasAccess(numProduct.id) : false
+  const unlocked = isAdminOverride ? manualUnlock : (manualUnlock || realOwned)
   const precioLabel = numProduct && numProduct.price_cents > 0 ? money(numProduct.price_cents, numProduct.currency) : "US$ 20.00"
 
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -177,16 +181,6 @@ export function NumerologiaCosmica() {
     w.document.open(); w.document.write(html); w.document.close()
   }, [result, deep, unlocked, isAdminOverride])
 
-  const onProfundizar = useCallback(() => {
-    if (unlocked) { abrirDeep(); return }
-    // Con producto de DB con precio y bloqueado → checkout real.
-    // Cerramos el estudio para que el modal de pago quede al frente (un solo flujo).
-    if (numProduct && numProduct.price_cents > 0 && numProduct.is_locked) {
-      setOpen(false); setCheckoutOpen(true); return
-    }
-    // Sin checkout real todavía: queda en estado "pendiente" (lo muestra ResultView).
-  }, [unlocked, abrirDeep, numProduct])
-
   const activarManual = useCallback(() => {
     try { localStorage.setItem(MANUAL_UNLOCK_KEY, "1") } catch { /* privado */ }
     setManualUnlock(true)
@@ -232,24 +226,17 @@ export function NumerologiaCosmica() {
                   onGuardar={guardar}
                   onActualizar={() => { prefill(result); setStage("form") }}
                   unlocked={unlocked}
-                  hasCheckout={!!(numProduct && numProduct.price_cents > 0 && numProduct.is_locked)}
-                  precioLabel={precioLabel}
                   isAdmin={isAdminOverride}
-                  onProfundizar={onProfundizar}
+                  numProduct={numProduct}
+                  precioLabel={precioLabel}
+                  onOpenDeep={abrirDeep}
+                  onPurchased={abrirDeep}
                   onActivarManual={activarManual}
                 />
               ) : null}
             </div>
           </div>
         </Overlay>,
-        document.body,
-      )}
-      {checkoutOpen && numProduct && createPortal(
-        <ProductCheckoutModal
-          product={numProduct}
-          onClose={() => { setCheckoutOpen(false); setOpen(true) }}
-          onSuccess={() => { setCheckoutOpen(false); setOpen(true); setTimeout(() => abrirDeep(), 120) }}
-        />,
         document.body,
       )}
     </>
@@ -436,10 +423,10 @@ function Field({ label, hint, required, children }: { label: string; hint?: stri
 }
 
 // ── Resultado: 7 bloques ────────────────────────────────────────────────
-function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckout, precioLabel, isAdmin, onProfundizar, onActivarManual }: {
+function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, isAdmin, numProduct, precioLabel, onOpenDeep, onPurchased, onActivarManual }: {
   r: NumerologiaResultado; hasSaved: boolean; onGuardar: () => void; onActualizar: () => void
-  unlocked: boolean; hasCheckout: boolean; precioLabel: string; isAdmin: boolean
-  onProfundizar: () => void; onActivarManual: () => void
+  unlocked: boolean; isAdmin: boolean; numProduct: DbProduct | null; precioLabel: string
+  onOpenDeep: () => void; onPurchased: () => void; onActivarManual: () => void
 }) {
   const bloques = useMemo(() => {
     const c = num(r.caminoVida), a = num(r.alma), pe = num(r.personalidad), ex = num(r.expresion)
@@ -518,8 +505,8 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckou
 
       {/* Profundizar lectura — versión premium */}
       <ProfundizarBlock
-        unlocked={unlocked} hasCheckout={hasCheckout} precioLabel={precioLabel} isAdmin={isAdmin}
-        onProfundizar={onProfundizar} onActivarManual={onActivarManual}
+        unlocked={unlocked} isAdmin={isAdmin} numProduct={numProduct} precioLabel={precioLabel}
+        onOpenDeep={onOpenDeep} onPurchased={onPurchased} onActivarManual={onActivarManual}
       />
 
       {/* Cerraduras futuras */}
@@ -529,10 +516,11 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckou
 }
 
 // ── Bloque premium: PROFUNDIZAR LECTURA — USD 20 ─────────────────────────
-function ProfundizarBlock({ unlocked, hasCheckout, precioLabel, isAdmin, onProfundizar, onActivarManual }: {
-  unlocked: boolean; hasCheckout: boolean; precioLabel: string; isAdmin: boolean
-  onProfundizar: () => void; onActivarManual: () => void
+function ProfundizarBlock({ unlocked, isAdmin, numProduct, precioLabel, onOpenDeep, onPurchased, onActivarManual }: {
+  unlocked: boolean; isAdmin: boolean; numProduct: DbProduct | null; precioLabel: string
+  onOpenDeep: () => void; onPurchased: () => void; onActivarManual: () => void
 }) {
+  const purchasable = !!(numProduct && numProduct.price_cents > 0 && numProduct.is_locked)
   return (
     <div style={{
       position: "relative", marginTop: "2.4rem", padding: "clamp(1.3rem,4vw,1.9rem)", borderRadius: 18,
@@ -557,9 +545,9 @@ function ProfundizarBlock({ unlocked, hasCheckout, precioLabel, isAdmin, onProfu
         {unlocked ? (
           <div style={{ marginTop: "1.3rem" }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD, fontFamily: "var(--font-mono,monospace)" }}>
-              <Check size={13} /> {isAdmin ? "Acceso de administrador" : "Lectura desbloqueada"}
+              <Check size={13} /> Lectura desbloqueada
             </span>
-            <button type="button" onClick={onProfundizar} style={{ ...goldBtn, marginTop: "0.9rem" }}>
+            <button type="button" onClick={onOpenDeep} style={{ ...goldBtn, marginTop: "0.9rem" }}>
               <Sparkles size={16} /> Ver mi Revelación de Misión
             </button>
           </div>
@@ -569,19 +557,28 @@ function ProfundizarBlock({ unlocked, hasCheckout, precioLabel, isAdmin, onProfu
               <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.9rem", color: GOLD }}>{precioLabel}</span>
               <span style={{ fontSize: "0.62rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>Pago único</span>
             </div>
-            <button type="button" onClick={onProfundizar} style={goldBtn}>
-              <Lock size={15} /> Profundizar lectura — {precioLabel}
-            </button>
-            {!hasCheckout && (
-              <p style={{ margin: "0.9rem 0 0", fontSize: "0.72rem", lineHeight: 1.5, color: "#9297bb", fontFamily: "var(--font-mono,monospace)" }}>
+
+            {isAdmin ? (
+              // Admin: el cobro real devolvería owned=true (override). Previsualiza.
+              <button type="button" onClick={onActivarManual} style={goldBtn}>
+                <KeyRound size={15} /> Desbloquear (admin · pruebas)
+              </button>
+            ) : purchasable && numProduct ? (
+              // Usuario real: desbloqueo 1-clic embebido (sin segundo modal).
+              <ProductUnlockInline
+                productId={numProduct.id}
+                priceCents={numProduct.price_cents}
+                currency={numProduct.currency}
+                priceLabel={precioLabel}
+                buttonLabel={`Desbloquear · ${precioLabel}`}
+                buttonStyle={{ ...goldBtn, width: "100%", justifyContent: "center" }}
+                onSuccess={onPurchased}
+              />
+            ) : (
+              <p style={{ margin: "0.4rem 0 0", fontSize: "0.72rem", lineHeight: 1.5, color: "#9297bb", fontFamily: "var(--font-mono,monospace)" }}>
                 El cobro aún no está integrado en la plataforma para este producto. El flujo queda preparado y
                 se activará en cuanto el checkout esté disponible.
               </p>
-            )}
-            {isAdmin && (
-              <button type="button" onClick={onActivarManual} style={{ ...ghostBtn, marginTop: "0.9rem" }}>
-                <KeyRound size={13} /> Desbloqueo manual (admin · pruebas)
-              </button>
             )}
           </div>
         )}
