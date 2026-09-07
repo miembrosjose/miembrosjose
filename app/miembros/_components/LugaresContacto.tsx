@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import dynamic from "next/dynamic"
 import {
   X, MapPin, Search, Plus, Bookmark, BookmarkCheck, Footprints,
   MessageSquarePlus, Shield, Check, BookmarkPlus, Globe2, Loader2,
@@ -18,8 +19,18 @@ import {
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
-import { ContactPlacesMap, LocationPicker } from "./ContactPlacesMap"
 import prod from "./products.module.css"
+
+// Mapa y selector: SOLO cliente (ssr:false). Así Leaflet/globe.gl/three NO entran
+// al bundle del Worker (evita "Error 1102 · Worker exceeded resource limits").
+const ContactPlacesMap = dynamic(() => import("./ContactPlacesMap").then((m) => m.ContactPlacesMap), {
+  ssr: false,
+  loading: () => <div style={{ height: "min(62vh,460px)", minHeight: 300, borderRadius: 14, border: "1px solid rgba(167,139,202,0.25)", background: "#06060f", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b90b4", fontSize: "0.8rem" }}>Cargando mapa…</div>,
+})
+const LocationPicker = dynamic(() => import("./ContactPlacesMap").then((m) => m.LocationPicker), {
+  ssr: false,
+  loading: () => <div style={{ height: 260, borderRadius: 14, border: "1px solid rgba(167,139,202,0.25)", background: "#06060f", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b90b4", fontSize: "0.8rem" }}>Cargando selector…</div>,
+})
 
 const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"

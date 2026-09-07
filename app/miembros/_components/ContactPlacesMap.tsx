@@ -134,6 +134,20 @@ export function LocationPicker({ lat, lon, onPick }: {
   const mapRef = useRef<any>(null); const markerRef = useRef<any>(null); const LRef = useRef<any>(null)
   const onPickRef = useRef(onPick); onPickRef.current = onPick
   const [q, setQ] = useState(""); const [results, setResults] = useState<GeoResult[]>([]); const [searching, setSearching] = useState(false)
+  const pickedRef = useRef("")
+
+  // Buscador EN VIVO: resultados mientras se escribe (con debounce de 400 ms).
+  useEffect(() => {
+    const val = q.trim()
+    if (val.length < 3 || val === pickedRef.current) { setResults([]); setSearching(false); return }
+    let cancelled = false
+    setSearching(true)
+    const t = setTimeout(async () => {
+      const r = await geocode(val)
+      if (!cancelled) { setResults(r); setSearching(false) }
+    }, 400)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [q])
 
   useEffect(() => {
     let cancelled = false
@@ -168,7 +182,9 @@ export function LocationPicker({ lat, lon, onPick }: {
     setResults(r); setSearching(false)
   }
   function choose(r: GeoResult) {
-    setResults([]); setQ(r.label.split(",")[0])
+    const label = r.label.split(",")[0]
+    pickedRef.current = label
+    setResults([]); setSearching(false); setQ(label)
     const map = mapRef.current
     if (map) map.setView([r.lat, r.lon], 8)
     setMarker(r.lat, r.lon)
@@ -183,11 +199,13 @@ export function LocationPicker({ lat, lon, onPick }: {
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#6a6f92" }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar dirección, ciudad o lugar…"
             style={{ width: "100%", padding: "0.55rem 0.7rem 0.55rem 2rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.85rem", outline: "none" }} />
-          {results.length > 0 && (
-            <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, maxHeight: 200, overflowY: "auto", borderRadius: 10, border: "1px solid rgba(167,139,202,0.3)", background: "#14122c", boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }}>
+          {(results.length > 0 || (searching && q.trim().length >= 3)) && (
+            <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, maxHeight: 220, overflowY: "auto", borderRadius: 10, border: "1px solid rgba(167,139,202,0.3)", background: "#14122c", boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }}>
+              {searching && <div style={{ padding: "0.55rem 0.7rem", fontSize: "0.74rem", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>Buscando…</div>}
               {results.map((r, i) => (
                 <button key={i} type="button" onClick={() => choose(r)} style={{ display: "block", width: "100%", textAlign: "left", padding: "0.5rem 0.7rem", fontSize: "0.78rem", color: "#e6e9f7", background: "transparent", border: "none", borderBottom: "1px solid rgba(167,139,202,0.12)", cursor: "pointer" }}>{r.label}</button>
               ))}
+              {!searching && results.length === 0 && <div style={{ padding: "0.55rem 0.7rem", fontSize: "0.74rem", color: "#6a6f92" }}>Sin resultados</div>}
             </div>
           )}
         </div>
