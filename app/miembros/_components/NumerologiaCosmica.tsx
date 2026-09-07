@@ -180,7 +180,10 @@ export function NumerologiaCosmica() {
   const onProfundizar = useCallback(() => {
     if (unlocked) { abrirDeep(); return }
     // Con producto de DB con precio y bloqueado → checkout real.
-    if (numProduct && numProduct.price_cents > 0 && numProduct.is_locked) { setCheckoutOpen(true); return }
+    // Cerramos el estudio para que el modal de pago quede al frente (un solo flujo).
+    if (numProduct && numProduct.price_cents > 0 && numProduct.is_locked) {
+      setOpen(false); setCheckoutOpen(true); return
+    }
     // Sin checkout real todavía: queda en estado "pendiente" (lo muestra ResultView).
   }, [unlocked, abrirDeep, numProduct])
 
@@ -244,8 +247,8 @@ export function NumerologiaCosmica() {
       {checkoutOpen && numProduct && createPortal(
         <ProductCheckoutModal
           product={numProduct}
-          onClose={() => setCheckoutOpen(false)}
-          onSuccess={() => { setCheckoutOpen(false); setTimeout(() => abrirDeep(), 120) }}
+          onClose={() => { setCheckoutOpen(false); setOpen(true) }}
+          onSuccess={() => { setCheckoutOpen(false); setOpen(true); setTimeout(() => abrirDeep(), 120) }}
         />,
         document.body,
       )}
