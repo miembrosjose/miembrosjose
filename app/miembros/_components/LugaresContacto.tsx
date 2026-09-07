@@ -252,7 +252,7 @@ function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPi
   ]
   const showList = focused && q.trim().length >= 1
   return (
-    <div>
+    <div style={{ position: "relative", zIndex: 1200 }}>
       <div style={{ position: "relative" }}>
         <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6a6f92" }} />
         <input value={q} onChange={(e) => setQ(e.target.value)}
@@ -261,7 +261,7 @@ function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPi
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (matches[0]) onPickMatch(matches[0]) } }}
           placeholder="Buscar lugar, país, ciudad o categoría…" style={{ width: "100%", padding: "0.65rem 0.85rem 0.65rem 2.2rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.9rem", outline: "none" }} />
         {showList && (
-          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 30, maxHeight: 260, overflowY: "auto", borderRadius: 10, border: "1px solid rgba(167,139,202,0.3)", background: "#14122c", boxShadow: "0 12px 34px rgba(0,0,0,0.65)" }}>
+          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 1200, maxHeight: 260, overflowY: "auto", borderRadius: 10, border: "1px solid rgba(167,139,202,0.3)", background: "#14122c", boxShadow: "0 12px 34px rgba(0,0,0,0.65)" }}>
             {matches.length === 0 ? (
               <div style={{ padding: "0.6rem 0.8rem", fontSize: "0.76rem", color: "#6a6f92" }}>Sin coincidencias</div>
             ) : matches.map((p) => {
