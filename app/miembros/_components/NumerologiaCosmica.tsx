@@ -6,26 +6,57 @@
 // Gran Bitácora. Sin dependencias externas.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { X, Sparkles, Lock, BookmarkPlus, RefreshCw, Check } from "lucide-react"
+import { X, Sparkles, Lock, BookmarkPlus, RefreshCw, Check, FileDown, KeyRound, Gem } from "lucide-react"
 import {
   calcular, num, planoTexto, mensajeMision, resultadoATexto,
   saveLastReading, loadLastReading, bitacoraPrompt,
   type NumerologiaResultado,
 } from "../_lib/numerologia"
-import { upsertAnswer } from "../_lib/journal-store"
+import {
+  generarLecturaProfunda, lecturaProfundaATexto,
+  type LecturaProfunda, type BitacoraContexto,
+} from "../_lib/numerologia-profunda"
+import { upsertAnswer, entriesByCategory } from "../_lib/journal-store"
+import { useProducts, type DbProduct } from "../_lib/use-products"
+import { useProductAccess } from "../_lib/use-product-access"
+import { ProductCheckoutModal } from "./ProductCheckoutModal"
 import prod from "./products.module.css"
 
 const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"
 const VIOLET = "#a78bca"
 
-type Stage = "form" | "result"
+const DEEP_PRODUCT_NAME = "LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA"
+const MANUAL_UNLOCK_KEY = "los144k_numerologia_premium"
+
+type Stage = "form" | "result" | "deep"
+
+// Encuentra el producto premium en el catálogo (por nombre estable).
+function findDeepProduct(products: DbProduct[]): DbProduct | null {
+  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  return products.find((p) => {
+    const n = norm(p.name)
+    return n.includes("numerolog") && n.includes("profund")
+  }) || null
+}
+
+function readBitacoraCtx(): BitacoraContexto {
+  const has = (c: Parameters<typeof entriesByCategory>[0]) =>
+    entriesByCategory(c).some((e) => e.answer.trim().length > 0)
+  return {
+    historia: has("historia"), linaje: has("linaje"), territorio: has("territorio"),
+    acciones: has("acciones"), revelaciones: has("revelaciones"),
+  }
+}
 
 export function NumerologiaCosmica() {
   const [open, setOpen] = useState(false)
   const [stage, setStage] = useState<Stage>("form")
   const [result, setResult] = useState<NumerologiaResultado | null>(null)
   const [hasSaved, setHasSaved] = useState(false)
+  const [deep, setDeep] = useState<LecturaProfunda | null>(null)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [manualUnlock, setManualUnlock] = useState(false)
 
   // form fields
   const [nombre, setNombre] = useState("")
@@ -33,12 +64,18 @@ export function NumerologiaCosmica() {
   const [ciudad, setCiudad] = useState("")
   const [cosmico, setCosmico] = useState("")
 
+  const { products } = useProducts()
+  const { hasAccess, isAdminOverride } = useProductAccess()
+  const deepProduct = useMemo(() => findDeepProduct(products), [products])
+  const unlocked = isAdminOverride || manualUnlock || (deepProduct ? hasAccess(deepProduct.id) : false)
+
   const bodyRef = useRef<HTMLDivElement>(null)
 
   // Carga la última lectura guardada (para el botón del panel).
   useEffect(() => {
     const last = loadLastReading()
     if (last) setResult(last)
+    try { setManualUnlock(localStorage.getItem(MANUAL_UNLOCK_KEY) === "1") } catch { /* privado */ }
   }, [])
 
   useEffect(() => {
@@ -76,6 +113,7 @@ export function NumerologiaCosmica() {
     setResult(r)
     saveLastReading(r)
     setHasSaved(false)
+    setDeep(null)
     setStage("result")
   }, [canSubmit, nombre, fecha, ciudad, cosmico])
 
@@ -91,6 +129,52 @@ export function NumerologiaCosmica() {
     })
     setHasSaved(true)
   }, [result])
+
+  // ── Lectura profunda ────────────────────────────────────────────────
+  const generarDeep = useCallback(() => {
+    if (!result) return
+    const L = generarLecturaProfunda(result, readBitacoraCtx())
+    setDeep(L)
+    setStage("deep")
+  }, [result])
+
+  const abrirDeep = useCallback(() => {
+    if (deep) setStage("deep"); else generarDeep()
+  }, [deep, generarDeep])
+
+  const guardarDeep = useCallback(() => {
+    if (!result || !deep) return
+    upsertAnswer({
+      category: "numerologia",
+      source: "numerologia_profunda",
+      sourceLabel: "Numerología Cósmica · Revelación de Misión",
+      prompt: `Revelación profunda · ${result.nombre} · ${result.fecha.split("-").reverse().join("/")}`,
+      answer: lecturaProfundaATexto(result, deep),
+      isPrivate: true,
+    })
+    // guarda también la lectura gratuita si no estaba
+    guardar()
+  }, [result, deep, guardar])
+
+  const descargarPdf = useCallback(() => {
+    if (!result || !deep) return
+    const html = buildDeepReportHtml(result, deep, unlocked ? (isAdminOverride ? "admin" : "desbloqueado") : "pendiente")
+    const w = window.open("", "_blank", "width=820,height=1000")
+    if (!w) { alert("Permite las ventanas emergentes para descargar tu informe PDF."); return }
+    w.document.open(); w.document.write(html); w.document.close()
+  }, [result, deep, unlocked, isAdminOverride])
+
+  const onProfundizar = useCallback(() => {
+    if (unlocked) { abrirDeep(); return }
+    if (deepProduct) { setCheckoutOpen(true); return }
+    // Sin checkout real todavía: queda en estado "pendiente" (lo muestra ResultView).
+  }, [unlocked, abrirDeep, deepProduct])
+
+  const activarManual = useCallback(() => {
+    try { localStorage.setItem(MANUAL_UNLOCK_KEY, "1") } catch { /* privado */ }
+    setManualUnlock(true)
+    setTimeout(() => abrirDeep(), 60)
+  }, [abrirDeep])
 
   const onCardClick = useCallback(() => {
     if (result) openResult(); else openForm()
@@ -115,17 +199,38 @@ export function NumerologiaCosmica() {
                   cosmico={cosmico} setCosmico={setCosmico}
                   canSubmit={canSubmit} onSubmit={submit}
                 />
+              ) : stage === "deep" && result && deep ? (
+                <DeepView
+                  r={result} L={deep}
+                  isAdmin={isAdminOverride}
+                  onGuardar={guardarDeep}
+                  onPdf={descargarPdf}
+                  onActualizar={generarDeep}
+                  onVolver={() => setStage("result")}
+                />
               ) : result ? (
                 <ResultView
                   r={result}
                   hasSaved={hasSaved}
                   onGuardar={guardar}
                   onActualizar={() => { prefill(result); setStage("form") }}
+                  unlocked={unlocked}
+                  hasCheckout={!!deepProduct}
+                  isAdmin={isAdminOverride}
+                  onProfundizar={onProfundizar}
+                  onActivarManual={activarManual}
                 />
               ) : null}
             </div>
           </div>
         </Overlay>
+      )}
+      {checkoutOpen && deepProduct && (
+        <ProductCheckoutModal
+          product={deepProduct}
+          onClose={() => setCheckoutOpen(false)}
+          onSuccess={() => { setCheckoutOpen(false); setTimeout(() => abrirDeep(), 120) }}
+        />
       )}
     </>
   )
@@ -301,8 +406,10 @@ function Field({ label, hint, required, children }: { label: string; hint?: stri
 }
 
 // ── Resultado: 7 bloques ────────────────────────────────────────────────
-function ResultView({ r, hasSaved, onGuardar, onActualizar }: {
+function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckout, isAdmin, onProfundizar, onActivarManual }: {
   r: NumerologiaResultado; hasSaved: boolean; onGuardar: () => void; onActualizar: () => void
+  unlocked: boolean; hasCheckout: boolean; isAdmin: boolean
+  onProfundizar: () => void; onActivarManual: () => void
 }) {
   const bloques = useMemo(() => {
     const c = num(r.caminoVida), a = num(r.alma), pe = num(r.personalidad), ex = num(r.expresion)
@@ -379,8 +486,76 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar }: {
         </button>
       </div>
 
+      {/* Profundizar lectura — versión premium */}
+      <ProfundizarBlock
+        unlocked={unlocked} hasCheckout={hasCheckout} isAdmin={isAdmin}
+        onProfundizar={onProfundizar} onActivarManual={onActivarManual}
+      />
+
       {/* Cerraduras futuras */}
       <LockedCards />
+    </div>
+  )
+}
+
+// ── Bloque premium: PROFUNDIZAR LECTURA — USD 20 ─────────────────────────
+function ProfundizarBlock({ unlocked, hasCheckout, isAdmin, onProfundizar, onActivarManual }: {
+  unlocked: boolean; hasCheckout: boolean; isAdmin: boolean
+  onProfundizar: () => void; onActivarManual: () => void
+}) {
+  return (
+    <div style={{
+      position: "relative", marginTop: "2.4rem", padding: "clamp(1.3rem,4vw,1.9rem)", borderRadius: 18,
+      border: `1px solid ${unlocked ? "rgba(217,184,102,0.5)" : "rgba(167,139,202,0.35)"}`,
+      background: "linear-gradient(155deg, rgba(46,34,80,0.55) 0%, rgba(18,15,38,0.75) 60%, rgba(8,9,20,0.8) 100%)",
+      overflow: "hidden",
+    }}>
+      <div aria-hidden style={{ position: "absolute", top: -70, right: -50, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(217,184,102,0.22), transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative" }}>
+        <p style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: GOLD }}>
+          <Gem size={13} /> Lectura profunda
+        </p>
+        <h3 style={{ margin: "0.6rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "clamp(1.3rem,3.5vw,1.7rem)", lineHeight: 1.12, color: "#fff" }}>
+          Revelación Numerológica de Misión
+        </h3>
+        <p style={{ margin: "0.7rem 0 0", fontSize: "0.92rem", lineHeight: 1.72, color: "#c6cbe6" }}>
+          Una lectura completa que cruza tu nombre, tu fecha, tu matriz, tu alma, tu presencia, tu servicio,
+          tu linaje, tu territorio, el ciclo que atraviesas ahora y los cinco objetivos de Los 144.000.
+          Dieciséis capítulos interpretados, no una calculadora.
+        </p>
+
+        {unlocked ? (
+          <div style={{ marginTop: "1.3rem" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD, fontFamily: "var(--font-mono,monospace)" }}>
+              <Check size={13} /> {isAdmin ? "Acceso de administrador" : "Lectura desbloqueada"}
+            </span>
+            <button type="button" onClick={onProfundizar} style={{ ...goldBtn, marginTop: "0.9rem" }}>
+              <Sparkles size={16} /> Ver mi Revelación de Misión
+            </button>
+          </div>
+        ) : (
+          <div style={{ marginTop: "1.3rem" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.7rem", marginBottom: "0.9rem" }}>
+              <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.9rem", color: GOLD }}>US$ 20</span>
+              <span style={{ fontSize: "0.62rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>Pago único</span>
+            </div>
+            <button type="button" onClick={onProfundizar} style={goldBtn}>
+              <Lock size={15} /> Profundizar lectura — US$ 20
+            </button>
+            {!hasCheckout && (
+              <p style={{ margin: "0.9rem 0 0", fontSize: "0.72rem", lineHeight: 1.5, color: "#9297bb", fontFamily: "var(--font-mono,monospace)" }}>
+                El cobro aún no está integrado en la plataforma para este producto. El flujo queda preparado y
+                se activará en cuanto el checkout esté disponible.
+              </p>
+            )}
+            {isAdmin && (
+              <button type="button" onClick={onActivarManual} style={{ ...ghostBtn, marginTop: "0.9rem" }}>
+                <KeyRound size={13} /> Desbloqueo manual (admin · pruebas)
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -434,6 +609,14 @@ const ghostBtn: React.CSSProperties = {
   fontFamily: "var(--font-mono,monospace)", fontSize: "0.68rem", fontWeight: 700,
   letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer",
 }
+const goldBtn: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: "0.5rem",
+  padding: "0.85rem 1.5rem", borderRadius: 12, border: "1px solid rgba(217,184,102,0.6)",
+  background: "linear-gradient(135deg,#e6cf95 0%,#d9b866 60%,#c9a86b 100%)", color: "#1a1204",
+  fontFamily: "var(--font-mono,monospace)", fontSize: "0.7rem", fontWeight: 700,
+  letterSpacing: "0.16em", textTransform: "uppercase", cursor: "pointer",
+  boxShadow: "0 12px 30px -10px rgba(217,184,102,0.5)",
+}
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "0.7rem 0.85rem", borderRadius: 10,
   border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)",
@@ -447,4 +630,215 @@ const kickerStyle: React.CSSProperties = {
 const titleStyle: React.CSSProperties = {
   margin: "0.6rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800,
   fontSize: "clamp(1.5rem,4vw,2.1rem)", lineHeight: 1.1, color: "#fff",
+}
+
+// ── Vista de la Lectura Profunda (16 secciones) ──────────────────────────
+function DeepSection({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <section style={{
+      marginTop: "1.1rem", padding: "1.15rem 1.25rem", borderRadius: 14,
+      border: "1px solid rgba(167,139,202,0.2)", borderLeft: `3px solid ${GOLD}`, background: "rgba(10,11,26,0.5)",
+    }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem" }}>
+        <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.2rem", color: GOLD_DEEP }}>{n}</span>
+        <h3 style={{ margin: 0, fontFamily: "var(--font-cinzel,serif)", fontWeight: 700, fontSize: "1.16rem", color: "#fff" }}>{title}</h3>
+      </div>
+      <div style={{ marginTop: "0.6rem" }}>{children}</div>
+    </section>
+  )
+}
+function paras(text: string) {
+  return text.split("\n\n").map((p, i) => (
+    <p key={i} style={{ margin: i ? "0.7rem 0 0" : 0, fontSize: "0.96rem", lineHeight: 1.8, color: "#e6e9f7" }}>{p}</p>
+  ))
+}
+
+function DeepView({ r, L, isAdmin, onGuardar, onPdf, onActualizar, onVolver }: {
+  r: NumerologiaResultado; L: LecturaProfunda; isAdmin: boolean
+  onGuardar: () => void; onPdf: () => void; onActualizar: () => void; onVolver: () => void
+}) {
+  const [savedNow, setSavedNow] = useState(false)
+  const chip = (label: string, val: string) => (
+    <div style={{ padding: "0.5rem 0.7rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.22)", background: "rgba(10,11,26,0.55)", textAlign: "center" }}>
+      <div style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.15rem", color: GOLD }}>{val}</div>
+      <div style={{ fontSize: "0.52rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)", marginTop: 2 }}>{label}</div>
+    </div>
+  )
+  return (
+    <div>
+      <button type="button" onClick={onVolver} style={{ ...ghostBtn, padding: "0.5rem 0.9rem", marginBottom: "1rem" }}>← Volver a la lectura</button>
+      <p style={{ ...kickerStyle, display: "inline-flex", alignItems: "center", gap: "0.4rem" }}><Gem size={12} /> Revelación numerológica de misión</p>
+      <h2 style={titleStyle}>{r.nombre}</h2>
+      <p style={{ margin: "0.6rem 0 0", fontSize: "0.78rem", letterSpacing: "0.08em", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
+        {r.fecha.split("-").reverse().join("/")}{r.ciudad ? ` · ${r.ciudad}` : ""}{r.nombreCosmico ? ` · ${r.nombreCosmico}` : ""}
+      </p>
+
+      <DeepSection n={1} title="Mensaje principal de revelación">{paras(L.revelacion)}</DeepSection>
+
+      <DeepSection n={2} title="Matriz numerológica del nombre">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.9rem" }}>
+          {L.matriz.letras.map((x, i) => (
+            <div key={i} title={x.tipo} style={{
+              width: 40, padding: "0.35rem 0", borderRadius: 8, textAlign: "center",
+              border: `1px solid ${x.tipo === "vocal" ? "rgba(217,184,102,0.5)" : "rgba(167,139,202,0.35)"}`,
+              background: x.tipo === "vocal" ? "rgba(217,184,102,0.1)" : "rgba(167,139,202,0.08)",
+            }}>
+              <div style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 700, fontSize: "0.95rem", color: "#fff" }}>{x.letra}</div>
+              <div style={{ fontSize: "0.7rem", color: x.tipo === "vocal" ? GOLD : VIOLET, fontFamily: "var(--font-mono,monospace)" }}>{x.numero}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(90px,1fr))", gap: "0.5rem" }}>
+          {chip("Vocales", String(L.matriz.sumaVocales))}
+          {chip("Consonantes", String(L.matriz.sumaConsonantes))}
+          {chip("Total", String(L.matriz.sumaTotal))}
+        </div>
+        <div style={{ marginTop: "0.7rem", fontSize: "0.85rem", lineHeight: 1.7, color: "#c6cbe6" }}>
+          <p style={{ margin: 0 }}><b style={{ color: "#fff" }}>Dominantes:</b> {L.matriz.dominantes.join(", ") || "—"} · <b style={{ color: "#fff" }}>Ausentes:</b> {L.matriz.ausentes.join(", ") || "—"}</p>
+          <p style={{ margin: "0.3rem 0 0" }}><b style={{ color: "#fff" }}>Maestros:</b> {L.matriz.maestros.join(", ") || "—"} · <b style={{ color: "#fff" }}>Kármicos:</b> {L.matriz.karmicos.join(", ") || "—"}</p>
+        </div>
+      </DeepSection>
+
+      <DeepSection n={3} title="Camino álmico">
+        <p style={{ margin: "0 0 0.6rem", fontFamily: "var(--font-mono,monospace)", fontSize: "0.8rem", color: GOLD_DEEP }}>
+          {L.camino.sumaVisible} = {L.camino.total} → {L.camino.reduccion}{L.camino.maestro ? " · número maestro" : ""}
+        </p>
+        {paras(L.caminoTexto)}
+      </DeepSection>
+      <DeepSection n={4} title="Impulso del alma">{paras(L.alma)}</DeepSection>
+      <DeepSection n={5} title="Presencia externa">{paras(L.presencia)}</DeepSection>
+      <DeepSection n={6} title="Dirección de servicio">{paras(L.servicio)}</DeepSection>
+      <DeepSection n={7} title="El verbo del nombre">{paras(L.verbo)}</DeepSection>
+      <DeepSection n={8} title="Plano dominante">{paras(L.planoTexto)}</DeepSection>
+
+      <DeepSection n={9} title="Casas internas de la matriz">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "0.6rem" }}>
+          {L.casas.map((c) => (
+            <div key={c.n} style={{ padding: "0.7rem 0.8rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.18)", background: "rgba(10,11,26,0.4)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 700, fontSize: "0.9rem", color: "#fff" }}>Casa {c.n} · {c.nombre}</span>
+                <span style={{ fontSize: "0.62rem", color: c.veces ? GOLD : "#5a5f80", fontFamily: "var(--font-mono,monospace)" }}>{c.veces ? `×${c.veces}` : "—"}</span>
+              </div>
+              <p style={{ margin: "0.35rem 0 0", fontSize: "0.8rem", lineHeight: 1.55, color: "#c6cbe6" }}>{c.texto}</p>
+            </div>
+          ))}
+        </div>
+      </DeepSection>
+
+      <DeepSection n={10} title="Herida, medicina y linaje">{paras(L.heridaMedicina)}</DeepSection>
+      {L.territorio && <DeepSection n={11} title="Territorio y misión">{paras(L.territorio)}</DeepSection>}
+
+      <DeepSection n={12} title="Ciclo actual">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.5rem", marginBottom: "0.8rem" }}>
+          {chip("Año personal", String(L.ciclo.anioPersonal))}
+          {chip("Mes personal", String(L.ciclo.mesPersonal))}
+          {chip("Día personal", String(L.ciclo.diaPersonal))}
+        </div>
+        {paras(L.ciclo.texto)}
+        <p style={{ margin: "0.7rem 0 0", padding: "0.7rem 0.9rem", borderLeft: `2px solid ${GOLD}`, borderRadius: 8, background: "rgba(217,184,102,0.06)", fontSize: "0.92rem", lineHeight: 1.7, color: "#eef1fb" }}>
+          <b style={{ color: GOLD }}>Acción del momento:</b> {L.ciclo.accion}
+        </p>
+      </DeepSection>
+
+      <DeepSection n={13} title="Los cinco objetivos de Los 144.000">
+        {paras(L.objetivos.texto)}
+        <ol style={{ margin: "0.7rem 0 0", paddingLeft: "1.2rem", color: "#e6e9f7", fontSize: "0.9rem", lineHeight: 1.7 }}>
+          {L.objetivos.lista.map((o, i) => (
+            <li key={i} style={o.toLowerCase() === L.objetivos.inicio.toLowerCase() ? { color: GOLD, fontWeight: 600 } : undefined}>{o}</li>
+          ))}
+        </ol>
+      </DeepSection>
+
+      <DeepSection n={14} title="Acciones de integración">
+        <ul style={{ margin: 0, paddingLeft: "1.2rem", color: "#e6e9f7", fontSize: "0.92rem", lineHeight: 1.75 }}>
+          {L.acciones.map((a, i) => <li key={i} style={{ marginBottom: "0.4rem" }}>{a}</li>)}
+        </ul>
+      </DeepSection>
+
+      <DeepSection n={15} title="Frase de misión personal">
+        <p style={{ margin: 0, fontFamily: "var(--font-cinzel,serif)", fontSize: "1.15rem", lineHeight: 1.5, fontStyle: "italic", color: GOLD }}>“{L.frase}”</p>
+      </DeepSection>
+
+      {/* 16. Botones finales */}
+      <div style={{ marginTop: "1.8rem", display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+        <button type="button" onClick={() => { onGuardar(); setSavedNow(true) }} disabled={savedNow} style={{ ...primaryBtn, opacity: savedNow ? 0.6 : 1, cursor: savedNow ? "default" : "pointer" }}>
+          {savedNow ? <><Check size={15} /> Guardado en tu bitácora</> : <><BookmarkPlus size={15} /> Guardar en Mi Gran Bitácora</>}
+        </button>
+        <button type="button" onClick={onPdf} style={ghostBtn}><FileDown size={14} /> Descargar informe PDF</button>
+        <button type="button" onClick={() => { onActualizar(); setSavedNow(false) }} style={ghostBtn}><RefreshCw size={14} /> Actualizar con mi bitácora</button>
+      </div>
+      {isAdmin && (
+        <p style={{ margin: "1rem 0 0", fontSize: "0.66rem", color: "#6a6f92", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.06em" }}>
+          Modo admin · acceso de pruebas activo.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── PDF de la Revelación Numerológica de Misión ──────────────────────────
+function esc(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+
+function buildDeepReportHtml(r: NumerologiaResultado, L: LecturaProfunda, estado: string): string {
+  const today = new Date().toLocaleDateString("es", { day: "2-digit", month: "long", year: "numeric" })
+  const p = (t: string) => t.split("\n\n").map((x) => `<p>${esc(x)}</p>`).join("")
+  const sec = (n: number, title: string, body: string) => `<section><h2>${n} · ${esc(title)}</h2>${body}</section>`
+  const matrizCells = L.matriz.letras.map((x) =>
+    `<span class="cell ${x.tipo}">${esc(x.letra)}<b>${x.numero}</b></span>`).join("")
+  const casas = L.casas.map((c) =>
+    `<div class="casa"><b>Casa ${c.n} · ${esc(c.nombre)}</b> ${c.veces ? `(×${c.veces})` : "(—)"}<br/>${esc(c.texto)}</div>`).join("")
+  const acciones = L.acciones.map((a) => `<li>${esc(a)}</li>`).join("")
+  const objetivos = L.objetivos.lista.map((o) => `<li>${esc(o)}</li>`).join("")
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
+<title>Revelación Numerológica de Misión — ${esc(r.nombre)}</title>
+<style>
+  @page { margin: 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, "Times New Roman", serif; color: #1a1a24; line-height: 1.65; margin: 0; }
+  .cover { text-align: center; padding: 46px 0 26px; border-bottom: 2px solid #c9a86b; }
+  .cover .glyph { font-size: 34px; color: #b8934a; }
+  .cover h1 { font-size: 26px; letter-spacing: 1.5px; margin: 12px 0 4px; color: #2a2140; }
+  .cover .who { font-size: 14px; color: #444; margin-top: 8px; }
+  .cover .date { font-size: 11px; color: #888; margin-top: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  h2 { font-size: 15px; letter-spacing: 0.5px; color: #6d4a9b; border-left: 3px solid #c9a86b; padding-left: 10px; margin: 26px 0 10px; }
+  section { page-break-inside: auto; }
+  p { font-size: 13px; margin: 0 0 9px; }
+  .matriz { margin: 6px 0 12px; }
+  .cell { display: inline-block; min-width: 30px; text-align: center; padding: 4px 6px; margin: 2px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+  .cell b { display: block; font-size: 11px; color: #6d4a9b; }
+  .cell.vocal { border-color: #c9a86b; background: #faf4e4; }
+  .sums { font-size: 12px; color: #333; margin: 4px 0 6px; }
+  .casa { font-size: 12px; margin: 0 0 8px; padding: 6px 8px; border: 1px solid #eee; border-radius: 6px; page-break-inside: avoid; }
+  ul, ol { font-size: 13px; margin: 4px 0 10px; padding-left: 20px; }
+  li { margin: 0 0 5px; }
+  .frase { font-style: italic; font-size: 15px; color: #6d4a9b; border-left: 3px solid #c9a86b; padding-left: 12px; }
+  .estado { font-size: 10px; color: #999; text-align: center; margin: 8px 0 16px; text-transform: uppercase; letter-spacing: 1px; }
+</style></head>
+<body>
+  <div class="cover">
+    <div class="glyph">✷</div>
+    <h1>REVELACIÓN NUMEROLÓGICA DE MISIÓN</h1>
+    <div style="font-size:12px;letter-spacing:3px;color:#b8934a;">LOS 144.000</div>
+    <div class="who">${esc(r.nombre)} · ${esc(r.fecha.split("-").reverse().join("/"))}${r.ciudad ? " · " + esc(r.ciudad) : ""}${r.nombreCosmico ? " · " + esc(r.nombreCosmico) : ""}</div>
+    <div class="date">Generado el ${esc(today)}</div>
+  </div>
+  <div class="estado">Estado: ${esc(estado)}</div>
+  ${sec(1, "Mensaje principal de revelación", p(L.revelacion))}
+  ${sec(2, "Matriz numerológica del nombre", `<div class="matriz">${matrizCells}</div><div class="sums">Vocales: ${L.matriz.sumaVocales} · Consonantes: ${L.matriz.sumaConsonantes} · Total: ${L.matriz.sumaTotal}<br/>Dominantes: ${L.matriz.dominantes.join(", ") || "—"} · Ausentes: ${L.matriz.ausentes.join(", ") || "—"} · Maestros: ${L.matriz.maestros.join(", ") || "—"} · Kármicos: ${L.matriz.karmicos.join(", ") || "—"}</div>`)}
+  ${sec(3, "Camino álmico", `<p><b>${esc(L.camino.sumaVisible)} = ${L.camino.total} → ${L.camino.reduccion}${L.camino.maestro ? " (maestro)" : ""}</b></p>${p(L.caminoTexto)}`)}
+  ${sec(4, "Impulso del alma", p(L.alma))}
+  ${sec(5, "Presencia externa", p(L.presencia))}
+  ${sec(6, "Dirección de servicio", p(L.servicio))}
+  ${sec(7, "El verbo del nombre", p(L.verbo))}
+  ${sec(8, "Plano dominante", p(L.planoTexto))}
+  ${sec(9, "Casas internas de la matriz", casas)}
+  ${sec(10, "Herida, medicina y linaje", p(L.heridaMedicina))}
+  ${L.territorio ? sec(11, "Territorio y misión", p(L.territorio)) : ""}
+  ${sec(12, "Ciclo actual", `<p>Año personal ${L.ciclo.anioPersonal} · Mes ${L.ciclo.mesPersonal} · Día ${L.ciclo.diaPersonal}</p>${p(L.ciclo.texto)}<p><b>Acción del momento:</b> ${esc(L.ciclo.accion)}</p>`)}
+  ${sec(13, "Los cinco objetivos de Los 144.000", `${p(L.objetivos.texto)}<ol>${objetivos}</ol>`)}
+  ${sec(14, "Acciones de integración", `<ul>${acciones}</ul>`)}
+  ${sec(15, "Frase de misión personal", `<p class="frase">“${esc(L.frase)}”</p>`)}
+  <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250);};</script>
+</body></html>`
 }

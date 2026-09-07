@@ -153,11 +153,26 @@ const PLANO_TEXTO: Record<PlanoNombre, string> = {
 }
 
 export function num(n: number): Num {
-  return NUMERO[n] || NUMERO[reduce9(n)]
+  return NUMERO[n] || NUMERO[reduce9(n)] || NUMERO[9]
 }
 function reduce9(n: number): number { let x = n; while (x > 9) x = String(x).split("").reduce((a, d) => a + Number(d), 0); return x }
 
 export function planoTexto(p: PlanoNombre): string { return PLANO_TEXTO[p] }
+
+// ── Helpers reutilizables por la lectura profunda ───────────────────────
+export function letterValue(ch: string): number { return LETTER_VALUE[ch] || 0 }
+export function isVowel(ch: string): boolean { return VOWELS.has(ch) }
+export function reduceKeepMasters(n: number): number { return reduce(n) }
+export function sumDigits(s: string): number {
+  return s.replace(/\D/g, "").split("").reduce((a, c) => a + Number(c), 0)
+}
+export const MASTER_NUMBERS = [11, 22, 33, 44]
+export const planoDeNumero: Record<number, PlanoNombre> = {
+  1: "mental", 8: "mental",
+  4: "físico", 5: "físico",
+  2: "emocional", 3: "emocional", 6: "emocional",
+  7: "intuitivo", 9: "intuitivo",
+}
 
 /** Mensaje inicial de misión — une camino, alma y expresión en un párrafo. */
 export function mensajeMision(r: NumerologiaResultado): string {
