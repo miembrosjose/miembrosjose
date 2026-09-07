@@ -171,6 +171,7 @@ function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: Cont
           .width(w).height(h)
           .backgroundColor("rgba(0,0,0,0)")
           .showGlobe(true)
+          .globeImageUrl("/textures/earth-night.jpg")
           .showAtmosphere(true)
           .atmosphereColor("#a78bca")
           .atmosphereAltitude(0.18)
@@ -184,12 +185,6 @@ function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: Cont
           .pointLabel((d: any) => `${d.place.name} · ${d.place.country}`)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .onPointClick((d: any) => onSelectRef.current(d.place))
-        // Material del planeta: azul-violeta oscuro (sin textura externa).
-        try {
-          const mat = g.globeMaterial()
-          mat.color = { r: 0.11, g: 0.10, b: 0.22 } as never
-          if ("emissive" in mat) (mat as { emissive?: unknown }).emissive = { r: 0.03, g: 0.02, b: 0.07 }
-        } catch { /* material opcional */ }
         g.controls().autoRotate = true
         g.controls().autoRotateSpeed = 0.6
         g.controls().enableZoom = true
