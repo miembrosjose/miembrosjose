@@ -12,6 +12,7 @@ import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { NumerologiaCosmica, isNumerologiaToolProduct } from "./NumerologiaCosmica"
+import { LugaresContacto, isLugaresToolProduct } from "./LugaresContacto"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
@@ -685,7 +686,11 @@ function ViewInicio({
             </button>
           )}
         </header>
-        <TiendaCarousel category="biblioteca" leadingCard={<NumerologiaCosmica />} hide={isNumerologiaToolProduct} />
+        <TiendaCarousel
+          category="biblioteca"
+          leadingCard={<><NumerologiaCosmica /><LugaresContacto /></>}
+          hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p)}
+        />
       </section>
 
       {/* TIENDA — sección aparte, estilo dorado (diferenciado de Biblioteca) */}

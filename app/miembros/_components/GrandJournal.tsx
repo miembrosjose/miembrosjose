@@ -70,7 +70,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
     const qs = bankByCategory(cat)
     const answered = qs.filter((q) => readAnswer(q.source, q.prompt).trim()).length
     const extraCount = entriesByCategory(cat).filter((e) => !qs.some((q) => q.id === e.id)).length
-    const showsExtras = cat === "revelaciones" || cat === "numerologia"
+    const showsExtras = cat === "revelaciones" || cat === "numerologia" || cat === "lugares"
     return { answered: answered + (showsExtras ? extraCount : 0), total: qs.length }
   }, [])
 
@@ -177,7 +177,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
               {extras.length > 0 && (
                 <div>
                   <div className="mb-2.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#a78bca] [font-family:var(--font-mono)]">
-                    {tab === "revelaciones" ? "Revelaciones guardadas" : tab === "numerologia" ? "Lecturas guardadas" : "Otros registros"}
+                    {tab === "revelaciones" ? "Revelaciones guardadas" : tab === "numerologia" ? "Lecturas guardadas" : tab === "lugares" ? "Registros de lugares" : "Otros registros"}
                   </div>
                   <div className="flex flex-col gap-3">
                     {extras.map((e) => <StoredCard key={e.id} entry={e} />)}
