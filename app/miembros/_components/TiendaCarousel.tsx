@@ -41,6 +41,7 @@ export function TiendaCarousel({
   category = "biblioteca",
   variant = "biblioteca",
   leadingCard,
+  hide,
 }: {
   /** Filtra los productos por sección: "biblioteca" (default) o "tienda". */
   category?: string
@@ -48,6 +49,8 @@ export function TiendaCarousel({
   variant?: "biblioteca" | "tienda"
   /** Tarjeta opcional que se renderiza como primer elemento del grid. */
   leadingCard?: React.ReactNode
+  /** Oculta productos que cumplan el predicado (p.ej. los que ya se muestran como leadingCard). */
+  hide?: (p: DbProduct) => boolean
 } = {}) {
   const { products, loading } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
@@ -60,11 +63,12 @@ export function TiendaCarousel({
     () =>
       products
         .filter((p) => (p.category ?? "biblioteca") === category)
+        .filter((p) => !(hide?.(p)))
         .sort((a, b) => {
           const d = availableKey(a.available_from) - availableKey(b.available_from)
           return d !== 0 ? d : (a.sort_order ?? 0) - (b.sort_order ?? 0)
         }),
-    [products, category],
+    [products, category, hide],
   )
 
   function handleClick(p: DbProduct) {

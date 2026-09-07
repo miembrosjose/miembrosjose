@@ -1,54 +1,59 @@
 -- ============================================================================
--- LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA — producto premium (US$ 20)
+-- NUMEROLOGÍA CÓSMICA — producto único (tarjeta + desbloqueo profundo US$ 20)
 -- ============================================================================
--- Crea el producto que desbloquea la "Revelación Numerológica de Misión"
--- dentro de la herramienta gratuita de Numerología Cósmica (Biblioteca).
+-- Un solo producto en la Biblioteca representa la herramienta:
+--   · Portada (media_url), nombre y descripción → editables desde "Gestionar".
+--   · price_cents = 2000 (US$ 20) → precio de la Lectura Profunda (editable).
+--   · is_locked = true → el desbloqueo usa el checkout 1-click de Stripe
+--     (/api/products/[id]/unlock · /state · /confirm · /create-pi).
 --
--- category = 'numerologia'  → NO aparece en los carruseles de Biblioteca ni
---                             Tienda (esos filtran por 'biblioteca'/'tienda').
---                             El desbloqueo se hace solo desde la lectura.
--- price_cents = 2000 (US$ 20) · is_locked = true · sin available_from (comprable).
+-- La tarjeta gratuita se muestra SIEMPRE (abre la herramienta); el precio solo
+-- aplica al desbloqueo de la "Revelación Numerológica de Misión" dentro de ella.
+-- El producto se filtra del carrusel de Biblioteca (se muestra como tarjeta
+-- principal), así que no aparece duplicado.
 --
--- Usa el mismo checkout 1-click de Stripe que el resto de productos:
---   /api/products/[id]/unlock · /state · /confirm · /create-pi
 -- Ejecutar en Supabase (proyecto principal) → SQL Editor → Run. Idempotente.
 -- ============================================================================
 
--- Requiere las columnas price_cents/currency (productos_precio.sql) y
--- category (productos_categoria.sql). Ambas son idempotentes:
+-- Columnas necesarias (idempotentes).
 alter table public.products add column if not exists price_cents integer not null default 0;
 alter table public.products add column if not exists currency text not null default 'usd';
 alter table public.products add column if not exists category text not null default 'biblioteca';
+alter table public.products add column if not exists available_from text;
 
--- 1) Crear el producto si aún no existe (identificado por nombre estable).
+-- Consolidar: eliminar el producto "profunda" separado si se creó antes.
+delete from public.products where name ilike '%numerolog%profund%';
+
+-- 1) Si ya existe "Numerología Cósmica" → configurarlo como producto activo.
+update public.products
+set category       = 'biblioteca',
+    available_from = null,       -- deja de ser "próximamente": comprable
+    is_locked      = true,
+    price_cents    = 2000,
+    currency       = 'usd',
+    description    = coalesce(nullif(description, ''), 'Tu código personal: nombre, fecha, alma y misión.')
+where name ilike '%numerolog%' and name not ilike '%profund%';
+
+-- 2) Si no existía, crearlo.
 insert into public.products
   (num, name, description, category, gradient, emoji, sort_order, is_locked, price_cents, currency)
 select
-  90,
-  'LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA',
-  'Revelación Numerológica de Misión — lectura profunda de 16 capítulos.',
-  'numerologia',
+  91,
+  'Numerología Cósmica',
+  'Tu código personal: nombre, fecha, alma y misión.',
+  'biblioteca',
   'linear-gradient(135deg, #2a2140 0%, #6D4A9B 100%)',
   '🔮',
-  90,
+  0,
   true,
   2000,
   'usd'
 where not exists (
   select 1 from public.products
-  where name = 'LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA'
+  where name ilike '%numerolog%' and name not ilike '%profund%'
 );
 
--- 2) Asegurar precio/estado si ya existía (no destructivo sobre media/textos).
-update public.products
-set price_cents    = 2000,
-    currency       = 'usd',
-    is_locked      = true,
-    category       = 'numerologia',
-    available_from = null
-where name = 'LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA';
-
 -- 3) Verificar.
-select id, num, name, category, price_cents, currency, is_locked, available_from
+select id, num, name, category, price_cents, currency, is_locked, available_from, media_url
 from public.products
-where name = 'LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA';
+where name ilike '%numerolog%';

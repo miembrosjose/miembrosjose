@@ -11,7 +11,7 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { NumerologiaCosmica } from "./NumerologiaCosmica"
+import { NumerologiaCosmica, isNumerologiaToolProduct } from "./NumerologiaCosmica"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
@@ -685,7 +685,7 @@ function ViewInicio({
             </button>
           )}
         </header>
-        <TiendaCarousel category="biblioteca" leadingCard={<NumerologiaCosmica />} />
+        <TiendaCarousel category="biblioteca" leadingCard={<NumerologiaCosmica />} hide={isNumerologiaToolProduct} />
       </section>
 
       {/* TIENDA — sección aparte, estilo dorado (diferenciado de Biblioteca) */}

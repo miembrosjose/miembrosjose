@@ -6,6 +6,7 @@
 // Gran Bitácora. Sin dependencias externas.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { X, Sparkles, Lock, BookmarkPlus, RefreshCw, Check, FileDown, KeyRound, Gem } from "lucide-react"
 import {
   calcular, num, planoTexto, mensajeMision, resultadoATexto,
@@ -26,19 +27,30 @@ const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"
 const VIOLET = "#a78bca"
 
-const DEEP_PRODUCT_NAME = "LECTURA PROFUNDA DE NUMEROLOGÍA CÓSMICA"
 const MANUAL_UNLOCK_KEY = "los144k_numerologia_premium"
 
 type Stage = "form" | "result" | "deep"
 
-// Encuentra el producto premium en el catálogo (por nombre estable).
-function findDeepProduct(products: DbProduct[]): DbProduct | null {
-  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-  return products.find((p) => {
-    const n = norm(p.name)
-    return n.includes("numerolog") && n.includes("profund")
-  }) || null
+function norm(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 }
+
+// Identifica el producto de DB que representa la herramienta Numerología Cósmica
+// (para portada/nombre/descripción/precio editables desde "Gestionar"). Excluye
+// cualquier variante "profunda" heredada.
+export function isNumerologiaToolProduct(p: { name: string }): boolean {
+  const n = norm(p.name)
+  return n.includes("numerolog") && !n.includes("profund")
+}
+function findNumerologiaProduct(products: DbProduct[]): DbProduct | null {
+  return products.find(isNumerologiaToolProduct) || null
+}
+
+function money(cents: number, currency = "usd"): string {
+  const sym = currency.toLowerCase() === "usd" ? "US$" : currency.toUpperCase() + " "
+  return `${sym} ${(cents / 100).toFixed(2)}`
+}
+const isVideo = (u?: string | null) => !!u && /\.(mp4|webm|mov)(\?|$)/i.test(u)
 
 function readBitacoraCtx(): BitacoraContexto {
   const has = (c: Parameters<typeof entriesByCategory>[0]) =>
@@ -66,8 +78,9 @@ export function NumerologiaCosmica() {
 
   const { products } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
-  const deepProduct = useMemo(() => findDeepProduct(products), [products])
-  const unlocked = isAdminOverride || manualUnlock || (deepProduct ? hasAccess(deepProduct.id) : false)
+  const numProduct = useMemo(() => findNumerologiaProduct(products), [products])
+  const unlocked = isAdminOverride || manualUnlock || (numProduct ? hasAccess(numProduct.id) : false)
+  const precioLabel = numProduct && numProduct.price_cents > 0 ? money(numProduct.price_cents, numProduct.currency) : "US$ 20.00"
 
   const bodyRef = useRef<HTMLDivElement>(null)
 
@@ -166,9 +179,10 @@ export function NumerologiaCosmica() {
 
   const onProfundizar = useCallback(() => {
     if (unlocked) { abrirDeep(); return }
-    if (deepProduct) { setCheckoutOpen(true); return }
+    // Con producto de DB con precio y bloqueado → checkout real.
+    if (numProduct && numProduct.price_cents > 0 && numProduct.is_locked) { setCheckoutOpen(true); return }
     // Sin checkout real todavía: queda en estado "pendiente" (lo muestra ResultView).
-  }, [unlocked, abrirDeep, deepProduct])
+  }, [unlocked, abrirDeep, numProduct])
 
   const activarManual = useCallback(() => {
     try { localStorage.setItem(MANUAL_UNLOCK_KEY, "1") } catch { /* privado */ }
@@ -182,8 +196,8 @@ export function NumerologiaCosmica() {
 
   return (
     <>
-      <NumerologiaCard onClick={onCardClick} result={result} />
-      {open && (
+      <NumerologiaCard onClick={onCardClick} result={result} product={numProduct} />
+      {open && createPortal(
         <Overlay onClose={() => setOpen(false)}>
           <div
             ref={bodyRef}
@@ -215,7 +229,8 @@ export function NumerologiaCosmica() {
                   onGuardar={guardar}
                   onActualizar={() => { prefill(result); setStage("form") }}
                   unlocked={unlocked}
-                  hasCheckout={!!deepProduct}
+                  hasCheckout={!!(numProduct && numProduct.price_cents > 0 && numProduct.is_locked)}
+                  precioLabel={precioLabel}
                   isAdmin={isAdminOverride}
                   onProfundizar={onProfundizar}
                   onActivarManual={activarManual}
@@ -223,47 +238,59 @@ export function NumerologiaCosmica() {
               ) : null}
             </div>
           </div>
-        </Overlay>
+        </Overlay>,
+        document.body,
       )}
-      {checkoutOpen && deepProduct && (
+      {checkoutOpen && numProduct && createPortal(
         <ProductCheckoutModal
-          product={deepProduct}
+          product={numProduct}
           onClose={() => setCheckoutOpen(false)}
           onSuccess={() => { setCheckoutOpen(false); setTimeout(() => abrirDeep(), 120) }}
-        />
+        />,
+        document.body,
       )}
     </>
   )
 }
 
 // ── Tarjeta en el formato de la Biblioteca (mismo grid que los productos) ─
-function NumerologiaCard({ onClick, result }: {
-  onClick: () => void; result: NumerologiaResultado | null
+// Portada, nombre y descripción son editables desde "Gestionar" (producto de DB).
+function NumerologiaCard({ onClick, result, product }: {
+  onClick: () => void; result: NumerologiaResultado | null; product: DbProduct | null
 }) {
+  const cover = product?.media_url || null
+  const titulo = product?.name?.trim() || "Numerología Cósmica"
+  const descripcion = product?.description?.trim()
   return (
     <button type="button" onClick={onClick} className={prod.card} style={{ cursor: "pointer" }}>
       <div className={prod.thumb}>
-        <div style={{
-          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "radial-gradient(120% 90% at 50% 18%, rgba(167,139,202,0.5) 0%, rgba(60,44,110,0.4) 42%, rgba(12,10,28,0.9) 100%)",
-        }}>
-          {/* Glow + glifo */}
-          <div aria-hidden style={{
-            position: "absolute", width: 150, height: 150, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(230,207,149,0.35), transparent 68%)",
-          }} />
-          <Sparkles size={54} strokeWidth={1.3} style={{ color: GOLD, filter: "drop-shadow(0 0 14px rgba(217,184,102,0.6))", position: "relative" }} />
-        </div>
+        {cover ? (
+          isVideo(cover)
+            ? <video src={cover} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline loop autoPlay />
+            // eslint-disable-next-line @next/next/no-img-element
+            : <img src={cover} alt={titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "radial-gradient(120% 90% at 50% 18%, rgba(167,139,202,0.5) 0%, rgba(60,44,110,0.4) 42%, rgba(12,10,28,0.9) 100%)",
+          }}>
+            <div aria-hidden style={{
+              position: "absolute", width: 150, height: 150, borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(230,207,149,0.35), transparent 68%)",
+            }} />
+            <Sparkles size={54} strokeWidth={1.3} style={{ color: GOLD, filter: "drop-shadow(0 0 14px rgba(217,184,102,0.6))", position: "relative" }} />
+          </div>
+        )}
       </div>
       <div className={prod.body}>
-        <h3 className={prod.name} style={{ color: "#F3F6FA" }}>Numerología Cósmica</h3>
+        <h3 className={prod.name} style={{ color: "#F3F6FA" }}>{titulo}</h3>
         <p style={{ margin: 0, fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: VIOLET, fontFamily: "var(--font-mono,monospace)" }}>
           Nombre · Fecha · Alma · Misión
         </p>
         <p style={{ margin: "0.15rem 0 0", fontSize: "0.75rem", color: "#a8a8c0", lineHeight: 1.45 }}>
           {result
             ? `Tu última lectura: Camino ${result.caminoVida} · Alma ${result.alma}.`
-            : "Descubre tu código personal a partir de tu nombre y tu fecha de nacimiento."}
+            : (descripcion || "Descubre tu código personal a partir de tu nombre y tu fecha de nacimiento.")}
         </p>
         <div className={prod.footer} style={{ marginTop: "0.75rem" }}>
           <span className={prod.access} style={{ color: GOLD }}>
@@ -406,9 +433,9 @@ function Field({ label, hint, required, children }: { label: string; hint?: stri
 }
 
 // ── Resultado: 7 bloques ────────────────────────────────────────────────
-function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckout, isAdmin, onProfundizar, onActivarManual }: {
+function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckout, precioLabel, isAdmin, onProfundizar, onActivarManual }: {
   r: NumerologiaResultado; hasSaved: boolean; onGuardar: () => void; onActualizar: () => void
-  unlocked: boolean; hasCheckout: boolean; isAdmin: boolean
+  unlocked: boolean; hasCheckout: boolean; precioLabel: string; isAdmin: boolean
   onProfundizar: () => void; onActivarManual: () => void
 }) {
   const bloques = useMemo(() => {
@@ -488,7 +515,7 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckou
 
       {/* Profundizar lectura — versión premium */}
       <ProfundizarBlock
-        unlocked={unlocked} hasCheckout={hasCheckout} isAdmin={isAdmin}
+        unlocked={unlocked} hasCheckout={hasCheckout} precioLabel={precioLabel} isAdmin={isAdmin}
         onProfundizar={onProfundizar} onActivarManual={onActivarManual}
       />
 
@@ -499,8 +526,8 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, hasCheckou
 }
 
 // ── Bloque premium: PROFUNDIZAR LECTURA — USD 20 ─────────────────────────
-function ProfundizarBlock({ unlocked, hasCheckout, isAdmin, onProfundizar, onActivarManual }: {
-  unlocked: boolean; hasCheckout: boolean; isAdmin: boolean
+function ProfundizarBlock({ unlocked, hasCheckout, precioLabel, isAdmin, onProfundizar, onActivarManual }: {
+  unlocked: boolean; hasCheckout: boolean; precioLabel: string; isAdmin: boolean
   onProfundizar: () => void; onActivarManual: () => void
 }) {
   return (
@@ -536,11 +563,11 @@ function ProfundizarBlock({ unlocked, hasCheckout, isAdmin, onProfundizar, onAct
         ) : (
           <div style={{ marginTop: "1.3rem" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "0.7rem", marginBottom: "0.9rem" }}>
-              <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.9rem", color: GOLD }}>US$ 20</span>
+              <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.9rem", color: GOLD }}>{precioLabel}</span>
               <span style={{ fontSize: "0.62rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>Pago único</span>
             </div>
             <button type="button" onClick={onProfundizar} style={goldBtn}>
-              <Lock size={15} /> Profundizar lectura — US$ 20
+              <Lock size={15} /> Profundizar lectura — {precioLabel}
             </button>
             {!hasCheckout && (
               <p style={{ margin: "0.9rem 0 0", fontSize: "0.72rem", lineHeight: 1.5, color: "#9297bb", fontFamily: "var(--font-mono,monospace)" }}>
