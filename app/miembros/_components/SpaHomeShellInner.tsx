@@ -11,6 +11,7 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
+import { NumerologiaCosmica } from "./NumerologiaCosmica"
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
@@ -684,6 +685,9 @@ function ViewInicio({
             </button>
           )}
         </header>
+        <div style={{ marginBottom: "1.8rem" }}>
+          <NumerologiaCosmica />
+        </div>
         <TiendaCarousel category="biblioteca" />
       </section>
 

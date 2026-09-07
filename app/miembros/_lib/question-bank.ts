@@ -27,6 +27,7 @@ export const BANK_CATEGORIES: { id: JournalCategory; label: string; hint: string
   { id: "territorio", label: "Mi Territorio", hint: "Historia del lugar, heridas colectivas, memoria ancestral." },
   { id: "acciones", label: "Acciones Alquímicas", hint: "Cartas, actos simbólicos, reparación." },
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Lecturas del Revelador de Misión." },
+  { id: "numerologia", label: "Numerología Cósmica", hint: "Lecturas de tu código personal." },
 ]
 
 const PORTAL_LABEL: Record<string, { label: string; season: number }> = {

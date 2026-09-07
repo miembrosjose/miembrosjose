@@ -14,6 +14,7 @@ export type JournalCategory =
   | "acciones"      // MIS ACCIONES ALQUÍMICAS — cartas, actos simbólicos
   | "misiones"      // MIS MISIONES — custodia, nodos, reportes
   | "revelaciones"  // MIS REVELACIONES — comprensiones-hito
+  | "numerologia"   // NUMEROLOGÍA CÓSMICA — lecturas del escáner de código personal
 
 export const JOURNAL_CATEGORIES: { id: JournalCategory; label: string; hint: string }[] = [
   { id: "camino", label: "Mi Camino", hint: "Portal de Ingreso e integraciones generales" },
@@ -23,6 +24,7 @@ export const JOURNAL_CATEGORIES: { id: JournalCategory; label: string; hint: str
   { id: "acciones", label: "Mis Acciones Alquímicas", hint: "Cartas, actos simbólicos, reparación" },
   { id: "misiones", label: "Mis Misiones", hint: "Custodia, territorio, nodos, irradiación" },
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Comprensiones que quieras guardar como hitos" },
+  { id: "numerologia", label: "Numerología Cósmica", hint: "Lecturas de tu código personal (nombre · fecha · alma · misión)" },
 ]
 
 export type JournalEntry = {
@@ -147,7 +149,7 @@ export function entriesByCategory(cat: JournalCategory): JournalEntry[] {
 }
 
 export function countByCategory(): Record<JournalCategory, number> {
-  const out = { camino: 0, historia: 0, linaje: 0, territorio: 0, acciones: 0, misiones: 0, revelaciones: 0 } as Record<JournalCategory, number>
+  const out = { camino: 0, historia: 0, linaje: 0, territorio: 0, acciones: 0, misiones: 0, revelaciones: 0, numerologia: 0 } as Record<JournalCategory, number>
   for (const e of loadEntries()) out[e.category] = (out[e.category] || 0) + 1
   return out
 }
