@@ -13,6 +13,7 @@ import {
   type NumerologiaResultado,
 } from "../_lib/numerologia"
 import { upsertAnswer } from "../_lib/journal-store"
+import prod from "./products.module.css"
 
 const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"
@@ -91,9 +92,13 @@ export function NumerologiaCosmica() {
     setHasSaved(true)
   }, [result])
 
+  const onCardClick = useCallback(() => {
+    if (result) openResult(); else openForm()
+  }, [result, openResult, openForm])
+
   return (
     <>
-      <PanelCard onCalcular={openForm} onVer={result ? openResult : undefined} result={result} />
+      <NumerologiaCard onClick={onCardClick} result={result} />
       {open && (
         <Overlay onClose={() => setOpen(false)}>
           <div
@@ -126,68 +131,42 @@ export function NumerologiaCosmica() {
   )
 }
 
-// ── Panel visible en la Biblioteca ──────────────────────────────────────
-function PanelCard({ onCalcular, onVer, result }: {
-  onCalcular: () => void; onVer?: () => void; result: NumerologiaResultado | null
+// ── Tarjeta en el formato de la Biblioteca (mismo grid que los productos) ─
+function NumerologiaCard({ onClick, result }: {
+  onClick: () => void; result: NumerologiaResultado | null
 }) {
   return (
-    <div
-      style={{
-        position: "relative",
-        borderRadius: 20,
-        border: "1px solid rgba(167,139,202,0.28)",
-        background: "linear-gradient(155deg, rgba(40,30,72,0.55) 0%, rgba(16,14,34,0.72) 55%, rgba(8,9,20,0.78) 100%)",
-        boxShadow: "0 26px 60px -30px rgba(90,60,160,0.6)",
-        overflow: "hidden",
-        padding: "clamp(1.4rem,4vw,2.2rem)",
-      }}
-    >
-      {/* Glow decorativo */}
-      <div aria-hidden style={{
-        position: "absolute", top: -80, right: -60, width: 260, height: 260, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(167,139,202,0.35), transparent 70%)", pointerEvents: "none",
-      }} />
-      <div aria-hidden style={{
-        position: "absolute", bottom: -90, left: -50, width: 220, height: 220, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(217,184,102,0.18), transparent 70%)", pointerEvents: "none",
-      }} />
-
-      <div style={{ position: "relative" }}>
-        <p style={{ margin: 0, fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.34em", textTransform: "uppercase", color: GOLD }}>
-          Herramienta viva · gratuita
-        </p>
-        <h3 style={{
-          margin: "0.7rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800,
-          fontSize: "clamp(1.5rem,4.5vw,2.1rem)", lineHeight: 1.08, color: "#fff", letterSpacing: "0.02em",
+    <button type="button" onClick={onClick} className={prod.card} style={{ cursor: "pointer" }}>
+      <div className={prod.thumb}>
+        <div style={{
+          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+          background: "radial-gradient(120% 90% at 50% 18%, rgba(167,139,202,0.5) 0%, rgba(60,44,110,0.4) 42%, rgba(12,10,28,0.9) 100%)",
         }}>
-          Numerología Cósmica
-        </h3>
-        <p style={{ margin: "0.5rem 0 0", fontFamily: "var(--font-mono,monospace)", fontSize: "0.72rem", letterSpacing: "0.22em", textTransform: "uppercase", color: VIOLET }}>
+          {/* Glow + glifo */}
+          <div aria-hidden style={{
+            position: "absolute", width: 150, height: 150, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(230,207,149,0.35), transparent 68%)",
+          }} />
+          <Sparkles size={54} strokeWidth={1.3} style={{ color: GOLD, filter: "drop-shadow(0 0 14px rgba(217,184,102,0.6))", position: "relative" }} />
+        </div>
+      </div>
+      <div className={prod.body}>
+        <h3 className={prod.name} style={{ color: "#F3F6FA" }}>Numerología Cósmica</h3>
+        <p style={{ margin: 0, fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: VIOLET, fontFamily: "var(--font-mono,monospace)" }}>
           Nombre · Fecha · Alma · Misión
         </p>
-        <p style={{ margin: "1.15rem 0 0", maxWidth: "60ch", fontSize: "clamp(0.92rem,1.5vw,1rem)", lineHeight: 1.78, color: "#c6cbe6" }}>
-          Tu nombre y tu fecha de nacimiento guardan una arquitectura vibratoria. La Numerología Cósmica abre
-          una primera lectura de tu código personal: la forma en que tu conciencia entra en la materia, expresa
-          su energía y comienza a revelar su servicio dentro de la Red.
+        <p style={{ margin: "0.15rem 0 0", fontSize: "0.75rem", color: "#a8a8c0", lineHeight: 1.45 }}>
+          {result
+            ? `Tu última lectura: Camino ${result.caminoVida} · Alma ${result.alma}.`
+            : "Descubre tu código personal a partir de tu nombre y tu fecha de nacimiento."}
         </p>
-
-        <div style={{ marginTop: "1.5rem", display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
-          <button type="button" onClick={onCalcular} style={primaryBtn}>
-            <Sparkles size={15} /> Calcular mi código personal
-          </button>
-          {onVer && (
-            <button type="button" onClick={onVer} style={ghostBtn}>
-              Ver mi última lectura
-            </button>
-          )}
+        <div className={prod.footer} style={{ marginTop: "0.75rem" }}>
+          <span className={prod.access} style={{ color: GOLD }}>
+            {result ? "Ver mi lectura" : "Gratis · Calcular"}
+          </span>
         </div>
-        {result && (
-          <p style={{ margin: "0.9rem 0 0", fontSize: "0.72rem", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.08em" }}>
-            Última lectura: {result.nombre} · Camino {result.caminoVida} · Alma {result.alma}
-          </p>
-        )}
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -224,6 +203,26 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
   )
 }
 
+// ── Fecha: helpers para el formato día/mes/año ───────────────────────────
+function isoToDMY(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : ""
+}
+function maskDMY(raw: string): string {
+  const dig = raw.replace(/\D/g, "").slice(0, 8)
+  const parts: string[] = [dig.slice(0, 2)]
+  if (dig.length > 2) parts.push(dig.slice(2, 4))
+  if (dig.length > 4) parts.push(dig.slice(4, 8))
+  return parts.filter(Boolean).join("/")
+}
+function dmyToIso(txt: string): string {
+  const m = txt.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (!m) return ""
+  const d = +m[1], mo = +m[2], y = +m[3]
+  if (mo < 1 || mo > 12 || d < 1 || d > 31 || y < 1900 || y > 2099) return ""
+  return `${m[3]}-${m[2]}-${m[1]}`
+}
+
 // ── Formulario ──────────────────────────────────────────────────────────
 function FormView(p: {
   nombre: string; setNombre: (v: string) => void
@@ -232,20 +231,46 @@ function FormView(p: {
   cosmico: string; setCosmico: (v: string) => void
   canSubmit: boolean; onSubmit: (e?: React.FormEvent) => void
 }) {
+  const [fechaTxt, setFechaTxt] = useState(() => isoToDMY(p.fecha))
+  // Sincroniza si la fecha cambia desde fuera (p.ej. "Actualizar mi lectura").
+  useEffect(() => { setFechaTxt(isoToDMY(p.fecha)) }, [p.fecha])
+  const fechaValida = dmyToIso(fechaTxt) !== ""
+  const fechaTocada = fechaTxt.length > 0
+
   return (
     <form onSubmit={p.onSubmit}>
       <p style={kickerStyle}>Escáner de código personal</p>
-      <h2 style={titleStyle}>Ingresa tus datos</h2>
-      <p style={{ margin: "0.9rem 0 1.6rem", fontSize: "0.95rem", lineHeight: 1.7, color: "#c6cbe6" }}>
-        Escribe tu nombre tal como resuena en ti. La lectura se calcula al instante y puedes guardarla en tu
-        bitácora.
+      <h2 style={titleStyle}>Numerología Cósmica</h2>
+      <p style={{ margin: "0.9rem 0 0", fontSize: "0.95rem", lineHeight: 1.78, color: "#c6cbe6" }}>
+        Tu nombre y tu fecha de nacimiento guardan una arquitectura vibratoria. La Numerología Cósmica abre
+        una primera lectura de tu código personal: la forma en que tu conciencia entra en la materia, expresa
+        su energía y comienza a revelar su servicio dentro de la Red.
+      </p>
+      <p style={{ margin: "0.7rem 0 1.6rem", fontSize: "0.88rem", lineHeight: 1.65, color: "#9297bb" }}>
+        Escribe tu nombre tal como resuena en ti. La lectura se calcula al instante y puedes guardarla en tu bitácora.
       </p>
 
       <Field label="Nombre completo" required>
         <input value={p.nombre} onChange={(e) => p.setNombre(e.target.value)} placeholder="Tu nombre y apellidos" style={inputStyle} autoFocus />
       </Field>
-      <Field label="Fecha de nacimiento" required>
-        <input type="date" value={p.fecha} onChange={(e) => p.setFecha(e.target.value)} style={inputStyle} max="2099-12-31" />
+      <Field label="Fecha de nacimiento" required hint="día / mes / año">
+        <input
+          inputMode="numeric"
+          value={fechaTxt}
+          onChange={(e) => {
+            const masked = maskDMY(e.target.value)
+            setFechaTxt(masked)
+            p.setFecha(dmyToIso(masked))
+          }}
+          placeholder="DD/MM/AAAA"
+          maxLength={10}
+          style={{ ...inputStyle, letterSpacing: "0.08em", ...(fechaTocada && !fechaValida ? { borderColor: "rgba(220,120,120,0.6)" } : {}) }}
+        />
+        <span style={{ display: "block", marginTop: "0.35rem", fontSize: "0.68rem", color: fechaTocada && !fechaValida ? "#d78" : "#6a6f92", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.04em" }}>
+          {fechaTocada && !fechaValida
+            ? "Escribe la fecha como DD/MM/AAAA — ejemplo: 27/12/1988"
+            : "Ejemplo: 27/12/1988 (día, mes y año)"}
+        </span>
       </Field>
       <Field label="Ciudad / territorio actual" hint="opcional">
         <input value={p.ciudad} onChange={(e) => p.setCiudad(e.target.value)} placeholder="Dónde habitas hoy" style={inputStyle} />

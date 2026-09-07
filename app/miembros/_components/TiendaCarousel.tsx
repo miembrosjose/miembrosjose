@@ -40,11 +40,14 @@ function availableKey(af: string | null | undefined): number {
 export function TiendaCarousel({
   category = "biblioteca",
   variant = "biblioteca",
+  leadingCard,
 }: {
   /** Filtra los productos por sección: "biblioteca" (default) o "tienda". */
   category?: string
   /** Estilo visual: "biblioteca" (violeta) o "tienda" (dorado, diferenciado). */
   variant?: "biblioteca" | "tienda"
+  /** Tarjeta opcional que se renderiza como primer elemento del grid. */
+  leadingCard?: React.ReactNode
 } = {}) {
   const { products, loading } = useProducts()
   const { hasAccess, isAdminOverride } = useProductAccess()
@@ -88,19 +91,29 @@ export function TiendaCarousel({
   }
 
   if (loading) {
-    return <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem" }}>Cargando productos...</p>
+    return (
+      <div className={styles.grid}>
+        {leadingCard}
+      </div>
+    )
   }
 
   if (orderedProducts.length === 0) {
     return (
-      <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem", padding: "2rem 0" }}>
-        {isTienda ? "No hay productos en la tienda todavía." : "No hay productos todavía."}
-      </p>
+      <div className={styles.grid}>
+        {leadingCard}
+        {!leadingCard && (
+          <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem", padding: "2rem 0" }}>
+            {isTienda ? "No hay productos en la tienda todavía." : "No hay productos todavía."}
+          </p>
+        )}
+      </div>
     )
   }
 
   return (
     <div className={styles.grid}>
+      {leadingCard}
       {orderedProducts.map((p) => {
         const userHasAccess = hasAccess(p.id) || isAdminOverride
         const isLockedForUser = !userHasAccess && p.is_locked

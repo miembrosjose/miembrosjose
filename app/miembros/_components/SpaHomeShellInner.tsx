@@ -685,10 +685,7 @@ function ViewInicio({
             </button>
           )}
         </header>
-        <div style={{ marginBottom: "1.8rem" }}>
-          <NumerologiaCosmica />
-        </div>
-        <TiendaCarousel category="biblioteca" />
+        <TiendaCarousel category="biblioteca" leadingCard={<NumerologiaCosmica />} />
       </section>
 
       {/* TIENDA — sección aparte, estilo dorado (diferenciado de Biblioteca) */}

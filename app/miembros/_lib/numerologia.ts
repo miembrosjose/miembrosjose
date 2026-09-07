@@ -68,11 +68,12 @@ export function calcular(input: {
   const vowels = letters.filter((c) => VOWELS.has(c))
   const consonants = letters.filter((c) => !VOWELS.has(c))
 
-  // Camino de vida — desde la fecha (YYYY-MM-DD del input date).
-  const [y, m, d] = (input.fecha || "").split("-").map((v) => parseInt(v, 10))
-  const dd = reduce(d || 0), mm = reduce(m || 0)
-  const yy = reduce(String(y || 0).split("").reduce((a, ch) => a + Number(ch), 0))
-  const caminoVida = reduce(dd + mm + yy)
+  // Camino de vida — suma de TODOS los dígitos de la fecha, reducida
+  // conservando maestros. Este método detecta 11/22/33 que se perderían al
+  // reducir día/mes/año por separado (ej. 27/12/1988 → 3+8=11, no 2).
+  const [, m, d] = (input.fecha || "").split("-").map((v) => parseInt(v, 10))
+  const digitSum = (input.fecha || "").replace(/\D/g, "").split("").reduce((a, ch) => a + Number(ch), 0)
+  const caminoVida = reduce(digitSum)
 
   const alma = reduce(sumLetters(vowels))
   const personalidad = reduce(sumLetters(consonants))
