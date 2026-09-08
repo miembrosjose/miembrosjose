@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import "leaflet/dist/leaflet.css"
-import { Globe2, Map as MapIcon, Crosshair } from "lucide-react"
+import { Globe2, Map as MapIcon, Crosshair, Share2 } from "lucide-react"
 import { project, placeColor, placeTipo, tipoLabel, TIPOS, type ContactPlace } from "../_lib/lugares-data"
 
 const GOLD = "#e6cf95"
@@ -28,17 +28,19 @@ export function ContactPlacesMap({
   view: "map" | "globe"; onToggleView: (v: "map" | "globe") => void
 }) {
   const plotted = places.filter((p) => p.latitude != null && p.longitude != null) as Plotted[]
+  const [showRed, setShowRed] = useState(false)
   return (
     <div>
       <MapStyles />
-      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.7rem" }}>
+      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.7rem", flexWrap: "wrap" }}>
         <button type="button" onClick={() => onToggleView("map")} style={viewBtn(view === "map")}><MapIcon size={13} /> Mapa 2D</button>
         <button type="button" onClick={() => onToggleView("globe")} style={viewBtn(view === "globe")}><Globe2 size={13} /> Globo 3D</button>
+        {view === "map" && <button type="button" onClick={() => setShowRed((v) => !v)} style={viewBtn(showRed)}><Share2 size={13} /> Red planetaria</button>}
       </div>
 
       {view === "globe"
         ? <GlobeView places={plotted} onSelect={onSelect} />
-        : <LeafletMap places={plotted} selectedId={selectedId} onSelect={onSelect} />}
+        : <LeafletMap places={plotted} selectedId={selectedId} onSelect={onSelect} showRed={showRed} />}
 
       {/* Leyenda por tipo */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 0.85rem", marginTop: "0.7rem", fontSize: "0.6rem", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
@@ -73,7 +75,7 @@ function MapStyles() {
 }
 
 // ── 2D: Leaflet + OSM oscurecido ────────────────────────────────────────
-function LeafletMap({ places, selectedId, onSelect }: { places: Plotted[]; selectedId: string | null; onSelect: (p: ContactPlace) => void }) {
+function LeafletMap({ places, selectedId, onSelect, showRed }: { places: Plotted[]; selectedId: string | null; onSelect: (p: ContactPlace) => void; showRed: boolean }) {
   const elRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null); const layerRef = useRef<any>(null); const LRef = useRef<any>(null)
@@ -98,7 +100,7 @@ function LeafletMap({ places, selectedId, onSelect }: { places: Plotted[]; selec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => { renderMarkers() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [places, selectedId])
+  useEffect(() => { renderMarkers() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [places, selectedId, showRed])
 
   // Centra el mapa en el punto seleccionado (al elegirlo desde el buscador).
   useEffect(() => {
@@ -113,6 +115,16 @@ function LeafletMap({ places, selectedId, onSelect }: { places: Plotted[]; selec
     const L = LRef.current, layer = layerRef.current
     if (!L || !layer) return
     layer.clearLayers()
+    // Red planetaria: líneas sutiles entre puntos oficiales (Discos Solares).
+    if (showRed) {
+      const discos = places.filter((p) => p.tipoPrincipal === "disco_solar" && p.latitude != null && p.longitude != null)
+        .slice().sort((a, b) => a.longitude - b.longitude)
+      for (let i = 0; i < discos.length - 1; i++) {
+        L.polyline([[discos[i].latitude, discos[i].longitude], [discos[i + 1].latitude, discos[i + 1].longitude]], {
+          color: GOLD, weight: 0.8, opacity: 0.35, dashArray: "4 6",
+        }).addTo(layer)
+      }
+    }
     // Chakras planetarios → halos continentales amplios (debajo de los puntos).
     for (const p of places) {
       if (p.tipoPrincipal !== "chakra" || !p.chakra || p.latitude == null || p.longitude == null) continue

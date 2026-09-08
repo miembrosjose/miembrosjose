@@ -9,7 +9,7 @@ import { createPortal } from "react-dom"
 import dynamic from "next/dynamic"
 import {
   X, MapPin, Search, Plus, Bookmark, BookmarkCheck, Footprints,
-  MessageSquarePlus, Shield, Check, BookmarkPlus, Globe2, Loader2,
+  MessageSquarePlus, Shield, Check, BookmarkPlus, Globe2, Loader2, Sparkles,
 } from "lucide-react"
 import {
   fetchPlaces, submitPlace, moderatePlace, deletePlace,
@@ -444,6 +444,7 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
   const official = place.authorityLevel === "official" || place.authorityLevel === "featured"
   const col = placeColor(place)
   const [showTestimony, setShowTestimony] = useState(false)
+  const [showWorked, setShowWorked] = useState(false)
   const levelBadge = official ? (place.authorityLevel === "featured" ? "Destacado" : "Oficial") : place.status === "pending_review" ? "Pendiente" : "Comunidad"
 
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev } }, [])
@@ -498,8 +499,10 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginTop: "1.3rem" }}>
             <button type="button" onClick={() => { setSaved(place.id, "saved"); refresh() }} style={actBtn(sv?.status === "saved")}>{sv?.status === "saved" ? <BookmarkCheck size={14} /> : <Bookmark size={14} />} Guardar</button>
             <button type="button" onClick={() => { setSaved(place.id, "visited"); refresh() }} style={actBtn(sv?.status === "visited")}><Footprints size={14} /> He visitado</button>
+            <button type="button" onClick={() => setShowWorked((v) => !v)} style={actBtn(showWorked)}><Sparkles size={14} /> He trabajado este lugar</button>
             <button type="button" onClick={() => setShowTestimony((v) => !v)} style={actBtn(showTestimony)}><MessageSquarePlus size={14} /> Añadir testimonio</button>
           </div>
+          {showWorked && <WorkedForm place={place} onDone={() => { setShowWorked(false); refresh() }} />}
           {showTestimony && <TestimonyForm place={place} onDone={() => { setShowTestimony(false); refresh() }} />}
           {testimonies.length > 0 && (
             <div style={{ marginTop: "1.4rem" }}>
@@ -510,6 +513,50 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
           {isAdmin && <AdminTools place={place} official={official} onModerated={onModerated} />}
         </div>
       </div>
+    </div>
+  )
+}
+
+function WorkedForm({ place, onDone }: { place: ContactPlace; onDone: () => void }) {
+  const [f, setF] = useState({ fecha: new Date().toISOString().slice(0, 10), intencion: "", senti: "", senal: "", custodia: "" })
+  const [priv, setPriv] = useState(true)
+  const set = (k: keyof typeof f, v: string) => setF((s) => ({ ...s, [k]: v }))
+  const canSave = f.intencion.trim().length > 0 || f.senti.trim().length > 0
+  const save = () => {
+    if (!canSave) return
+    setSaved(place.id, "worked")
+    upsertAnswer({
+      category: "lugares", source: "lugares_trabajo", sourceLabel: "Mapa Cósmico · Mis Lugares",
+      prompt: `Trabajo · ${place.name} · ${f.fecha}`,
+      answer: [
+        `Lugar: ${place.name} (${place.country}) · ${tipoLabel(placeTipo(place))}`,
+        `Fecha: ${f.fecha}`,
+        f.intencion && `Intención: ${f.intencion}`,
+        f.senti && `Qué sentí / observé: ${f.senti}`,
+        f.senal && `Sueño, señal o percepción posterior: ${f.senal}`,
+        f.custodia && `Acción de custodia: ${f.custodia}`,
+      ].filter(Boolean).join("\n"),
+      isPrivate: priv,
+    })
+    onDone()
+  }
+  return (
+    <div style={{ marginTop: "1rem", padding: "1rem", borderRadius: 12, border: "1px solid rgba(217,184,102,0.3)", background: "rgba(217,184,102,0.05)" }}>
+      <div style={{ fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD, fontFamily: "var(--font-mono,monospace)", marginBottom: "0.5rem" }}>Registrar un trabajo en este lugar</div>
+      <label style={miniLabel}>Fecha</label>
+      <input type="date" value={f.fecha} onChange={(e) => set("fecha", e.target.value)} style={input} />
+      <label style={miniLabel}>Intención</label>
+      <input value={f.intencion} onChange={(e) => set("intencion", e.target.value)} placeholder="¿Con qué intención trabajaste este lugar?" style={input} />
+      <label style={miniLabel}>Qué sentí / observé</label>
+      <textarea value={f.senti} onChange={(e) => set("senti", e.target.value)} style={{ ...input, minHeight: 60, resize: "vertical" }} />
+      <label style={miniLabel}>Sueño, señal o percepción posterior</label>
+      <input value={f.senal} onChange={(e) => set("senal", e.target.value)} style={input} />
+      <label style={miniLabel}>Acción de custodia realizada</label>
+      <input value={f.custodia} onChange={(e) => set("custodia", e.target.value)} placeholder="Ej. limpieza, ofrenda, oración, cuidado del lugar" style={input} />
+      <label style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem", cursor: "pointer", fontSize: "0.78rem", color: "#c6cbe6" }}>
+        <input type="checkbox" checked={priv} onChange={(e) => setPriv(e.target.checked)} /> Privado (solo en mi bitácora)
+      </label>
+      <button type="button" onClick={save} disabled={!canSave} style={{ ...goldBtn, width: "100%", justifyContent: "center", marginTop: "0.8rem", opacity: canSave ? 1 : 0.45 }}><Check size={14} /> Guardar en Mi Gran Bitácora</button>
     </div>
   )
 }
@@ -582,6 +629,7 @@ function FichaBloque({ label, text }: { label: string; text: string }) {
 
 const input: React.CSSProperties = { width: "100%", padding: "0.6rem 0.75rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.9rem", outline: "none", fontFamily: "var(--font-geist-sans,sans-serif)" }
 const selectStyle: React.CSSProperties = { padding: "0.35rem 0.6rem", borderRadius: 999, border: "1px solid rgba(167,139,202,0.3)", background: "rgba(10,11,26,0.6)", color: VIOLET, fontSize: "0.62rem", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer", maxWidth: 200 }
+const miniLabel: React.CSSProperties = { display: "block", margin: "0.6rem 0 0.25rem", fontSize: "0.6rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }
 const kicker: React.CSSProperties = { margin: 0, fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.32em", textTransform: "uppercase", color: GOLD }
 const title: React.CSSProperties = { margin: "0.55rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "clamp(1.6rem,4.5vw,2.3rem)", lineHeight: 1.08, color: "#fff" }
 const goldBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.8rem 1.4rem", borderRadius: 12, border: "1px solid rgba(217,184,102,0.6)", background: "linear-gradient(135deg,#e6cf95,#c9a86b)", color: "#1a1204", fontFamily: "var(--font-mono,monospace)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }
