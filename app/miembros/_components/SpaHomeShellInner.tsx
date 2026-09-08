@@ -11,8 +11,11 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { NumerologiaCosmica, isNumerologiaToolProduct } from "./NumerologiaCosmica"
-import { LugaresContacto, isLugaresToolProduct } from "./LugaresContacto"
+import { isNumerologiaToolProduct, isLugaresToolProduct } from "../_lib/tool-products"
+// Herramientas de Biblioteca: SOLO cliente (ssr:false) para no cargar Stripe/
+// Leaflet/globe.gl en el render del Worker (evita Error 1102 en /miembros).
+const NumerologiaCosmica = dynamic(() => import("./NumerologiaCosmica").then((m) => m.NumerologiaCosmica), { ssr: false })
+const LugaresContacto = dynamic(() => import("./LugaresContacto").then((m) => m.LugaresContacto), { ssr: false })
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
