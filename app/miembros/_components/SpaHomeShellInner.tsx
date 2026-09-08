@@ -12,6 +12,7 @@ import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { isNumerologiaToolProduct, isLugaresToolProduct } from "../_lib/tool-products"
+import { BibliotecaSeeder } from "./BibliotecaSeeder"
 // Herramientas de Biblioteca: SOLO cliente (ssr:false) para no cargar Stripe/
 // Leaflet/globe.gl en el render del Worker (evita Error 1102 en /miembros).
 const NumerologiaCosmica = dynamic(() => import("./NumerologiaCosmica").then((m) => m.NumerologiaCosmica), { ssr: false })
@@ -689,6 +690,7 @@ function ViewInicio({
             </button>
           )}
         </header>
+        <BibliotecaSeeder />
         <TiendaCarousel
           category="biblioteca"
           leadingCard={<><NumerologiaCosmica /><LugaresContacto /></>}
