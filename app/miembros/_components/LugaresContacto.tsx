@@ -322,7 +322,7 @@ function PlaceList({ places, onSelect }: { places: ContactPlace[]; onSelect: (p:
   return (
     <div style={{ marginTop: "1rem", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: "0.8rem" }}>
       {places.map((p) => {
-        const col = categoryColor(p.category)
+        const col = placeColor(p)
         const official = p.authorityLevel === "official" || p.authorityLevel === "featured"
         return (
           <button key={p.id} type="button" onClick={() => onSelect(p)} style={{ textAlign: "left", padding: "1rem 1.05rem", borderRadius: 14, border: "1px solid rgba(167,139,202,0.2)", borderLeft: `3px solid ${official ? GOLD : col}`, background: "rgba(10,11,26,0.5)", cursor: "pointer" }}>
