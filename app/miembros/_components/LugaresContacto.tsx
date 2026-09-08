@@ -75,6 +75,8 @@ export function LugaresContacto() {
   }, [isAdminOverride, productsLoading, product, createProduct])
 
   const bodyRef = useRef<HTMLDivElement>(null)
+  const selectedRef = useRef<ContactPlace | null>(null)
+  selectedRef.current = selected
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -87,14 +89,15 @@ export function LugaresContacto() {
   useEffect(() => {
     if (!open) return
     reload()
-    const prev = document.body.style.overflow
+    // Bloqueo de scroll del fondo SOLO ligado a `open` (no a `selected`), y se
+    // restaura siempre a normal al cerrar → evita que la página quede sin scroll.
     document.body.style.overflow = "hidden"
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (selected) setSelected(null); else setOpen(false) } }
-    const onLocal = () => { /* testimonios/guardados cambian → forzar re-render */ setPlaces((p) => [...p]) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (selectedRef.current) setSelected(null); else setOpen(false) } }
+    const onLocal = () => { setPlaces((p) => [...p]) }
     window.addEventListener("keydown", onKey)
     window.addEventListener(LUGARES_CHANGED_EVENT, onLocal)
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); window.removeEventListener(LUGARES_CHANGED_EVENT, onLocal) }
-  }, [open, selected, reload])
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); window.removeEventListener(LUGARES_CHANGED_EVENT, onLocal) }
+  }, [open, reload])
 
   useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [view])
 
@@ -138,7 +141,7 @@ export function LugaresContacto() {
     <>
       <LugaresCard onClick={() => setOpen(true)} product={product} />
       {open && createPortal(
-        <Overlay onClose={() => setOpen(false)}>
+        <Overlay onClose={() => { setOpen(false); setSelected(null) }}>
           <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto" style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
             <div style={{ maxWidth: 860, margin: "0 auto", padding: "clamp(1.3rem,4vw,2.4rem) clamp(1rem,4vw,1.8rem) 4rem" }}>
               <p style={kicker}>Discos Solares · Retiros Interiores · Chakras Planetarios · Lugares Sagrados</p>
@@ -451,7 +454,8 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
   const [showWorked, setShowWorked] = useState(false)
   const levelBadge = official ? (place.authorityLevel === "featured" ? "Destacado" : "Oficial") : place.status === "pending_review" ? "Pendiente" : "Comunidad"
 
-  useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev } }, [])
+  // El bloqueo de scroll del fondo lo maneja el overlay principal; aquí no se
+  // toca el body (evitaba dejar la página sin scroll al cerrar).
   const testimonies = loadTestimonies(place.id).filter((t) => !t.isPrivate)
 
   return (
