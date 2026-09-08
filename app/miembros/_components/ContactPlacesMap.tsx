@@ -35,11 +35,11 @@ export function ContactPlacesMap({
       <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.7rem", flexWrap: "wrap" }}>
         <button type="button" onClick={() => onToggleView("map")} style={viewBtn(view === "map")}><MapIcon size={13} /> Mapa 2D</button>
         <button type="button" onClick={() => onToggleView("globe")} style={viewBtn(view === "globe")}><Globe2 size={13} /> Globo 3D</button>
-        {view === "map" && <button type="button" onClick={() => setShowRed((v) => !v)} style={viewBtn(showRed)}><Share2 size={13} /> Red planetaria</button>}
+        <button type="button" onClick={() => setShowRed((v) => !v)} style={viewBtn(showRed)}><Share2 size={13} /> Red planetaria</button>
       </div>
 
       {view === "globe"
-        ? <GlobeView places={plotted} onSelect={onSelect} />
+        ? <GlobeView places={plotted} onSelect={onSelect} showRed={showRed} />
         : <LeafletMap places={plotted} selectedId={selectedId} onSelect={onSelect} showRed={showRed} />}
 
       {/* Leyenda por tipo */}
@@ -115,15 +115,20 @@ function LeafletMap({ places, selectedId, onSelect, showRed }: { places: Plotted
     const L = LRef.current, layer = layerRef.current
     if (!L || !layer) return
     layer.clearLayers()
-    // Red planetaria: líneas sutiles entre puntos oficiales (Discos Solares).
+    // Red planetaria: cadenas sutiles por capa (Discos, Retiros, Contacto).
     if (showRed) {
-      const discos = places.filter((p) => p.tipoPrincipal === "disco_solar" && p.latitude != null && p.longitude != null)
-        .slice().sort((a, b) => a.longitude - b.longitude)
-      for (let i = 0; i < discos.length - 1; i++) {
-        L.polyline([[discos[i].latitude, discos[i].longitude], [discos[i + 1].latitude, discos[i + 1].longitude]], {
-          color: GOLD, weight: 0.8, opacity: 0.35, dashArray: "4 6",
-        }).addTo(layer)
+      const chain = (subset: Plotted[], color: string, opacity: number) => {
+        const s = subset.slice().sort((a, b) => a.longitude - b.longitude)
+        for (let i = 0; i < s.length - 1; i++) {
+          L.polyline([[s[i].latitude, s[i].longitude], [s[i + 1].latitude, s[i + 1].longitude]], {
+            color, weight: 0.8, opacity, dashArray: "4 6",
+          }).addTo(layer)
+        }
       }
+      const notChakra = places.filter((p) => p.tipoPrincipal !== "chakra")
+      chain(notChakra.filter((p) => p.tipoPrincipal === "disco_solar"), GOLD, 0.4)
+      chain(notChakra.filter((p) => (p.capas ?? []).includes("Retiro Interior")), "#7c5cff", 0.28)
+      chain(notChakra.filter((p) => p.tipoPrincipal === "contacto" || (p.capas ?? []).includes("Lugar de Contacto")), "#4aa3ff", 0.22)
     }
     // Chakras planetarios → halos continentales amplios (debajo de los puntos).
     for (const p of places) {
@@ -205,7 +210,13 @@ export function LocationPicker({ lat, lon, onPick }: {
 }
 
 // ── 3D: globe.gl ─────────────────────────────────────────────────────────
-function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: ContactPlace) => void }) {
+function arcData(places: Plotted[]) {
+  const discos = places.filter((p) => p.tipoPrincipal === "disco_solar").slice().sort((a, b) => a.longitude - b.longitude)
+  const arcs: { startLat: number; startLng: number; endLat: number; endLng: number }[] = []
+  for (let i = 0; i < discos.length - 1; i++) arcs.push({ startLat: discos[i].latitude, startLng: discos[i].longitude, endLat: discos[i + 1].latitude, endLng: discos[i + 1].longitude })
+  return arcs
+}
+function GlobeView({ places, onSelect, showRed }: { places: Plotted[]; onSelect: (p: ContactPlace) => void; showRed: boolean }) {
   const elRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const globeRef = useRef<any>(null)
@@ -237,6 +248,8 @@ function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: Cont
           .pointLabel((d: any) => `${d.place.name} · ${d.place.country}`)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .onPointClick((d: any) => onSelectRef.current(d.place))
+          .arcColor(() => "#e6cf95").arcStroke(0.4).arcAltitude(0.18).arcDashLength(0.5).arcDashGap(0.25).arcDashAnimateTime(4000)
+          .arcsData(showRed ? arcData(places) : [])
         g.controls().autoRotate = true; g.controls().autoRotateSpeed = 0.6; g.controls().enableZoom = true
         g.pointOfView({ lat: 8, lng: -40, altitude: 2.4 })
         globeRef.current = g
@@ -255,6 +268,7 @@ function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: Cont
   }, [])
 
   useEffect(() => { if (globeRef.current) globeRef.current.pointsData(pointData(places)) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [places])
+  useEffect(() => { if (globeRef.current) globeRef.current.arcsData(showRed ? arcData(places) : []) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showRed, places])
 
   if (failed) return <GlobeFallback count={places.length} />
   return <div style={{ ...MAP_WRAP, background: "radial-gradient(70% 90% at 50% 40%, rgba(30,22,60,0.6) 0%, #06060f 70%)" }}><div ref={elRef} style={{ position: "absolute", inset: 0 }} /></div>
