@@ -33,6 +33,20 @@ export async function getMembership(supabase: SupabaseServer): Promise<Membershi
     return { userId: user.id, authenticated: true, isAdmin: true, active: true }
   }
 
+  // Acceso manual (testers/reviewers/invitados). Defensivo ante columna ausente.
+  const { data: access } = await supabase
+    .from("profiles")
+    .select("manual_access, access_role")
+    .eq("id", user.id)
+    .maybeSingle()
+  const role = (access as { access_role?: string | null } | null)?.access_role
+  const manual =
+    (access as { manual_access?: boolean } | null)?.manual_access === true ||
+    role === "tester" || role === "reviewer" || role === "admin"
+  if (manual) {
+    return { userId: user.id, authenticated: true, isAdmin: false, active: true }
+  }
+
   // Membro normal: RLS devuelve solo su propia fila.
   const { data: sub } = await supabase
     .from("member_subscriptions")

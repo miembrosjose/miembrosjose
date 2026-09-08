@@ -48,6 +48,22 @@ export async function requireMiembrosAuth(): Promise<MiembrosAuthResult> {
     return { user, supabase }
   }
 
+  // 2b. Acesso manual concedido pelo admin (testers/reviewers/convidados).
+  //     Consulta separada e defensiva: se as colunas ainda não existem, o erro
+  //     retorna data=null → não concede acesso, sem quebrar o gate.
+  const { data: access } = await supabase
+    .from("profiles")
+    .select("manual_access, access_role")
+    .eq("id", user.id)
+    .maybeSingle()
+  const role = (access as { access_role?: string | null } | null)?.access_role
+  const manual =
+    (access as { manual_access?: boolean } | null)?.manual_access === true ||
+    role === "tester" || role === "reviewer" || role === "admin"
+  if (manual) {
+    return { user, supabase }
+  }
+
   // 3. Membro normal: precisa de membresía ativa. O RLS garante que esta query
   //    só retorna a linha cujo email == email da sessão.
   const { data: sub } = await supabase
