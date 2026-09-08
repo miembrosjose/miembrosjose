@@ -28,7 +28,6 @@ export const BANK_CATEGORIES: { id: JournalCategory; label: string; hint: string
   { id: "acciones", label: "Acciones Alquímicas", hint: "Cartas, actos simbólicos, reparación." },
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Lecturas del Revelador de Misión." },
   { id: "numerologia", label: "Numerología Cósmica", hint: "Lecturas de tu código personal." },
-  { id: "lugares", label: "Lugares de Contacto", hint: "Tus testimonios y visitas del Mapa Cósmico." },
 ]
 
 const PORTAL_LABEL: Record<string, { label: string; season: number }> = {
