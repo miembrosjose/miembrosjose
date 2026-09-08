@@ -282,11 +282,6 @@ function NumerologiaCard({ onClick, result, product }: {
             ? `Tu última lectura: Camino ${result.caminoVida} · Alma ${result.alma}.`
             : (descripcion || "Descubre tu código personal a partir de tu nombre y tu fecha de nacimiento.")}
         </p>
-        <div className={prod.footer} style={{ marginTop: "0.75rem" }}>
-          <span className={prod.access} style={{ color: GOLD }}>
-            {result ? "Ver mi lectura" : "Gratis · Calcular"}
-          </span>
-        </div>
       </div>
     </button>
   )

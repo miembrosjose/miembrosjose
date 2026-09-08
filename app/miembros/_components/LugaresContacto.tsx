@@ -130,7 +130,7 @@ export function LugaresContacto() {
 
   return (
     <>
-      <LugaresCard onClick={() => setOpen(true)} product={product} count={counters.registrados} />
+      <LugaresCard onClick={() => setOpen(true)} product={product} />
       {open && createPortal(
         <Overlay onClose={() => setOpen(false)}>
           <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto" style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
@@ -214,7 +214,7 @@ export function LugaresContacto() {
 }
 
 // ── Tarjeta ─────────────────────────────────────────────────────────────
-function LugaresCard({ onClick, product, count }: { onClick: () => void; product: DbProduct | null; count: number }) {
+function LugaresCard({ onClick, product }: { onClick: () => void; product: DbProduct | null }) {
   const cover = product?.media_url || null
   const isVid = !!cover && /\.(mp4|webm|mov)(\?|$)/i.test(cover)
   const titulo = product?.name?.trim() || "Lugares de Contacto"
@@ -236,7 +236,6 @@ function LugaresCard({ onClick, product, count }: { onClick: () => void; product
         <h3 className={prod.name} style={{ color: "#F3F6FA" }}>{titulo}</h3>
         <p style={{ margin: 0, fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: VIOLET, fontFamily: "var(--font-mono,monospace)" }}>Mapa Cósmico de la Red</p>
         <p style={{ margin: "0.15rem 0 0", fontSize: "0.75rem", color: "#a8a8c0", lineHeight: 1.45 }}>{product?.description?.trim() || "Explora lugares sagrados, puntos de contacto y nodos de la Red planetaria."}</p>
-        <div className={prod.footer} style={{ marginTop: "0.75rem" }}><span className={prod.access} style={{ color: GOLD }}>{count} lugares · Explorar</span></div>
       </div>
     </button>
   )
