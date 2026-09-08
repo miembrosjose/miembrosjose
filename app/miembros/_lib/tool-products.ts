@@ -6,12 +6,17 @@ function norm(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 }
 
-export function isNumerologiaToolProduct(p: { name: string }): boolean {
+// `num` estable de cada herramienta (así el vínculo sobrevive al renombrado).
+export const LUGARES_PRODUCT_NUM = 92
+
+export function isNumerologiaToolProduct(p: { name: string; num?: number }): boolean {
   const n = norm(p.name)
   return n.includes("numerolog") && !n.includes("profund")
 }
 
-export function isLugaresToolProduct(p: { name: string }): boolean {
+// Coincide por num estable (92) o, en su defecto, por nombre.
+export function isLugaresToolProduct(p: { name: string; num?: number }): boolean {
+  if (p.num === LUGARES_PRODUCT_NUM) return true
   const n = norm(p.name)
   return n.includes("lugares") && n.includes("contacto")
 }

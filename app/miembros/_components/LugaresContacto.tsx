@@ -19,7 +19,8 @@ import {
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
-import { isLugaresToolProduct } from "../_lib/tool-products"
+import { useProductAccess } from "../_lib/use-product-access"
+import { isLugaresToolProduct, LUGARES_PRODUCT_NUM } from "../_lib/tool-products"
 import prod from "./products.module.css"
 
 // Mapa y selector: SOLO cliente (ssr:false). Así Leaflet/globe.gl/three NO entran
@@ -53,11 +54,24 @@ export function LugaresContacto() {
   const [level, setLevel] = useState<"todos" | "official" | "community" | "pending">("todos")
   const [cat, setCat] = useState("")
 
-  const { products } = useProducts()
-  // Identifica el producto de la tarjeta por nombre (debe contener "lugares" y
-  // "contacto"). Puede renombrarse añadiendo palabras, pero conservando esos dos
-  // términos; si hay varios, toma el primero.
+  const { products, loading: productsLoading, createProduct } = useProducts()
+  // El producto de la tarjeta se identifica por num estable (92) o por nombre.
   const product = useMemo(() => products.find(isLugaresToolProduct) ?? null, [products])
+  const { isAdminOverride } = useProductAccess()
+
+  // Alta automática (una vez, admin) del producto gestionable. Al usar num 92
+  // como identidad, renombrar la tarjeta NO crea duplicados.
+  const seededRef = useRef(false)
+  useEffect(() => {
+    if (seededRef.current || !isAdminOverride || productsLoading || product) return
+    seededRef.current = true
+    createProduct({
+      num: LUGARES_PRODUCT_NUM, name: "Lugares de Contacto",
+      description: "Mapa Cósmico de la Red: lugares sagrados, discos solares, zonas de contacto y nodos.",
+      category: "biblioteca", gradient: "linear-gradient(135deg, #14142a 0%, #6D4A9B 100%)",
+      emoji: "🛸", sort_order: 2, is_locked: false, price_cents: 499, currency: "usd",
+    } as never).catch(() => { /* si falla, no reintentar en bucle */ })
+  }, [isAdminOverride, productsLoading, product, createProduct])
 
   const bodyRef = useRef<HTMLDivElement>(null)
 
