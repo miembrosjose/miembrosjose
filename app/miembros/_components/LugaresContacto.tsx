@@ -19,7 +19,15 @@ import {
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
+import { useProductAccess } from "../_lib/use-product-access"
+import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
+
+const LUGARES_MANUAL_KEY = "los144k_lugares_premium"
+function money(cents: number, currency = "usd"): string {
+  const sym = currency.toLowerCase() === "usd" ? "US$" : currency.toUpperCase() + " "
+  return `${sym} ${(cents / 100).toFixed(2)}`
+}
 
 // Mapa y selector: SOLO cliente (ssr:false). Así Leaflet/globe.gl/three NO entran
 // al bundle del Worker (evita "Error 1102 · Worker exceeded resource limits").
@@ -59,6 +67,15 @@ export function LugaresContacto() {
 
   const { products } = useProducts()
   const product = useMemo(() => products.find(isLugaresToolProduct) ?? null, [products])
+  const { hasAccess, isAdminOverride } = useProductAccess()
+  const [manualUnlock, setManualUnlock] = useState(false)
+  useEffect(() => { try { setManualUnlock(localStorage.getItem(LUGARES_MANUAL_KEY) === "1") } catch { /* privado */ } }, [])
+  // Admin: bloqueado por defecto (para poder probar) salvo desbloqueo manual.
+  const realOwned = product ? hasAccess(product.id) : false
+  const purchasable = !!(product && product.price_cents > 0 && product.is_locked)
+  const unlocked = isAdminOverride ? manualUnlock : (manualUnlock || realOwned || !purchasable)
+  const precioLabel = product && product.price_cents > 0 ? money(product.price_cents, product.currency) : "US$ 4.99"
+  const activarManual = useCallback(() => { try { localStorage.setItem(LUGARES_MANUAL_KEY, "1") } catch { /* privado */ } setManualUnlock(true) }, [])
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const reload = useCallback(async () => {
@@ -134,6 +151,10 @@ export function LugaresContacto() {
                 reconocer cómo la Red se expresa en la Tierra.
               </p>
 
+              {!unlocked ? (
+                <LockGate isAdmin={isAdminOverride} product={product} purchasable={purchasable} precioLabel={precioLabel} onAdminManual={activarManual} />
+              ) : (
+              <>
               <div style={{ marginTop: "1.4rem", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: "0.6rem" }}>
                 {[
                   { l: "Lugares registrados", v: counters.registrados },
@@ -179,6 +200,8 @@ export function LugaresContacto() {
                 {view === "anadir" && <SubmitForm onDone={() => { setView("mapa"); reload() }} />}
                 {view === "mis" && <MisRegistros places={places} onSelect={setSelected} />}
               </div>
+              </>
+              )}
 
               <p style={{ marginTop: "2.2rem", padding: "0.9rem 1rem", borderRadius: 12, border: "1px solid rgba(167,139,202,0.18)", background: "rgba(10,11,26,0.4)", fontSize: "0.78rem", lineHeight: 1.6, color: "#8b90b4" }}>
                 Este mapa reúne registros administrativos y aportes comunitarios. Cada punto debe ser explorado con
@@ -234,6 +257,45 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       <div className="relative flex w-[min(900px,calc(100vw-24px))] flex-col overflow-hidden" style={{ maxHeight: "calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 32px)", borderRadius: 18, border: "1px solid rgba(167,139,202,0.3)", background: "linear-gradient(160deg, rgba(20,18,46,0.98), rgba(8,9,20,0.98))", boxShadow: "0 40px 90px -20px rgba(0,0,0,0.9)" }}>
         <button type="button" onClick={onClose} aria-label="Cerrar" className="absolute right-3 top-3 z-10 rounded-full p-2 text-[#a8a8c0] transition-colors hover:bg-[#251f30] hover:text-white"><X size={20} /></button>
         {children}
+      </div>
+    </div>
+  )
+}
+
+// ── Gate premium: desbloqueo 1-clic del Mapa Cósmico ────────────────────
+function LockGate({ isAdmin, product, purchasable, precioLabel, onAdminManual }: {
+  isAdmin: boolean; product: DbProduct | null; purchasable: boolean; precioLabel: string; onAdminManual: () => void
+}) {
+  const incluye = ["Lugares sagrados", "Discos solares", "Zonas de contacto / avistamiento", "Retiros interiores", "Nodos comunitarios", "Añadir tus propios puntos"]
+  return (
+    <div style={{ position: "relative", marginTop: "1.6rem", padding: "clamp(1.3rem,4vw,1.9rem)", borderRadius: 18, border: "1px solid rgba(217,184,102,0.5)", background: "linear-gradient(155deg, rgba(46,34,80,0.55) 0%, rgba(18,15,38,0.75) 60%, rgba(8,9,20,0.8) 100%)", overflow: "hidden" }}>
+      <div aria-hidden style={{ position: "absolute", top: -70, right: -50, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(217,184,102,0.22), transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative" }}>
+        <p style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: GOLD }}><Globe2 size={13} /> Acceso al Mapa Cósmico</p>
+        <h3 style={{ margin: "0.6rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "clamp(1.3rem,3.5vw,1.7rem)", lineHeight: 1.12, color: "#fff" }}>Desbloquea Lugares de Contacto</h3>
+        <p style={{ margin: "0.7rem 0 0", fontSize: "0.92rem", lineHeight: 1.72, color: "#c6cbe6" }}>
+          Explora el mapa vivo de la Red planetaria: registra, descubre y visualiza puntos de contacto, memoria y activación. Añade tus propios lugares y guarda tus visitas.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 1.1rem", margin: "0.9rem 0 0" }}>
+          {incluye.map((x) => <span key={x} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "#e6e9f7" }}><Check size={13} style={{ color: GOLD }} /> {x}</span>)}
+        </div>
+
+        <div style={{ marginTop: "1.3rem" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.7rem", marginBottom: "0.9rem" }}>
+            <span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "1.9rem", color: GOLD }}>{precioLabel}</span>
+            <span style={{ fontSize: "0.62rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>Pago único</span>
+          </div>
+          {isAdmin ? (
+            <button type="button" onClick={onAdminManual} style={{ ...goldBtn, width: "100%", justifyContent: "center" }}>
+              <Shield size={15} /> Desbloquear (admin · pruebas)
+            </button>
+          ) : purchasable && product ? (
+            <ProductUnlockInline productId={product.id} priceCents={product.price_cents} currency={product.currency} priceLabel={precioLabel}
+              buttonLabel={`Desbloquear · ${precioLabel}`} buttonStyle={{ ...goldBtn, width: "100%", justifyContent: "center" }} onSuccess={() => { /* el evento de acceso refresca el gate */ }} />
+          ) : (
+            <p style={{ margin: "0.4rem 0 0", fontSize: "0.72rem", lineHeight: 1.5, color: "#9297bb", fontFamily: "var(--font-mono,monospace)" }}>El cobro aún no está integrado para este producto. Corre el SQL del producto para activarlo.</p>
+          )}
+        </div>
       </div>
     </div>
   )
