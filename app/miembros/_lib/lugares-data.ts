@@ -83,17 +83,15 @@ export function categoryColor(id: string): string { return PLACE_CATEGORIES.find
 export const TIPOS: { id: string; label: string; color: string }[] = [
   { id: "disco_solar", label: "Disco Solar", color: "#f0c419" },
   { id: "contacto", label: "Lugar de Contacto", color: "#4aa3ff" },
-  { id: "retiro", label: "Retiro Interior", color: "#7c5cff" },
-  { id: "ciudad_intraterrena", label: "Ciudad Intraterrena", color: "#d8c7ff" },
+  { id: "retiro", label: "Retiro Interior / Ciudad Intraterrena", color: "#7c5cff" },
   { id: "chakra", label: "Chakra Planetario", color: "#c084fc" },
   { id: "sagrado_mayor", label: "Lugar Sagrado Mayor", color: "#eef1fb" },
-  { id: "montana", label: "Montaña Sagrada", color: "#e0a86b" },
-  { id: "volcan", label: "Volcán Sagrado", color: "#ef7d5a" },
+  { id: "montana", label: "Montaña / Volcán Sagrado", color: "#e0a86b" },
   { id: "desierto", label: "Desierto de Contacto", color: "#f0b559" },
   { id: "cueva", label: "Cueva / Portal Interior", color: "#9fb0d6" },
   { id: "lago", label: "Lago / Portal Acuático", color: "#6fd0e0" },
   { id: "piramide", label: "Pirámide / Arquitectura Estelar", color: "#c9a86b" },
-  { id: "aparicion", label: "Aparición Celeste", color: "#cfe0ff" },
+  { id: "aparicion", label: "Aparición Mariana", color: "#cfe0ff" },
   { id: "comunitario", label: "Nodo Comunitario", color: "#a78bca" },
   { id: "por_revisar", label: "Por revisar", color: "#7a7f9a" },
 ]
@@ -106,10 +104,11 @@ const CAT_TO_TIPO: Record<string, string> = {
   sagrado: "sagrado_mayor", retiro: "retiro", natural: "montana", activacion: "contacto",
   nodo: "comunitario", comunitario: "comunitario", otro: "comunitario",
 }
+// Tipos fusionados: ciudad intraterrena → retiro; volcán → montaña.
+const TIPO_MERGE: Record<string, string> = { ciudad_intraterrena: "retiro", volcan: "montana" }
 export function placeTipo(p: ContactPlace): string {
-  if (p.tipoPrincipal) return p.tipoPrincipal
-  if (TIPOS.some((t) => t.id === p.category)) return p.category
-  return CAT_TO_TIPO[p.category] || "comunitario"
+  const raw = p.tipoPrincipal || (TIPOS.some((t) => t.id === p.category) ? p.category : (CAT_TO_TIPO[p.category] || p.category)) || "comunitario"
+  return TIPO_MERGE[raw] || raw
 }
 export function placeColor(p: ContactPlace): string { return p.chakra?.color || tipoColor(placeTipo(p)) }
 
@@ -478,8 +477,6 @@ const LUGARES: ContactPlace[] = [
     shortDescription: "Punto oceánico energético (por revisar).", longDescription: `Santa Catarina y Florianópolis aportan un punto oceánico energético asociado a relatos de contacto; por revisar. ${RESPETO}` }),
   P({ name: "Montañas Rocosas / Banff", country: "Canadá", lat: 51.178, lon: -115.571, tipo: "montana", capas: ["Montaña de Poder"], nivelAutoridad: "por_revisar",
     shortDescription: "Cordillera de altura y lagos (por revisar).", longDescription: `Banff y las Rocosas canadienses se incluyen como nodo de montaña por investigar. ${RESPETO}` }),
-  P({ name: "Nahanni Valley", country: "Canadá", lat: 61.55, lon: -125.58, tipo: "por_revisar", capas: [], nivelAutoridad: "por_revisar",
-    shortDescription: "Valle remoto de leyendas (por revisar).", longDescription: `El valle de Nahanni, remoto y envuelto en leyendas, se incluye como nodo por investigar. ${RESPETO}` }),
   P({ name: "Haida Gwaii", country: "Canadá", lat: 53.0, lon: -132.0, tipo: "sagrado_mayor", capas: ["Memoria Ancestral"], nivelAutoridad: "por_revisar",
     shortDescription: "Islas de memoria ancestral haida (por revisar).", longDescription: `Haida Gwaii guarda la memoria ancestral del pueblo haida; nodo por investigar con respeto a sus custodios. ${RESPETO}` }),
   P({ name: "Manitoulin Island", country: "Canadá", lat: 45.75, lon: -82.27, tipo: "sagrado_mayor", capas: ["Memoria Ancestral"], nivelAutoridad: "por_revisar",
@@ -564,13 +561,38 @@ const LUGARES: ContactPlace[] = [
     shortDescription: "Cuevas de la memoria más antigua de la humanidad.", longDescription: `Makapansgat guarda vestigios muy antiguos de homínidos: cueva de la memoria profunda de la humanidad. ${RESPETO}` }),
   P({ name: "Salones de Amenti (bajo Gizeh)", country: "Egipto", lat: 29.975, lon: 31.138, tipo: "cueva", capas: ["Intraterreno", "Portal Estelar"], nivelAutoridad: "por_revisar",
     shortDescription: "Salones intraterrenos de la tradición (por revisar).", longDescription: `Los llamados Salones de Amenti bajo la meseta de Gizeh se incluyen, según la tradición del proyecto, como archivo intraterreno; nodo por revisar. ${RESPETO}` }),
+
+  // ── Volcanes sagrados (más) ────────────────────────────────────────
+  P({ name: "Pico de Orizaba (Citlaltépetl)", country: "México", lat: 19.03, lon: -97.27, tipo: "volcan", capas: ["Volcán Sagrado", "Montaña de Poder"], nivelAutoridad: "sagrado",
+    shortDescription: "Volcán más alto de México, la Montaña de la Estrella.", longDescription: `El Pico de Orizaba o Citlaltépetl, "montaña de la estrella", es el volcán más alto de México: eje de altura, hielo y fuego. ${RESPETO}` }),
+  P({ name: "Volcán de Colima", country: "México", lat: 19.51, lon: -103.62, tipo: "volcan", capas: ["Volcán Sagrado", "Lugar de Contacto"], nivelAutoridad: "relato",
+    shortDescription: "Volcán de Fuego, asociado a relatos de luces.", longDescription: `El Volcán de Colima (Volcán de Fuego) es uno de los más activos de México, asociado a relatos de luces y presencias en sus cielos. ${RESPETO}` }),
+  P({ name: "Nevado de Toluca", country: "México", lat: 19.11, lon: -99.76, tipo: "volcan", capas: ["Volcán Sagrado", "Lago / Portal Acuático"], nivelAutoridad: "sagrado",
+    shortDescription: "Volcán con lagunas ceremoniales en el cráter.", longDescription: `El Nevado de Toluca guarda en su cráter las lagunas del Sol y de la Luna: volcán ceremonial de ofrendas antiguas. ${RESPETO}` }),
+  P({ name: "Paricutín", country: "México", lat: 19.49, lon: -102.25, tipo: "volcan", capas: ["Volcán Sagrado"], nivelAutoridad: "historico",
+    shortDescription: "Volcán nacido en el siglo XX ante testigos.", longDescription: `El Paricutín surgió de un campo de maíz en 1943: testimonio vivo del fuego que crea montaña. ${RESPETO}` }),
+  P({ name: "Volcán Cotopaxi", country: "Ecuador", lat: -0.68, lon: -78.44, tipo: "volcan", capas: ["Volcán Sagrado", "Montaña de Poder", "Memoria Andina"], nivelAutoridad: "sagrado",
+    shortDescription: "Gran volcán andino de fuego y nieve.", longDescription: `El Cotopaxi, cono perfecto de los Andes, es volcán sagrado de fuego y nieve: eje de poder del Ecuador. ${RESPETO}` }),
+  P({ name: "Etna", country: "Italia", lat: 37.75, lon: 15.00, tipo: "volcan", capas: ["Volcán Sagrado"], nivelAutoridad: "sagrado",
+    shortDescription: "Gran volcán del Mediterráneo, fragua mítica.", longDescription: `El Etna, en Sicilia, es el gran volcán del Mediterráneo: fragua de mitos y fuego perpetuo. ${RESPETO}` }),
+  P({ name: "Kīlauea", country: "Estados Unidos", region: "Hawái", lat: 19.42, lon: -155.29, tipo: "volcan", capas: ["Volcán Sagrado", "Memoria Ancestral"], nivelAutoridad: "sagrado",
+    shortDescription: "Volcán vivo de Hawái, morada de Pele.", longDescription: `El Kīlauea, en Hawái, es volcán vivo venerado como morada de Pele: fuego creador de tierra nueva. ${RESPETO}` }),
+
+  // ── Lagos / portales acuáticos (más) ───────────────────────────────
+  P({ name: "Lago Atitlán", country: "Guatemala", lat: 14.69, lon: -91.20, tipo: "lago", capas: ["Lago / Portal Acuático", "Memoria Maya", "Lugar de Contacto"], nivelAutoridad: "sagrado",
+    shortDescription: "Lago volcánico maya de gran fuerza energética.", longDescription: `El Lago Atitlán, rodeado de volcanes, es lago sagrado maya de honda fuerza energética y belleza. ${RESPETO}` }),
+  P({ name: "Lago Baikal", country: "Rusia / Siberia", lat: 53.5, lon: 108.0, tipo: "lago", capas: ["Lago / Portal Acuático", "Memoria Ancestral"], nivelAutoridad: "sagrado",
+    shortDescription: "El lago más profundo y antiguo de la Tierra.", longDescription: `El Baikal, el lago más profundo y antiguo del planeta, guarda un agua primordial venerada por los pueblos de Siberia. ${RESPETO}` }),
+  P({ name: "Lago de Pátzcuaro", country: "México", region: "Michoacán", lat: 19.60, lon: -101.60, tipo: "lago", capas: ["Lago / Portal Acuático", "Memoria Ancestral"], nivelAutoridad: "sagrado",
+    shortDescription: "Lago purépecha, umbral entre mundos.", longDescription: `El Lago de Pátzcuaro, corazón purépecha, es umbral entre mundos, célebre por su memoria y sus ritos de ánimas. ${RESPETO}` }),
 ]
 
-// Etiqueta de capa equivalente a cada tipo (para filtros y cruces).
-export const TIPO_CAPA: Record<string, string> = {
-  disco_solar: "Disco Solar", contacto: "Lugar de Contacto", retiro: "Retiro Interior",
-  ciudad_intraterrena: "Ciudad Intraterrena", desierto: "Desierto de Contacto",
-  montana: "Montaña de Poder", piramide: "Arquitectura Estelar", cueva: "Cueva / Portal Interior",
+// Capas equivalentes a cada tipo (para filtros inclusivos y cruces).
+export const TIPO_CAPAS: Record<string, string[]> = {
+  disco_solar: ["Disco Solar"], contacto: ["Lugar de Contacto"],
+  retiro: ["Retiro Interior", "Ciudad Intraterrena"], desierto: ["Desierto de Contacto"],
+  montana: ["Montaña de Poder", "Volcán Sagrado"], piramide: ["Arquitectura Estelar"],
+  cueva: ["Cueva / Portal Interior"], lago: ["Lago / Portal Acuático"],
 }
 
 // Cruce de capas: todos los Discos Solares son también Retiro Interior; y todos

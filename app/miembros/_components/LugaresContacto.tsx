@@ -15,7 +15,7 @@ import {
   fetchPlaces, submitPlace, moderatePlace, deletePlace,
   loadTestimonies, addTestimony, loadSaved, savedStatus, setSaved,
   countTerritories, COUNTRIES, LUGARES_CHANGED_EVENT, type ContactPlace,
-  placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS, TIPO_CAPA,
+  placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS, TIPO_CAPAS,
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
@@ -108,8 +108,8 @@ export function LugaresContacto() {
       if (level === "community" && p.authorityLevel !== "community") return false
       if (level === "pending" && p.status !== "pending_review") return false
       if (tipo) {
-        const capaEq = TIPO_CAPA[tipo]
-        const ok = placeTipo(p) === tipo || (capaEq ? (p.capas ?? []).includes(capaEq) : false)
+        const caps = TIPO_CAPAS[tipo]
+        const ok = placeTipo(p) === tipo || (caps ? caps.some((c) => (p.capas ?? []).includes(c)) : false)
         if (!ok) return false
       }
       if (capa && !(p.capas ?? []).includes(capa)) return false
