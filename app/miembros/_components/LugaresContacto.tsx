@@ -14,8 +14,8 @@ import {
 import {
   fetchPlaces, submitPlace, moderatePlace, deletePlace,
   loadTestimonies, addTestimony, loadSaved, savedStatus, setSaved,
-  countTerritories, categoryLabel, categoryColor, PLACE_CATEGORIES, COUNTRIES,
-  LUGARES_CHANGED_EVENT, type ContactPlace,
+  countTerritories, COUNTRIES, LUGARES_CHANGED_EVENT, type ContactPlace,
+  placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS,
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
@@ -52,7 +52,8 @@ export function LugaresContacto() {
 
   const [q, setQ] = useState("")
   const [level, setLevel] = useState<"todos" | "official" | "community" | "pending">("todos")
-  const [cat, setCat] = useState("")
+  const [tipo, setTipo] = useState("")
+  const [capa, setCapa] = useState("")
 
   const { products, loading: productsLoading, createProduct } = useProducts()
   // El producto de la tarjeta se identifica por num estable (92) o por nombre.
@@ -106,17 +107,18 @@ export function LugaresContacto() {
       if (level === "official" && !(p.authorityLevel === "official" || p.authorityLevel === "featured")) return false
       if (level === "community" && p.authorityLevel !== "community") return false
       if (level === "pending" && p.status !== "pending_review") return false
-      if (cat && p.category !== cat) return false
-      if (needle) { const hay = `${p.name} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${p.tags.join(" ")}`.toLowerCase(); if (!hay.includes(needle)) return false }
+      if (tipo && placeTipo(p) !== tipo) return false
+      if (capa && !(p.capas ?? []).includes(capa)) return false
+      if (needle) { const hay = `${p.name} ${p.nombreEnergetico ?? ""} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${(p.capas ?? []).join(" ")} ${p.tags.join(" ")}`.toLowerCase(); if (!hay.includes(needle)) return false }
       return true
     })
-  }, [places, q, level, cat])
+  }, [places, q, level, tipo, capa])
 
-  // Resultados en vivo del buscador del mapa (por nombre, país, ciudad o categoría).
+  // Resultados en vivo del buscador del mapa (nombre, energético, país, ciudad, tipo, capa).
   const searchMatches = useMemo(() => {
     const needle = q.trim().toLowerCase()
     if (!needle) return []
-    return places.filter((p) => `${p.name} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${categoryLabel(p.category)} ${p.tags.join(" ")}`.toLowerCase().includes(needle)).slice(0, 8)
+    return places.filter((p) => `${p.name} ${p.nombreEnergetico ?? ""} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${tipoLabel(placeTipo(p))} ${(p.capas ?? []).join(" ")} ${p.tags.join(" ")}`.toLowerCase().includes(needle)).slice(0, 8)
   }, [places, q])
 
   const counters = useMemo(() => ({
@@ -135,17 +137,17 @@ export function LugaresContacto() {
         <Overlay onClose={() => setOpen(false)}>
           <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto" style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
             <div style={{ maxWidth: 860, margin: "0 auto", padding: "clamp(1.3rem,4vw,2.4rem) clamp(1rem,4vw,1.8rem) 4rem" }}>
-              <p style={kicker}>Mapa Cósmico de la Red</p>
-              <h2 style={title}>Lugares de Contacto</h2>
+              <p style={kicker}>Discos Solares · Retiros Interiores · Chakras Planetarios · Lugares Sagrados</p>
+              <h2 style={title}>Mapa Cósmico</h2>
               <p style={{ margin: "1rem 0 0", fontSize: "0.95rem", lineHeight: 1.78, color: "#c6cbe6" }}>
-                Hay territorios donde la memoria parece respirar más cerca de la superficie. Montañas, desiertos,
-                lagunas, cuevas, templos antiguos y zonas de silencio han sido reconocidos por distintas tradiciones
-                como puntos de contacto, custodia y activación.
+                La Tierra es un cuerpo vivo. Sus montañas, desiertos, mares, cuevas, templos y ciudades antiguas
+                guardan memorias de contacto, iniciación y custodia. Este mapa reúne los puntos donde la red planetaria
+                se vuelve visible: discos solares, retiros interiores, lugares de contacto, chakras planetarios y sitios
+                sagrados mayores.
               </p>
-              <p style={{ margin: "0.7rem 0 0", fontSize: "0.9rem", lineHeight: 1.7, color: "#9297bb" }}>
-                Este mapa reúne lugares registrados por la administración y puntos compartidos por la comunidad. Cada
-                registro es una semilla de memoria territorial, una invitación al discernimiento y una forma de
-                reconocer cómo la Red se expresa en la Tierra.
+              <p style={{ margin: "0.7rem 0 0", fontSize: "0.86rem", lineHeight: 1.65, color: "#9297bb" }}>
+                Explóralo como una red viva: activa capas, abre las fichas y descubre cómo la memoria de la Tierra se
+                expresa en cada territorio. Los aportes de la comunidad se revisan antes de publicarse.
               </p>
 
               <div style={{ marginTop: "1.4rem", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: "0.6rem" }}>
@@ -178,7 +180,7 @@ export function LugaresContacto() {
 
               <div style={{ marginTop: "1.4rem" }}>
                 {(view === "mapa" || view === "oficiales") && (
-                  <Filters q={q} setQ={setQ} level={level} setLevel={setLevel} cat={cat} setCat={setCat} isAdmin={isAdmin}
+                  <Filters q={q} setQ={setQ} level={level} setLevel={setLevel} tipo={tipo} setTipo={setTipo} capa={capa} setCapa={setCapa} isAdmin={isAdmin}
                     matches={searchMatches} onPickMatch={(p) => { setSelected(p); setQ("") }} />
                 )}
                 {loading && places.length === 0 && (
@@ -252,10 +254,10 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
   )
 }
 
-function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPickMatch }: {
+function Filters({ q, setQ, level, setLevel, tipo, setTipo, capa, setCapa, isAdmin, matches, onPickMatch }: {
   q: string; setQ: (v: string) => void
   level: "todos" | "official" | "community" | "pending"; setLevel: (v: "todos" | "official" | "community" | "pending") => void
-  cat: string; setCat: (v: string) => void; isAdmin: boolean
+  tipo: string; setTipo: (v: string) => void; capa: string; setCapa: (v: string) => void; isAdmin: boolean
   matches: ContactPlace[]; onPickMatch: (p: ContactPlace) => void
 }) {
   const [focused, setFocused] = useState(false)
@@ -278,14 +280,14 @@ function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPi
             {matches.length === 0 ? (
               <div style={{ padding: "0.6rem 0.8rem", fontSize: "0.76rem", color: "#6a6f92" }}>Sin coincidencias</div>
             ) : matches.map((p) => {
-              const col = categoryColor(p.category)
+              const col = placeColor(p)
               return (
                 <button key={p.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onPickMatch(p)}
                   style={{ display: "flex", alignItems: "center", gap: "0.55rem", width: "100%", textAlign: "left", padding: "0.55rem 0.8rem", background: "transparent", border: "none", borderBottom: "1px solid rgba(167,139,202,0.12)", cursor: "pointer" }}>
                   <i style={{ width: 9, height: 9, borderRadius: "50%", background: col, boxShadow: `0 0 5px ${col}`, flexShrink: 0 }} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "block", color: "#eef1fb", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                    <span style={{ display: "block", color: "#8b90b4", fontSize: "0.66rem", fontFamily: "var(--font-mono,monospace)" }}>{p.country}{p.region ? ` · ${p.region}` : ""} · {categoryLabel(p.category).split(" / ")[0]}</span>
+                    <span style={{ display: "block", color: "#8b90b4", fontSize: "0.66rem", fontFamily: "var(--font-mono,monospace)" }}>{p.country}{p.region ? ` · ${p.region}` : ""} · {tipoLabel(placeTipo(p)).split(" / ")[0]}</span>
                   </span>
                 </button>
               )
@@ -295,9 +297,13 @@ function Filters({ q, setQ, level, setLevel, cat, setCat, isAdmin, matches, onPi
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.7rem" }}>
         {levels.map((l) => <button key={l.id} type="button" onClick={() => setLevel(l.id)} style={chip(level === l.id)}>{l.label}</button>)}
-        <select value={cat} onChange={(e) => setCat(e.target.value)} style={{ padding: "0.35rem 0.6rem", borderRadius: 999, border: "1px solid rgba(167,139,202,0.3)", background: "rgba(10,11,26,0.6)", color: VIOLET, fontSize: "0.62rem", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-          <option value="">Categoría · todas</option>
-          {PLACE_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} style={selectStyle}>
+          <option value="">Tipo · todos</option>
+          {TIPOS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+        <select value={capa} onChange={(e) => setCapa(e.target.value)} style={selectStyle}>
+          <option value="">Capa · todas</option>
+          {CAPAS.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
     </div>
@@ -315,7 +321,7 @@ function PlaceList({ places, onSelect }: { places: ContactPlace[]; onSelect: (p:
           <button key={p.id} type="button" onClick={() => onSelect(p)} style={{ textAlign: "left", padding: "1rem 1.05rem", borderRadius: 14, border: "1px solid rgba(167,139,202,0.2)", borderLeft: `3px solid ${official ? GOLD : col}`, background: "rgba(10,11,26,0.5)", cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><MapPin size={13} style={{ color: col }} /><span style={{ fontFamily: "var(--font-cinzel,serif)", fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{p.name}</span></div>
             <div style={{ marginTop: "0.3rem", fontSize: "0.66rem", letterSpacing: "0.08em", textTransform: "uppercase", color: GOLD_DEEP, fontFamily: "var(--font-mono,monospace)" }}>{p.country}{p.region ? ` · ${p.region}` : ""}</div>
-            <div style={{ marginTop: "0.15rem", fontSize: "0.62rem", color: col, fontFamily: "var(--font-mono,monospace)" }}>{categoryLabel(p.category)}</div>
+            <div style={{ marginTop: "0.15rem", fontSize: "0.62rem", color: col, fontFamily: "var(--font-mono,monospace)" }}>{tipoLabel(placeTipo(p))}</div>
             <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", lineHeight: 1.5, color: "#a8a8c0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.shortDescription}</p>
           </button>
         )
@@ -409,7 +415,7 @@ function SubmitForm({ onDone }: { onDone: () => void }) {
         <Field label="Ciudad"><input style={input} value={f.city} onChange={(e) => set("city", e.target.value)} placeholder="Ciudad (se completa al buscar)" /></Field>
         <Field label="Categoría">
           <select style={input} value={f.category} onChange={(e) => set("category", e.target.value)}>
-            {PLACE_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            {TIPOS.filter((t) => t.id !== "chakra" && t.id !== "por_revisar").map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </Field>
       </div>
@@ -436,7 +442,7 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
   const refresh = () => force((n) => n + 1)
   const sv = savedStatus(place.id)
   const official = place.authorityLevel === "official" || place.authorityLevel === "featured"
-  const col = categoryColor(place.category)
+  const col = placeColor(place)
   const [showTestimony, setShowTestimony] = useState(false)
   const levelBadge = official ? (place.authorityLevel === "featured" ? "Destacado" : "Oficial") : place.status === "pending_review" ? "Pendiente" : "Comunidad"
 
@@ -459,12 +465,34 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto" style={{ padding: "1.1rem 1.3rem 1.4rem", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
-          <MetaRow label="Categoría" value={categoryLabel(place.category)} color={col} />
+          <MetaRow label="Tipo" value={tipoLabel(placeTipo(place))} color={col} />
+          {place.nivelAutoridad && <MetaRow label="Nivel" value={nivelLabel(place.nivelAutoridad)} />}
+          {place.nombreEnergetico && <MetaRow label="Nombre energético" value={place.nombreEnergetico} />}
+          {place.alias && place.alias.length > 0 && <MetaRow label="Alias" value={place.alias.join(" · ")} />}
           {place.latitude != null && place.longitude != null && <MetaRow label="Coordenadas" value={`${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}`} />}
           {place.createdBy && <MetaRow label="Registrado por" value={place.createdBy} />}
           <p style={{ margin: "0.9rem 0 0", fontSize: "0.92rem", lineHeight: 1.7, color: "#e6e9f7" }}>{place.shortDescription}</p>
           {place.longDescription && <p style={{ margin: "0.7rem 0 0", fontSize: "0.9rem", lineHeight: 1.7, color: "#c6cbe6", whiteSpace: "pre-wrap" }}>{place.longDescription}</p>}
-          {place.visitRecommendations && <p style={{ margin: "0.8rem 0 0", padding: "0.7rem 0.9rem", borderLeft: `2px solid ${GOLD}`, borderRadius: 8, background: "rgba(217,184,102,0.06)", fontSize: "0.85rem", lineHeight: 1.6, color: "#eef1fb" }}><b style={{ color: GOLD }}>Recomendaciones de visita:</b> {place.visitRecommendations}</p>}
+
+          {place.capas && place.capas.length > 0 && (
+            <div style={{ marginTop: "1rem" }}>
+              <div style={{ fontSize: "0.58rem", letterSpacing: "0.18em", textTransform: "uppercase", color: VIOLET, fontFamily: "var(--font-mono,monospace)", marginBottom: "0.4rem" }}>Capas energéticas</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                {place.capas.map((c) => <span key={c} style={{ fontSize: "0.62rem", padding: "0.2rem 0.6rem", borderRadius: 999, border: `1px solid ${col}55`, color: col, background: `${col}14`, fontFamily: "var(--font-mono,monospace)" }}>{c}</span>)}
+              </div>
+            </div>
+          )}
+
+          {place.funcionEnergetica && <FichaBloque label="Función energética" text={place.funcionEnergetica} />}
+          {place.relacionContacto && <FichaBloque label="Relación con el contacto" text={place.relacionContacto} />}
+          {place.relacionRetiro && <FichaBloque label="Retiro interior / intraterreno" text={place.relacionRetiro} />}
+          {place.relacionDisco && <FichaBloque label="Relación con Discos Solares" text={place.relacionDisco} />}
+          {place.relacionIntra && <FichaBloque label="Mundo intraterreno" text={place.relacionIntra} />}
+          {place.relacionHistorica && <FichaBloque label="Relación histórica / mística" text={place.relacionHistorica} />}
+          {place.linajes && place.linajes.length > 0 && <FichaBloque label="Linajes asociados" text={place.linajes.join(" · ")} />}
+
+          {(place.recomendacionesVisita || place.visitRecommendations) && <p style={{ margin: "0.9rem 0 0", padding: "0.7rem 0.9rem", borderLeft: `2px solid ${GOLD}`, borderRadius: 8, background: "rgba(217,184,102,0.06)", fontSize: "0.85rem", lineHeight: 1.6, color: "#eef1fb" }}><b style={{ color: GOLD }}>Recomendaciones de visita:</b> {place.recomendacionesVisita || place.visitRecommendations}</p>}
+          {place.fuentesNotas && <p style={{ margin: "0.7rem 0 0", fontSize: "0.72rem", color: "#6a6f92", fontStyle: "italic" }}>Nota: {place.fuentesNotas}</p>}
           {place.tags.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.9rem" }}>{place.tags.map((t) => <span key={t} style={{ fontSize: "0.62rem", padding: "0.2rem 0.55rem", borderRadius: 999, border: "1px solid rgba(167,139,202,0.3)", color: VIOLET, fontFamily: "var(--font-mono,monospace)" }}>#{t}</span>)}</div>}
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginTop: "1.3rem" }}>
@@ -491,7 +519,7 @@ function TestimonyForm({ place, onDone }: { place: ContactPlace; onDone: () => v
   const save = () => {
     if (text.trim().length < 4) return
     addTestimony({ placeId: place.id, testimony: text, isPrivate: !share })
-    if (toBitacora) upsertAnswer({ category: "lugares", source: "lugares", sourceLabel: "Lugares de Contacto", prompt: `${place.name} · ${place.country}`, answer: `Lugar: ${place.name} (${place.country})\nCategoría: ${categoryLabel(place.category)}\nFecha: ${new Date().toLocaleDateString("es")}\nCompartido con la comunidad: ${share ? "sí (pendiente de revisión)" : "no"}\n\nTestimonio / experiencia:\n${text.trim()}`, isPrivate: !share })
+    if (toBitacora) upsertAnswer({ category: "lugares", source: "lugares", sourceLabel: "Mapa Cósmico · Lugares", prompt: `${place.name} · ${place.country}`, answer: `Lugar: ${place.name} (${place.country})\nTipo: ${tipoLabel(placeTipo(place))}\nFecha: ${new Date().toLocaleDateString("es")}\nCompartido con la comunidad: ${share ? "sí (pendiente de revisión)" : "no"}\n\nTestimonio / experiencia:\n${text.trim()}`, isPrivate: !share })
     onDone()
   }
   return (
@@ -543,7 +571,17 @@ function MetaRow({ label, value, color }: { label: string; value: string; color?
   )
 }
 
+function FichaBloque({ label, text }: { label: string; text: string }) {
+  return (
+    <div style={{ marginTop: "0.8rem" }}>
+      <div style={{ fontSize: "0.58rem", letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD_DEEP, fontFamily: "var(--font-mono,monospace)", marginBottom: "0.2rem" }}>{label}</div>
+      <p style={{ margin: 0, fontSize: "0.86rem", lineHeight: 1.6, color: "#c6cbe6" }}>{text}</p>
+    </div>
+  )
+}
+
 const input: React.CSSProperties = { width: "100%", padding: "0.6rem 0.75rem", borderRadius: 10, border: "1px solid rgba(167,139,202,0.28)", background: "rgba(10,11,26,0.6)", color: "#eef1fb", fontSize: "0.9rem", outline: "none", fontFamily: "var(--font-geist-sans,sans-serif)" }
+const selectStyle: React.CSSProperties = { padding: "0.35rem 0.6rem", borderRadius: 999, border: "1px solid rgba(167,139,202,0.3)", background: "rgba(10,11,26,0.6)", color: VIOLET, fontSize: "0.62rem", fontFamily: "var(--font-mono,monospace)", letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer", maxWidth: 200 }
 const kicker: React.CSSProperties = { margin: 0, fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.32em", textTransform: "uppercase", color: GOLD }
 const title: React.CSSProperties = { margin: "0.55rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800, fontSize: "clamp(1.6rem,4.5vw,2.3rem)", lineHeight: 1.08, color: "#fff" }
 const goldBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.8rem 1.4rem", borderRadius: 12, border: "1px solid rgba(217,184,102,0.6)", background: "linear-gradient(135deg,#e6cf95,#c9a86b)", color: "#1a1204", fontFamily: "var(--font-mono,monospace)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }

@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react"
 import "leaflet/dist/leaflet.css"
 import { Globe2, Map as MapIcon, Crosshair } from "lucide-react"
-import { project, categoryColor, categoryLabel, PLACE_CATEGORIES, type ContactPlace } from "../_lib/lugares-data"
+import { project, placeColor, placeTipo, tipoLabel, TIPOS, type ContactPlace } from "../_lib/lugares-data"
 
 const GOLD = "#e6cf95"
 const VIOLET = "#a78bca"
@@ -40,10 +40,10 @@ export function ContactPlacesMap({
         ? <GlobeView places={plotted} onSelect={onSelect} />
         : <LeafletMap places={plotted} selectedId={selectedId} onSelect={onSelect} />}
 
-      {/* Leyenda por categorías */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem 0.9rem", marginTop: "0.7rem", fontSize: "0.62rem", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
-        {PLACE_CATEGORIES.filter((c) => c.id !== "oficial_contacto" && c.id !== "comunitario").map((c) => (
-          <span key={c.id} style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}><i style={dot(c.color)} /> {c.label.split(" / ")[0]}</span>
+      {/* Leyenda por tipo */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 0.85rem", marginTop: "0.7rem", fontSize: "0.6rem", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
+        {TIPOS.filter((t) => t.id !== "por_revisar").map((t) => (
+          <span key={t.id} style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}><i style={dot(t.color)} /> {t.label.split(" / ")[0]}</span>
         ))}
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: GOLD }}><i style={{ ...dot("transparent"), border: `2px solid ${GOLD}`, boxShadow: `0 0 6px ${GOLD}` }} /> Aro dorado = oficial</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}><i style={{ ...dot("transparent"), border: `1.5px dashed ${VIOLET}` }} /> Punteado = pendiente</span>
@@ -113,10 +113,23 @@ function LeafletMap({ places, selectedId, onSelect }: { places: Plotted[]; selec
     const L = LRef.current, layer = layerRef.current
     if (!L || !layer) return
     layer.clearLayers()
+    // Chakras planetarios → halos continentales amplios (debajo de los puntos).
     for (const p of places) {
+      if (p.tipoPrincipal !== "chakra" || !p.chakra || p.latitude == null || p.longitude == null) continue
+      const c = L.circle([p.latitude, p.longitude], {
+        radius: p.chakra.radioKm * 1000, color: p.chakra.color, weight: 1, opacity: 0.4,
+        fillColor: p.chakra.color, fillOpacity: p.id === selectedId ? 0.16 : 0.09,
+      })
+      c.bindTooltip(`${p.name}`, { direction: "top", className: "cp-tip" })
+      c.on("click", () => onSelectRef.current(p))
+      c.addTo(layer)
+    }
+    // Puntos.
+    for (const p of places) {
+      if (p.tipoPrincipal === "chakra" || p.latitude == null || p.longitude == null) continue
       const official = isOfficial(p)
       const pending = p.status === "pending_review"
-      const fill = categoryColor(p.category)
+      const fill = placeColor(p)
       const stroke = official ? GOLD : fill
       const sel = p.id === selectedId
       const m = L.circleMarker([p.latitude, p.longitude], {
@@ -124,7 +137,7 @@ function LeafletMap({ places, selectedId, onSelect }: { places: Plotted[]; selec
         color: stroke, weight: official ? 2.5 : pending ? 2 : 1.4,
         fillColor: fill, fillOpacity: pending ? 0.15 : 0.85, dashArray: pending ? "3 3" : undefined,
       })
-      m.bindTooltip(`${p.name} · ${p.country}`, { direction: "top", offset: [0, -6], className: "cp-tip" })
+      m.bindTooltip(`${p.name} · ${tipoLabel(placeTipo(p))}`, { direction: "top", offset: [0, -6], className: "cp-tip" })
       m.on("click", () => onSelectRef.current(p))
       m.addTo(layer)
     }
@@ -235,7 +248,7 @@ function GlobeView({ places, onSelect }: { places: Plotted[]; onSelect: (p: Cont
   return <div style={{ ...MAP_WRAP, background: "radial-gradient(70% 90% at 50% 40%, rgba(30,22,60,0.6) 0%, #06060f 70%)" }}><div ref={elRef} style={{ position: "absolute", inset: 0 }} /></div>
 }
 function pointData(places: Plotted[]) {
-  return places.map((p) => ({ lat: p.latitude, lng: p.longitude, official: isOfficial(p), color: categoryColor(p.category), place: p }))
+  return places.map((p) => ({ lat: p.latitude, lng: p.longitude, official: isOfficial(p), color: placeColor(p), place: p }))
 }
 
 // ── Fallbacks ─────────────────────────────────────────────────────────────
@@ -246,8 +259,8 @@ function FallbackMap({ places, selectedId, onSelect }: { places: Plotted[]; sele
         {Array.from({ length: 11 }, (_, i) => (i + 1) * 30).map((x) => <line key={x} x1={x} y1={0} x2={x} y2={180} stroke="rgba(167,139,202,0.08)" strokeWidth={0.4} />)}
         {Array.from({ length: 5 }, (_, i) => (i + 1) * 30).map((y) => <line key={y} x1={0} y1={y} x2={360} y2={y} stroke="rgba(167,139,202,0.08)" strokeWidth={0.4} />)}
       </svg>
-      {places.map((p) => { const { x, y } = project(p.latitude, p.longitude); const c = categoryColor(p.category)
-        return <button key={p.id} type="button" onClick={() => onSelect(p)} title={`${p.name} · ${categoryLabel(p.category)}`}
+      {places.map((p) => { const { x, y } = project(p.latitude, p.longitude); const c = placeColor(p)
+        return <button key={p.id} type="button" onClick={() => onSelect(p)} title={`${p.name} · ${tipoLabel(placeTipo(p))}`}
           style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", width: p.id === selectedId ? 18 : 13, height: p.id === selectedId ? 18 : 13, borderRadius: "50%", cursor: "pointer", border: `1.5px solid ${isOfficial(p) ? GOLD : c}`, background: `radial-gradient(circle, ${c}, transparent 72%)`, boxShadow: `0 0 8px ${c}`, padding: 0 }} />
       })}
     </div>
