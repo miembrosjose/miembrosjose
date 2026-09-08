@@ -19,7 +19,6 @@ import {
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
-import { useProductAccess } from "../_lib/use-product-access"
 import { isLugaresToolProduct } from "../_lib/tool-products"
 import prod from "./products.module.css"
 
@@ -54,24 +53,11 @@ export function LugaresContacto() {
   const [level, setLevel] = useState<"todos" | "official" | "community" | "pending">("todos")
   const [cat, setCat] = useState("")
 
-  const { products, loading: productsLoading, createProduct } = useProducts()
+  const { products } = useProducts()
+  // Identifica el producto de la tarjeta por nombre (debe contener "lugares" y
+  // "contacto"). Puede renombrarse añadiendo palabras, pero conservando esos dos
+  // términos; si hay varios, toma el primero.
   const product = useMemo(() => products.find(isLugaresToolProduct) ?? null, [products])
-  const { isAdminOverride } = useProductAccess()
-
-  // Auto-crea el producto "Lugares de Contacto" (una vez, admin) para que sea
-  // gestionable desde "Gestionar → Biblioteca". Gratis (is_locked:false); el
-  // precio queda listo para desbloquear funciones premium del mapa a futuro.
-  const seededRef = useRef(false)
-  useEffect(() => {
-    if (seededRef.current || !isAdminOverride || productsLoading || product) return
-    seededRef.current = true
-    createProduct({
-      num: 92, name: "Lugares de Contacto",
-      description: "Mapa Cósmico de la Red: lugares sagrados, discos solares, zonas de contacto y nodos.",
-      category: "biblioteca", gradient: "linear-gradient(135deg, #14142a 0%, #6D4A9B 100%)",
-      emoji: "🛸", sort_order: 2, is_locked: false, price_cents: 499, currency: "usd",
-    } as never).catch(() => { /* si falla, no reintentar en bucle */ })
-  }, [isAdminOverride, productsLoading, product, createProduct])
 
   const bodyRef = useRef<HTMLDivElement>(null)
 
