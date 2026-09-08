@@ -19,6 +19,8 @@ const SEED = [
     description: "Las razas primarias y su papel en la historia de la Tierra y la Red." },
   { num: 94, key: "sanacion extraterrestre", name: "Sanación Extraterrestre", available_from: "Enero 2027", emoji: "💠",
     description: "Claves y prácticas de sanación de origen estelar para el cuerpo y el campo." },
+  { num: 95, key: "protocolo de contacto", name: "Protocolo de Contacto", available_from: "Diciembre 2026", emoji: "🛸",
+    description: "Preparación, discernimiento y protocolo para el contacto con los Guías." },
 ]
 
 export function BibliotecaSeeder() {
