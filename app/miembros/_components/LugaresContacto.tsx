@@ -15,7 +15,7 @@ import {
   fetchPlaces, submitPlace, moderatePlace, deletePlace,
   loadTestimonies, addTestimony, loadSaved, savedStatus, setSaved,
   countTerritories, COUNTRIES, LUGARES_CHANGED_EVENT, type ContactPlace,
-  placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS,
+  placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS, TIPO_CAPA,
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
 import { useProducts, type DbProduct } from "../_lib/use-products"
@@ -107,7 +107,11 @@ export function LugaresContacto() {
       if (level === "official" && !(p.authorityLevel === "official" || p.authorityLevel === "featured")) return false
       if (level === "community" && p.authorityLevel !== "community") return false
       if (level === "pending" && p.status !== "pending_review") return false
-      if (tipo && placeTipo(p) !== tipo) return false
+      if (tipo) {
+        const capaEq = TIPO_CAPA[tipo]
+        const ok = placeTipo(p) === tipo || (capaEq ? (p.capas ?? []).includes(capaEq) : false)
+        if (!ok) return false
+      }
       if (capa && !(p.capas ?? []).includes(capa)) return false
       if (needle) { const hay = `${p.name} ${p.nombreEnergetico ?? ""} ${p.country} ${p.region ?? ""} ${p.city ?? ""} ${(p.capas ?? []).join(" ")} ${p.tags.join(" ")}`.toLowerCase(); if (!hay.includes(needle)) return false }
       return true
@@ -469,7 +473,6 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
           <MetaRow label="Tipo" value={tipoLabel(placeTipo(place))} color={col} />
           {place.nivelAutoridad && <MetaRow label="Nivel" value={nivelLabel(place.nivelAutoridad)} />}
           {place.nombreEnergetico && <MetaRow label="Nombre energético" value={place.nombreEnergetico} />}
-          {place.alias && place.alias.length > 0 && <MetaRow label="Alias" value={place.alias.join(" · ")} />}
           {place.latitude != null && place.longitude != null && <MetaRow label="Coordenadas" value={`${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}`} />}
           {place.createdBy && <MetaRow label="Registrado por" value={place.createdBy} />}
           <p style={{ margin: "0.9rem 0 0", fontSize: "0.92rem", lineHeight: 1.7, color: "#e6e9f7" }}>{place.shortDescription}</p>

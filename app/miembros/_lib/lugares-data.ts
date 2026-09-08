@@ -164,12 +164,12 @@ const DISCOS: ContactPlace[] = [
     capas: ["Disco Solar", "Montaña de Poder", "Lugar de Contacto"],
     shortDescription: "Disco Solar Sipenbó: fuego interno, guerrero interior y acción ordenada.",
     longDescription: `El Valle de Santiago y su campo de volcanes —las Siete Luminarias— custodia, según la tradición del proyecto, el Disco Solar Sipenbó (también escrito Sipembó). Se asocia al fuego interno de la Tierra, al volcanismo y a la energía del guerrero interior: la fuerza masculina armonizada con el corazón, la protección consciente y la acción ordenada. Es un nodo que habla de coraje sereno, de poner la fuerza al servicio y de transformar el impulso en dirección. ${RESPETO}`,
-    fuentesNotas: "Alias en revisión: Sipenbó / Sipembó.", funcionEnergetica: "Fuego interno, guerrero interior y acción ordenada." }),
+    funcionEnergetica: "Fuego interno, guerrero interior y acción ordenada." }),
   P({ name: "Ciudad Blanca", nombreEnergetico: "Aromané", alias: ["Aromane"], country: "Honduras", region: "La Mosquitia", lat: 15.15, lon: -84.9, tipo: "disco_solar",
     capas: ["Disco Solar", "Memoria Ancestral"],
     shortDescription: "Disco Solar Aromané: reconciliación de polaridades y equilibrio entre acción y entrega.",
     longDescription: `La llamada Ciudad Blanca, en la selva de La Mosquitia, custodia dentro del archivo del proyecto el Disco Solar Aromané. Se vincula con la memoria centroamericana y con la reconciliación de polaridades: el equilibrio entre firmeza y sensibilidad, entre acción y entrega. Es un nodo de integración, donde lo que parecía opuesto aprende a sostenerse en una misma frecuencia. ${RESPETO}`,
-    fuentesNotas: "Alias en revisión: Aromané / Aromane.", funcionEnergetica: "Reconciliación de polaridades; firmeza y sensibilidad." }),
+    funcionEnergetica: "Reconciliación de polaridades; firmeza y sensibilidad." }),
   P({ name: "Guatavita", nombreEnergetico: "Xemancó", country: "Colombia", region: "Cundinamarca", lat: 4.98, lon: -73.77, tipo: "disco_solar",
     capas: ["Disco Solar", "Lago / Portal Acuático", "Memoria Andina"], linajes: ["Memoria muisca"],
     shortDescription: "Disco Solar Xemancó: agua sagrada, fuego interior y unión de opuestos.",
@@ -189,7 +189,7 @@ const DISCOS: ContactPlace[] = [
     capas: ["Disco Solar", "Retiro Interior", "Intraterreno", "Memoria Andina"],
     shortDescription: "Gran Disco Solar Ilumana: selva intraterrena, renacimiento y red del tiempo.",
     longDescription: `Paititi, la ciudad-selva de la tradición amazónica, custodia el Gran Disco Solar Ilumana (también Ilumanah). Se describe dentro del archivo como selva intraterrena y nodo de renacimiento: transformación, inocencia original y una red del tiempo que enlaza pasado y futuro. Es un retiro interior mayor, oculto a la mirada ordinaria. ${RESPETO}`,
-    fuentesNotas: "Alias en revisión: Ilumana / Ilumanah.", funcionEnergetica: "Renacimiento, inocencia original y red del tiempo." }),
+    funcionEnergetica: "Renacimiento, inocencia original y red del tiempo." }),
   P({ name: "Lago Titicaca", nombreEnergetico: "Demayón", country: "Bolivia / Perú", lat: -15.92, lon: -69.33, tipo: "disco_solar",
     capas: ["Disco Solar", "Lago / Portal Acuático", "Sirio", "Memoria Andina"], linajes: ["Sirio"],
     shortDescription: "Disco Solar Demayón: agua primordial, memoria siriana y unidad masculino-femenino.",
@@ -499,7 +499,29 @@ const LUGARES: ContactPlace[] = [
     shortDescription: "Aparición luminosa registrada colectivamente.", longDescription: `Zeitoun, en El Cairo, se incluye por una aparición luminosa registrada de forma colectiva; lugar de mensaje y memoria. ${RESPETO}` }),
 ]
 
-export const ADMIN_SEED_POINTS: ContactPlace[] = [...DISCOS, ...LUGARES, ...CHAKRAS]
+// Etiqueta de capa equivalente a cada tipo (para filtros y cruces).
+export const TIPO_CAPA: Record<string, string> = {
+  disco_solar: "Disco Solar", contacto: "Lugar de Contacto", retiro: "Retiro Interior",
+  ciudad_intraterrena: "Ciudad Intraterrena", desierto: "Desierto de Contacto",
+  montana: "Montaña de Poder", piramide: "Arquitectura Estelar",
+}
+
+// Cruce de capas: todos los Discos Solares son también Retiro Interior; y todos
+// los lugares oficiales/sagrados (retiros, sagrados mayores, apariciones,
+// montañas, volcanes, desiertos, cuevas, lagos, pirámides, ciudades, discos)
+// cuentan además como Lugar de Contacto. No aplica a chakras ni comunitarios.
+const CONTACTO_TIPOS = new Set(["disco_solar", "retiro", "sagrado_mayor", "aparicion", "montana", "volcan", "desierto", "cueva", "lago", "piramide", "ciudad_intraterrena", "contacto"])
+function normalizeCapas(p: ContactPlace): ContactPlace {
+  if (p.tipoPrincipal === "chakra") return p
+  const set = new Set(p.capas ?? [])
+  const t = p.tipoPrincipal || ""
+  if (t === "disco_solar") { set.add("Disco Solar"); set.add("Retiro Interior") }
+  if (t === "retiro") set.add("Retiro Interior")
+  if (CONTACTO_TIPOS.has(t)) set.add("Lugar de Contacto")
+  return { ...p, capas: Array.from(set) }
+}
+
+export const ADMIN_SEED_POINTS: ContactPlace[] = [...DISCOS, ...LUGARES, ...CHAKRAS].map(normalizeCapas)
 
 // ── API de puntos ────────────────────────────────────────────────────────
 // Muestra SIEMPRE el contenido curado (Discos, Chakras, nodos) y le fusiona los
