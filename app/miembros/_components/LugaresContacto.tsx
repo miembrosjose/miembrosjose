@@ -18,6 +18,7 @@ import {
   placeColor, placeTipo, tipoLabel, nivelLabel, TIPOS, CAPAS,
 } from "../_lib/lugares-data"
 import { upsertAnswer } from "../_lib/journal-store"
+import { loadLastReading, type NumerologiaResultado } from "../_lib/numerologia"
 import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { isLugaresToolProduct, LUGARES_PRODUCT_NUM } from "../_lib/tool-products"
@@ -54,6 +55,7 @@ export function LugaresContacto() {
   const [level, setLevel] = useState<"todos" | "official" | "community" | "pending">("todos")
   const [tipo, setTipo] = useState("")
   const [capa, setCapa] = useState("")
+  const [reading, setReading] = useState<NumerologiaResultado | null>(null)
 
   const { products, loading: productsLoading, createProduct } = useProducts()
   // El producto de la tarjeta se identifica por num estable (92) o por nombre.
@@ -87,6 +89,7 @@ export function LugaresContacto() {
   useEffect(() => {
     if (!open) return
     reload()
+    setReading(loadLastReading())
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (selected) setSelected(null); else setOpen(false) } }
@@ -178,6 +181,8 @@ export function LugaresContacto() {
                 </button>
               )}
 
+              <MisionTerritorial reading={reading} onExplore={(t) => { setTipo(t); setLevel("todos"); setView("mapa") }} />
+
               <div style={{ marginTop: "1.4rem" }}>
                 {(view === "mapa" || view === "oficiales") && (
                   <Filters q={q} setQ={setQ} level={level} setLevel={setLevel} tipo={tipo} setTipo={setTipo} capa={capa} setCapa={setCapa} isAdmin={isAdmin}
@@ -249,6 +254,38 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       <div className="relative flex w-[min(900px,calc(100vw-24px))] flex-col overflow-hidden" style={{ maxHeight: "calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 32px)", borderRadius: 18, border: "1px solid rgba(167,139,202,0.3)", background: "linear-gradient(160deg, rgba(20,18,46,0.98), rgba(8,9,20,0.98))", boxShadow: "0 40px 90px -20px rgba(0,0,0,0.9)" }}>
         <button type="button" onClick={onClose} aria-label="Cerrar" className="absolute right-3 top-3 z-10 rounded-full p-2 text-[#a8a8c0] transition-colors hover:bg-[#251f30] hover:text-white"><X size={20} /></button>
         {children}
+      </div>
+    </div>
+  )
+}
+
+// ── Cruce con Numerología: sugerencia de misión territorial ─────────────
+const PLANO_SUG: Record<string, { foco: string; texto: string; tipos: { id: string; label: string }[] }> = {
+  mental: { foco: "estudio y memoria", texto: "Tu plano mental te inclina a estudiar y transmitir la memoria de los territorios. Comienza por la arquitectura estelar y los lugares sagrados mayores.", tipos: [{ id: "piramide", label: "Arquitectura estelar" }, { id: "sagrado_mayor", label: "Sagrados mayores" }] },
+  físico: { foco: "custodia concreta", texto: "Tu plano físico te llama a la custodia concreta del territorio: montañas de poder, volcanes y desiertos son tu terreno de trabajo.", tipos: [{ id: "montana", label: "Montañas" }, { id: "volcan", label: "Volcanes" }, { id: "desierto", label: "Desiertos" }] },
+  emocional: { foco: "comunidad y vínculo", texto: "Tu plano emocional teje comunidad y sana vínculos. Los lugares de contacto y los retiros interiores resuenan contigo.", tipos: [{ id: "contacto", label: "Lugares de contacto" }, { id: "retiro", label: "Retiros interiores" }] },
+  intuitivo: { foco: "escucha y silencio", texto: "Tu plano intuitivo escucha lo sutil. Los chakras planetarios, los retiros y los portales interiores son tu puerta.", tipos: [{ id: "chakra", label: "Chakras" }, { id: "retiro", label: "Retiros" }, { id: "cueva", label: "Portales interiores" }] },
+}
+function MisionTerritorial({ reading, onExplore }: { reading: NumerologiaResultado | null; onExplore: (tipoId: string) => void }) {
+  if (!reading) {
+    return (
+      <div style={{ marginTop: "1.2rem", padding: "0.9rem 1.1rem", borderRadius: 14, border: "1px dashed rgba(167,139,202,0.3)", background: "rgba(10,11,26,0.4)" }}>
+        <p style={{ margin: 0, fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase", color: VIOLET, fontFamily: "var(--font-mono,monospace)" }}>Tu misión territorial</p>
+        <p style={{ margin: "0.4rem 0 0", fontSize: "0.85rem", lineHeight: 1.6, color: "#9297bb" }}>Calcula tu <b style={{ color: "#e6e9f7" }}>Numerología Cósmica</b> para recibir sugerencias de lugares según tu plano dominante.</p>
+      </div>
+    )
+  }
+  const sug = PLANO_SUG[reading.plano] || PLANO_SUG.emocional
+  return (
+    <div style={{ marginTop: "1.2rem", padding: "1rem 1.15rem", borderRadius: 14, border: "1px solid rgba(217,184,102,0.35)", background: "linear-gradient(150deg, rgba(46,34,80,0.5), rgba(10,11,26,0.55))" }}>
+      <p style={{ margin: 0, fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, fontFamily: "var(--font-mono,monospace)" }}>Tu misión territorial</p>
+      <p style={{ margin: "0.4rem 0 0", fontSize: "0.9rem", lineHeight: 1.7, color: "#e6e9f7" }}>
+        Camino {reading.caminoVida} · plano <b style={{ color: GOLD }}>{reading.plano}</b> ({sug.foco}). {sug.texto}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
+        {sug.tipos.map((t) => (
+          <button key={t.id} type="button" onClick={() => onExplore(t.id)} style={chip(false)}>Ver {t.label}</button>
+        ))}
       </div>
     </div>
   )
