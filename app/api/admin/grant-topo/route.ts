@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { emitCommunityEvent } from "@/lib/notify"
 import { isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
@@ -117,26 +118,18 @@ export async function POST(req: NextRequest) {
       preview: "Insignia exclusiva — Los 144000 construyó tu embudo (servicio premium Los 144000)",
     })
 
-    // 3b. Broadcast pros outros users
-    // CRÍTICO: usar auth.admin.listUsers, NÃO .schema("auth").from("users")
-    // que falha silenciosamente em prod (retorna array vazio sem erro).
-    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const otherUsers = (listed?.users || []).filter((u) => u.id !== targetUserId)
-
-    if (otherUsers.length > 0) {
-      const rows = otherUsers.map((u) => ({
-        user_id: u.id as string,
-        type: "public_insignia",
-        source_user_id: targetUserId,
-        source_user_name: targetName,
-        source_user_avatar_url: targetAvatar,
-        title: `${targetName} entró en EL TOPO 🔥`,
-        preview: "Insignia exclusiva — Los 144000 construyó tu embudo (servicio premium Los 144000)",
-      }))
-      for (let i = 0; i < rows.length; i += 100) {
-        await admin.from("notifications").insert(rows.slice(i, i + 100))
-      }
-    }
+    // 3b. Comunidad: UNA fila en community_events (antes: fan-out a todos).
+    await emitCommunityEvent({
+      type: "public_insignia",
+      actorUserId: targetUserId,
+      actorName: targetName,
+      actorAvatarUrl: targetAvatar,
+      title: `${targetName} entró en EL TOPO 🔥`,
+      preview: "Insignia exclusiva de Los 144.000.",
+      category: "badge",
+      visibility: "members",
+      priority: "highlight",
+    })
   }
 
   return NextResponse.json({

@@ -36,7 +36,12 @@ function isTopTierNotif(n: NotificationItem): boolean {
   return t.includes("EL TOPO") || t.includes("EL ESTUDIO") || t.includes("ETERNO") || t.includes("LEYENDA")
 }
 
-type Filter = "all" | "new"
+type Filter = "all" | "new" | "red"
+
+type CommunityEvent = {
+  id: string; type: string; actor_name?: string | null; actor_avatar_url?: string | null
+  title: string; preview?: string | null; category?: string; priority?: string; created_at: string
+}
 
 export function NotificationsBell() {
   const { setView } = useView()
@@ -46,10 +51,19 @@ export function NotificationsBell() {
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [filter, setFilter] = useState<Filter>("all")
   const [items, setItems] = useState<NotificationItem[]>([])
+  const [redItems, setRedItems] = useState<CommunityEvent[]>([])
   const wrapRef = useRef<HTMLDivElement>(null)
   // Tracking de IDs ja vistos no boot — evita re-disparar broadcast quando
   // Realtime entrega notif que ja foi puxada via fetchNotifs (race condition).
   const bootIdsRef = useRef<Set<string>>(new Set())
+
+  // Actividad de la Red — eventos comunitarios (una fila por evento).
+  const fetchRed = useCallback(async () => {
+    try {
+      const data = await api<{ events: CommunityEvent[] }>("/api/community-events")
+      setRedItems(data.events || [])
+    } catch { /* silencioso */ }
+  }, [])
 
   const fetchNotifs = useCallback(async (currentFilter: Filter) => {
     const url =
@@ -97,6 +111,11 @@ export function NotificationsBell() {
   useEffect(() => {
     if (open) fetchNotifs(filter)
   }, [open, filter, fetchNotifs])
+
+  // Carga la Actividad de la Red al abrir esa pestaña.
+  useEffect(() => {
+    if (open && filter === "red") fetchRed()
+  }, [open, filter, fetchRed])
 
   // Realtime — notifs novas chegam via postgres_changes INSERT na tabela
   // notifications filtrada por user_id=me. Aqui SIM enfileira broadcast
@@ -220,6 +239,13 @@ export function NotificationsBell() {
                 >
                   Nuevas
                 </button>
+                <button
+                  type="button"
+                  className={`${styles.filterBtn} ${filter === "red" ? styles.active : ""}`}
+                  onClick={() => setFilter("red")}
+                >
+                  La Red
+                </button>
               </div>
               {unreadCount > 0 && (
                 <button
@@ -248,7 +274,28 @@ export function NotificationsBell() {
           </header>
 
           <div className={styles.list}>
-            {items.length === 0 ? (
+            {filter === "red" ? (
+              redItems.length === 0 ? (
+                <div className={styles.empty}>Aún no hay actividad de la Red.</div>
+              ) : (
+                redItems.map((n) => (
+                  <div key={n.id} className={styles.item}>
+                    <div className={styles.itemAvatar}>
+                      {n.actor_avatar_url ? (
+                        <img src={n.actor_avatar_url} alt="" loading="lazy" />
+                      ) : (
+                        (n.actor_name || "M").charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className={styles.itemBody}>
+                      <div className={styles.itemTitle}>{n.title}</div>
+                      {n.preview && <div className={styles.itemPreview}>{n.preview}</div>}
+                      <div className={styles.itemTime}>{timeAgoEs(n.created_at)}</div>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : items.length === 0 ? (
               <div className={styles.empty}>Sin notificaciones</div>
             ) : (
               items.map((n) => (

@@ -8,6 +8,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { computeCommunityRank } from "@/lib/achievements"
+import { emitCommunityEvent } from "@/lib/notify"
 import type { User } from "@supabase/supabase-js"
 
 /**
@@ -55,29 +56,9 @@ export async function maybeBroadcastRankUp(user: User): Promise<void> {
     const fullName = meta.full_name || (user.email ? user.email.split("@")[0] : "Miembro")
     const avatarUrl = (typeof meta.avatar_url === "string" && meta.avatar_url) || null
 
-    // Lista todos outros users via auth.admin.listUsers (não usa .schema("auth")
-    // — falha silenciosamente em prod)
-    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const otherUsers = (listed?.users || []).filter((u) => u.id !== user.id)
-    if (otherUsers.length === 0) return
-
     const tierEmoji = rank.tier === "platinum" ? "💎" : rank.tier === "gold" ? "🥇" : rank.tier === "silver" ? "🥈" : "🥉"
-    const rows = otherUsers.map((u) => ({
-      user_id: u.id,
-      type: "rank_up",
-      source_user_id: user.id,
-      source_user_name: fullName,
-      source_user_avatar_url: avatarUrl,
-      title: `${fullName} ascendió a ${rank.label} ${tierEmoji}`,
-      preview: `Nueva patente desbloqueada en la comunidad.`,
-    }))
 
-    // Batch de 100 pra evitar payload gigante
-    for (let i = 0; i < rows.length; i += 100) {
-      await admin.from("notifications").insert(rows.slice(i, i + 100))
-    }
-
-    // Notification pro próprio user (rank_up_self)
+    // Notificación PERSONAL para el propio user (rank_up_self) — se conserva.
     await admin.from("notifications").insert({
       user_id: user.id,
       type: "rank_up_self",
@@ -88,7 +69,20 @@ export async function maybeBroadcastRankUp(user: User): Promise<void> {
       preview: `Tu trabajo en la comunidad fue reconocido. Seguí así.`,
     })
 
-    console.log(`[rank-broadcast] ${fullName} → ${rank.label} (level=${rank.level}, broadcasted to ${otherUsers.length})`)
+    // Comunidad: UNA fila en community_events (antes: fan-out a todos).
+    await emitCommunityEvent({
+      type: "rank_up",
+      actorUserId: user.id,
+      actorName: fullName,
+      actorAvatarUrl: avatarUrl,
+      title: `${fullName} ascendió a ${rank.label} ${tierEmoji}`,
+      preview: "Nueva patente desbloqueada en la comunidad.",
+      category: "rank",
+      visibility: "members",
+      priority: rank.tier === "platinum" || rank.tier === "gold" ? "important" : "normal",
+    })
+
+    console.log(`[rank-broadcast] ${fullName} → ${rank.label} (level=${rank.level}) → community_event`)
   } catch (e) {
     console.warn("[maybeBroadcastRankUp] failed:", e)
   }

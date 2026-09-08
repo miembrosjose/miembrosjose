@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
+import { emitCommunityEvent } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
 
@@ -160,26 +161,18 @@ export async function POST(req: NextRequest) {
       preview: ach.desc,
     })
 
-    // Broadcast FOMO pra outros users.
-    // CRÍTICO: usar auth.admin.listUsers, NÃO .schema("auth").from("users")
-    // que falha silenciosamente em prod (retorna array vazio sem erro).
-    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const otherUsers = (listed?.users || []).filter((u) => u.id !== user.id)
-
-    if (otherUsers.length > 0) {
-      const rows = otherUsers.map((u) => ({
-        user_id: u.id as string,
-        type: "public_insignia",
-        source_user_id: user.id,
-        source_user_name: fullName,
-        source_user_avatar_url: avatarUrl,
-        title: `${fullName} desbloqueó "${ach.name}" ${tierEmoji}`,
-        preview: ach.desc,
-      }))
-      for (let i = 0; i < rows.length; i += 100) {
-        await admin.from("notifications").insert(rows.slice(i, i + 100))
-      }
-    }
+    // Comunidad: UNA fila en community_events (antes: fan-out a todos).
+    await emitCommunityEvent({
+      type: "public_insignia",
+      actorUserId: user.id,
+      actorName: fullName,
+      actorAvatarUrl: avatarUrl,
+      title: `${fullName} desbloqueó "${ach.name}" ${tierEmoji}`,
+      preview: ach.desc,
+      category: "badge",
+      visibility: "members",
+      priority: ach.tier === "topo" || ach.tier === "diamond" ? "highlight" : "important",
+    })
   }
 
   return NextResponse.json({ ok: true, xp_awarded: xpAmount, category: ach.category, broadcast: shouldBroadcast })

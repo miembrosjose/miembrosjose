@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { emitCommunityEvent } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
 
@@ -69,26 +70,18 @@ export async function POST() {
       const labels: Record<number, string> = { 30: "Habitué — 30 días", 90: "Veterano — 90 días", 365: "Eterno — 365 días" }
       const label = labels[newDays]
 
-      const { data: otherUsers } = await admin
-        .schema("auth" as "public")
-        .from("users")
-        .select("id")
-        .neq("id", user.id)
-
-      if (otherUsers && otherUsers.length > 0) {
-        const rows = otherUsers.map((u) => ({
-          user_id: u.id as string,
-          type: "public_streak",
-          source_user_id: user.id,
-          source_user_name: fullName,
-          source_user_avatar_url: avatarUrl,
-          title: `${fullName} alcanzó ${label} 🔥`,
-          preview: "Constancia que vale oro. ¡Dale aplausos!",
-        }))
-        for (let i = 0; i < rows.length; i += 100) {
-          await admin.from("notifications").insert(rows.slice(i, i + 100))
-        }
-      }
+      // Comunidad: UNA fila en community_events (antes: fan-out a todos).
+      await emitCommunityEvent({
+        type: "public_streak",
+        actorUserId: user.id,
+        actorName: fullName,
+        actorAvatarUrl: avatarUrl,
+        title: `${fullName} alcanzó ${label} 🔥`,
+        preview: "Constancia que vale oro.",
+        category: "streak",
+        visibility: "members",
+        priority: newDays >= 365 ? "highlight" : "important",
+      })
     } catch (e) {
       console.warn("[login-ping] streak broadcast falhou:", e)
     }
