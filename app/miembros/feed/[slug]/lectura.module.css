@@ -111,6 +111,12 @@
 }
 .body :global(strong) { color: var(--text-primary); font-weight: 600; }
 
+/* Etiquetas de hablante — solo el nombre + ":". Elegante, no neón.
+   José: dorado solar cálido · Guías: violeta-cósmico luminoso. */
+.body :global(.speaker) { font-weight: 700; letter-spacing: 0.01em; }
+.body :global(.speaker-jose) { color: #e0b962; }
+.body :global(.speaker-guide) { color: #b49ae6; }
+
 .tags {
   display: flex;
   flex-wrap: wrap;

@@ -34,8 +34,19 @@ function renderInline(escaped: string): string {
     const rel = ext ? ' target="_blank" rel="noopener noreferrer nofollow"' : ""
     return `<a href="${url}"${rel}>${txt}</a>`
   })
-  // Negrita luego cursiva.
-  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  // Negrita. Caso especial: etiqueta de hablante (una sola palabra + ":")
+  // como **José:** o **Sergel:** → se marca con una clase para colorear solo
+  // el nombre. José = dorado; cualquier otro hablante (guías) = violeta.
+  // Reutilizable para todas las transmisiones sin estilos por archivo.
+  out = out.replace(/\*\*([^*]+)\*\*/g, (_m, inner) => {
+    const label = /^([\p{L}]+):$/u.exec(inner.trim())
+    if (label) {
+      const key = label[1].toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+      const who = key === "jose" ? "jose" : "guide"
+      return `<strong class="speaker speaker-${who}">${inner}</strong>`
+    }
+    return `<strong>${inner}</strong>`
+  })
   out = out.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
   return out
 }
