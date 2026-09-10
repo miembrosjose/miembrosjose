@@ -332,8 +332,17 @@
 @media (max-width: 640px) {
   /* En móvil el hero deja de ser flex (el flex-item con min-width:auto forzaba
      el ancho al de la palabra "TRANSMISIONES" y desbordaba la pantalla). */
-  .hero { display: block; min-height: 0; margin-top: 60px; padding: 1.8rem 1.2rem; }
-  .heroTitle { font-size: clamp(1.9rem, 11vw, 2.9rem); }
+  .hero { display: block; min-height: 0; margin-top: 60px; padding: 1.8rem 1.1rem; }
+  /* "TRANSMISIONES" en UNA sola línea en cualquier teléfono: el tamaño escala
+     con el ancho del viewport (vw) y nowrap impide que se parta. El 8vw está
+     calculado para que la palabra quepa entera desde ~320px hacia arriba. */
+  .heroTitle {
+    font-size: clamp(1.35rem, 8vw, 2.8rem);
+    white-space: nowrap;
+    letter-spacing: 0;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
   .heroSubtitle { font-size: 0.98rem; }
   .searchInput { font-size: 0.95rem; padding: 12px 10px; }
   .wrap { padding: 0 14px 90px; }
