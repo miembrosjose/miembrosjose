@@ -63,6 +63,8 @@
 .heroInner {
   position: relative;
   max-width: 640px;
+  min-width: 0;
+  width: 100%;
 }
 
 .eyebrow {
@@ -76,13 +78,18 @@
 
 .heroTitle {
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 8vw, 5rem);
+  font-size: clamp(2.2rem, 8vw, 5rem);
   line-height: 0.98;
   font-weight: 700;
   letter-spacing: 0.02em;
   margin: 0 0 1.1rem;
   color: var(--text-primary);
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
+  /* La palabra "TRANSMISIONES" es larga: que reduzca/rompa antes de desbordar
+     y ser recortada por el overflow:hidden del hero. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .heroSubtitle {
@@ -321,7 +328,11 @@
   .featuredGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .hero { min-height: 300px; margin-top: 60px; }
+  .hero { min-height: 280px; margin-top: 60px; padding: 1.8rem 1.2rem; }
+  .heroTitle { font-size: clamp(1.9rem, 11vw, 2.9rem); }
+  .heroSubtitle { font-size: 0.98rem; }
+  .searchInput { font-size: 0.95rem; padding: 12px 10px; }
+  .wrap { padding: 0 14px 90px; }
   /* Mobile: la foto de José pasa a fondo superior, más tenue, con crop
      inteligente y velo reforzado para no dañar la legibilidad. */
   .heroBg {

@@ -206,7 +206,7 @@ export function Transmisiones() {
         {loading ? (
           <div className={styles.stateMsg}>Buscando en el archivo…</div>
         ) : items.length === 0 ? (
-          <EmptyState categories={categories} onClear={clearAll} onPick={setCategory} />
+          <EmptyState hasQuery={!!q.trim()} categories={categories} onClear={clearAll} onPick={setCategory} />
         ) : (
           <div className={styles.archiveGrid}>
             {items.map((t) => (
@@ -254,17 +254,23 @@ function TxCard({
 
 // ── Estado vacío ──
 function EmptyState({
+  hasQuery,
   categories,
   onClear,
   onPick,
 }: {
+  hasQuery: boolean
   categories: Category[]
   onClear: () => void
   onPick: (slug: string) => void
 }) {
   return (
     <div className={styles.empty}>
-      <p className={styles.emptyMsg}>No encontramos una transmisión con esas palabras.</p>
+      <p className={styles.emptyMsg}>
+        {hasQuery
+          ? "No encontramos una transmisión con esas palabras."
+          : "Aún no hay transmisiones publicadas en esta categoría."}
+      </p>
       <button type="button" className={styles.emptyBtn} onClick={onClear}>
         Explorar todas las transmisiones
       </button>
