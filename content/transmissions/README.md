@@ -63,31 +63,40 @@ No hay que borrar nada a mano ni descomentar líneas. Reglas:
 
 > Regla de oro: **nunca** pongas `is_mock: true` en una transmisión real.
 
-## Flujo recomendado (SQL generado) — el que usamos
+## Flujo de trabajo oficial
 
-Escribes cada transmisión como un `.md` y un generador produce **un solo `.sql`**
-que pegas en Supabase. No necesitas credenciales ni Node-Supabase.
+> **CONTENIDO APROBADO → JOSÉ LO ENTREGA → CLAUDE PREPARA TODO → JOSÉ HACE UN SOLO RUN EN SUPABASE.**
 
-1. **Copia la plantilla** `_TEMPLATE.md` por cada transmisión y renómbrala
-   (ej. `content/transmissions/el-proposito.md`). Rellena frontmatter + cuerpo.
-2. **Genera el SQL:**
-   ```bash
-   node scripts/generate-transmissions-sql.mjs
-   ```
-   Crea `docs/sql/transmissions_generated.sql` (idempotente, upsert por slug,
-   con la purga automática de mocks al final).
-3. **Pega ese archivo** en Supabase → SQL Editor → **Run**. Listo: entran tus
-   transmisiones y desaparecen los mocks (`is_mock = true`).
+José **no** maneja plantillas, `.md`, terminal ni comandos. Cuando entrega las
+transmisiones reales (ya redactadas y aprobadas), **Claude** hace todo lo local:
 
-Re-generar y re-pegar tras editar un `.md` **no duplica**: actualiza por slug.
-Para practicar con los placeholders: `node scripts/generate-transmissions-sql.mjs --include-mock`.
+1. Crea cada archivo en `content/transmissions/` usando la estructura de `_TEMPLATE.md`.
+2. Genera slugs estables (derivados del título; no cambian al editar el título).
+3. Asigna categoría, extracto, tags, `featured`/`featured_order`, `related_*` y
+   metadata exactamente según el contenido entregado.
+4. **No modifica ni resume** el cuerpo editorial.
+5. Corre `node scripts/generate-transmissions-sql.mjs`.
+6. Verifica que el SQL se generó bien: sin slugs duplicados, sin errores de
+   frontmatter, sin transmisiones omitidas (el generador **aborta** si algo falla,
+   así el corpus entra completo o no entra).
+7. Deja listo `docs/sql/transmissions_generated.sql`.
 
-## Alternativa (importador directo por red)
+**Única acción manual de José:** abrir `docs/sql/transmissions_generated.sql`,
+copiarlo en Supabase → SQL Editor → **Run**.
 
-Si prefieres subir por red con la service_role key:
+Ese Run es idempotente (upsert por slug, no duplica) e incluye la purga segura de
+mocks (`delete … where is_mock = true`), que solo se ejecuta tras cargar contenido
+real y nunca toca transmisiones reales (`is_mock = false`).
+
+### Referencia de comandos (los corre Claude, no José)
 
 ```bash
-SUPABASE_URL=https://xxxx.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=eyJ... \
-node scripts/import-transmissions.mjs        # --dry para simular · --include-mock para incluir mocks
+node scripts/generate-transmissions-sql.mjs                # genera el .sql desde los .md reales
+node scripts/generate-transmissions-sql.mjs --include-mock # incluye placeholders (solo para pruebas)
+```
+
+Alternativa por red (con service_role key) — no es el flujo por defecto:
+
+```bash
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… node scripts/import-transmissions.mjs
 ```

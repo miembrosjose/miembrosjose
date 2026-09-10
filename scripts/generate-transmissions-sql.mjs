@@ -112,15 +112,28 @@ async function main() {
   }
 
   const rows = []
-  const seen = new Set()
+  const seen = new Map() // slug -> archivo (para reportar el choque)
+  const errors = []
   for (const file of files) {
     const raw = await readFile(file, "utf8")
     const { data, body } = parseFrontmatter(raw)
-    if (!data.title) { console.warn(`⚠ ${basename(file)} sin 'title' — omitido.`); continue }
+    if (!data.title) { errors.push(`${basename(file)}: falta 'title' en el frontmatter.`); continue }
+    if (!body || !body.trim()) { errors.push(`${basename(file)}: cuerpo vacío.`); continue }
     const slug = data.slug || slugify(data.title)
-    if (seen.has(slug)) { console.warn(`⚠ slug duplicado '${slug}' (${basename(file)}) — omitido.`); continue }
-    seen.add(slug)
+    if (seen.has(slug)) {
+      errors.push(`slug duplicado '${slug}': ${basename(file)} choca con ${seen.get(slug)}.`)
+      continue
+    }
+    seen.set(slug, basename(file))
     rows.push({ data, body, slug })
+  }
+
+  // Verificación estricta: NO generar nada si hay problemas (evita omisiones
+  // silenciosas). El corpus debe entrar completo o no entrar.
+  if (errors.length > 0) {
+    console.error(`✗ ${errors.length} problema(s) — no se generó SQL:`)
+    errors.forEach((e) => console.error(`  · ${e}`))
+    process.exit(1)
   }
   if (rows.length === 0) { console.log("Nada que generar."); return }
 
