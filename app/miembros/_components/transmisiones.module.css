@@ -6,6 +6,8 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 0 20px 120px;
+  /* Red de seguridad: ningún hijo puede provocar scroll horizontal. */
+  overflow-x: hidden;
 }
 
 /* ── HERO ─────────────────────────────────────────────────────────────
@@ -328,7 +330,9 @@
   .featuredGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .hero { min-height: 280px; margin-top: 60px; padding: 1.8rem 1.2rem; }
+  /* En móvil el hero deja de ser flex (el flex-item con min-width:auto forzaba
+     el ancho al de la palabra "TRANSMISIONES" y desbordaba la pantalla). */
+  .hero { display: block; min-height: 0; margin-top: 60px; padding: 1.8rem 1.2rem; }
   .heroTitle { font-size: clamp(1.9rem, 11vw, 2.9rem); }
   .heroSubtitle { font-size: 0.98rem; }
   .searchInput { font-size: 0.95rem; padding: 12px 10px; }
