@@ -152,6 +152,7 @@ async function main() {
       source_basis: data.source_basis || null,
       editorial_notes: data.editorial_notes || null,
       season_overlap_notes: data.season_overlap_notes || null,
+      is_mock: data.is_mock === true,
       sort_order: data.sort_order ?? 0,
       updated_at: new Date().toISOString(),
     })
@@ -171,6 +172,27 @@ async function main() {
     process.exit(1)
   }
   console.log(`✔ Importadas ${rows.length} transmisión(es) sin duplicados.`)
+
+  // ── Purga automática de mocks ──
+  // Tras un import REAL exitoso, elimina SOLO las filas is_mock=true (los
+  // placeholders de desarrollo, ya sea sembrados por SQL o por --include-mock
+  // en corridas previas). El contenido real siempre es is_mock=false, así que
+  // NUNCA se toca. No se purga si esta corrida trae mocks (--include-mock) o si
+  // no se importó ninguna transmisión real (evita borrar mocks sin sustituto).
+  const realCount = rows.filter((r) => !r.is_mock).length
+  if (!includeMock && realCount > 0) {
+    const { error: delErr, count } = await supabase
+      .from("transmissions")
+      .delete({ count: "exact" })
+      .eq("is_mock", true)
+    if (delErr) {
+      console.warn(`⚠ No se pudieron purgar los mocks: ${delErr.message}`)
+    } else {
+      console.log(`✔ Mocks purgados automáticamente: ${count ?? 0} eliminado(s).`)
+    }
+  } else if (includeMock) {
+    console.log("· Corrida con --include-mock: no se purgan mocks.")
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1) })

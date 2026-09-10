@@ -47,6 +47,22 @@ Aquí va el cuerpo en Markdown: párrafos, ## subtítulos, **negrita**,
 `contacto-familia-cosmica`, `evolucion-futuro`, `memoria-origen`,
 `tierra-servicio-red`.
 
+## Mocks y purga automática
+
+Los placeholders de desarrollo llevan `is_mock: true` (en su frontmatter y en
+`docs/sql/transmissions_seed_mock.sql`). El contenido real **no** lleva ese campo
+(queda `is_mock = false`).
+
+En la **primera importación exitosa de contenido real**, el importador elimina
+automáticamente **solo** las filas `is_mock = true` — nunca toca contenido real.
+No hay que borrar nada a mano ni descomentar líneas. Reglas:
+
+- Se purga si la corrida importó ≥1 transmisión real y el upsert no falló.
+- **No** se purga en corridas con `--include-mock` (previsualización de dev).
+- El borrado filtra estrictamente por `is_mock = true`.
+
+> Regla de oro: **nunca** pongas `is_mock: true` en una transmisión real.
+
 ## Importar
 
 ```bash

@@ -53,6 +53,7 @@ create table if not exists public.transmissions (
   source_basis text,                                 -- interno: jose_previous_work | jose_contact_experience | los144000_previous_conversation | bashar_research | mixed | other
   editorial_notes text,                              -- interno
   season_overlap_notes text,                         -- interno
+  is_mock boolean not null default false,            -- placeholder de desarrollo (se purga solo al importar contenido real)
   sort_order int not null default 0,
   published_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
@@ -64,6 +65,9 @@ create table if not exists public.transmissions (
   -- funciones no inmutables.
   search tsvector
 );
+
+-- Idempotente: garantiza la columna is_mock aunque la tabla ya existiera.
+alter table public.transmissions add column if not exists is_mock boolean not null default false;
 
 -- Trigger que rellena/actualiza el tsvector de búsqueda.
 create or replace function public.transmissions_search_refresh()

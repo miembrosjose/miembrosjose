@@ -7,6 +7,7 @@ tags: [mock, prueba]
 status: published
 featured: false
 related_post_slugs: [mock-transmision-destacada, mock-abundancia]
+is_mock: true
 source_basis: other
 editorial_notes: "MOCK de desarrollo — NO es contenido real de José."
 ---

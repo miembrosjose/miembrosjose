@@ -7,6 +7,7 @@ tags: [mock, prueba, abundancia]
 status: published
 featured: true
 featured_order: 2
+is_mock: true
 source_basis: other
 editorial_notes: "MOCK de desarrollo — NO es contenido real de José."
 ---
