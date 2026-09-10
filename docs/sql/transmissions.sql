@@ -58,13 +58,31 @@ create table if not exists public.transmissions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   -- Búsqueda full-text (español) con pesos: título > extracto/tags > cuerpo.
-  search tsvector generated always as (
-    setweight(to_tsvector('spanish', coalesce(title,'')), 'A') ||
-    setweight(to_tsvector('spanish', coalesce(excerpt,'')), 'B') ||
-    setweight(to_tsvector('spanish', array_to_string(tags, ' ')), 'B') ||
-    setweight(to_tsvector('spanish', coalesce(body,'')), 'C')
-  ) stored
+  -- NO es columna generada: to_tsvector('spanish',…) no es IMMUTABLE (depende
+  -- de la config), así que Postgres la rechaza en un GENERATED STORED
+  -- (ERROR 42P17). Se mantiene con un trigger (abajo), que sí permite
+  -- funciones no inmutables.
+  search tsvector
 );
+
+-- Trigger que rellena/actualiza el tsvector de búsqueda.
+create or replace function public.transmissions_search_refresh()
+returns trigger language plpgsql as $$
+begin
+  new.search :=
+    setweight(to_tsvector('spanish', coalesce(new.title, '')), 'A') ||
+    setweight(to_tsvector('spanish', coalesce(new.excerpt, '')), 'B') ||
+    setweight(to_tsvector('spanish', array_to_string(coalesce(new.tags, '{}'), ' ')), 'B') ||
+    setweight(to_tsvector('spanish', coalesce(new.body, '')), 'C');
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_transmissions_search on public.transmissions;
+create trigger trg_transmissions_search
+  before insert or update of title, excerpt, tags, body
+  on public.transmissions
+  for each row execute function public.transmissions_search_refresh();
 
 create index if not exists transmissions_search_idx   on public.transmissions using gin (search);
 create index if not exists transmissions_category_idx  on public.transmissions (category_slug);
