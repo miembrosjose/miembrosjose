@@ -80,3 +80,6 @@ AGENTS.md
 # CSV exports (PII de clientes — NÃO commitar)
 scripts/legacy-customers.csv
 scripts/*-export.csv
+
+# SQL generado desde content/transmissions (fuente de verdad = los .md)
+docs/sql/transmissions_generated.sql

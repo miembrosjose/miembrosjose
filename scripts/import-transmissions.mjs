@@ -105,9 +105,10 @@ async function collectFiles(dir, depth = 0) {
     const isMock = e.name.startsWith("_")
     if (isMock && !includeMock) continue
     const full = join(dir, e.name)
+    const lower = e.name.toLowerCase()
     if (e.isDirectory()) {
       out.push(...(await collectFiles(full, depth + 1)))
-    } else if (e.name.endsWith(".md") && e.name.toLowerCase() !== "readme.md") {
+    } else if (e.name.endsWith(".md") && lower !== "readme.md" && lower !== "_template.md") {
       out.push(full)
     }
   }

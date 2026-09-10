@@ -63,17 +63,31 @@ No hay que borrar nada a mano ni descomentar líneas. Reglas:
 
 > Regla de oro: **nunca** pongas `is_mock: true` en una transmisión real.
 
-## Importar
+## Flujo recomendado (SQL generado) — el que usamos
+
+Escribes cada transmisión como un `.md` y un generador produce **un solo `.sql`**
+que pegas en Supabase. No necesitas credenciales ni Node-Supabase.
+
+1. **Copia la plantilla** `_TEMPLATE.md` por cada transmisión y renómbrala
+   (ej. `content/transmissions/el-proposito.md`). Rellena frontmatter + cuerpo.
+2. **Genera el SQL:**
+   ```bash
+   node scripts/generate-transmissions-sql.mjs
+   ```
+   Crea `docs/sql/transmissions_generated.sql` (idempotente, upsert por slug,
+   con la purga automática de mocks al final).
+3. **Pega ese archivo** en Supabase → SQL Editor → **Run**. Listo: entran tus
+   transmisiones y desaparecen los mocks (`is_mock = true`).
+
+Re-generar y re-pegar tras editar un `.md` **no duplica**: actualiza por slug.
+Para practicar con los placeholders: `node scripts/generate-transmissions-sql.mjs --include-mock`.
+
+## Alternativa (importador directo por red)
+
+Si prefieres subir por red con la service_role key:
 
 ```bash
-# 1) Crear tablas (una vez): pegar docs/sql/transmissions.sql en Supabase SQL Editor.
-# 2) Importar (idempotente):
 SUPABASE_URL=https://xxxx.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=eyJ... \
-node scripts/import-transmissions.mjs
-
-# Ver qué haría sin escribir:
-node scripts/import-transmissions.mjs --dry
-# Incluir los mocks de desarrollo:
-node scripts/import-transmissions.mjs --include-mock
+node scripts/import-transmissions.mjs        # --dry para simular · --include-mock para incluir mocks
 ```
