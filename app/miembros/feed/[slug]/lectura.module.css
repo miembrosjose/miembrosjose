@@ -109,12 +109,15 @@
   background: linear-gradient(90deg, transparent, rgba(109,74,155,0.4), transparent);
   margin: 2.6rem 0;
 }
-.body :global(strong) { color: var(--text-primary); font-weight: 600; }
+/* Negrita de énfasis dentro del cuerpo → dorado suave (resalta términos clave
+   y la afirmación de cierre). Los hablantes tienen su propio color abajo. */
+.body :global(strong) { color: var(--gold-soft); font-weight: 700; }
 
 /* Etiquetas de hablante — solo el nombre + ":". Elegante, no neón.
-   José: dorado solar cálido · Guías: violeta-cósmico luminoso. */
+   José: dorado solar cálido · Guías: violeta-cósmico luminoso.
+   Mayor especificidad que la regla de strong → ganan sobre el dorado. */
 .body :global(.speaker) { font-weight: 700; letter-spacing: 0.01em; }
-.body :global(.speaker-jose) { color: #e0b962; }
+.body :global(.speaker-jose) { color: #e6b34d; }
 .body :global(.speaker-guide) { color: #b49ae6; }
 
 .tags {
