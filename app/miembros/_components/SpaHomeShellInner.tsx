@@ -64,7 +64,9 @@ const ProductPurchaseModal = dynamic(
   () => import("./ProductModals").then((m) => m.ProductPurchaseModal),
   { ssr: false },
 )
-const AdminFeed = dynamic(() => import("./AdminFeed").then((m) => m.AdminFeed), { ssr: false })
+// AdminFeed (avisos del creador) se conserva en el repo pero ya no se monta:
+// el Feed pasó a ser el archivo TRANSMISIONES.
+const Transmisiones = dynamic(() => import("./Transmisiones").then((m) => m.Transmisiones), { ssr: false })
 const ViewPerfil = dynamic(() => import("./ViewPerfil").then((m) => m.ViewPerfil), { ssr: false })
 const ViewAdmin = dynamic(() => import("./ViewAdmin").then((m) => m.ViewAdmin), { ssr: false })
 const ViewProducto = dynamic(
@@ -785,25 +787,13 @@ function ViewComunidad() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// VIEW: FEED (AdminFeed do Estudio)
+// VIEW: FEED → TRANSMISIONES (archivo vivo)
+// El Feed dejó de ser "Anuncios del creador" (AdminFeed) y ahora es el archivo
+// editorial TRANSMISIONES. Se carga client-only (ssr:false) para no engordar el
+// bundle del Worker (evita 1102). AdminFeed se conserva pero ya no se monta aquí.
 // ─────────────────────────────────────────────────────────────────────────
 
 function ViewFeed() {
-  return (
-    <div className={styles.view}>
-      <section className={styles.section} style={{ maxWidth: 880 }}>
-        <header className={styles.sectionHeader}>
-          <div>
-            <p className={styles.sectionKicker}>Anuncios &amp; Novedades</p>
-            <h2 className={styles.sectionTitle}>
-              <span className={styles.sectionDivider} />
-              Feed del Creador
-            </h2>
-          </div>
-        </header>
-        <AdminFeed />
-      </section>
-    </div>
-  )
+  return <Transmisiones />
 }
 

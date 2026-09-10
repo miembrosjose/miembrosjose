@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Biblioteca", view: "inicio", anchor: "biblioteca" },
   { label: "Comunidad", view: "comunidad", anchor: null },
   { label: "Miembros", view: "miembros_lista", anchor: null },
-  { label: "Feed", view: "feed", anchor: null },
+  { label: "Transmisiones", view: "feed", anchor: null },
   { label: "Tienda", view: "inicio", anchor: "tienda" },
 ]
 

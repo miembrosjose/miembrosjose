@@ -1,0 +1,192 @@
+/* Lectura de una transmisión — editorial, contemplativa, alta legibilidad.
+   Fondo cósmico lo aporta SpaceBackground del layout; aquí solo tipografía
+   y ritmo de lectura sobre superficies contenidas. */
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 88px 20px 120px;
+}
+
+.back {
+  display: inline-block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 2.4rem;
+  transition: color var(--duration-base) var(--ease-out-quart);
+}
+.back:hover { color: var(--text-primary); }
+
+.eyebrow {
+  font-family: var(--font-impact);
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1.08;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.excerpt {
+  font-size: 1.18rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 1.6rem;
+  font-weight: 400;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+.dot { opacity: 0.5; }
+
+.seasonRel {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--gold-soft);
+  border: 1px solid rgba(217, 184, 102, 0.25);
+  border-radius: 999px !important;
+  padding: 4px 12px;
+  margin: 0.4rem 0 0;
+}
+
+/* Cuerpo — el corazón de la lectura. */
+.body {
+  margin-top: 2.6rem;
+  font-size: 1.12rem;
+  line-height: 1.78;
+  color: #e4e6f0;
+}
+.body :global(p) { margin: 0 0 1.4rem; }
+.body :global(h2) {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 2.6rem 0 1rem;
+}
+.body :global(h3) {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin: 2rem 0 0.8rem;
+}
+.body :global(h4) {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  margin: 1.6rem 0 0.6rem;
+}
+.body :global(blockquote) {
+  margin: 1.8rem 0;
+  padding: 0.4rem 0 0.4rem 1.4rem;
+  border-left: 2px solid rgba(217, 184, 102, 0.4);
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 1.16rem;
+}
+.body :global(ul),
+.body :global(ol) { margin: 0 0 1.4rem; padding-left: 1.3rem; }
+.body :global(li) { margin: 0 0 0.5rem; }
+.body :global(a) { color: var(--gold-soft); text-underline-offset: 3px; }
+.body :global(hr) {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(109,74,155,0.4), transparent);
+  margin: 2.6rem 0;
+}
+.body :global(strong) { color: var(--text-primary); font-weight: 600; }
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.tag {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  background: rgba(243,246,250,0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px !important;
+  padding: 3px 11px;
+}
+
+/* Relacionadas */
+.related {
+  max-width: 940px;
+  margin: 4rem auto 0;
+  padding: 0 20px;
+}
+.relatedTitle {
+  font-family: var(--font-impact);
+  letter-spacing: 0.16em;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.4rem;
+}
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.relatedCard {
+  display: block;
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) !important;
+  padding: 1.2rem 1.3rem;
+  transition: border-color var(--duration-base) var(--ease-out-quart),
+    transform var(--duration-base) var(--ease-out-quart);
+}
+.relatedCard:hover {
+  border-color: rgba(109,74,155,0.5);
+  transform: translateY(-2px);
+}
+.relatedCardTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.25;
+}
+.relatedCardExcerpt {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 0.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.relatedCardCta {
+  font-size: 0.82rem;
+  color: var(--gold);
+}
+
+@media (max-width: 600px) {
+  .page { padding: 72px 18px 90px; }
+  .body { font-size: 1.06rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relatedCard:hover { transform: none; }
+}
