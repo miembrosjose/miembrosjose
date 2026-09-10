@@ -64,7 +64,7 @@
 
 .heroInner {
   position: relative;
-  max-width: 640px;
+  max-width: 760px;
   min-width: 0;
   width: 100%;
 }
@@ -87,11 +87,9 @@
   margin: 0 0 1.1rem;
   color: var(--text-primary);
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
-  /* La palabra "TRANSMISIONES" es larga: que reduzca/rompa antes de desbordar
-     y ser recortada por el overflow:hidden del hero. */
+  /* Una sola línea. En móvil el @media reajusta el tamaño con vw para que quepa. */
   max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 .heroSubtitle {
