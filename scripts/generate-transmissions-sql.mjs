@@ -14,13 +14,17 @@
 //   node scripts/generate-transmissions-sql.mjs --include-mock   (incluye los _mock/, para practicar)
 // ============================================================================
 
-import { readdir, readFile, writeFile } from "node:fs/promises"
+import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises"
 import { join, basename, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CONTENT_DIR = join(__dirname, "..", "content", "transmissions")
 const OUT_FILE = join(__dirname, "..", "docs", "sql", "transmissions_generated.sql")
+const PARTS_DIR = join(__dirname, "..", "docs", "sql", "parts")
+// Presupuesto por parte. El SQL Editor de Supabase falla con consultas grandes;
+// ~150 KB de filas deja margen de sobra para la cabecera y el on-conflict.
+const PART_MAX_BYTES = 150_000
 
 const includeMock = process.argv.includes("--include-mock")
 
@@ -180,10 +184,11 @@ async function main() {
     .join(",\n  ")
 
   const realCount = rows.filter((r) => r.data.is_mock !== true).length
+  const stamp = new Date().toISOString()
 
   const sql = `-- ============================================================================
 -- TRANSMISIONES — SQL generado automáticamente. NO editar a mano.
--- Fuente: content/transmissions/*.md · Generado: ${new Date().toISOString()}
+-- Fuente: content/transmissions/*.md · Generado: ${stamp}
 -- Pegar en Supabase → SQL Editor → Run. Idempotente (upsert por slug).
 -- ============================================================================
 
@@ -208,10 +213,67 @@ select count(*) as transmisiones from public.transmissions where is_mock = false
 `
 
   await writeFile(OUT_FILE, sql, "utf8")
+
+  // ── Partes troceadas ──────────────────────────────────────────────────────
+  // El SQL Editor de Supabase rechaza consultas muy grandes ("Query is too
+  // large"). Emitimos además partes numeradas, cada una autocontenida e
+  // idempotente, para pegarlas de una en una y en cualquier orden.
+  await rm(PARTS_DIR, { recursive: true, force: true })
+  await mkdir(PARTS_DIR, { recursive: true })
+
+  const chunks = []
+  let current = []
+  let currentBytes = 0
+  values.forEach((v, i) => {
+    const bytes = Buffer.byteLength(v, "utf8")
+    if (current.length && currentBytes + bytes > PART_MAX_BYTES) {
+      chunks.push(current)
+      current = []
+      currentBytes = 0
+    }
+    current.push({ v, slug: rows[i].slug })
+    currentBytes += bytes
+  })
+  if (current.length) chunks.push(current)
+
+  const pad = (n) => String(n).padStart(2, "0")
+  const total = chunks.length
+  for (let c = 0; c < total; c++) {
+    const isLast = c === total - 1
+    const part = chunks[c]
+    const partSql = `-- ============================================================================
+-- TRANSMISIONES — parte ${c + 1} de ${total}. Generado automáticamente. NO editar a mano.
+-- Fuente: content/transmissions/*.md · Generado: ${stamp}
+-- Pegar en Supabase → SQL Editor → Run. Idempotente: repetirla no duplica.
+-- Contiene ${part.length} transmisión(es): ${part.map((p) => p.slug).join(", ")}
+-- ============================================================================
+
+-- Migración autocontenida: garantiza la columna de etapas de navegación.
+alter table public.transmissions add column if not exists stages text[] not null default '{}';
+
+insert into public.transmissions
+  (${cols.join(", ")})
+values
+${part.map((p) => p.v).join(",\n")}
+on conflict (slug) do update set
+  ${updateSet};
+${
+  isLast && !includeMock && realCount > 0
+    ? `
+-- Purga de mocks tras cargar todo el contenido real (solo toca is_mock = true).
+delete from public.transmissions where is_mock = true;
+`
+    : ""
+}${isLast ? "\nselect count(*) as transmisiones from public.transmissions where is_mock = false;\n" : ""}`
+    await writeFile(join(PARTS_DIR, `transmissions_part_${pad(c + 1)}.sql`), partSql, "utf8")
+  }
+
   console.log(`✔ ${rows.length} transmisión(es) → ${OUT_FILE}`)
   rows.forEach((r) => console.log(`  · ${r.slug}${r.data.featured ? "  ★" : ""}`))
   if (!includeMock && realCount > 0) console.log("  (incluye purga automática de mocks)")
-  console.log("\nAhora pega el contenido de docs/sql/transmissions_generated.sql en Supabase → SQL Editor → Run.")
+  console.log(`\n✔ ${total} parte(s) → docs/sql/parts/transmissions_part_01..${pad(total)}.sql`)
+  console.log("Si el SQL Editor dice 'Query is too large', pega las partes EN ORDEN, una por una.")
+  console.log("La última parte incluye la purga de mocks y el conteo final.")
 }
 
 main().catch((e) => { console.error(e); process.exit(1) })
