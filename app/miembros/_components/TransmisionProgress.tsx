@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Stage } from "@/lib/markdown"
+import { api } from "../_lib/api"
 import styles from "./progress.module.css"
 
 const ARTICLE_ID = "tx-article"
@@ -29,6 +30,7 @@ export function TransmisionProgress({ slug, stages }: { slug: string; stages: St
   const [indexOpen, setIndexOpen] = useState(false)
   const rafRef = useRef<number | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const markedReadRef = useRef(false)
   const storageKey = `tx-pos:${slug}`
 
   // Restaura posición de lectura al volver.
@@ -54,8 +56,15 @@ export function TransmisionProgress({ slug, stages }: { slug: string; stages: St
     if (art) {
       const top = art.getBoundingClientRect().top + y
       const end = top + art.offsetHeight - winH
-      const raw = (y - top) / Math.max(1, end - top)
-      setProgress(clamp(raw, 0, 1))
+      const p = clamp((y - top) / Math.max(1, end - top), 0, 1)
+      setProgress(p)
+      // Marca "leído" al llegar al final (una sola vez).
+      if (p >= 0.9 && !markedReadRef.current) {
+        markedReadRef.current = true
+        api(`/api/transmissions/reads`, { method: "POST", body: { slug } }).catch(() => {
+          markedReadRef.current = false
+        })
+      }
     }
 
     // Etapa actual: última ancla cuyo borde superior ya pasó el umbral.
@@ -77,7 +86,7 @@ export function TransmisionProgress({ slug, stages }: { slug: string; stages: St
         localStorage.setItem(storageKey, String(Math.round(y)))
       } catch { /* ignore */ }
     }, 350)
-  }, [stages, storageKey])
+  }, [stages, storageKey, slug])
 
   useEffect(() => {
     if (stages.length === 0) return

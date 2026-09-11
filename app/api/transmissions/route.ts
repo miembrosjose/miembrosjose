@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { expandQuery } from "@/lib/transmissions-search"
+import { getCategoryAccess, isCategoryLocked } from "@/lib/transmissions-access"
 
 export const dynamic = "force-dynamic"
 
@@ -59,7 +60,27 @@ export async function GET(req: NextRequest) {
       console.error("[/api/transmissions]", error)
       return NextResponse.json({ transmissions: [] })
     }
-    return NextResponse.json({ transmissions: data || [] })
+
+    // Estado de bloqueo (paywall) por categoría para el usuario actual.
+    const rows = (data || []) as { category_slug: string | null }[]
+    const lockedByCat: Record<string, boolean> = {}
+    try {
+      const { data: cats } = await supabase
+        .from("transmission_categories")
+        .select("slug, is_locked")
+      for (const c of (cats || []) as { slug: string; is_locked?: boolean }[]) {
+        lockedByCat[c.slug] = c.is_locked === true
+      }
+    } catch {
+      /* sin columna is_locked → nada bloqueado */
+    }
+    const access = await getCategoryAccess(supabase, user.id)
+    const transmissions = rows.map((t) => ({
+      ...t,
+      locked: isCategoryLocked(t.category_slug, lockedByCat[t.category_slug || ""] === true, access),
+    }))
+
+    return NextResponse.json({ transmissions })
   } catch (e) {
     console.error("[/api/transmissions]", e)
     return NextResponse.json({ transmissions: [] })

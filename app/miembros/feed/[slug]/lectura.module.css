@@ -124,6 +124,32 @@
 .body :global(.speaker-jose) { color: #e6b34d; }
 .body :global(.speaker-guide) { color: #b49ae6; }
 
+/* Panel de bloqueo (paywall) en la lectura. */
+.lockPanel {
+  margin-top: 2.6rem;
+  padding: 2.4rem 1.6rem;
+  text-align: center;
+  background: var(--surface-1);
+  border: 1px solid rgba(217, 184, 102, 0.22);
+  border-radius: var(--radius-lg) !important;
+}
+.lockIcon { font-size: 2rem; margin-bottom: 0.8rem; }
+.lockText { color: var(--text-secondary); font-size: 1.02rem; line-height: 1.6; margin: 0 auto 1.4rem; max-width: 440px; }
+.lockBtn {
+  display: inline-block;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: #050510;
+  background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+  border-radius: var(--radius-md) !important;
+  padding: 12px 26px;
+  font-weight: 600;
+  transition: transform var(--duration-base) var(--ease-out-quart);
+}
+.lockBtn:hover { transform: translateY(-2px); }
+.lockSoon { color: var(--text-muted); font-size: 0.9rem; }
+
 /* Botón inferior "Volver a Transmisiones" — cierre de la lectura. */
 .backBottom {
   max-width: 720px;

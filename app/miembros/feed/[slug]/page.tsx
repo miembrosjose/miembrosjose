@@ -8,6 +8,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { requireMiembrosAuth } from "../../_lib/auth-server"
 import { renderMarkdownWithStages, parseStageDefs, readingTimeMinutes } from "@/lib/markdown"
+import { getCategoryAccess, isCategoryLocked } from "@/lib/transmissions-access"
 import { TransmisionEngagement } from "../../_components/TransmisionEngagement"
 import { TransmisionProgress } from "../../_components/TransmisionProgress"
 import styles from "./lectura.module.css"
@@ -51,7 +52,7 @@ export default async function TransmisionLectura({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const { supabase } = await requireMiembrosAuth()
+  const { user, supabase } = await requireMiembrosAuth()
 
   const { data: tx } = await supabase
     .from("transmissions")
@@ -63,15 +64,52 @@ export default async function TransmisionLectura({
 
   if (!tx) notFound()
 
-  // Nombre de la categoría (para el eyebrow).
+  // Categoría: nombre (eyebrow) + estado de bloqueo (paywall).
   let categoryName: string | null = null
+  let locked = false
+  let unlockUrl: string | null = null
+  let priceUsd: number | null = null
   if (tx.category_slug) {
     const { data: cat } = await supabase
       .from("transmission_categories")
-      .select("name")
+      .select("name, is_locked, unlock_url, price_usd")
       .eq("slug", tx.category_slug)
-      .maybeSingle<{ name: string }>()
+      .maybeSingle<{ name: string; is_locked?: boolean; unlock_url?: string | null; price_usd?: number | null }>()
     categoryName = cat?.name || null
+    if (cat && user) {
+      const access = await getCategoryAccess(supabase, user.id)
+      locked = isCategoryLocked(tx.category_slug, cat.is_locked === true, access)
+      unlockUrl = cat.unlock_url ?? null
+      priceUsd = cat.price_usd ?? null
+    }
+  }
+
+  // Si la categoría está bloqueada para este usuario, no entregamos el cuerpo:
+  // mostramos el panel de desbloqueo.
+  if (locked) {
+    return (
+      <main className={`${styles.page} tx-reading`}>
+        <article className={styles.article}>
+          <a href="/miembros#feed" className={styles.back}>← Volver a Transmisiones</a>
+          {categoryName && <div className={styles.eyebrow}>{categoryName}</div>}
+          <h1 className={styles.title}>{tx.title}</h1>
+          {tx.excerpt && <p className={styles.excerpt}>{tx.excerpt}</p>}
+          <div className={styles.lockPanel}>
+            <div className={styles.lockIcon} aria-hidden="true">🔒</div>
+            <p className={styles.lockText}>
+              Esta transmisión pertenece a una categoría que aún no has desbloqueado.
+            </p>
+            {unlockUrl ? (
+              <a className={styles.lockBtn} href={unlockUrl} target="_blank" rel="noopener noreferrer">
+                Desbloquear{priceUsd ? ` · $${priceUsd.toFixed(2)}` : ""}
+              </a>
+            ) : (
+              <span className={styles.lockSoon}>Desbloqueo disponible próximamente.</span>
+            )}
+          </div>
+        </article>
+      </main>
+    )
   }
 
   // Relacionadas: explícitas si existen; si no, misma categoría (máx 3).

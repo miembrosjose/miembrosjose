@@ -15,7 +15,15 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { api } from "../_lib/api"
 import styles from "./transmisiones.module.css"
 
-type Category = { slug: string; name: string; description?: string | null; sort_order?: number }
+type Category = {
+  slug: string
+  name: string
+  description?: string | null
+  sort_order?: number
+  locked?: boolean
+  unlock_url?: string | null
+  price_usd?: number | null
+}
 type Transmission = {
   slug: string
   title: string
@@ -23,6 +31,7 @@ type Transmission = {
   category_slug: string | null
   tags: string[] | null
   author_name: string | null
+  locked?: boolean
   featured: boolean
   featured_order: number | null
   reading_time: number | null
@@ -51,6 +60,7 @@ export function Transmisiones() {
   const [featured, setFeatured] = useState<Transmission[]>([])
   const [loading, setLoading] = useState(true)
   const [chipsExpanded, setChipsExpanded] = useState(false)
+  const [readSlugs, setReadSlugs] = useState<Set<string>>(new Set())
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isDefaultView = !q.trim() && (category === ALL || !category)
@@ -59,8 +69,12 @@ export function Transmisiones() {
     (slug: string | null) => categories.find((c) => c.slug === slug)?.name || "",
     [categories],
   )
+  const catUnlock = useCallback(
+    (slug: string | null) => categories.find((c) => c.slug === slug) || null,
+    [categories],
+  )
 
-  // Categorías + destacadas (una sola vez).
+  // Categorías + destacadas + transmisiones leídas (una sola vez).
   useEffect(() => {
     api<{ categories: Category[] }>("/api/transmission-categories")
       .then((d) => setCategories(d.categories || []))
@@ -68,6 +82,9 @@ export function Transmisiones() {
     api<{ transmissions: Transmission[] }>("/api/transmissions?featured=1&limit=3")
       .then((d) => setFeatured(d.transmissions || []))
       .catch(() => setFeatured([]))
+    api<{ slugs: string[] }>("/api/transmissions/reads")
+      .then((d) => setReadSlugs(new Set(d.slugs || [])))
+      .catch(() => setReadSlugs(new Set()))
   }, [])
 
   // Sincroniza la URL (?q=&category=) sin recargar.
@@ -185,11 +202,11 @@ export function Transmisiones() {
         <section className={styles.featuredSection} aria-labelledby="tx-featured-title">
           <h2 id="tx-featured-title" className={styles.blockTitle}>TRANSMISIONES DESTACADAS</h2>
           <div className={styles.featuredGrid}>
-            <TxCard t={featuredMain} catName={catName} variant="hero" />
+            <TxCard t={featuredMain} catName={catName} cat={catUnlock(featuredMain.category_slug)} read={readSlugs.has(featuredMain.slug)} variant="hero" />
             {featuredRest.length > 0 && (
               <div className={styles.featuredSide}>
                 {featuredRest.map((t) => (
-                  <TxCard key={t.slug} t={t} catName={catName} variant="side" />
+                  <TxCard key={t.slug} t={t} catName={catName} cat={catUnlock(t.category_slug)} read={readSlugs.has(t.slug)} variant="side" />
                 ))}
               </div>
             )}
@@ -210,7 +227,7 @@ export function Transmisiones() {
         ) : (
           <div className={styles.archiveGrid}>
             {items.map((t) => (
-              <TxCard key={t.slug} t={t} catName={catName} variant="grid" />
+              <TxCard key={t.slug} t={t} catName={catName} cat={catUnlock(t.category_slug)} read={readSlugs.has(t.slug)} variant="grid" />
             ))}
           </div>
         )}
@@ -223,15 +240,47 @@ export function Transmisiones() {
 function TxCard({
   t,
   catName,
+  cat,
+  read,
   variant,
 }: {
   t: Transmission
   catName: (slug: string | null) => string
+  cat: Category | null
+  read: boolean
   variant: "hero" | "side" | "grid"
 }) {
   const minutes = t.reading_time || null
+
+  // ── Bloqueada (paywall): candado + capa gris; clic → link de desbloqueo. ──
+  if (t.locked) {
+    const price = cat?.price_usd ? `$${cat.price_usd.toFixed(2)}` : "$9.99"
+    const open = () => { if (cat?.unlock_url) window.open(cat.unlock_url, "_blank", "noopener") }
+    return (
+      <div
+        className={`${styles.card} ${styles[`card_${variant}`]} ${styles.cardLocked} ${cat?.unlock_url ? styles.cardLockedClickable : ""}`}
+        role={cat?.unlock_url ? "button" : undefined}
+        tabIndex={cat?.unlock_url ? 0 : undefined}
+        onClick={open}
+        onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && cat?.unlock_url) { e.preventDefault(); open() } }}
+        aria-label={`Bloqueado: ${t.title}`}
+      >
+        <div className={styles.lockOverlay} aria-hidden="true">
+          <span className={styles.lockBadge}>🔒</span>
+        </div>
+        <div className={styles.cardDimmed}>
+          <div className={styles.cardCat}>{catName(t.category_slug)}</div>
+          <h3 className={styles.cardTitle}>{t.title}</h3>
+          {t.excerpt && <p className={styles.cardExcerpt}>{t.excerpt}</p>}
+        </div>
+        <span className={styles.cardUnlockCta}>Desbloquear · {price}</span>
+      </div>
+    )
+  }
+
   return (
     <a href={`/miembros/feed/${t.slug}`} className={`${styles.card} ${styles[`card_${variant}`]}`}>
+      {read && <span className={styles.readBadge}>Leído</span>}
       <div className={styles.cardCat}>{catName(t.category_slug)}</div>
       <h3 className={styles.cardTitle}>{t.title}</h3>
       {t.excerpt && <p className={styles.cardExcerpt}>{t.excerpt}</p>}
