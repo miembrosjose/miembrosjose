@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [deja-vu, suenos, tiempo, ahora]
+related_post_slugs: [frecuencia, deja-vu, suenos, tiempo, ahora]
 source_basis:
 overlap_status: none
 stages:
