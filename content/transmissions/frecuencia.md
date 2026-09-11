@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [premonicion, percepcion, realidad, observador]
+related_post_slugs: [intuicion, premonicion, percepcion, realidad, observador]
 source_basis:
 overlap_status: none
 stages:
