@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [realidad, dualidad, percepcion]
+related_post_slugs: [red, realidad, dualidad, percepcion]
 source_basis:
 overlap_status: none
 stages:
