@@ -118,7 +118,7 @@ export default async function TransmisionLectura({
   const minutes = tx.reading_time || readingTimeMinutes(tx.body)
 
   return (
-    <main className={styles.page}>
+    <main className={`${styles.page} tx-reading`}>
       <article id="tx-article" className={styles.article}>
         {/* Enlace duro (no next/link): fuerza recarga de /miembros para que el
             SPA lea el hash #feed y abra el archivo de Transmisiones (el

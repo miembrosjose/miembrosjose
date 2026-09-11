@@ -480,3 +480,10 @@ html:has(.miembros-shell) {
     left: -75%;
   }
 }
+
+/* En la página de lectura de una transmisión, ocultar el FAB del messenger
+   (burbuja de chat) para que no choque con la cápsula de progreso inferior.
+   .tx-reading es el marcador del <main> de esa ruta. */
+body:has(.tx-reading) [class*="fab" i] {
+  display: none !important;
+}
