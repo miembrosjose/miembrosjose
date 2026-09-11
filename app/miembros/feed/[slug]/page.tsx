@@ -8,6 +8,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { requireMiembrosAuth } from "../../_lib/auth-server"
 import { renderMarkdown, readingTimeMinutes } from "@/lib/markdown"
+import { TransmisionEngagement } from "../../_components/TransmisionEngagement"
 import styles from "./lectura.module.css"
 
 export const dynamic = "force-dynamic"
@@ -104,9 +105,12 @@ export default async function TransmisionLectura({
   return (
     <main className={styles.page}>
       <article className={styles.article}>
-        <Link href="/miembros#feed" className={styles.back}>
+        {/* Enlace duro (no next/link): fuerza recarga de /miembros para que el
+            SPA lea el hash #feed y abra el archivo de Transmisiones (el
+            ViewProvider vive en el layout y no se re-sincroniza con pushState). */}
+        <a href="/miembros#feed" className={styles.back}>
           ← Volver a Transmisiones
-        </Link>
+        </a>
 
         {categoryName && <div className={styles.eyebrow}>{categoryName}</div>}
         <h1 className={styles.title}>{tx.title}</h1>
@@ -141,6 +145,8 @@ export default async function TransmisionLectura({
           </div>
         )}
       </article>
+
+      <TransmisionEngagement slug={tx.slug} />
 
       {related.length > 0 && (
         <section className={styles.related}>

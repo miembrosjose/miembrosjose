@@ -1,0 +1,152 @@
+/* Reacciones + comentarios de una transmisión. Sobrio, cósmico, no chat de mensajería. */
+
+.wrap {
+  max-width: 720px;
+  margin: 3rem auto 0;
+  padding: 0 20px;
+}
+
+/* ── Reacciones ── */
+.reactions {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 2rem;
+  margin-bottom: 2.6rem;
+}
+.reactionsLabel {
+  display: block;
+  font-family: var(--font-impact);
+  letter-spacing: 0.16em;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.9rem;
+}
+.reactionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px !important;
+  padding: 7px 14px;
+  transition: transform var(--duration-fast) var(--ease-out-quart),
+    border-color var(--duration-base), background var(--duration-base);
+}
+.reaction:hover { transform: translateY(-1px); border-color: rgba(109,74,155,0.5); }
+.reaction:active { transform: translateY(0); }
+.reactionActive {
+  background: rgba(109, 74, 155, 0.22);
+  border-color: rgba(109, 74, 155, 0.7);
+}
+.reactionEmoji { font-size: 1.15rem; line-height: 1; }
+.reactionCount { font-size: 0.86rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.reactionActive .reactionCount { color: var(--text-primary); }
+
+/* ── Comentarios ── */
+.comments { padding-bottom: 1rem; }
+.commentsTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin: 0 0 1.4rem;
+}
+.commentsN {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: rgba(243,246,250,0.06);
+  border-radius: 999px !important;
+  padding: 2px 9px;
+}
+
+.composer {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+}
+.composerBody { flex: 1; min-width: 0; }
+.textarea {
+  width: 100%;
+  resize: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color var(--duration-base);
+}
+.textarea::placeholder { color: var(--text-muted); }
+.textarea:focus { border-color: rgba(109,74,155,0.7); box-shadow: 0 0 0 3px rgba(109,74,155,0.15); }
+.composerActions { display: flex; justify-content: flex-end; margin-top: 0.6rem; }
+.submit {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  background: rgba(109, 74, 155, 0.25);
+  border: 1px solid rgba(109, 74, 155, 0.6);
+  border-radius: var(--radius-md) !important;
+  padding: 9px 20px;
+  transition: background var(--duration-base);
+}
+.submit:hover:not(:disabled) { background: rgba(109, 74, 155, 0.4); }
+.submit:disabled { opacity: 0.45; cursor: default; }
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.6rem; }
+.comment { display: flex; gap: 0.8rem; }
+.commentBody { flex: 1; min-width: 0; }
+.commentHead { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
+.commentAuthor { font-weight: 600; color: var(--text-primary); font-size: 0.94rem; }
+.commentTime { font-size: 0.78rem; color: var(--text-muted); }
+.delete {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  transition: color var(--duration-fast);
+}
+.delete:hover { color: #d98a8a; }
+.commentText {
+  margin: 0;
+  color: #d7dae6;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Avatar compartido */
+.avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50% !important;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4a3170, #6d4a9b);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.state { color: var(--text-muted); font-size: 0.92rem; padding: 0.6rem 0 1.4rem; }
+
+@media (max-width: 600px) {
+  .wrap { padding: 0 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reaction:hover { transform: none; }
+}

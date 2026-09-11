@@ -141,8 +141,19 @@ export function SpaHomeShellInner() {
   // introDone = Hero/views podem aparecer. Setado SÍNCRONO no click Saltar
   // (pra Hero aparecer atrás enquanto Intro faz fade-out por cima).
   // introMounted = Intro continua no DOM (fade-out anima 1.5s antes de remover).
-  const [introDone, setIntroDone] = useState(false)
-  const [introMounted, setIntroMounted] = useState(true)
+  //
+  // Si llegamos con un hash de vista profunda (ej. #feed al "Volver a
+  // Transmisiones"), saltamos el intro y mostramos esa vista directamente.
+  // SpaHomeShell carga esto con ssr:false → window existe en el primer render,
+  // así que no hay flash ni mismatch de hidratación.
+  const deepHashEntry =
+    typeof window !== "undefined" &&
+    (() => {
+      const h = window.location.hash.replace(/^#/, "").toLowerCase()
+      return h !== "" && h !== "inicio"
+    })()
+  const [introDone, setIntroDone] = useState<boolean>(!!deepHashEntry)
+  const [introMounted, setIntroMounted] = useState<boolean>(!deepHashEntry)
   const [seriesInfoOpen, setSeriesInfoOpen] = useState(false)
   const [openSeason, setOpenSeason] = useState<Season | null>(null)
   // Temporada 5 = Portal de Misión (overlay propio, no drawer de episodios).
