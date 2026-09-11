@@ -280,6 +280,7 @@ delete from public.transmissions where is_mock = true;
   }
 
   // ── Delta (--only=slug1,slug2) ────────────────────────────────────────────
+  let deltaFiles = []
   if (onlySlugs.length) {
     const idx = new Map(rows.map((r, i) => [r.slug, i]))
     const faltan = onlySlugs.filter((s) => !idx.has(s))
@@ -287,11 +288,34 @@ delete from public.transmissions where is_mock = true;
       console.error(`✖ --only: slug(s) inexistente(s): ${faltan.join(", ")}`)
       process.exit(1)
     }
-    const deltaValues = onlySlugs.map((s) => values[idx.get(s)])
-    const deltaSql = `-- ============================================================================
--- TRANSMISIONES — delta. Generado automáticamente. NO editar a mano.
+    // Trocea el delta igual que las partes: el SQL Editor rechaza consultas
+    // grandes. Con pocos slugs sale un único archivo; con muchos, varios.
+    const deltaChunks = []
+    let dcur = []
+    let dbytes = 0
+    for (const s of onlySlugs) {
+      const v = values[idx.get(s)]
+      const b = Buffer.byteLength(v, "utf8")
+      if (dcur.length && dbytes + b > PART_MAX_BYTES) {
+        deltaChunks.push(dcur)
+        dcur = []
+        dbytes = 0
+      }
+      dcur.push({ v, slug: s })
+      dbytes += b
+    }
+    if (dcur.length) deltaChunks.push(dcur)
+
+    const dtotal = deltaChunks.length
+    deltaFiles = []
+    for (let c = 0; c < dtotal; c++) {
+      const isLast = c === dtotal - 1
+      const chunk = deltaChunks[c]
+      const label = dtotal === 1 ? "delta" : `delta — parte ${c + 1} de ${dtotal}`
+      const deltaSql = `-- ============================================================================
+-- TRANSMISIONES — ${label}. Generado automáticamente. NO editar a mano.
 -- Generado: ${stamp}
--- Contiene SOLO: ${onlySlugs.join(", ")}
+-- Contiene SOLO: ${chunk.map((x) => x.slug).join(", ")}
 -- Pegar en Supabase → SQL Editor → Run. Idempotente: repetirlo no duplica.
 -- No borra ni modifica el resto de transmisiones ya cargadas.
 -- ============================================================================
@@ -301,21 +325,28 @@ alter table public.transmissions add column if not exists stages text[] not null
 insert into public.transmissions
   (${cols.join(", ")})
 values
-${deltaValues.join(",\n")}
+${chunk.map((x) => x.v).join(",\n")}
 on conflict (slug) do update set
   ${updateSet};
-
-select count(*) as transmisiones from public.transmissions where is_mock = false;
-`
-    await writeFile(DELTA_FILE, deltaSql, "utf8")
+${isLast ? "\nselect count(*) as transmisiones from public.transmissions where is_mock = false;\n" : ""}`
+      const name = dtotal === 1
+        ? "transmissions_delta.sql"
+        : `transmissions_delta_${String(c + 1).padStart(2, "0")}.sql`
+      const full = join(dirname(DELTA_FILE), name)
+      await writeFile(full, deltaSql, "utf8")
+      deltaFiles.push(name)
+    }
   }
 
   console.log(`✔ ${rows.length} transmisión(es) → ${OUT_FILE}`)
   rows.forEach((r) => console.log(`  · ${r.slug}${r.data.featured ? "  ★" : ""}`))
   if (!includeMock && realCount > 0) console.log("  (incluye purga automática de mocks)")
   if (onlySlugs.length) {
-    console.log(`\n✔ delta (${onlySlugs.length}) → docs/sql/transmissions_delta.sql`)
-    console.log("  Pega SOLO ese archivo para cargar las transmisiones nuevas.")
+    console.log(`\n✔ delta (${onlySlugs.length}) → ${deltaFiles.length} archivo(s):`)
+    deltaFiles.forEach((f) => console.log(`  · docs/sql/${f}`))
+    console.log(deltaFiles.length === 1
+      ? "  Pega SOLO ese archivo para cargar las transmisiones nuevas."
+      : "  Pega esos archivos EN ORDEN; el último trae el conteo final.")
   }
   console.log(`\n✔ ${total} parte(s) → docs/sql/parts/transmissions_part_01..${pad(total)}.sql`)
   console.log("Si el SQL Editor dice 'Query is too large', pega las partes EN ORDEN, una por una.")
