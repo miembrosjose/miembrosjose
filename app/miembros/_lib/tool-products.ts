@@ -8,6 +8,14 @@ function norm(s: string): string {
 
 // `num` estable de cada herramienta (así el vínculo sobrevive al renombrado).
 export const LUGARES_PRODUCT_NUM = 92
+// Acceso completo a Transmisiones (paywall de categorías). Producto único $9.99.
+export const TRANSMISIONES_ACCESS_PRODUCT_NUM = 93
+
+export function isTransmisionesAccessProduct(p: { name: string; num?: number }): boolean {
+  if (p.num === TRANSMISIONES_ACCESS_PRODUCT_NUM) return true
+  const n = norm(p.name)
+  return n.includes("transmision") && n.includes("acceso")
+}
 
 export function isNumerologiaToolProduct(p: { name: string; num?: number }): boolean {
   const n = norm(p.name)

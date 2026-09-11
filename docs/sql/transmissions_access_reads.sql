@@ -51,4 +51,33 @@ drop policy if exists "tx_reads delete own" on public.transmission_reads;
 create policy "tx_reads delete own" on public.transmission_reads
   for delete to authenticated using (user_id = auth.uid());
 
-select 'transmissions access + reads listo' as status;
+-- ── Producto único de desbloqueo ($9.99) — 1-click Stripe ────────────────
+-- Reutiliza el sistema de products / user_product_access (igual que
+-- meditaciones y numerología premium). num=93 estable. category='transmisiones'
+-- para que NO aparezca en los carruseles de Biblioteca ni Tienda.
+alter table public.products add column if not exists price_cents integer not null default 0;
+alter table public.products add column if not exists currency text not null default 'usd';
+alter table public.products add column if not exists category text not null default 'biblioteca';
+alter table public.products add column if not exists available_from text;
+
+insert into public.products
+  (num, name, description, category, gradient, emoji, sort_order, is_locked, price_cents, currency)
+select
+  93,
+  'Transmisiones · Acceso completo',
+  'Desbloquea todas las categorías de Transmisiones y su contenido completo.',
+  'transmisiones',
+  'linear-gradient(135deg, #2a2140 0%, #6D4A9B 100%)',
+  '🔓',
+  0,
+  true,
+  999,
+  'usd'
+where not exists (select 1 from public.products where num = 93);
+
+-- Asegura precio/estado si ya existía.
+update public.products
+set is_locked = true, price_cents = 999, currency = 'usd', available_from = null, category = 'transmisiones'
+where num = 93;
+
+select 'transmissions access + reads + producto listo' as status;

@@ -8,9 +8,10 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { requireMiembrosAuth } from "../../_lib/auth-server"
 import { renderMarkdownWithStages, parseStageDefs, readingTimeMinutes } from "@/lib/markdown"
-import { getCategoryAccess, isCategoryLocked } from "@/lib/transmissions-access"
+import { getCategoryAccess, isCategoryLocked, getTransmisionsProduct } from "@/lib/transmissions-access"
 import { TransmisionEngagement } from "../../_components/TransmisionEngagement"
 import { TransmisionProgress } from "../../_components/TransmisionProgress"
+import { TransmisionUnlock } from "../../_components/TransmisionUnlock"
 import styles from "./lectura.module.css"
 
 export const dynamic = "force-dynamic"
@@ -67,26 +68,24 @@ export default async function TransmisionLectura({
   // Categoría: nombre (eyebrow) + estado de bloqueo (paywall).
   let categoryName: string | null = null
   let locked = false
-  let unlockUrl: string | null = null
-  let priceUsd: number | null = null
   if (tx.category_slug) {
     const { data: cat } = await supabase
       .from("transmission_categories")
-      .select("name, is_locked, unlock_url, price_usd")
+      .select("name, is_locked")
       .eq("slug", tx.category_slug)
-      .maybeSingle<{ name: string; is_locked?: boolean; unlock_url?: string | null; price_usd?: number | null }>()
+      .maybeSingle<{ name: string; is_locked?: boolean }>()
     categoryName = cat?.name || null
     if (cat && user) {
       const access = await getCategoryAccess(supabase, user.id)
       locked = isCategoryLocked(tx.category_slug, cat.is_locked === true, access)
-      unlockUrl = cat.unlock_url ?? null
-      priceUsd = cat.price_usd ?? null
     }
   }
 
   // Si la categoría está bloqueada para este usuario, no entregamos el cuerpo:
-  // mostramos el panel de desbloqueo.
+  // mostramos el panel de desbloqueo (1-click de Stripe, un solo pago
+  // desbloquea todas las categorías).
   if (locked) {
+    const product = await getTransmisionsProduct()
     return (
       <main className={`${styles.page} tx-reading`}>
         <article className={styles.article}>
@@ -97,12 +96,14 @@ export default async function TransmisionLectura({
           <div className={styles.lockPanel}>
             <div className={styles.lockIcon} aria-hidden="true">🔒</div>
             <p className={styles.lockText}>
-              Esta transmisión pertenece a una categoría que aún no has desbloqueado.
+              Con un solo pago desbloqueas todas las categorías de Transmisiones y su contenido completo.
             </p>
-            {unlockUrl ? (
-              <a className={styles.lockBtn} href={unlockUrl} target="_blank" rel="noopener noreferrer">
-                Desbloquear{priceUsd ? ` · $${priceUsd.toFixed(2)}` : ""}
-              </a>
+            {product ? (
+              <TransmisionUnlock
+                productId={product.id}
+                priceCents={product.priceCents}
+                currency={product.currency}
+              />
             ) : (
               <span className={styles.lockSoon}>Desbloqueo disponible próximamente.</span>
             )}

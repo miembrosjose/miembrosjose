@@ -252,17 +252,13 @@ function TxCard({
 }) {
   const minutes = t.reading_time || null
 
-  // ── Bloqueada (paywall): candado + capa gris; clic → link de desbloqueo. ──
+  // ── Bloqueada (paywall): candado + capa gris; clic → página con desbloqueo. ──
   if (t.locked) {
     const price = cat?.price_usd ? `$${cat.price_usd.toFixed(2)}` : "$9.99"
-    const open = () => { if (cat?.unlock_url) window.open(cat.unlock_url, "_blank", "noopener") }
     return (
-      <div
-        className={`${styles.card} ${styles[`card_${variant}`]} ${styles.cardLocked} ${cat?.unlock_url ? styles.cardLockedClickable : ""}`}
-        role={cat?.unlock_url ? "button" : undefined}
-        tabIndex={cat?.unlock_url ? 0 : undefined}
-        onClick={open}
-        onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && cat?.unlock_url) { e.preventDefault(); open() } }}
+      <a
+        href={`/miembros/feed/${t.slug}`}
+        className={`${styles.card} ${styles[`card_${variant}`]} ${styles.cardLocked} ${styles.cardLockedClickable}`}
         aria-label={`Bloqueado: ${t.title}`}
       >
         <div className={styles.lockOverlay} aria-hidden="true">
@@ -274,7 +270,7 @@ function TxCard({
           {t.excerpt && <p className={styles.cardExcerpt}>{t.excerpt}</p>}
         </div>
         <span className={styles.cardUnlockCta}>Desbloquear · {price}</span>
-      </div>
+      </a>
     )
   }
 
