@@ -84,3 +84,4 @@ scripts/*-export.csv
 # SQL generado desde content/transmissions (fuente de verdad = los .md)
 docs/sql/transmissions_generated.sql
 docs/sql/parts/
+docs/sql/transmissions_delta.sql

@@ -28,6 +28,17 @@ const PART_MAX_BYTES = 150_000
 
 const includeMock = process.argv.includes("--include-mock")
 
+// --only slug1,slug2  → además escribe docs/sql/transmissions_delta.sql con
+// SOLO esos slugs. Útil para cargar transmisiones nuevas sin repegar todas las
+// partes (los trozos se recalculan al añadir archivos y sus límites se corren).
+const onlyArg = process.argv.find((a) => a.startsWith("--only="))
+const onlySlugs = onlyArg
+  ? onlyArg.slice("--only=".length).split(",").map((s) => s.trim()).filter(Boolean)
+  : []
+const DELTA_FILE = join(
+  dirname(fileURLToPath(import.meta.url)), "..", "docs", "sql", "transmissions_delta.sql",
+)
+
 // ── Frontmatter mínimo (subconjunto YAML) ──
 function parseFrontmatter(raw) {
   const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(raw)
@@ -268,9 +279,44 @@ delete from public.transmissions where is_mock = true;
     await writeFile(join(PARTS_DIR, `transmissions_part_${pad(c + 1)}.sql`), partSql, "utf8")
   }
 
+  // ── Delta (--only=slug1,slug2) ────────────────────────────────────────────
+  if (onlySlugs.length) {
+    const idx = new Map(rows.map((r, i) => [r.slug, i]))
+    const faltan = onlySlugs.filter((s) => !idx.has(s))
+    if (faltan.length) {
+      console.error(`✖ --only: slug(s) inexistente(s): ${faltan.join(", ")}`)
+      process.exit(1)
+    }
+    const deltaValues = onlySlugs.map((s) => values[idx.get(s)])
+    const deltaSql = `-- ============================================================================
+-- TRANSMISIONES — delta. Generado automáticamente. NO editar a mano.
+-- Generado: ${stamp}
+-- Contiene SOLO: ${onlySlugs.join(", ")}
+-- Pegar en Supabase → SQL Editor → Run. Idempotente: repetirlo no duplica.
+-- No borra ni modifica el resto de transmisiones ya cargadas.
+-- ============================================================================
+
+alter table public.transmissions add column if not exists stages text[] not null default '{}';
+
+insert into public.transmissions
+  (${cols.join(", ")})
+values
+${deltaValues.join(",\n")}
+on conflict (slug) do update set
+  ${updateSet};
+
+select count(*) as transmisiones from public.transmissions where is_mock = false;
+`
+    await writeFile(DELTA_FILE, deltaSql, "utf8")
+  }
+
   console.log(`✔ ${rows.length} transmisión(es) → ${OUT_FILE}`)
   rows.forEach((r) => console.log(`  · ${r.slug}${r.data.featured ? "  ★" : ""}`))
   if (!includeMock && realCount > 0) console.log("  (incluye purga automática de mocks)")
+  if (onlySlugs.length) {
+    console.log(`\n✔ delta (${onlySlugs.length}) → docs/sql/transmissions_delta.sql`)
+    console.log("  Pega SOLO ese archivo para cargar las transmisiones nuevas.")
+  }
   console.log(`\n✔ ${total} parte(s) → docs/sql/parts/transmissions_part_01..${pad(total)}.sql`)
   console.log("Si el SQL Editor dice 'Query is too large', pega las partes EN ORDEN, una por una.")
   console.log("La última parte incluye la purga de mocks y el conteo final.")
