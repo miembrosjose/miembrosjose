@@ -8,7 +8,6 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
-import { expandQuery } from "@/lib/transmissions-search"
 import { getCategoryAccess, isCategoryLocked } from "@/lib/transmissions-access"
 
 export const dynamic = "force-dynamic"
@@ -40,12 +39,9 @@ export async function GET(req: NextRequest) {
     if (featuredOnly) query = query.eq("featured", true)
 
     if (q) {
-      // Full-text con sinónimos. Si no matchea nada, el resultado es [] y el
-      // frontend muestra el estado vacío.
-      query = query.textSearch("search", expandQuery(q), {
-        type: "websearch",
-        config: "spanish",
-      })
+      // Búsqueda SOLO por título (nombre principal), no por cuerpo/extracto/tags.
+      // ilike = coincidencia parcial, insensible a mayúsculas.
+      query = query.ilike("title", `%${q}%`)
     }
 
     // Orden: destacados primero (por featured_order), luego recientes.

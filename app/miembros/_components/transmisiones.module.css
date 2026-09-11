@@ -436,7 +436,8 @@
     word-break: normal;
   }
   .heroSubtitle { font-size: 0.98rem; }
-  .searchInput { font-size: 0.95rem; padding: 12px 10px; }
+  /* 16px evita el auto-zoom de iOS Safari al enfocar el input. */
+  .searchInput { font-size: 16px; padding: 12px 10px; }
   .wrap { padding: 0 14px 90px; }
   /* Mobile: la foto de José pasa a fondo superior, más tenue, con crop
      inteligente y velo reforzado para no dañar la legibilidad. */

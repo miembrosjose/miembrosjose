@@ -1,17 +1,17 @@
 /* Botón de desbloqueo — dorado glossy con brillo animado que invita al clic. */
 
-.wrap { width: 100%; }
+.wrap { text-align: center; }
 
 .wrap button {
   position: relative;
   overflow: hidden;
-  width: 100%;
+  width: auto;
   border: none;
-  border-radius: 14px !important;
-  padding: 1.05rem 1.6rem;
+  border-radius: 999px !important;
+  padding: 0.6rem 1.35rem;
   color: #1a1204;
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
