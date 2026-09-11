@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
-import { getCategoryAccess, isCategoryLocked } from "@/lib/transmissions-access"
+import { getCategoryAccess, isCategoryLocked, getTransmisionsProduct } from "@/lib/transmissions-access"
 
 export const dynamic = "force-dynamic"
 
@@ -60,5 +60,11 @@ export async function GET() {
     price_usd: c.price_usd ?? null,
   }))
 
-  return NextResponse.json({ categories })
+  // Producto único de desbloqueo ($9.99) para el cartel/banner.
+  const product = await getTransmisionsProduct()
+  const unlock = product
+    ? { productId: product.id, priceCents: product.priceCents, currency: product.currency }
+    : null
+
+  return NextResponse.json({ categories, unlock })
 }

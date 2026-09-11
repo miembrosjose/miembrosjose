@@ -11,8 +11,9 @@
 // NO genera contenido: solo muestra/organiza/busca lo que José cargue vía el
 // importador. Sin IA, sin botones de "generar".
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { api } from "../_lib/api"
+import { TransmisionUnlock } from "./TransmisionUnlock"
 import styles from "./transmisiones.module.css"
 
 type Category = {
@@ -41,14 +42,17 @@ type Transmission = {
   published_at: string
 }
 
-const ALL = "todos"
-const COLLAPSED_CHIPS = 6 // categorías visibles antes de "Más" (además de TODOS)
+// Categoría gratuita por defecto (sin botón "Todos"): el menú muestra las
+// categorías reales y arranca en VIDA Y PROPÓSITO.
+const DEFAULT_CATEGORY = "vida-proposito"
+
+type Unlock = { productId: string; priceCents: number; currency: string } | null
 
 // Lee el estado inicial desde la URL (?q=&category=) para deep-links.
 function readUrlState(): { q: string; category: string } {
-  if (typeof window === "undefined") return { q: "", category: ALL }
+  if (typeof window === "undefined") return { q: "", category: DEFAULT_CATEGORY }
   const p = new URLSearchParams(window.location.search)
-  return { q: p.get("q") || "", category: p.get("category") || ALL }
+  return { q: p.get("q") || "", category: p.get("category") || DEFAULT_CATEGORY }
 }
 
 export function Transmisiones() {
@@ -59,11 +63,12 @@ export function Transmisiones() {
   const [items, setItems] = useState<Transmission[]>([])
   const [featured, setFeatured] = useState<Transmission[]>([])
   const [loading, setLoading] = useState(true)
-  const [chipsExpanded, setChipsExpanded] = useState(false)
   const [readSlugs, setReadSlugs] = useState<Set<string>>(new Set())
+  const [unlock, setUnlock] = useState<Unlock>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const isDefaultView = !q.trim() && (category === ALL || !category)
+  // Vista libre (VIDA Y PROPÓSITO) sin búsqueda → muestra destacadas.
+  const isFreeView = !q.trim() && category === DEFAULT_CATEGORY
 
   const catName = useCallback(
     (slug: string | null) => categories.find((c) => c.slug === slug)?.name || "",
@@ -73,11 +78,13 @@ export function Transmisiones() {
     (slug: string | null) => categories.find((c) => c.slug === slug) || null,
     [categories],
   )
+  const selectedCategory = categories.find((c) => c.slug === category) || null
+  const categoryLocked = selectedCategory?.locked === true
 
-  // Categorías + destacadas + transmisiones leídas (una sola vez).
+  // Categorías (+ producto de desbloqueo) + destacadas + leídas (una sola vez).
   useEffect(() => {
-    api<{ categories: Category[] }>("/api/transmission-categories")
-      .then((d) => setCategories(d.categories || []))
+    api<{ categories: Category[]; unlock: Unlock }>("/api/transmission-categories")
+      .then((d) => { setCategories(d.categories || []); setUnlock(d.unlock || null) })
       .catch(() => setCategories([]))
     api<{ transmissions: Transmission[] }>("/api/transmissions?featured=1&limit=3")
       .then((d) => setFeatured(d.transmissions || []))
@@ -92,7 +99,7 @@ export function Transmisiones() {
     if (typeof window === "undefined") return
     const p = new URLSearchParams(window.location.search)
     if (q.trim()) p.set("q", q.trim()); else p.delete("q")
-    if (category && category !== ALL) p.set("category", category); else p.delete("category")
+    if (category && category !== DEFAULT_CATEGORY) p.set("category", category); else p.delete("category")
     const qs = p.toString()
     const url = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`
     window.history.replaceState(null, "", url)
@@ -105,7 +112,7 @@ export function Transmisiones() {
     debounceRef.current = setTimeout(() => {
       const p = new URLSearchParams()
       if (q.trim()) p.set("q", q.trim())
-      if (category && category !== ALL) p.set("category", category)
+      if (category) p.set("category", category)
       p.set("limit", "60")
       api<{ transmissions: Transmission[] }>(`/api/transmissions?${p.toString()}`)
         .then((d) => setItems(d.transmissions || []))
@@ -117,21 +124,12 @@ export function Transmisiones() {
     }
   }, [q, category])
 
-  const visibleChips = useMemo(() => {
-    const base = [{ slug: ALL, name: "Todos" } as Category, ...categories]
-    if (chipsExpanded) return base
-    return base.slice(0, COLLAPSED_CHIPS + 1)
-  }, [categories, chipsExpanded])
-
-  const hasMoreChips = categories.length > COLLAPSED_CHIPS
-
   const featuredMain = featured[0]
   const featuredRest = featured.slice(1, 3)
 
   function clearAll() {
     setQ("")
-    setCategory(ALL)
-    setChipsExpanded(false)
+    setCategory(DEFAULT_CATEGORY)
   }
 
   return (
@@ -170,10 +168,10 @@ export function Transmisiones() {
         </div>
       </header>
 
-      {/* ── Categorías (data-driven) ── */}
+      {/* ── Categorías (data-driven, sin "Todos": todas visibles) ── */}
       {categories.length > 0 && (
         <nav className={styles.chipsRow} aria-label="Categorías de transmisiones">
-          {visibleChips.map((c) => (
+          {categories.map((c) => (
             <button
               key={c.slug}
               type="button"
@@ -182,23 +180,33 @@ export function Transmisiones() {
               onClick={() => setCategory(c.slug)}
             >
               {c.name}
+              {c.locked && <span className={styles.chipLock} aria-hidden="true"> 🔒</span>}
             </button>
           ))}
-          {hasMoreChips && (
-            <button
-              type="button"
-              className={styles.chipMore}
-              onClick={() => setChipsExpanded((v) => !v)}
-              aria-expanded={chipsExpanded}
-            >
-              {chipsExpanded ? "Menos" : "Más"}
-            </button>
-          )}
         </nav>
       )}
 
-      {/* ── Destacadas (solo en la vista por defecto) ── */}
-      {isDefaultView && featuredMain && (
+      {/* ── Cartel de desbloqueo (categoría bloqueada): botón de pago ARRIBA,
+           sobre las tarjetas. Un solo pago desbloquea todas las categorías. ── */}
+      {categoryLocked && unlock && (
+        <section className={styles.unlockBanner} aria-label="Desbloquear Transmisiones">
+          <span className={styles.unlockBannerBadge} aria-hidden="true">🔓</span>
+          <h2 className={styles.unlockBannerTitle}>Desbloquea todas las Transmisiones</h2>
+          <p className={styles.unlockBannerText}>
+            Accede a todas las transmisiones de todas las categorías con un solo pago
+            de ${(unlock.priceCents / 100).toFixed(2)}. Pago único, acceso permanente.
+          </p>
+          <TransmisionUnlock
+            productId={unlock.productId}
+            priceCents={unlock.priceCents}
+            currency={unlock.currency}
+            label={`Desbloquear todo · $${(unlock.priceCents / 100).toFixed(2)}`}
+          />
+        </section>
+      )}
+
+      {/* ── Destacadas (solo en la vista libre por defecto) ── */}
+      {isFreeView && featuredMain && (
         <section className={styles.featuredSection} aria-labelledby="tx-featured-title">
           <h2 id="tx-featured-title" className={styles.blockTitle}>TRANSMISIONES DESTACADAS</h2>
           <div className={styles.featuredGrid}>
@@ -217,7 +225,7 @@ export function Transmisiones() {
       {/* ── Archivo / resultados ── */}
       <section className={styles.archiveSection} aria-labelledby="tx-archive-title">
         <h2 id="tx-archive-title" className={styles.blockTitle}>
-          {isDefaultView ? "ARCHIVO" : q.trim() ? "RESULTADOS" : catName(category) || "ARCHIVO"}
+          {q.trim() ? "RESULTADOS" : catName(category) || "ARCHIVO"}
         </h2>
 
         {loading ? (
@@ -252,14 +260,16 @@ function TxCard({
 }) {
   const minutes = t.reading_time || null
 
-  // ── Bloqueada (paywall): candado + capa gris; clic → página con desbloqueo. ──
+  // ── Bloqueada (paywall): SOLO candado + capa gris. Sin precio por título y
+  //    sin acceso (ni para "más información"): el desbloqueo está en el cartel
+  //    superior. No es enlace: no navega a ningún lado. ──
   if (t.locked) {
-    const price = cat?.price_usd ? `$${cat.price_usd.toFixed(2)}` : "$9.99"
+    void cat
     return (
-      <a
-        href={`/miembros/feed/${t.slug}`}
-        className={`${styles.card} ${styles[`card_${variant}`]} ${styles.cardLocked} ${styles.cardLockedClickable}`}
+      <div
+        className={`${styles.card} ${styles[`card_${variant}`]} ${styles.cardLocked}`}
         aria-label={`Bloqueado: ${t.title}`}
+        aria-disabled="true"
       >
         <div className={styles.lockOverlay} aria-hidden="true">
           <span className={styles.lockBadge}>🔒</span>
@@ -269,8 +279,7 @@ function TxCard({
           <h3 className={styles.cardTitle}>{t.title}</h3>
           {t.excerpt && <p className={styles.cardExcerpt}>{t.excerpt}</p>}
         </div>
-        <span className={styles.cardUnlockCta}>Desbloquear · {price}</span>
-      </a>
+      </div>
     )
   }
 

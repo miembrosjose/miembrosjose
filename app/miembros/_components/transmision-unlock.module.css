@@ -1,0 +1,60 @@
+/* Botón de desbloqueo — dorado glossy con brillo animado que invita al clic. */
+
+.wrap { width: 100%; }
+
+.wrap button {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  border: none;
+  border-radius: 14px !important;
+  padding: 1.05rem 1.6rem;
+  color: #1a1204;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f0d488 0%, #d9b866 45%, #c79a3f 100%);
+  box-shadow: 0 10px 30px -8px rgba(217, 184, 102, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  animation: txPulse 2.4s var(--ease-out-quart) infinite;
+  transition: transform var(--duration-fast) var(--ease-out-quart);
+}
+.wrap button:hover { transform: translateY(-2px); }
+.wrap button:active { transform: translateY(0); }
+.wrap button:disabled { opacity: 0.7; cursor: wait; animation: none; }
+
+/* Barrido de luz (shine) que cruza el botón. */
+.wrap button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -140%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 40%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0.15) 60%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  animation: txShine 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes txPulse {
+  0%, 100% { box-shadow: 0 10px 30px -8px rgba(217, 184, 102, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+  50% { box-shadow: 0 14px 44px -6px rgba(217, 184, 102, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+}
+@keyframes txShine {
+  0% { left: -140%; }
+  55%, 100% { left: 140%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrap button { animation: none; }
+  .wrap button::before { animation: none; display: none; }
+}
