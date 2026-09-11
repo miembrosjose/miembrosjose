@@ -12,6 +12,15 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - INFORMACIÓN, NO ORDEN :: Hay algo que me ha confundido durante años porque, cuando hablas de propósito
+  - NOVEDAD Y PROFUNDIDAD :: Eso me preocupa porque yo soy muy intenso con las cosas
+  - ATRAVESAR LA MATERIA :: Eso es muy importante porque cuando algo deja de emocionarme como al principio
+  - LA CORRIENTE Y EL APARATO :: Eso me recuerda algo que me pasa mucho. Tengo varias cosas que me apasionan
+  - RESPONSABILIDAD Y ESCALA :: Hay algo más que me genera conflicto. Cuando tienes responsabilidades
+  - EL CUERPO QUE PERCIBE :: Quiero preguntarte algo más profundo. Muchas veces hemos hablado de una mente superior
+  - CUANDO SE VUELVE HUIDA :: Eso me lleva a otra cosa. A veces una pasión puede convertirse en obsesión
+  - LA PUERTA Y LA FUENTE :: Hay algo que quiero preguntarte para cerrar. Si tuvieras que explicarme qué es la pasión
 editorial_notes:
 ---
 

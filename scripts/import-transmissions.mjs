@@ -154,6 +154,7 @@ async function main() {
       editorial_notes: data.editorial_notes || null,
       season_overlap_notes: data.season_overlap_notes || null,
       is_mock: data.is_mock === true,
+      stages: Array.isArray(data.stages) ? data.stages : [],
       sort_order: data.sort_order ?? 0,
       updated_at: new Date().toISOString(),
     })

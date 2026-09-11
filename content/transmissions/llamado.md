@@ -12,6 +12,15 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - LA RESONANCIA :: Hay algo que me ha acompañado durante muchos años y todavía no sé explicarlo
+  - INTENSIDAD NO ES DIRECCIÓN :: Pero si lo planteamos así, podría justificar cualquier cosa
+  - LA PUERTA Y LA HABITACIÓN :: Eso sí lo reconozco. Hay lugares a los que he querido ir durante años
+  - EL FILTRO QUE INTERPRETA :: Pero también me pasa algo más personal. Yo he sentido llamados hacia lugares
+  - LLAMADO Y CAPACIDAD FUTURA :: Hay algo que me genera mucha curiosidad. A veces siento que un lugar me llama años antes
+  - NI OBLIGACIÓN NI ELEGIDO :: Sí. Totalmente. Hay veces que siento
+  - SERVICIO, NO IDENTIDAD :: Eso aplica muchísimo a la espiritualidad. Porque si alguien dice que fue llamado por extraterrestres
+  - QUIÉN RESPONDE :: Eso me hace pensar que quizá durante años he preguntado
 editorial_notes:
 ---
 

@@ -12,6 +12,15 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - PREPARACIÓN NO ES CERTEZA :: Hay algo en mí que conozco perfectamente y aun así sigo repitiendo
+  - RESPONSABILIDAD Y MIEDO :: Pero ahí es donde me cuesta. Antes podía decir
+  - ACTUAR TE REVELA :: Entonces la acción también me revela cosas sobre mí que el pensamiento no puede mostrarme
+  - LA FRICCIÓN ES INFORMACIÓN :: A veces interpreto esa fricción como una señal de que algo no debe hacerse
+  - PEQUEÑAS ACCIONES :: Esto se conecta mucho con mis proyectos. A veces quiero saber si algo va a funcionar
+  - DEFINIR ES RENUNCIAR :: Entonces cuando actúo también estoy cerrando cosas
+  - RESULTADO Y DECISIÓN :: Pero ahí aparece otra cosa que me cuesta: cuando hago algo con mucha convicción y sale mal
+  - ENCARNACIÓN CONSCIENTE :: Entonces quizá he estado esperando que la acción me dé seguridad
 editorial_notes:
 ---
 

@@ -12,6 +12,14 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - EL MAR ABIERTO :: Hay etapas en las que siento mi vida con una claridad impresionante
+  - UNA DECISIÓN NO ES TODA TU VIDA :: Eso me identifica muchísimo. Porque antes había cosas que eran casi obvias
+  - ¿QUÉ ES DESPERDICIAR LA VIDA? :: Pero ahí aparece mi miedo de perder tiempo. Tengo 37 años
+  - PERSEVERAR O SOLTAR :: Esto me toca mucho porque yo sí puedo ser terco
+  - EL CAMPO QUE ORGANIZA :: Entonces podría estar muy comprometido con mi rumbo sin estar casado con ninguna forma
+  - EN QUIÉN TE CONVIERTES :: Esa frase sí me cambia algo. Porque siempre he pensado mucho en misión
+  - CREAR EL CAMINO :: Creo que empiezo a entender por qué algunos momentos de mi vida se sienten sin rumbo
 editorial_notes:
 ---
 

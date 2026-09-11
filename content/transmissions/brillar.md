@@ -12,6 +12,15 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - BRILLAR NO ES SER VISTO :: Hay algo que me cuesta admitir porque llevo muchos años
+  - LA MIRADA :: Pero en mi caso hay algo que me parece importante
+  - CRECER HACIA ADENTRO :: Esto me toca porque siento que hay una parte de mí que quiere que lo que hago sea grande
+  - CUANDO LA MIRADA CAMBIA LA FUENTE :: Eso pasa mucho en redes. Uno descubre algo que funciona
+  - GENERAR LUZ DESDE EL CENTRO :: Entonces, cuando nadie mira, es cuando realmente descubro
+  - ¿CÓMO MEDIR LA VERDAD? :: Me cuesta porque también he construido una identidad alrededor de comunicar
+  - COMUNICAR COMO SERVICIO :: Eso cambia completamente lo que significa para mí tener seguidores
+  - CUANDO NADIE ESTÁ MIRANDO :: ¿Qué estoy emitiendo cuando ninguna mirada me obliga a emitir nada
 editorial_notes:
 ---
 

@@ -141,7 +141,7 @@ async function main() {
     "slug", "title", "excerpt", "body", "category_slug", "tags", "author_name",
     "status", "featured", "featured_order", "reading_time", "image_url",
     "related_post_slugs", "related_season", "related_episode_id", "overlap_status",
-    "source_basis", "editorial_notes", "season_overlap_notes", "is_mock", "sort_order", "updated_at",
+    "source_basis", "editorial_notes", "season_overlap_notes", "is_mock", "stages", "sort_order", "updated_at",
   ]
 
   const values = rows.map(({ data, body, slug }) => {
@@ -166,6 +166,7 @@ async function main() {
       sqlText(data.editorial_notes || null),
       sqlText(data.season_overlap_notes || null),
       sqlBool(data.is_mock === true),
+      sqlTextArray(Array.isArray(data.stages) ? data.stages : []),
       sqlInt(data.sort_order ?? 0),
       "now()",
     ]
@@ -185,6 +186,9 @@ async function main() {
 -- Fuente: content/transmissions/*.md · Generado: ${new Date().toISOString()}
 -- Pegar en Supabase → SQL Editor → Run. Idempotente (upsert por slug).
 -- ============================================================================
+
+-- Migración autocontenida: garantiza la columna de etapas de navegación.
+alter table public.transmissions add column if not exists stages text[] not null default '{}';
 
 insert into public.transmissions
   (${cols.join(", ")})

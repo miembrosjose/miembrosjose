@@ -12,6 +12,15 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - LA DUDA COMO INSTRUMENTO :: Hay una pregunta que me ha acompañado durante años
+  - SEPARAR LAS CAPAS :: Entonces una cosa es dudar de lo que creo que significa una experiencia
+  - LA VERDAD Y LA IDENTIDAD :: Eso me obliga también a revisar cosas que he dicho con mucha seguridad
+  - DUDA VIVA O REFUGIO :: Pero también conozco el extremo contrario. Personas que dudan tanto
+  - FRENTE A LO DESCONOCIDO :: Eso conecta muchísimo con algo que hablamos en BRILLAR
+  - ¿QUIÉN SOY YO PARA...? :: Eso me lleva a otro lugar todavía más personal. Hay momentos donde la duda no nace
+  - CERTEZA OPERATIVA :: Hay algo más que quiero preguntarte. ¿Existe un punto donde uno debe dejar de dudar?
+  - NAVEGAR CON DUDA :: Entonces la duda no tendría que alejarme de la verdad
 editorial_notes:
 ---
 

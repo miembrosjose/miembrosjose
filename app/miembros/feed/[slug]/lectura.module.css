@@ -113,12 +113,37 @@
    y la afirmación de cierre). Los hablantes tienen su propio color abajo. */
 .body :global(strong) { color: var(--gold-soft); font-weight: 700; }
 
+/* Anclas invisibles de etapas (navegación). No ocupan espacio; el
+   scroll-margin evita que queden bajo el navbar fijo al saltar. */
+.body :global(.tx-stage) { display: block; height: 0; scroll-margin-top: 96px; }
+
 /* Etiquetas de hablante — solo el nombre + ":". Elegante, no neón.
    José: dorado solar cálido · Guías: violeta-cósmico luminoso.
    Mayor especificidad que la regla de strong → ganan sobre el dorado. */
 .body :global(.speaker) { font-weight: 700; letter-spacing: 0.01em; }
 .body :global(.speaker-jose) { color: #e6b34d; }
 .body :global(.speaker-guide) { color: #b49ae6; }
+
+/* Botón inferior "Volver a Transmisiones" — cierre de la lectura. */
+.backBottom {
+  max-width: 720px;
+  margin: 2.6rem auto 0;
+  padding: 0 20px;
+  display: flex;
+  justify-content: center;
+}
+.backBottomLink {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px !important;
+  padding: 10px 22px;
+  transition: color var(--duration-base), border-color var(--duration-base), background var(--duration-base);
+}
+.backBottomLink:hover { color: var(--text-primary); border-color: rgba(109, 74, 155, 0.5); background: rgba(109, 74, 155, 0.14); }
 
 .tags {
   display: flex;

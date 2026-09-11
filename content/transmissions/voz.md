@@ -12,6 +12,14 @@ related_season:
 related_post_slugs: []
 source_basis:
 overlap_status: none
+stages:
+  - EL RITMO DE LA MÁQUINA :: Hay algo que me pasa cada vez con más frecuencia
+  - PUBLICAR NO ES TRANSMITIR :: Pero ese ritmo tiene consecuencias reales. Si dejo de publicar varios días
+  - CUANDO LA VOZ ES IDENTIDAD :: Creo que ahí está exactamente el problema. Mi audiencia también se acostumbró
+  - FIDELIDAD A LA VERDAD :: Eso sí me ha pasado. Cuento algo como lo entendí en ese momento
+  - CLARIDAD SIN MUTILAR :: Ahí vuelvo a Instagram. Porque las redes premian exactamente lo contrario
+  - VIVIR PARA TENER VOZ :: Eso me da un poco de miedo. Porque si me expongo demasiado
+  - EL SILENCIO :: ¿Y el silencio? Después de todo lo que hemos hablado
 editorial_notes:
 ---
 

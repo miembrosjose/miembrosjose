@@ -7,8 +7,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { requireMiembrosAuth } from "../../_lib/auth-server"
-import { renderMarkdown, readingTimeMinutes } from "@/lib/markdown"
+import { renderMarkdownWithStages, parseStageDefs, readingTimeMinutes } from "@/lib/markdown"
 import { TransmisionEngagement } from "../../_components/TransmisionEngagement"
+import { TransmisionProgress } from "../../_components/TransmisionProgress"
 import styles from "./lectura.module.css"
 
 export const dynamic = "force-dynamic"
@@ -99,12 +100,26 @@ export default async function TransmisionLectura({
     related = [...related, ...((data as RelatedRow[]) || [])]
   }
 
-  const bodyHtml = renderMarkdown(tx.body)
+  // Etapas de navegación (metadata). Best-effort: si la columna `stages` aún no
+  // existe en la BD, degrada a [] sin romper la lectura.
+  let stageDefs: ReturnType<typeof parseStageDefs> = []
+  try {
+    const { data: srow } = await supabase
+      .from("transmissions")
+      .select("stages")
+      .eq("slug", slug)
+      .maybeSingle<{ stages: string[] | null }>()
+    stageDefs = parseStageDefs(srow?.stages)
+  } catch {
+    stageDefs = []
+  }
+
+  const { html: bodyHtml, stages } = renderMarkdownWithStages(tx.body, stageDefs)
   const minutes = tx.reading_time || readingTimeMinutes(tx.body)
 
   return (
     <main className={styles.page}>
-      <article className={styles.article}>
+      <article id="tx-article" className={styles.article}>
         {/* Enlace duro (no next/link): fuerza recarga de /miembros para que el
             SPA lea el hash #feed y abra el archivo de Transmisiones (el
             ViewProvider vive en el layout y no se re-sincroniza con pushState). */}
@@ -146,6 +161,12 @@ export default async function TransmisionLectura({
         )}
       </article>
 
+      <div className={styles.backBottom}>
+        <a href="/miembros#feed" className={styles.backBottomLink}>
+          ← Volver a Transmisiones
+        </a>
+      </div>
+
       <TransmisionEngagement slug={tx.slug} />
 
       {related.length > 0 && (
@@ -162,6 +183,8 @@ export default async function TransmisionLectura({
           </div>
         </section>
       )}
+
+      <TransmisionProgress slug={tx.slug} stages={stages} />
     </main>
   )
 }

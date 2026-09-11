@@ -138,3 +138,67 @@ export function readingTimeMinutes(body: string): number {
   const words = (body || "").trim().split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.round(words / 200))
 }
+
+// ── Navegación por etapas ──────────────────────────────────────────────
+// Cada transmisión define internamente "etapas" (metadata, NO títulos visibles
+// en el texto). Cada etapa se localiza por un fragmento textual (snippet) que
+// aparece al inicio del bloque donde empieza esa etapa. Aquí inyectamos anclas
+// invisibles (<span class="tx-stage" id="tx-stage-N">) justo antes del <p> que
+// contiene ese fragmento, sin alterar el texto. El texto sigue leyéndose como
+// una sola transmisión continua.
+
+export type StageDef = { title: string; snippet: string }
+export type Stage = { n: number; id: string; title: string }
+
+export function renderMarkdownWithStages(
+  md: string,
+  stageDefs: StageDef[],
+): { html: string; stages: Stage[] } {
+  const html = renderMarkdown(md)
+  if (!stageDefs || stageDefs.length === 0) return { html, stages: [] }
+
+  const inserts: { pos: number; frag: string }[] = []
+  const stages: Stage[] = []
+  let searchFrom = 0
+
+  for (const def of stageDefs) {
+    const snippet = (def.snippet || "").trim()
+    if (!snippet) continue
+    const idx = html.indexOf(snippet, searchFrom)
+    if (idx === -1) continue // no matchea → se omite (degradación elegante)
+    const pStart = html.lastIndexOf("<p>", idx)
+    const anchorAt = pStart === -1 ? idx : pStart
+    const n = stages.length + 1
+    const id = `tx-stage-${n}`
+    inserts.push({ pos: anchorAt, frag: `<span class="tx-stage" id="${id}" aria-hidden="true"></span>` })
+    stages.push({ n, id, title: def.title })
+    searchFrom = idx + snippet.length
+  }
+
+  if (inserts.length === 0) return { html, stages: [] }
+
+  inserts.sort((a, b) => a.pos - b.pos)
+  let out = ""
+  let last = 0
+  for (const ins of inserts) {
+    out += html.slice(last, ins.pos) + ins.frag
+    last = ins.pos
+  }
+  out += html.slice(last)
+  return { html: out, stages }
+}
+
+// Parsea la columna `stages` (text[]) donde cada item es "TÍTULO :: snippet".
+export function parseStageDefs(raw: unknown): StageDef[] {
+  if (!Array.isArray(raw)) return []
+  const out: StageDef[] = []
+  for (const item of raw) {
+    if (typeof item !== "string") continue
+    const i = item.indexOf("::")
+    if (i === -1) continue
+    const title = item.slice(0, i).trim()
+    const snippet = item.slice(i + 2).trim()
+    if (title && snippet) out.push({ title, snippet })
+  }
+  return out
+}
