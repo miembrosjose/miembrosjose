@@ -112,7 +112,9 @@ export function Transmisiones() {
     debounceRef.current = setTimeout(() => {
       const p = new URLSearchParams()
       if (q.trim()) p.set("q", q.trim())
-      if (category) p.set("category", category)
+      // Con búsqueda activa se busca en TODAS las categorías (no se filtra por
+      // la categoría seleccionada). Sin búsqueda, se muestra la categoría actual.
+      if (category && !q.trim()) p.set("category", category)
       p.set("limit", "60")
       api<{ transmissions: Transmission[] }>(`/api/transmissions?${p.toString()}`)
         .then((d) => setItems(d.transmissions || []))
