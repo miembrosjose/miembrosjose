@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [telepatia, intuicion, observador, percepcion]
+related_post_slugs: [clariaudiencia, telepatia, intuicion, observador, percepcion]
 source_basis:
 overlap_status: none
 stages:
