@@ -14,6 +14,7 @@
 // botão "Abrir" no header).
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { ArrowLeft, MessageCircle, Send, X, Maximize2 } from "lucide-react"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { useAuth } from "../_lib/auth-context"
@@ -78,7 +79,11 @@ export function MessengerWidget() {
   const isOnline = useIsOnline(activeUserId)
 
   // Esconde widget quando user já está na view dedicada (/miembros/mensajes)
-  const shouldRender = !!user && view !== "messages"
+  // e na leitura de uma transmissão (/miembros/feed/<slug>) — lá a cápsula de
+  // progresso ocupa a parte inferior e a bolha chocava com ela.
+  const pathname = usePathname()
+  const onTransmissionRead = /^\/miembros\/feed\/[^/]+$/.test(pathname || "")
+  const shouldRender = !!user && view !== "messages" && !onTransmissionRead
 
   // ─── Fetch threads quando popover abre ───────────────────────────────
   const refetchThreads = useCallback(async () => {
