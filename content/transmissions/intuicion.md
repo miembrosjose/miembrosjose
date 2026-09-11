@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [frecuencia, premonicion, percepcion, miedo]
+related_post_slugs: [telepatia, frecuencia, premonicion, percepcion, miedo]
 source_basis:
 overlap_status: none
 stages:
