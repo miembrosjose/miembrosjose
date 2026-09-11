@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [realidad, observador, unidad]
+related_post_slugs: [ahora, eternidad, realidad, observador, unidad]
 source_basis:
 overlap_status: none
 stages:

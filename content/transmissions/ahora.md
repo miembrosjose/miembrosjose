@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [tiempo, observador, ansiedad]
+related_post_slugs: [eternidad, tiempo, observador, ansiedad]
 source_basis:
 overlap_status: none
 stages:
