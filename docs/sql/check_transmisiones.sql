@@ -13,7 +13,7 @@ select
   c.name                  as categoria,
   count(t.id)             as transmisiones
 from public.transmission_categories c
-left join public.transmissions t on t.category = c.slug
+left join public.transmissions t on t.category_slug = c.slug
 group by c.sort_order, c.name
 order by c.sort_order;
 
@@ -31,3 +31,10 @@ select slug, coalesce(array_length(stages, 1), 0) as n_stages
 from public.transmissions
 where coalesce(array_length(stages, 1), 0) <> 8
 order by slug;
+
+-- 6) Transmisiones sin categoria valida  ─ esperado: 0 filas
+select t.slug, t.category_slug
+from public.transmissions t
+left join public.transmission_categories c on c.slug = t.category_slug
+where c.slug is null
+order by t.slug;
