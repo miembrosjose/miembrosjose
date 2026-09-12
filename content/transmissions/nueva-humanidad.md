@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [inteligencia, civilizacion, contacto, ninez]
+related_post_slugs: [salto, inteligencia, civilizacion, contacto, ninez]
 source_basis:
 overlap_status: none
 stages:

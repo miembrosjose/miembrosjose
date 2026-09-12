@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [civilizacion, crisis, umbral, amor, red]
+related_post_slugs: [salto, civilizacion, crisis, umbral, amor, red]
 source_basis:
 overlap_status: none
 stages:
