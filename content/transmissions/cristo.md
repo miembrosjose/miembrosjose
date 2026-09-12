@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [karma, catastrofe, profecias, muerte]
+related_post_slugs: ["144000", karma, catastrofe, profecias, muerte]
 source_basis:
 overlap_status: none
 stages:
