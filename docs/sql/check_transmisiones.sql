@@ -1,32 +1,33 @@
 -- ============================================================================
--- VERIFICACIÓN — qué transmisiones están cargadas y cuáles faltan.
--- Solo lee. No modifica nada.
--- Pegar en Supabase → SQL Editor → Run.
+-- VERIFICACION DEL ARCHIVO VIVO
+-- Solo lee. No modifica nada. Pegar entero en el SQL Editor de Supabase.
+-- Esperado: 106 transmisiones en 11 categorias, y 'memoria-origen' ya borrada.
 -- ============================================================================
 
--- 1) Total cargado (debería ser 72 cuando esté todo al día).
-select count(*) as total_cargadas
-from public.transmissions
-where is_mock = false;
+-- 1) Total cargado  ─ esperado: 106
+select count(*) as total_transmisiones from public.transmissions;
 
--- 2) Conteo por categoría.
-select category, count(*) as n
-from public.transmissions
-where is_mock = false
-group by category
-order by n desc;
-
--- 3) Cuáles de las últimas 11 YA están y cuáles FALTAN.
-with esperadas(slug) as (
-  values
-    ('percepcion'), ('dualidad'), ('holograma'), ('red'), ('proyeccion'),
-    ('simulacion'), ('matrix'), ('observador'), ('unidad'), ('separacion'),
-    ('tiempo')
-)
+-- 2) Reparto por categoria  ─ esperado: 11 filas, ninguna con 0
 select
-  e.slug,
-  case when t.slug is null then 'FALTA' else 'ok' end as estado
-from esperadas e
-left join public.transmissions t
-  on t.slug = e.slug and t.is_mock = false
-order by estado, e.slug;
+  c.sort_order            as orden,
+  c.name                  as categoria,
+  count(t.id)             as transmisiones
+from public.transmission_categories c
+left join public.transmissions t on t.category = c.slug
+group by c.sort_order, c.name
+order by c.sort_order;
+
+-- 3) La categoria retirada  ─ esperado: 0 filas
+select slug, name from public.transmission_categories where slug = 'memoria-origen';
+
+-- 4) Las ultimas de cada categoria nueva  ─ esperado: 'ok' en las 6
+select v.slug,
+       case when t.id is null then 'FALTA' else 'ok' end as estado
+from (values ('karma'),('catastrofe'),('muerte'),('profecias'),('cristo'),('144000')) as v(slug)
+left join public.transmissions t on t.slug = v.slug;
+
+-- 5) Etapas de lectura  ─ esperado: 0 filas (todas deben tener 8)
+select slug, coalesce(array_length(stages, 1), 0) as n_stages
+from public.transmissions
+where coalesce(array_length(stages, 1), 0) <> 8
+order by slug;
