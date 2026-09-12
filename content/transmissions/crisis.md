@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [umbral, evolucion, duelo, aceptacion]
+related_post_slugs: [cooperacion, umbral, evolucion, duelo, aceptacion]
 source_basis:
 overlap_status: none
 stages:
