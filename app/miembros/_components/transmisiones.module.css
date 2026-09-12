@@ -14,7 +14,7 @@
    La foto de José vive AQUÍ, como presencia única al fondo (no por post).
    Se coloca lateral a la derecha, fundida hacia abajo y hacia el centro con
    máscaras de gradiente sobre profundidad cósmica. Si el archivo aún no existe
-   (/images/transmisiones-jose.webp) el gradiente cósmico se muestra igual. */
+   (/images/transmisiones-jose.jpg) el gradiente cósmico se muestra igual. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -36,7 +36,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: url("/images/transmisiones-jose.webp");
+  background-image: url("/images/transmisiones-jose.jpg");
   background-repeat: no-repeat;
   background-position: right center;
   background-size: cover;
