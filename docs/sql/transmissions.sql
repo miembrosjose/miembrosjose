@@ -27,9 +27,14 @@ insert into public.transmission_categories (slug, name, sort_order) values
   ('intuicion-capacidades','Intuición y Capacidades Humanas',8),
   ('contacto-familia-cosmica','Contacto y Familia Cósmica',9),
   ('evolucion-futuro','Evolución Humana y Futuro',10),
-  ('memoria-origen','Memoria y Origen',11),
-  ('tierra-servicio-red','Tierra, Servicio y Red 144.000',12)
+  ('tierra-servicio-red','Tierra, Servicio y Red 144.000',11)
 on conflict (slug) do nothing;
+
+-- 'memoria-origen' (Memoria y Origen) fue retirada del plan editorial.
+-- Si ya se cargo en Supabase, ejecutar una vez:
+--   delete from public.transmission_categories where slug = 'memoria-origen';
+update public.transmission_categories set sort_order = 11 where slug = 'tierra-servicio-red';
+delete from public.transmission_categories where slug = 'memoria-origen';
 
 -- ── Transmisiones ────────────────────────────────────────────────────────
 create table if not exists public.transmissions (
