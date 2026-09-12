@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [clarividencia, psicometria, telepatia, intuicion, suenos]
+related_post_slugs: [canalizacion, clarividencia, psicometria, telepatia, intuicion, suenos]
 source_basis:
 overlap_status: none
 stages:
