@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [clariaudiencia, telepatia, intuicion, brillar]
+related_post_slugs: [mediumnidad, clariaudiencia, telepatia, intuicion, brillar]
 source_basis:
 overlap_status: none
 stages:
