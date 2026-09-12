@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [mediumnidad, canalizacion, telepatia, frecuencia]
+related_post_slugs: [avistamiento, mediumnidad, canalizacion, telepatia, frecuencia]
 source_basis:
 overlap_status: none
 stages:
