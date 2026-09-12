@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [civilizacion, cooperacion, tecnologia, evolucion]
+related_post_slugs: [nueva-humanidad, civilizacion, cooperacion, tecnologia, evolucion]
 source_basis:
 overlap_status: none
 stages:
