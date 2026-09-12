@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [cooperacion, evolucion, umbral, tecnologia]
+related_post_slugs: [inteligencia, cooperacion, evolucion, umbral, tecnologia]
 source_basis:
 overlap_status: none
 stages:
