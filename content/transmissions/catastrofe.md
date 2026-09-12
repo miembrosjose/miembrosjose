@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [muerte, karma, crisis, evolucion, miedo]
+related_post_slugs: [profecias, muerte, karma, crisis, evolucion, miedo]
 source_basis:
 overlap_status: none
 stages:
