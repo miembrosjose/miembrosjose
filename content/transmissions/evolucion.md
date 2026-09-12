@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [esencia, futuro, reconocimiento, contacto]
+related_post_slugs: [umbral, esencia, futuro, reconocimiento, contacto]
 source_basis:
 overlap_status: none
 stages:
