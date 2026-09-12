@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [avistamiento, contacto, telepatia, suenos]
+related_post_slugs: [familia-cosmica, avistamiento, contacto, telepatia, suenos]
 source_basis:
 overlap_status: none
 stages:
