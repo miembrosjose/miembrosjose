@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [contacto, clarividencia, frecuencia, brillar]
+related_post_slugs: [encuentro, contacto, clarividencia, frecuencia, brillar]
 source_basis:
 overlap_status: none
 stages:
