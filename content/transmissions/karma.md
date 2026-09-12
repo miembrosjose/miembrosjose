@@ -9,7 +9,7 @@ author_name: José
 featured: false
 featured_order:
 related_season:
-related_post_slugs: [evolucion, perdon, culpa, aceptacion]
+related_post_slugs: [catastrofe, evolucion, perdon, culpa, aceptacion]
 source_basis:
 overlap_status: none
 stages:
