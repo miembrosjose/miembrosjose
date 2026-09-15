@@ -270,13 +270,13 @@ where tabla in ('seasons','episodes','episode_blocks','products',
 -- Columna por columna de profiles. Muestra además el esquema real.
 -- Con la whitelist vacía, TODAS deben salir 'bloqueada'.
 union all
-select '6 · profiles', col.column_name,
-       case when has_column_privilege('authenticated','public.profiles',col.column_name,'UPDATE')
+select '6 · profiles', col.column_name::text,
+       case when has_column_privilege('authenticated','public.profiles',col.column_name::text,'UPDATE')
             then 'EDITABLE por authenticated' else 'bloqueada' end,
-       case when col.column_name in ('is_admin','manual_access','access_role')
-            then case when has_column_privilege('authenticated','public.profiles',col.column_name,'UPDATE')
+       case when col.column_name::text in ('is_admin','manual_access','access_role')
+            then case when has_column_privilege('authenticated','public.profiles',col.column_name::text,'UPDATE')
                       then 'FALLO CRITICO' else 'ok' end
-            when has_column_privilege('authenticated','public.profiles',col.column_name,'UPDATE')
+            when has_column_privilege('authenticated','public.profiles',col.column_name::text,'UPDATE')
             then 'revisar: fuera de la whitelist' else 'ok' end
 from information_schema.columns col
 where col.table_schema = 'public' and col.table_name = 'profiles'
