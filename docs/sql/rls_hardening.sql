@@ -94,7 +94,7 @@ begin
   foreach t in array array[
     'seasons','episodes','episode_blocks',
     'products','product_modules','product_blocks','product_module_blocks',
-    'series_info','site_texts','meditations','community_events','contact_places'
+    'series_info','site_texts','meditations'
   ]
   loop
     if to_regclass('public.'||t) is null then
@@ -120,6 +120,53 @@ begin
     create policy "rls_read_members" on public.feed_posts
       for select to authenticated using (true);
   end if;
+end $$;
+
+-- community_events: NO lleva using (true). La tabla tiene una columna
+-- 'visibility' (public | members | country | city | anonymous | admin) que
+-- existe justamente para filtrar. Un using (true) publicaría los eventos
+-- marcados como 'admin' a todos los miembros.
+do $$
+begin
+  if to_regclass('public.community_events') is null then return; end if;
+
+  drop policy if exists "rls_read_members" on public.community_events;
+  create policy "rls_read_members" on public.community_events
+    for select to authenticated
+    using (
+      public.is_admin()
+      or (visibility <> 'admin' and (expires_at is null or expires_at > now()))
+    );
+
+  drop policy if exists "rls_admin_all" on public.community_events;
+  create policy "rls_admin_all" on public.community_events
+    for all to authenticated
+    using (public.is_admin()) with check (public.is_admin());
+end $$;
+-- Sin policy de insert para authenticated: las altas las hacen los triggers
+-- security definer del fan-out (on_feed_post_inserted, on_user_xp_change,
+-- on_funnel_likes_threshold, on_user_xp_top3_check), que saltan RLS.
+
+-- contact_places: tiene 'status' (published | pending_review | rejected |
+-- hidden) y 'created_by_id'. Sin filtrar, un miembro vería los lugares
+-- rechazados y ocultos de los demás, que es justo lo que modera el admin.
+do $$
+begin
+  if to_regclass('public.contact_places') is null then return; end if;
+
+  drop policy if exists "rls_read_members" on public.contact_places;
+  create policy "rls_read_members" on public.contact_places
+    for select to authenticated
+    using (status = 'published' or created_by_id = auth.uid() or public.is_admin());
+
+  drop policy if exists "rls_insert_own" on public.contact_places;
+  create policy "rls_insert_own" on public.contact_places
+    for insert to authenticated with check (created_by_id = auth.uid());
+
+  drop policy if exists "rls_admin_all" on public.contact_places;
+  create policy "rls_admin_all" on public.contact_places
+    for all to authenticated
+    using (public.is_admin()) with check (public.is_admin());
 end $$;
 
 
@@ -299,6 +346,38 @@ end $$;
 --   end loop;
 -- end $$;
 -- alter default privileges in schema public revoke select on tables from anon;
+
+
+-- ════════════════════════════════════════════════════════════════════════
+-- BLOQUE 7-bis · OPCIONAL — fijar search_path en las funciones security definer
+-- ════════════════════════════════════════════════════════════════════════
+-- La auditoría encontró 29 funciones security definer en public, todas
+-- propiedad de postgres (triggers de XP, contadores de foro, fan-out de
+-- community_events, handle_new_user). Ninguna declara search_path.
+--
+-- Eso es BUENA noticia para esta migración: al saltar RLS por diseño, el
+-- sistema de XP, los contadores y la creación de perfil al registrarse
+-- seguirán funcionando con RLS activo. Por eso el BLOQUE 4 no les da policies
+-- de insert a los usuarios: no las necesitan.
+--
+-- Pero es un aviso aparte del Advisor (function_search_path_mutable): una
+-- función security definer sin search_path fijo puede ser engañada para
+-- ejecutar código con permisos de postgres. Se arregla sin tocar la lógica:
+--
+-- do $$
+-- declare r record;
+-- begin
+--   for r in
+--     select p.oid::regprocedure as f
+--     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--     where n.nspname = 'public' and p.prosecdef
+--       and coalesce(array_to_string(p.proconfig, ''), '') not like '%search_path%'
+--   loop
+--     execute format('alter function %s set search_path = public, pg_temp', r.f);
+--   end loop;
+-- end $$;
+--
+-- Va en una sesión aparte, después de confirmar que el sitio funciona con RLS.
 
 
 -- ════════════════════════════════════════════════════════════════════════

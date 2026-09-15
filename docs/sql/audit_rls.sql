@@ -1,62 +1,46 @@
 -- ============================================================================
--- AUDITORIA DE RLS  ─ SOLO LECTURA. No modifica nada.
--- Pegar entero en el SQL Editor de Supabase y pasar los resultados.
+-- AUDITORIA DE RLS  ─ SOLO LECTURA. Una sola consulta, un solo resultado.
+-- ============================================================================
+-- El SQL Editor de Supabase solo muestra el resultado de la ULTIMA consulta.
+-- Por eso esto es UNA consulta: devuelve todo el panorama de una vez.
+--
+-- Como leer la salida:
+--   rls          → "*** NO ***" marca las tablas que disparan la alerta.
+--   policies     → cuantas policies tiene. RLS si + 0 policies = solo service_role.
+--   anon / auth  → permisos, en orden S=select I=insert U=update D=delete.
+--                  "----" es sin ningun permiso. "SIUD" es acceso total.
+--   filas        → estimacion del planner (no exacta, sirve para priorizar).
 -- ============================================================================
 
--- 1) TABLAS DEL SCHEMA public CON RLS DESACTIVADO  ← las que disparan la alerta
 select
-  c.relname                                   as tabla,
-  c.relrowsecurity                            as rls_activo,
+  c.relname::text                                                    as tabla,
+  case when c.relrowsecurity then 'si' else '*** NO ***' end          as rls,
   (select count(*) from pg_policies p
-     where p.schemaname = 'public' and p.tablename = c.relname) as n_policies,
-  has_table_privilege('anon',          'public.'||quote_ident(c.relname), 'SELECT') as anon_select,
-  has_table_privilege('anon',          'public.'||quote_ident(c.relname), 'INSERT') as anon_insert,
-  has_table_privilege('anon',          'public.'||quote_ident(c.relname), 'UPDATE') as anon_update,
-  has_table_privilege('anon',          'public.'||quote_ident(c.relname), 'DELETE') as anon_delete,
-  has_table_privilege('authenticated', 'public.'||quote_ident(c.relname), 'SELECT') as auth_select,
-  has_table_privilege('authenticated', 'public.'||quote_ident(c.relname), 'INSERT') as auth_insert,
-  has_table_privilege('authenticated', 'public.'||quote_ident(c.relname), 'UPDATE') as auth_update,
-  has_table_privilege('authenticated', 'public.'||quote_ident(c.relname), 'DELETE') as auth_delete,
-  c.reltuples::bigint                         as filas_aprox
+     where p.schemaname = 'public' and p.tablename = c.relname)       as policies,
+  concat(
+    case when has_table_privilege('anon', c.oid, 'SELECT') then 'S' else '-' end,
+    case when has_table_privilege('anon', c.oid, 'INSERT') then 'I' else '-' end,
+    case when has_table_privilege('anon', c.oid, 'UPDATE') then 'U' else '-' end,
+    case when has_table_privilege('anon', c.oid, 'DELETE') then 'D' else '-' end
+  )                                                                   as anon,
+  concat(
+    case when has_table_privilege('authenticated', c.oid, 'SELECT') then 'S' else '-' end,
+    case when has_table_privilege('authenticated', c.oid, 'INSERT') then 'I' else '-' end,
+    case when has_table_privilege('authenticated', c.oid, 'UPDATE') then 'U' else '-' end,
+    case when has_table_privilege('authenticated', c.oid, 'DELETE') then 'D' else '-' end
+  )                                                                   as auth,
+  -- columna que identifica al dueño de la fila, si existe
+  coalesce((
+    select string_agg(a.column_name, ',' order by a.column_name)
+    from information_schema.columns a
+    where a.table_schema = 'public' and a.table_name = c.relname
+      and a.column_name in ('user_id','id','owner_id','author_id','profile_id',
+                            'created_by_id','actor_user_id','follower_id',
+                            'following_id','sender_id','recipient_id')
+  ), '-')                                                             as cols_dueno,
+  c.reltuples::bigint                                                 as filas
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public'
   and c.relkind = 'r'
-  and c.relrowsecurity = false
-order by c.reltuples desc, c.relname;
-
--- 2) INVENTARIO COMPLETO  ─ todas las tablas, con o sin RLS
-select
-  c.relname as tabla,
-  c.relrowsecurity as rls_activo,
-  c.relforcerowsecurity as rls_forzado,
-  (select count(*) from pg_policies p
-     where p.schemaname='public' and p.tablename=c.relname) as n_policies,
-  c.reltuples::bigint as filas_aprox
-from pg_class c
-join pg_namespace n on n.oid = c.relnamespace
-where n.nspname='public' and c.relkind='r'
-order by c.relrowsecurity, c.relname;
-
--- 3) VISTAS EN public  ─ pueden filtrar datos aunque las tablas tengan RLS
-select table_name as vista,
-       (select count(*) from information_schema.role_table_grants g
-          where g.table_schema='public' and g.table_name=v.table_name
-            and g.grantee in ('anon','authenticated')) as grants_expuestos
-from information_schema.views v
-where table_schema='public'
-order by table_name;
-
--- 4) POLICIES ACTUALES  ─ para no duplicar ni pisar nada
-select tablename as tabla, policyname as policy, cmd as operacion, roles,
-       qual as using_expr, with_check as check_expr
-from pg_policies
-where schemaname='public'
-order by tablename, cmd, policyname;
-
--- 5) FUNCIONES SECURITY DEFINER en public ─ saltan RLS por diseño
-select p.proname as funcion, pg_get_userbyid(p.proowner) as owner
-from pg_proc p
-join pg_namespace n on n.oid = p.pronamespace
-where n.nspname='public' and p.prosecdef = true
-order by p.proname;
+order by c.relrowsecurity asc, c.relname;
