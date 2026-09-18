@@ -32,23 +32,32 @@
   border: 1px solid var(--border-subtle);
 }
 
+/* La foto es un RETRATO CENTRADO (José en el eje de la imagen), no una toma
+   lateral. Por eso la caja de la imagen ocupa solo la mitad derecha del hero:
+   así el sujeto, centrado dentro de su caja, cae en el tercio derecho de la
+   cabecera y deja limpia la columna del texto. Con inset:0 quedaba en mitad
+   del hero, tapado por el velo, y solo se veían las nebulosas. */
 .heroBg {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 34%;
   z-index: -1;
   background-image: url("/images/transmisiones-jose.jpg");
   background-repeat: no-repeat;
-  background-position: right center;
+  /* 20% en vertical encuadra la cabeza completa sin recortar la coronilla. */
+  background-position: center 20%;
   background-size: cover;
-  opacity: 0.55;
+  opacity: 0.75;
   /* Funde la imagen hacia la izquierda (donde va el texto) y hacia abajo. */
   -webkit-mask-image:
-    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.15) 42%, #000 100%),
-    linear-gradient(180deg, #000 55%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 30%, #000 65%),
+    linear-gradient(180deg, #000 62%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-image:
-    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.15) 42%, #000 100%),
-    linear-gradient(180deg, #000 55%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 30%, #000 65%),
+    linear-gradient(180deg, #000 62%, transparent 100%);
   mask-composite: intersect;
 }
 
@@ -442,13 +451,19 @@
   /* Mobile: la foto de José pasa a fondo superior, más tenue, con crop
      inteligente y velo reforzado para no dañar la legibilidad. */
   .heroBg {
+    /* En móvil la foto vuelve a ocupar todo el ancho (en escritorio se limita
+       a la mitad derecha para apartar a José de la columna de texto). */
+    left: 0;
     background-position: center top;
-    opacity: 0.32;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+    /* Subida de 0.32 a 0.62: con 0.32 la cara apenas se intuía tras el título. */
+    opacity: 0.62;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.28) 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.28) 62%, transparent 100%);
   }
+  /* Velo más liviano ARRIBA (donde está la cara) y firme en la mitad baja,
+     que es donde caen el párrafo y el buscador y hace falta contraste. */
   .hero::after {
-    background: linear-gradient(180deg, rgba(5,5,16,0.55) 0%, rgba(5,5,16,0.85) 60%, #050510 100%);
+    background: linear-gradient(180deg, rgba(5,5,16,0.30) 0%, rgba(5,5,16,0.72) 48%, rgba(5,5,16,0.92) 72%, #050510 100%);
   }
   /* Chips en fila con scroll horizontal. */
   .chipsRow {
