@@ -143,6 +143,12 @@ export default function EpisodioBloque({
           /* Transparente: se ve el starfield unificado (antes: fondo estelar propio). */
           background: transparent;
           overflow: hidden; padding: 4rem 0;
+          /* Dorado EXACTO de la identidad (app/miembros/_styles/tokens.css).
+             Mismo reparto que EpisodioArchivo: violeta = campos y operadores;
+             dorado = identidad, módulo central, números y revelaciones. */
+          --ep-gold: #d9b866;
+          --ep-gold-soft: #e6cf95;
+          --ep-gold-dim: rgba(217, 184, 102, 0.42);
         }
         /* Starfield propio desactivado — usamos el canvas unificado detrás. */
         .ep-starfield {
@@ -178,14 +184,14 @@ export default function EpisodioBloque({
         :global(.ep-content > .ep-block:last-child) { margin-bottom: 0; }
         :global(.ep-block .corner-tr),
         :global(.ep-block .corner-bl) {
-          position: absolute; width: 14px; height: 14px; border: 1px solid #4A3170;
+          position: absolute; width: 14px; height: 14px; border: 1px solid var(--ep-gold-dim);
         }
         :global(.ep-block .corner-tr) { top:-1px; right:-1px; border-left:none; border-bottom:none; }
         :global(.ep-block .corner-bl) { bottom:-1px; left:-1px; border-right:none; border-top:none; }
         :global(.ep-block .block-eyebrow) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
-          color: #6D4A9B; margin: 0 0 1.1rem;
+          color: var(--ep-gold); margin: 0 0 1.1rem;
         }
         :global(.ep-block .voice) { color: #7c8088; letter-spacing: 0.2em; }
 
@@ -196,24 +202,30 @@ export default function EpisodioBloque({
 
         :global(.ep-block .equation-panel) {
           margin: 1.6rem 0; padding: 1.6rem 1rem; background: #07070a;
-          border-top: 1px solid #4A3170; border-bottom: 1px solid #4A3170; text-align: center;
+          border-top: 1px solid var(--ep-gold-dim); border-bottom: 1px solid var(--ep-gold-dim); text-align: center;
         }
         :global(.ep-block .equation) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-weight: 700; font-size: clamp(1.1rem, 4.2vw, 1.6rem);
-          letter-spacing: 0.04em; color: #6D4A9B;
+          letter-spacing: 0.04em; color: var(--ep-gold-soft);
         }
-        :global(.ep-block .equation .op) { color: #7c8088; margin: 0 0.35em; }
+        :global(.ep-block .equation .op) { color: #8a63b8; margin: 0 0.35em; }
         :global(.ep-block .equation-caption) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.68rem; letter-spacing: 0.2em; color: #7c8088;
           margin-top: 0.8rem; text-transform: uppercase;
         }
         :global(.ep-block .decode) { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid #1b1c2a; }
-        :global(.ep-block .decode-row) { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; margin-bottom: 0.55rem; }
+        /* El desglose es lectura secundaria: filete violeta a la izquierda para
+           que el dorado quede reservado a las cifras y no invada el bloque. */
+        :global(.ep-block .decode-row) {
+          display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem;
+          margin-bottom: 0.55rem; padding-left: 0.8rem;
+          border-left: 2px solid #4A3170;
+        }
         :global(.ep-block .decode-row dt) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
-          font-size: 0.9rem; color: #6D4A9B; white-space: nowrap;
+          font-size: 0.9rem; color: var(--ep-gold-soft); white-space: nowrap;
         }
         :global(.ep-block .decode-row dd) { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #e8e3d5; }
         :global(.ep-block .registro) {
@@ -222,7 +234,7 @@ export default function EpisodioBloque({
         :global(.ep-block .registro-label) {
           font-family: var(--ep-space-mono), 'Courier New', monospace;
           font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
-          color: #6D4A9B; margin: 0 0 0.9rem;
+          color: var(--ep-gold); margin: 0 0 0.9rem;
         }
         :global(.ep-block .registro-text) {
           font-style: italic; color: #cfc9ba;

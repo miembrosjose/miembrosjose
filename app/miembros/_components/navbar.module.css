@@ -75,6 +75,9 @@
   letter-spacing: 0.05em;
   transition: color 0.2s;
   position: relative;
+  /* Las etiquetas de dos palabras («La Red») no deben partirse en dos líneas
+     y descuadrar la altura de la barra. */
+  white-space: nowrap;
   padding: 0.5rem 0;
   display: inline-block;
 }

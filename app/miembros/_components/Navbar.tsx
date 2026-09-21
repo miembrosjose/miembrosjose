@@ -25,8 +25,11 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: "Inicio", view: "inicio", anchor: null },
   { label: "Biblioteca", view: "inicio", anchor: "biblioteca" },
+  // «La Red» sustituye a la antigua pestaña «Miembros»: hace lo mismo y además
+  // explora por territorio. La vista miembros_lista sigue existiendo y es
+  // accesible por /miembros/personas, pero sale del menú para no duplicar.
+  { label: "La Red", view: "red", anchor: null },
   { label: "Comunidad", view: "comunidad", anchor: null },
-  { label: "Miembros", view: "miembros_lista", anchor: null },
   { label: "Transmisiones", view: "feed", anchor: null },
   { label: "Tienda", view: "inicio", anchor: "tienda" },
 ]

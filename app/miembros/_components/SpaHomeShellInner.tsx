@@ -4,6 +4,7 @@
 // 1 ROTA SÓ (/miembros). Troca de tela via state, sem reload.
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { InvitacionUbicacion } from "./InvitacionUbicacion"
 import dynamic from "next/dynamic"
 import { Navbar } from "./Navbar"
 import { Hero } from "./Hero"
@@ -123,6 +124,11 @@ const ViewMessages = dynamic(
   () => import("./ViewMessages").then((m) => m.ViewMessages),
   { ssr: false },
 )
+const ViewRed = dynamic(
+  () => import("./ViewRed").then((m) => m.ViewRed),
+  { ssr: false },
+)
+
 const ViewMiembrosLista = dynamic(
   () => import("./ViewMiembrosLista").then((m) => m.ViewMiembrosLista),
   { ssr: false },
@@ -146,11 +152,20 @@ export function SpaHomeShellInner() {
   // Transmisiones"), saltamos el intro y mostramos esa vista directamente.
   // SpaHomeShell carga esto con ssr:false → window existe en el primer render,
   // así que no hay flash ni mismatch de hidratación.
+  //
+  // Ojo: no basta con mirar el hash. Un enlace compartido a un perfil
+  // (/miembros/u/<id>) o a cualquier vista con ruta propia llega SIN hash, y
+  // hasta aquí eso se tomaba por una entrada normal: el intro se montaba
+  // encima y el usuario sentía que la página «se reiniciaba» y lo devolvía al
+  // inicio. Cualquier ruta más profunda que /miembros es también entrada
+  // directa.
   const deepHashEntry =
     typeof window !== "undefined" &&
     (() => {
       const h = window.location.hash.replace(/^#/, "").toLowerCase()
-      return h !== "" && h !== "inicio"
+      if (h !== "" && h !== "inicio") return true
+      const p = window.location.pathname.replace(/\/+$/, "")
+      return p !== "" && p !== "/miembros"
     })()
   const [introDone, setIntroDone] = useState<boolean>(!!deepHashEntry)
   const [introMounted, setIntroMounted] = useState<boolean>(!deepHashEntry)
@@ -517,6 +532,7 @@ export function SpaHomeShellInner() {
             {view === "producto" && <ViewProducto />}
             {view === "messages" && <ViewMessages />}
             {view === "miembros_lista" && <ViewMiembrosLista />}
+            {view === "red" && <ViewRed />}
           </div>
 
           <SeriesInfoModal
@@ -609,6 +625,9 @@ function ViewInicio({
     <div className={styles.view}>
       {/* Hero é renderizado no shell (persistente, antes do viewWrap) — não
           renderizamos aqui pra não duplicar. Ele ocupa 100vh natural acima. */}
+
+      {/* LA RED — invitación a completar ubicación (solo si aún no la tiene) */}
+      <InvitacionUbicacion />
 
       {/* MIEMBROS ONLINE — widget realtime (Supabase Presence) */}
       <OnlineMembers />

@@ -69,8 +69,16 @@ export async function GET(
   }
 
   // Tamaño total (para calcular rangos y Content-Length sin traer el cuerpo).
-  const meta = await bucket.head(med.objectKey)
-  if (!meta) return new Response("Audio no encontrado", { status: 404 })
+  //
+  // La extensión se busca en los dos casos. Las claves de R2 distinguen
+  // mayúsculas: un archivo exportado como «.MP3» y una fila que dice «.mp3»
+  // son objetos distintos y el audio no aparece, aunque a la vista sea el
+  // mismo nombre. Es un tropiezo demasiado fácil al subir a mano, y el precio
+  // de cubrirlo es una consulta de cabecera más, solo cuando la primera falla.
+  const claveResuelta = await resolverClave(bucket, med.objectKey)
+  if (!claveResuelta) return new Response("Audio no encontrado", { status: 404 })
+  const meta = claveResuelta.meta
+  const objectKey = claveResuelta.key
   const total = meta.size
 
   const baseHeaders = (): Headers => {
@@ -107,7 +115,7 @@ export async function GET(
     }
 
     const length = end - start + 1
-    const object = await bucket.get(med.objectKey, { range: { offset: start, length } })
+    const object = await bucket.get(objectKey, { range: { offset: start, length } })
     if (!object) return new Response("Audio no encontrado", { status: 404 })
 
     const headers = baseHeaders()
@@ -120,7 +128,7 @@ export async function GET(
   }
 
   // Sin Range → objeto completo (streaming del ReadableStream de R2).
-  const object = await bucket.get(med.objectKey)
+  const object = await bucket.get(objectKey)
   if (!object) return new Response("Audio no encontrado", { status: 404 })
   const headers = baseHeaders()
   object.writeHttpMetadata(headers)
@@ -128,4 +136,30 @@ export async function GET(
   headers.set("ETag", object.httpEtag)
   headers.set("Content-Length", String(total))
   return new Response(object.body, { status: 200, headers })
+}
+
+/**
+ * Devuelve la clave que existe de verdad en el bucket: la pedida, o la misma
+ * con la extensión en el otro caso. Null si no hay ninguna.
+ */
+async function resolverClave(
+  bucket: R2BucketLike,
+  clave: string,
+): Promise<{ key: string; meta: R2Object } | null> {
+  const directo = await bucket.head(clave)
+  if (directo) return { key: clave, meta: directo }
+
+  const punto = clave.lastIndexOf(".")
+  if (punto < 0) return null
+  const base = clave.slice(0, punto)
+  const ext = clave.slice(punto)
+  const alterna = ext === ext.toLowerCase() ? ext.toUpperCase() : ext.toLowerCase()
+  if (alterna === ext) return null
+
+  const otra = base + alterna
+  const meta = await bucket.head(otra)
+  if (!meta) return null
+
+  console.warn(`[meditations] "${clave}" no existe; se sirvió "${otra}". Conviene igualar el nombre en R2 o en la base.`)
+  return { key: otra, meta }
 }

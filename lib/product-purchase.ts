@@ -71,4 +71,18 @@ export async function registerProductEntitlement(args: {
     },
     { onConflict: "user_id,product_id", ignoreDuplicates: true },
   )
+
+  // BIBLIOTECARIO CÓSMICO — el producto de las Transmisiones da acceso al
+  // archivo, y con él la insignia. Se compara contra el producto que
+  // getTransmisionsProduct declara, no contra un id escrito a mano aquí.
+  try {
+    const { getTransmisionsProduct } = await import("@/lib/transmissions-access")
+    const tx = await getTransmisionsProduct()
+    if (tx && tx.id === args.productId) {
+      const { concederInsignia } = await import("@/lib/conceder-insignia")
+      await concederInsignia(args.userId, "bibliotecario_cosmico")
+    }
+  } catch (e) {
+    console.error("[product-purchase] bibliotecario_cosmico", e instanceof Error ? e.message : e)
+  }
 }

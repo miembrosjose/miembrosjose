@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Play, Pause, RotateCcw, RotateCw, Lock, Sparkles, AlertCircle, Check } from 'lucide-react';
 import { loadStripe, type Stripe as StripeJs } from '@stripe/stripe-js';
-import type { MeditationClient } from '@/app/miembros/_lib/season1-meditaciones';
+import type { MeditationClient } from '@/app/miembros/_lib/meditaciones';
 import { StripeInlinePayment } from '@/app/miembros/_components/StripeInlinePayment';
 
 // ── Stripe.js (para 3DS del 1-clic) ─────────────────────────────────────────
@@ -45,8 +45,10 @@ const COMPLETE_TOLERANCE = 1.5;
 // ════════════════════════════════════════════════════════════════════════════
 // Reproductor de audio (incluida, o premium ya desbloqueada)
 // ════════════════════════════════════════════════════════════════════════════
-function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
+function AudioPlayer({ id, title, subtitle, image, badge, premium, guia = 'José' }: {
   id: string; title: string; subtitle?: string | null; image?: string; badge: string; premium?: boolean;
+  /** Quién guía la práctica. Las meditaciones las conduce José. */
+  guia?: string;
 }) {
   const streamUrl = `/api/meditations/${encodeURIComponent(id)}/audio`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -56,6 +58,12 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
   const [resumeAt, setResumeAt] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [immersive, setImmersive] = useState(false);
+  // Por qué falló, en palabras. El elemento <audio> del navegador solo avisa
+  // de que hubo un error; nunca dice el código HTTP. Así que cuando falla se
+  // vuelve a preguntar al endpoint para saber si el archivo no está, si falta
+  // la compra o si es otra cosa. Sin esto, «no se pudo cargar» era lo mismo
+  // para un MP3 ausente en R2 que para una meditación no comprada.
+  const [motivo, setMotivo] = useState<string | null>(null);
 
   const startedRef = useRef(false);
   const completedSentRef = useRef(false);
@@ -133,9 +141,29 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
   const onWaiting = () => setStatus((s) => (s === 'completed' ? s : 'buffering'));
   const onPlaying = () => setStatus('playing');
   const onEnded = () => markCompleted();
-  const onError = () => setStatus('error');
+  const onError = () => { setStatus('error'); diagnosticar(); };
+
+  async function diagnosticar() {
+    try {
+      // Un rango mínimo: confirma el acceso sin descargar el audio entero.
+      const r = await fetch(streamUrl, { headers: { Range: 'bytes=0-0' }, credentials: 'include' });
+      if (r.status === 404) {
+        const texto = await r.text().catch(() => '');
+        setMotivo(texto.includes('Audio no encontrado')
+          ? 'El archivo no está en el almacenamiento con el nombre que espera la base de datos.'
+          : 'Esta meditación no existe en el catálogo.');
+      } else if (r.status === 401) setMotivo('Tu sesión caducó. Vuelve a entrar.');
+      else if (r.status === 403) setMotivo('Esta meditación requiere membresía activa o la compra correspondiente.');
+      else if (r.status === 503) setMotivo('El almacenamiento de medios no está disponible ahora mismo.');
+      else if (!r.ok) setMotivo(`El servidor respondió ${r.status}.`);
+      else setMotivo('El archivo existe pero el navegador no pudo reproducirlo. ¿Es un MP3 válido?');
+    } catch {
+      setMotivo(null);
+    }
+  }
 
   const togglePlay = () => {
+    setMotivo(null);
     const a = audioRef.current; if (!a) return;
     if (a.paused) {
       if (!startedRef.current && resumeAt > 0) { try { a.currentTime = resumeAt; } catch { /* ignora */ } }
@@ -156,6 +184,7 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
   };
   const retry = () => {
     const a = audioRef.current; if (!a) return;
+    setMotivo(null);
     setStatus('loading'); a.load(); a.play().catch(() => setStatus('error'));
   };
 
@@ -178,13 +207,14 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium }: {
         </div>
 
         <div className="mp-body">
-          <p className="mp-kicker">Sergel · Práctica guiada</p>
+          <p className="mp-kicker">{guia} · Práctica guiada</p>
           <h3 className="mp-title">{title}</h3>
           {subtitle && !immersive && <p className="mp-sub">{subtitle}</p>}
 
           {status === 'error' ? (
             <div className="mp-error">
-              <AlertCircle size={16} /><span>No se pudo cargar la meditación.</span>
+              <AlertCircle size={16} />
+              <span>{motivo ?? 'No se pudo cargar la meditación.'}</span>
               <button type="button" className="mp-retry" onClick={retry}>Reintentar</button>
             </div>
           ) : (
@@ -304,7 +334,7 @@ function PremiumGate({ meditation }: { meditation: MeditationClient }) {
         </div>
       );
     }
-    return <AudioPlayer premium id={id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación premium · Desbloqueada" />;
+    return <AudioPlayer premium guia={meditation.guia} id={id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación premium · Desbloqueada" />;
   }
 
   const priceLabel = money(priceCents, currency);
@@ -318,7 +348,7 @@ function PremiumGate({ meditation }: { meditation: MeditationClient }) {
         <span className="mp-coverFade" aria-hidden />
       </div>
       <div className="mp-body">
-        <p className="mp-kicker mp-kicker--gold">Sergel · Práctica premium</p>
+        <p className="mp-kicker mp-kicker--gold">{meditation.guia ?? 'José'} · Práctica premium</p>
         <h3 className="mp-title">{meditation.title}</h3>
         {meditation.subtitle && <p className="mp-sub">{meditation.subtitle}</p>}
 
@@ -353,7 +383,7 @@ function PremiumGate({ meditation }: { meditation: MeditationClient }) {
 // ════════════════════════════════════════════════════════════════════════════
 export default function MeditationPlayer({ meditation }: { meditation: MeditationClient }) {
   if (meditation.access === 'premium') return <PremiumGate meditation={meditation} />;
-  return <AudioPlayer id={meditation.id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación · Incluida" />;
+  return <AudioPlayer guia={meditation.guia} id={meditation.id} title={meditation.title} subtitle={meditation.subtitle} image={meditation.image} badge="Meditación · Incluida" />;
 }
 
 // Estilos globales compartidos.

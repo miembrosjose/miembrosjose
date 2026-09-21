@@ -42,13 +42,13 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   // se abre cuando el admin lo PUBLICA (umbral.enabled = "si"). Mientras tanto
   // aparece como "Próximamente / En preparación".
   { key: "umbral.enabled", default: "no", label: 'Umbral del Contacto — Publicar (escribe "si" para activarlo)', group: "Umbral del Contacto" },
-  { key: "umbral.badge", default: "DISPONIBLE", label: "Umbral — Etiqueta de la tarjeta (cuando está activo)", group: "Umbral del Contacto" },
-  { key: "umbral.title", default: "El Umbral del Contacto", label: "Umbral — Título", group: "Umbral del Contacto" },
-  { key: "umbral.tagline", default: "Preparación para el contacto", label: "Umbral — Subtítulo corto", group: "Umbral del Contacto" },
-  { key: "umbral.intro", default: "El siguiente espacio no es una temporada de videos. Es un umbral: un camino de prácticas, meditaciones, bitácora y preparación interior para que el contacto deje de ser una idea y se convierta en una responsabilidad sostenida.", label: "Umbral — Introducción", group: "Umbral del Contacto", multiline: true },
-  { key: "umbral.body", default: "La memoria fue entregada.\nEl territorio debe ser recordado.\nLa Red debe sostenerse.\nEl contacto vendrá cuando la conciencia pueda responder.", label: "Umbral — Cuerpo (usa líneas en blanco para separar párrafos)", group: "Umbral del Contacto", multiline: true },
-  { key: "umbral.cta_label", default: "", label: "Umbral — Texto del botón (opcional)", group: "Umbral del Contacto" },
-  { key: "umbral.cta_url", default: "", label: "Umbral — Enlace del botón (opcional)", group: "Umbral del Contacto" },
+  { key: "umbral.badge", default: "EN DIRECTO", label: "Umbral — Etiqueta de la tarjeta", group: "Umbral del Contacto" },
+  { key: "umbral.title", default: "Umbral del Contacto", label: "Umbral — Título", group: "Umbral del Contacto" },
+  { key: "umbral.tagline", default: "Sesiones en directo · Preparación para el contacto", label: "Umbral — Subtítulo corto", group: "Umbral del Contacto" },
+  { key: "umbral.intro", default: "El contacto no se improvisa. Antes de sostener un encuentro con otra inteligencia hay que poder sostener la propia: una respiración que no se acelera, un cuerpo que no se defiende, una atención que no se dispersa y una intención que no pide nada para sí.", label: "Umbral — Introducción", group: "Umbral del Contacto", multiline: true },
+  { key: "umbral.body", default: "El contacto no llega a quien lo espera.\nLlega a quien está listo para sostenerlo.", label: "Umbral — Frase de cierre (bajo las secciones)", group: "Umbral del Contacto", multiline: true },
+  { key: "umbral.cta_label", default: "Entrar a la comunidad de preparación", label: "Umbral — Texto del botón", group: "Umbral del Contacto" },
+  { key: "umbral.cta_url", default: "", label: "Umbral — Enlace del grupo de WhatsApp", group: "Umbral del Contacto" },
   { key: "umbral.video", default: "", label: "Umbral — Video de fondo (URL, opcional)", group: "Umbral del Contacto" },
 
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },

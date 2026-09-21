@@ -13,6 +13,7 @@ import { BannerVideo } from "./BannerVideo"
 import { OBJETIVOS_5 } from "../_lib/objetivos-data"
 import { getLastRevelation, REVELATION_CHANGED_EVENT, type MissionReport } from "../_lib/mission-analysis"
 import { MissionRevealer } from "./MissionRevealer"
+import { SolicitarFuncion } from "./SolicitarFuncion"
 
 type Props = {
   open: boolean
@@ -22,6 +23,46 @@ type Props = {
 }
 
 export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
+  // Insignias desbloqueadas, desde el servidor: de ahí sale si alguien
+  // completó las cuatro temporadas y puede solicitar una función.
+  const [desbloqueadas, setDesbloqueadas] = useState<string[]>([])
+
+  // El nombre del umbral, configurable en Gestionar temporadas, para que
+  // este botón y la tarjeta del carrusel digan siempre lo mismo.
+  const [umbralTitulo, setUmbralTitulo] = useState("")
+
+  useEffect(() => {
+    if (!open) return
+    let vivo = true
+    fetch("/api/site-texts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!vivo || !d) return
+        const bruto = (d.texts || d.overrides || d) as
+          | Record<string, string>
+          | Array<{ key: string; value: string }>
+        const leer = (k: string): string =>
+          Array.isArray(bruto)
+            ? bruto.find((x) => x.key === k)?.value ?? ""
+            : (bruto as Record<string, string>)[k] ?? ""
+        setUmbralTitulo(leer("umbral.title").trim())
+      })
+      .catch(() => { /* sin esto, el botón abre el portal como siempre */ })
+    return () => { vivo = false }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    let vivo = true
+    fetch("/api/profile/unlocked-achievements", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!vivo || !d) return
+        setDesbloqueadas((d.unlocked || []).map((x: { achievement_id: string }) => x.achievement_id))
+      })
+      .catch(() => { /* sin esto, la sección simplemente no aparece */ })
+    return () => { vivo = false }
+  }, [open])
   const rootRef = useRef<HTMLDivElement>(null)
   const revealerRef = useRef<HTMLDivElement>(null)
   const [bannerVideo, setBannerVideo] = useState<string>("")
@@ -136,6 +177,10 @@ export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
             })}
           </div>
 
+          {/* Sostener la Red — solo para quien completó las cuatro
+              temporadas. El componente decide por sí mismo si aparece. */}
+          <SolicitarFuncion desbloqueadas={desbloqueadas} />
+
           {/* Bloque destacado: todos participan */}
           <div className={styles.declaration} style={{ marginTop: "1.8rem" }}>
             <p className={styles.declBig}>Todos los miembros participan de los cinco objetivos.</p>
@@ -169,11 +214,19 @@ export function Season5Portal({ open, onClose, onOpenUmbral }: Props) {
         <section className={styles.reveal}>
           <div className={styles.umbral}>
             <p className={styles.kicker} style={{ display: "inline-block" }}>El siguiente umbral</p>
-            <h2 className={styles.sectionTitle}>EL UMBRAL DEL CONTACTO</h2>
+            <h2 className={styles.sectionTitle}>{(umbralTitulo || "El Protocolo de Contacto").toUpperCase()}</h2>
             <p>El contacto no comienza mirando al cielo. Comienza cuando la intención se ordena, la mente se aquieta, el corazón se limpia y el servicio se vuelve más importante que la experiencia.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", justifyContent: "center", marginTop: "1.6rem" }}>
-              <button type="button" className={styles.cta} style={{ margin: 0, borderColor: "var(--s5-gold)" }} onClick={() => { onClose(); onOpenUmbral?.() }}>
-                Entrar al Umbral del Contacto <ArrowRight size={15} />
+              {/* Lleva al portal del Umbral, no al grupo. El enlace de la
+                  comunidad vive dentro de ese portal, al final de la
+                  explicación: nadie debería unirse antes de leer qué es. */}
+              <button
+                type="button"
+                className={styles.cta}
+                style={{ margin: 0, borderColor: "var(--s5-gold)" }}
+                onClick={() => { onClose(); onOpenUmbral?.() }}
+              >
+                Entrar al {umbralTitulo || "Umbral del Contacto"} <ArrowRight size={15} />
               </button>
             </div>
           </div>

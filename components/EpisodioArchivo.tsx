@@ -196,7 +196,15 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
       </div>
 
       <style jsx>{`
-        .ea-stage { position: relative; background: transparent; overflow: hidden; padding: 4rem 0; }
+        .ea-stage {
+          position: relative; background: transparent; overflow: hidden; padding: 4rem 0;
+          /* Dorado EXACTO de la identidad (app/miembros/_styles/tokens.css).
+             Reparto: violeta = registros y campos; dorado = conocimiento
+             central, números, conexiones fundamentales y revelaciones. */
+          --ea-gold: #d9b866;
+          --ea-gold-soft: #e6cf95;
+          --ea-gold-dim: rgba(217, 184, 102, 0.42);
+        }
         .ea-content { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 1.5rem; }
 
         :global(.ea-reveal) { opacity: 0; transform: translateY(16px); transition: opacity 0.9s ease, transform 0.9s ease; }
@@ -209,7 +217,7 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
           font-family: var(--ea-eb-garamond), Georgia, serif; color: #e8e3d5;
         }
         :global(.ea-block .corner-tr), :global(.ea-block .corner-bl) {
-          position: absolute; width: 14px; height: 14px; border: 1px solid #4A3170;
+          position: absolute; width: 14px; height: 14px; border: 1px solid var(--ea-gold-dim);
         }
         :global(.ea-block .corner-tr) { top:-1px; right:-1px; border-left:none; border-bottom:none; }
         :global(.ea-block .corner-bl) { bottom:-1px; left:-1px; border-right:none; border-top:none; }
@@ -217,7 +225,7 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         :global(.ea-block .block-eyebrow) {
           font-family: var(--ea-space-mono), 'Courier New', monospace;
           font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
-          color: #6D4A9B; margin: 0 0 1.2rem;
+          color: var(--ea-gold); margin: 0 0 1.2rem;
         }
         :global(.ea-block .voice) { color: #7c8088; letter-spacing: 0.2em; }
 
@@ -230,17 +238,17 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         /* ── Arquitectura central (nodos + flechas/operadores) ─────────── */
         :global(.ea-block .ea-archPanel) {
           margin: 0 0 1.8rem; padding: 1.7rem 1rem; background: #07070a;
-          border-top: 1px solid #4A3170; border-bottom: 1px solid #4A3170; text-align: center;
+          border-top: 1px solid var(--ea-gold-dim); border-bottom: 1px solid var(--ea-gold-dim); text-align: center;
         }
         :global(.ea-block .ea-archStack) { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
         :global(.ea-block .ea-archNode) {
           font-family: var(--ea-space-mono), 'Courier New', monospace; font-weight: 700;
-          font-size: clamp(0.95rem, 3.2vw, 1.28rem); letter-spacing: 0.06em; color: #8a63b8;
+          font-size: clamp(0.95rem, 3.2vw, 1.28rem); letter-spacing: 0.06em; color: var(--ea-gold-soft);
           line-height: 1.35;
         }
         :global(.ea-block .ea-archSep) {
           font-family: var(--ea-space-mono), 'Courier New', monospace;
-          font-size: 1rem; color: #7c8088; line-height: 1;
+          font-size: 1rem; color: var(--ea-gold-dim); line-height: 1;
         }
         :global(.ea-block .ea-archCaption) {
           font-family: var(--ea-space-mono), 'Courier New', monospace;
@@ -251,7 +259,7 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         /* ── Tarjetas-nodo conectadas ──────────────────────────────────── */
         :global(.ea-block .ea-nodes) { margin: 0 0 1.8rem; }
         :global(.ea-block .ea-nodeLink) {
-          display: block; width: 1px; height: 16px; margin: 0 auto; background: #4A3170; opacity: 0.7;
+          display: block; width: 1px; height: 16px; margin: 0 auto; background: var(--ea-gold-dim);
         }
         :global(.ea-block .ea-nodeCard) {
           background: #0b0b13; border: 1px solid #1b1c2a; border-left: 2px solid #4A3170;
@@ -306,15 +314,15 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         }
         :global(.ea-block .ea-boxTitle) {
           font-family: var(--ea-space-mono), 'Courier New', monospace;
-          font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: #6D4A9B;
+          font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ea-gold);
           text-align: center; margin: 0 0 0.9rem;
         }
         :global(.ea-block .ea-boxFormula) {
           font-family: var(--ea-space-mono), 'Courier New', monospace; font-weight: 700;
-          font-size: clamp(0.95rem, 3vw, 1.2rem); letter-spacing: 0.05em; color: #8a63b8;
+          font-size: clamp(0.95rem, 3vw, 1.2rem); letter-spacing: 0.05em; color: var(--ea-gold-soft);
           text-align: center; margin: 0 0 0.9rem;
         }
-        :global(.ea-block .ea-boxFormula .op) { color: #7c8088; margin: 0 0.3em; }
+        :global(.ea-block .ea-boxFormula .op) { color: #8a63b8; margin: 0 0.3em; }
         :global(.ea-block .ea-boxText) { font-size: 1rem; line-height: 1.65; color: #d8d3c6; margin: 0; }
         :global(.ea-block .ea-boxLines) { display: flex; flex-direction: column; gap: 0.4rem; text-align: center; }
         :global(.ea-block .ea-boxLines span) { font-size: 0.98rem; line-height: 1.5; color: #cfc9ba; }
@@ -352,12 +360,12 @@ export default function EpisodioArchivo({ content }: { content: ArchivoContent }
         :global(.ea-block .ea-registro) { margin-top: 0.2rem; padding-top: 1.4rem; border-top: 1px solid #1b1c2a; }
         :global(.ea-block .registro-label) {
           font-family: var(--ea-space-mono), 'Courier New', monospace;
-          font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase; color: #6D4A9B; margin: 0 0 0.9rem;
+          font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ea-gold); margin: 0 0 0.9rem;
         }
         :global(.ea-block .registro-text) { font-style: italic; color: #cfc9ba; font-size: 1.05rem; line-height: 1.7; margin: 0; }
 
         :global(.ea-block .ea-cierre) { margin-top: 1.8rem; text-align: center; }
-        :global(.ea-block .ea-cierre-mark) { display: block; width: 34px; height: 1px; margin: 0 auto 1.1rem; background: #4A3170; }
+        :global(.ea-block .ea-cierre-mark) { display: block; width: 34px; height: 1px; margin: 0 auto 1.1rem; background: var(--ea-gold-dim); }
         :global(.ea-block .ea-cierre-text) { font-style: italic; font-size: 1.08rem; color: #cbb9e6; margin: 0; }
 
         @media (max-width: 560px) {

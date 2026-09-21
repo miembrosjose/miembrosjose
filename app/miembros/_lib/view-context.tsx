@@ -7,7 +7,7 @@
 //   /miembros/u/<id>           → view=user, params.userId
 //   /miembros/producto/<slug>  → view=producto, params.slug
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 
 export type ViewKey =
   | "inicio"
@@ -19,6 +19,7 @@ export type ViewKey =
   | "producto"
   | "messages"
   | "miembros_lista"
+  | "red"
 
 const VALID_VIEWS: ViewKey[] = [
   "inicio",
@@ -28,6 +29,7 @@ const VALID_VIEWS: ViewKey[] = [
   "admin",
   "messages",
   "miembros_lista",
+  "red",
 ]
 
 export type Anchor = "cursos" | "biblioteca" | "tienda" | "servicios" | null
@@ -44,6 +46,10 @@ type ViewContextValue = {
   anchor: Anchor
   params: ViewParams
   setView: (v: ViewKey, anchor?: Anchor, params?: ViewParams) => void
+  /** Vuelve a la vista anterior. Si no hay ninguna, va a inicio. */
+  volver: () => void
+  /** false cuando se llegó por enlace directo: no hay a dónde volver. */
+  puedeVolver: boolean
 }
 
 const ViewContext = createContext<ViewContextValue>({
@@ -51,6 +57,8 @@ const ViewContext = createContext<ViewContextValue>({
   anchor: null,
   params: {},
   setView: () => {},
+  volver: () => {},
+  puedeVolver: false,
 })
 
 type ParseResult = { view: ViewKey; anchor: Anchor; params: ViewParams }
@@ -71,6 +79,7 @@ function parsePath(pathname: string, hash: string): ParseResult {
   if (path === "/miembros/admin") return { view: "admin", anchor: null, params: {} }
   if (path === "/miembros/mensajes") return { view: "messages", anchor: null, params: {} }
   if (path === "/miembros/personas") return { view: "miembros_lista", anchor: null, params: {} }
+  if (path === "/miembros/red") return { view: "red", anchor: null, params: {} }
 
   const mensajesMatch = path.match(/^\/miembros\/mensajes\/([^/]+)$/)
   if (mensajesMatch)
@@ -114,6 +123,12 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
   const [anchor, setAnchor] = useState<Anchor>(null)
   const [params, setParams] = useState<ViewParams>({})
 
+  // Cuántas vistas hemos apilado DENTRO de la SPA. Sirve para saber si hay a
+  // dónde volver: si alguien llega por un enlace directo a un perfil, la
+  // pila está vacía y un history.back() lo sacaría del sitio.
+  const profundidad = useRef(0)
+  const [puedeVolver, setPuedeVolver] = useState(false)
+
   // Sync inicial + popstate (back/forward do browser)
   useEffect(() => {
     function syncFromUrl() {
@@ -133,10 +148,15 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
       })
     }
     syncFromUrl()
-    window.addEventListener("popstate", syncFromUrl)
+    function alRetroceder() {
+      profundidad.current = Math.max(0, profundidad.current - 1)
+      setPuedeVolver(profundidad.current > 0)
+      syncFromUrl()
+    }
+    window.addEventListener("popstate", alRetroceder)
     window.addEventListener("hashchange", syncFromUrl)
     return () => {
-      window.removeEventListener("popstate", syncFromUrl)
+      window.removeEventListener("popstate", alRetroceder)
       window.removeEventListener("hashchange", syncFromUrl)
     }
   }, [])
@@ -147,6 +167,8 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
       const currentPath = window.location.pathname + window.location.hash
       if (currentPath !== newPath) {
         window.history.pushState({ view: v, anchor: a, params: p }, "", newPath)
+        profundidad.current += 1
+        setPuedeVolver(true)
       }
       setViewState(v)
       setAnchor(a)
@@ -165,8 +187,16 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
+  // Volver = el botón «atrás» del navegador, que es lo que la gente espera.
+  // Así se respeta toda la pila —mapa → perfil → otro perfil— sin llevar un
+  // historial propio en paralelo que acabaría desincronizado.
+  const volver = useCallback(() => {
+    if (profundidad.current > 0) window.history.back()
+    else setView("inicio")
+  }, [setView])
+
   return (
-    <ViewContext.Provider value={{ view, anchor, params, setView }}>
+    <ViewContext.Provider value={{ view, anchor, params, setView, volver, puedeVolver }}>
       {children}
     </ViewContext.Provider>
   )

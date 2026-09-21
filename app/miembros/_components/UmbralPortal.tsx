@@ -6,14 +6,14 @@
 // Solo se abre cuando el admin lo publica (umbral.enabled = "si"); el gate de
 // Temporada 4 se resuelve en el carrusel (aquí ya llega abierto).
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowRight, MessageSquare } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { X, ArrowRight } from "lucide-react"
 import styles from "./season5.module.css"
+import u from "./umbral-secciones.module.css"
 import { CosmicField } from "./CosmicField"
-import { BannerVideo } from "./BannerVideo"
 import { openExternal } from "../_lib/url-helpers"
-import { FORUM_TITLES } from "../_lib/portals-data"
 import { getSiteTextDefault } from "@/lib/site-texts"
+import { ENCUENTROS, FORMACIONES } from "../_lib/umbral-programa"
 
 type Props = {
   open: boolean
@@ -46,6 +46,9 @@ function readDefaults(): UmbralConfig {
 export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [cfg, setCfg] = useState<UmbralConfig>(readDefaults)
+  // Encuentro desplegado en el programa. Solo uno a la vez: con dieciséis,
+  // abrirlos todos devolvería el muro de texto que queríamos evitar.
+  const [abierto, setAbierto] = useState<number | null>(1)
 
   // Carga la configuración editada por el admin (site_texts) al abrir.
   useEffect(() => {
@@ -108,11 +111,6 @@ export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
     return () => { io.disconnect(); clearTimeout(t) }
   }, [open])
 
-  const goForo = useCallback(() => {
-    onClose()
-    onGoToForo?.(FORUM_TITLES.objetivos)
-  }, [onClose, onGoToForo])
-
   if (!open) return null
 
   // Párrafos del cuerpo: bloques separados por línea en blanco; dentro de un
@@ -131,32 +129,98 @@ export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
       </button>
 
       <div className={styles.inner}>
-        {/* HERO */}
-        <header className={styles.hero}>
-          {cfg.video && (
-            <div className={styles.bannerLayer} aria-hidden>
-              <BannerVideo src={cfg.video} className={styles.bannerMedia} />
-              <span className={styles.bannerVeil} />
-            </div>
-          )}
-          <div className={styles.heroInner}>
-            <p className={styles.kicker}>El siguiente umbral · Los 144.000</p>
-            <h1 className={styles.heroTitle}>{cfg.title}</h1>
-            {cfg.tagline && <p className={styles.heroSub}>{cfg.tagline}</p>}
-            {cfg.intro && (
-              <div className={styles.heroLead}>
-                <span className={styles.heroLeadHi}>Has recorrido el camino. Este es el umbral.</span>
-                {cfg.intro}
-              </div>
-            )}
-          </div>
+        {/* HERO — sin banner de video: la portada distraía de lo que aquí
+            hay que entender, que es cómo funciona la formación. */}
+        <header className={u.hero}>
+          <p className={u.heroKicker}>El siguiente umbral · Los 144.000</p>
+          <h1 className={u.heroTitulo}>{cfg.title}</h1>
+          <p className={u.heroSub}>{cfg.tagline}</p>
+          <p className={u.heroLinea}>
+            Grupos de contacto en vivo. Dieciséis encuentros, uno por semana,
+            durante cuatro meses.
+          </p>
         </header>
 
-        {/* CUERPO */}
-        {blocks.length > 0 && (
-          <section className={`${styles.section} ${styles.reveal}`}>
-            <div className={styles.umbral}>
-              <blockquote className={styles.finalQuote}>
+        {/* CÓMO SE ENTRA — el modelo de tandas, que es lo que más se
+            malinterpreta: no se repite el ciclo, se entra en el siguiente. */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <div className={u.encabezado}>
+            <span className={u.numeroSeccion}>01 · Cómo se entra</span>
+            <h2 className={u.tituloSeccion}>Se entra por tandas</h2>
+            <p className={u.bajada}>
+              Al terminar las cuatro temporadas no se empieza de inmediato: se espera
+              a que abra la siguiente formación. Cada grupo recorre el ciclo una vez,
+              de principio a fin, con las mismas personas.
+            </p>
+            <p className={u.donde}>
+              <span className={u.dondeEtiqueta}>En vivo por Zoom</span>
+              El día, el horario y la duración de cada encuentro se anuncian dentro
+              del grupo correspondiente.
+            </p>
+          </div>
+
+          <div className={u.tandas}>
+            {FORMACIONES.map((f) => (
+              <div key={f.cuando} className={`${u.tanda} ${f.primera ? u.tandaPrimera : ""}`}>
+                <span className={u.tandaPunto} aria-hidden />
+                <span className={u.tandaNota}>{f.nota}</span>
+                <span className={u.tandaCuando}>{f.cuando}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className={u.apunte}>
+            Cada cuatro meses empieza la formación de un nuevo grupo de contacto.
+          </p>
+        </section>
+
+        {/* El botón aparece dos veces: aquí, para quien ya lo tiene claro y
+            no necesita leerse el programa entero, y de nuevo al final. */}
+        <div className={u.unirseArriba}>
+          <Unirse cfg={cfg} margen="0" />
+        </div>
+
+        {/* EL PROGRAMA — dieciséis encuentros, en acordeón */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <div className={u.encabezado}>
+            <span className={u.numeroSeccion}>02 · El programa</span>
+            <h2 className={u.tituloSeccion}>Dieciséis encuentros</h2>
+            <p className={u.bajada}>
+              Uno por semana. Cada uno se apoya en el anterior: el orden no es una
+              sugerencia, es la estructura misma del entrenamiento.
+            </p>
+          </div>
+
+          <ol className={u.programa}>
+            {ENCUENTROS.map((e) => {
+              const esta = abierto === e.n
+              return (
+                <li key={e.n} className={`${u.encuentro} ${esta ? u.encuentroOn : ""}`}>
+                  <button
+                    type="button"
+                    className={u.encuentroBoton}
+                    aria-expanded={esta}
+                    onClick={() => setAbierto(esta ? null : e.n)}
+                  >
+                    <span className={u.encuentroNum}>{String(e.n).padStart(2, "0")}</span>
+                    <span className={u.encuentroTitulo}>{e.titulo}</span>
+                    <span className={u.encuentroSigno} aria-hidden>{esta ? "−" : "+"}</span>
+                  </button>
+                  {esta && <p className={u.encuentroTexto}>{e.texto}</p>}
+                </li>
+              )
+            })}
+          </ol>
+
+          <p className={u.apunte}>Dieciséis semanas · unos cuatro meses</p>
+        </section>
+
+        {/* CIERRE */}
+        <section className={`${styles.section} ${styles.reveal}`}>
+          <div className={u.cierre}>
+            {cfg.intro && <p className={u.cierreTexto}>{cfg.intro}</p>}
+            {blocks.length > 0 && (
+              <blockquote className={u.cierreFrase}>
                 {blocks.map((b, i) => (
                   <span key={i}>
                     {b.split("\n").map((line, j) => (
@@ -165,31 +229,26 @@ export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
                   </span>
                 ))}
               </blockquote>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", justifyContent: "center", marginTop: "2rem" }}>
-                {cfg.ctaLabel && cfg.ctaUrl && (
-                  <button
-                    type="button"
-                    className={styles.cta}
-                    style={{ margin: 0, borderColor: "var(--s5-gold)" }}
-                    onClick={() => openExternal(cfg.ctaUrl)}
-                  >
-                    {cfg.ctaLabel} <ArrowRight size={15} />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={styles.cta}
-                  style={{ margin: 0, borderColor: "rgba(167,139,202,0.5)", background: "linear-gradient(135deg, rgba(167,139,202,0.16), rgba(109,74,155,0.14))" }}
-                  onClick={goForo}
-                >
-                  <MessageSquare size={15} /> Compartir en el foro
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
+            )}
+            <Unirse cfg={cfg} margen="1.8rem 0 0" />
+          </div>
+        </section>
       </div>
     </div>
+  )
+}
+
+/** El botón que lleva a la comunidad. Solo aparece si hay enlace configurado. */
+function Unirse({ cfg, margen }: { cfg: UmbralConfig; margen: string }) {
+  if (!cfg.ctaLabel || !cfg.ctaUrl) return null
+  return (
+    <button
+      type="button"
+      className={styles.cta}
+      style={{ margin: margen, borderColor: "var(--s5-gold)" }}
+      onClick={() => openExternal(cfg.ctaUrl)}
+    >
+      {cfg.ctaLabel} <ArrowRight size={15} />
+    </button>
   )
 }

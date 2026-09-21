@@ -1,0 +1,327 @@
+/* EL UMBRAL DEL CONTACTO — secciones del portal.
+   Complementa season5.module.css, que aporta el marco y el fondo cósmico. */
+
+/* ── Hero, sin banner ────────────────────────────────────────────────────── */
+/* Sin video de portada: lo que aquí hay que entender es cómo funciona la
+   formación, y una imagen a pantalla completa competía con eso. */
+.hero {
+  padding: clamp(4rem, 12vh, 8rem) 1.5rem clamp(2.5rem, 6vh, 4rem);
+  text-align: center;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(360px, 60%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 184, 102, 0.5), transparent);
+}
+
+.heroKicker {
+  margin: 0 0 1.1rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(217, 184, 102, 0.8);
+}
+
+.heroTitulo {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(2.1rem, 7vw, 4rem);
+  line-height: 1.05;
+  color: #f3f6fa;
+}
+
+.heroSub {
+  margin: 0 0 1.8rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.heroLinea {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  line-height: 1.7;
+  color: #e6cf95;
+}
+
+/* ── Cabecera de sección ─────────────────────────────────────────────────── */
+.encabezado {
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+
+.numeroSeccion {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(217, 184, 102, 0.8);
+  margin-bottom: 0.7rem;
+}
+
+.tituloSeccion {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.4rem, 3.5vw, 2.1rem);
+  color: #f3f6fa;
+}
+
+.bajada {
+  margin: 0 auto;
+  max-width: 44rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #a8adc8;
+}
+
+/* ── Tandas ──────────────────────────────────────────────────────────────── */
+.tandas {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  padding-top: 2.2rem;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.tandas::before {
+  content: "";
+  position: absolute;
+  top: 2.2rem;
+  left: 16%;
+  right: 16%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(217, 184, 102, 0.6), rgba(217, 184, 102, 0.14));
+}
+
+.tanda {
+  position: relative;
+  text-align: center;
+  padding-top: 1.5rem;
+}
+
+.tandaPunto {
+  position: absolute;
+  top: -0.32rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #0a0a18;
+  border: 1px solid rgba(217, 184, 102, 0.55);
+}
+
+.tandaPrimera .tandaPunto {
+  background: #e6cf95;
+  border-color: #e6cf95;
+  box-shadow: 0 0 0 5px rgba(217, 184, 102, 0.16), 0 0 18px rgba(217, 184, 102, 0.65);
+}
+
+.tandaNota {
+  display: block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(217, 184, 102, 0.7);
+  margin-bottom: 0.35rem;
+}
+
+.tandaCuando {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  color: #9ea3c4;
+}
+
+.tandaPrimera .tandaCuando { color: #f3f6fa; }
+
+/* ── Dónde ocurre ───────────────────────────────────────────────────────── */
+.donde {
+  margin: 1.6rem auto 0;
+  max-width: 40rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(217, 184, 102, 0.28);
+  border-radius: 10px;
+  background: rgba(217, 184, 102, 0.05);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #a8adc8;
+}
+
+.dondeEtiqueta {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #e6cf95;
+}
+
+/* El botón, repetido antes del programa. */
+.unirseArriba {
+  display: flex;
+  justify-content: center;
+  padding: 0 1.5rem;
+}
+
+.apunte {
+  margin: 1.8rem 0 0;
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  color: #8b90b4;
+}
+
+/* ── El programa ─────────────────────────────────────────────────────────── */
+.programa {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 52rem;
+  border-top: 1px solid rgba(243, 246, 250, 0.07);
+}
+
+.encuentro {
+  border-bottom: 1px solid rgba(243, 246, 250, 0.07);
+  transition: background 240ms ease;
+}
+
+.encuentro:hover { background: rgba(217, 184, 102, 0.04); }
+
+.encuentroOn { background: rgba(217, 184, 102, 0.06); }
+
+.encuentroBoton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.05rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.encuentroNum {
+  flex: 0 0 auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: rgba(217, 184, 102, 0.65);
+}
+
+.encuentroOn .encuentroNum { color: #e6cf95; }
+
+.encuentroTitulo {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.98rem;
+  color: #c6cbe6;
+  transition: color 200ms ease;
+}
+
+.encuentroBoton:hover .encuentroTitulo,
+.encuentroOn .encuentroTitulo { color: #f3f6fa; }
+
+.encuentroSigno {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(217, 184, 102, 0.35);
+  border-radius: 50%;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  color: #e6cf95;
+  transition: border-color 200ms ease, transform 240ms cubic-bezier(.22,1,.36,1);
+}
+
+.encuentroOn .encuentroSigno {
+  border-color: #e6cf95;
+  transform: rotate(180deg);
+}
+
+.encuentroTexto {
+  margin: 0;
+  padding: 0 1rem 1.25rem 3.1rem;
+  font-size: 0.89rem;
+  line-height: 1.75;
+  color: #9297b8;
+  animation: abrirEncuentro 320ms cubic-bezier(.22,1,.36,1);
+}
+
+@keyframes abrirEncuentro {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Cierre ──────────────────────────────────────────────────────────────── */
+.cierre {
+  max-width: 44rem;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2.4rem 1.5rem 1rem;
+  border-top: 1px solid rgba(217, 184, 102, 0.22);
+}
+
+.cierreTexto {
+  margin: 0 0 1.6rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #a8adc8;
+}
+
+.cierreFrase {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  line-height: 1.55;
+  color: #e6cf95;
+}
+
+.cierreFrase span { display: block; }
+
+/* ── Móvil ───────────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .tandas {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-top: 0;
+  }
+  .tandas::before { display: none; }
+  .tanda {
+    padding-top: 0;
+    padding-left: 1.5rem;
+    text-align: left;
+  }
+  .tandaPunto { top: 0.35rem; left: 0; transform: none; }
+
+  .encuentroBoton { gap: 0.7rem; padding: 0.95rem 0.6rem; }
+  .encuentroTexto { padding: 0 0.6rem 1.15rem 2.5rem; }
+  .ejemplo { gap: 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .encuentroTexto { animation: none; }
+  .encuentroSigno { transition: none; }
+}

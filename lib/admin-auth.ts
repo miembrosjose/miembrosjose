@@ -29,9 +29,21 @@ export async function requireAdmin(): Promise<
     .from("profiles")
     .select("is_admin, email")
     .eq("id", user.id)
-    .single()
+    .maybeSingle()
 
-  if (!profile?.is_admin) {
+  // La plataforma tiene DOS marcas de administrador y hasta ahora cada ruta
+  // miraba solo una: este helper miraba profiles.is_admin, mientras que el
+  // panel y rutas como grant-topo miran app_metadata.is_admin. Con una sola de
+  // las dos puesta, el administrador veía la pestaña pero recibía 403 al
+  // pulsar cualquier botón.
+  //
+  // Se aceptan ambas porque ambas son de confianza: app_metadata solo lo
+  // escribe service_role, y profiles.is_admin quedó protegido al revocar
+  // UPDATE sobre profiles a `authenticated`. Ninguna es editable por su dueño.
+  const porPerfil = profile?.is_admin === true
+  const porMetadata = (user.app_metadata as { is_admin?: boolean } | null)?.is_admin === true
+
+  if (!porPerfil && !porMetadata) {
     return {
       ok: false,
       response: NextResponse.json({ error: "Acesso negado" }, { status: 403 }),
@@ -40,6 +52,6 @@ export async function requireAdmin(): Promise<
 
   return {
     ok: true,
-    user: { id: user.id, email: profile.email, is_admin: true },
+    user: { id: user.id, email: profile?.email ?? user.email ?? "", is_admin: true },
   }
 }

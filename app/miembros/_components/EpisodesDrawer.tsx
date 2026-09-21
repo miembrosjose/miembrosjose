@@ -23,10 +23,13 @@ import { useAuth } from "../_lib/auth-context"
 import { EpisodeBlocksView } from "./EpisodeBlocksView"
 import EpisodioBloque from "@/components/EpisodioBloque"
 import EpisodioArchivo from "@/components/EpisodioArchivo"
+import MapaDelViaje from "@/components/archivo/MapaDelViaje"
 import MeditationPlayer from "@/components/MeditationPlayer"
 import { getSeason1Archivo } from "../_lib/season1-archivos"
-import { getSeason1Meditaciones } from "../_lib/season1-meditaciones"
-import JerarquiaGalactica from "@/components/JerarquiaGalactica"
+import { getMeditaciones } from "../_lib/meditaciones"
+import { getSeason2Archivo } from "../_lib/season2-archivos"
+import { getSeason3Archivo } from "../_lib/season3-archivos"
+import { getSeason4Archivo } from "../_lib/season4-archivos"
 import AvisoIniciatico from "@/components/AvisoIniciatico"
 import { ALL_PREMIUM_PRODUCTS, KEY_TO_PRODUCT_NAME, type PremiumProduct } from "../_lib/products"
 import { EpisodeComments } from "./EpisodeComments"
@@ -464,24 +467,35 @@ export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onOpenInteg
                   <EpisodioBloque part="sergel" />
                 )}
 
-                {/* Bloque "La Jerarquía Galáctica" (Temporada 2) — anclado por
-                    TÍTULO para no romperse si se renumera el episodio. */}
-                {playingEp.title === "La jerarquía galáctica" && (
-                  <JerarquiaGalactica />
-                )}
+                {/* Archivos de Alina — Temporada 2, episodios 1 a 6. Cada uno
+                    tiene su módulo visual propio (SVG + estado) sobre la misma
+                    envoltura que la T1. Selección por nº + palabras clave. */}
+                {season.num === 2 && getSeason2Archivo(playingEp.num, playingEp.title)}
+
+                {/* Archivos de Antarel — Temporada 3, episodios 1 a 9.
+                    Cartografía de la memoria: historia oculta de la Tierra. */}
+                {season.num === 3 && getSeason3Archivo(playingEp.num, playingEp.title)}
+
+                {/* Archivos de Ivika — Temporada 4, episodios 1 a 7.
+                    Memoria solar: de los nodos planetarios al mensaje primordial. */}
+                {season.num === 4 && getSeason4Archivo(playingEp.num, playingEp.title)}
 
                 {/* Archivos de Sergel — Temporada 1, episodios 3 a 7. Mismo
                     lenguaje visual que el Cap. 2 (EpisodioBloque). Selección por
                     nº de episodio + palabras clave del título. Ep. 1 y 2 intactos. */}
                 {season.num === 1 && (() => {
+                  // Ep. 1 tiene su propio módulo: el mapa de navegación de la
+                  // plataforma. Los ep. 3–7 usan el archivo de datos de Sergel.
+                  if (playingEp.num === 1) return <MapaDelViaje />
                   const archivo = getSeason1Archivo(playingEp.num, playingEp.title)
                   return archivo ? <EpisodioArchivo content={archivo} /> : null
                 })()}
 
                 {/* Meditaciones complementarias (debajo del archivo). Incluidas
-                    (con membresía) y/o premium (bloqueadas), según el episodio. */}
-                {season.num === 1 && (() => {
-                  const meds = getSeason1Meditaciones(playingEp.num, playingEp.title)
+                    (con membresía) y/o premium (pago único), según el episodio.
+                    Disponibles en las cuatro temporadas. */}
+                {(() => {
+                  const meds = getMeditaciones(season.num, playingEp.num, playingEp.title)
                   if (!meds.length) return null
                   return (
                     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 1.5rem 3.5rem" }}>

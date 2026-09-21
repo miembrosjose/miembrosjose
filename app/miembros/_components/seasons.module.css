@@ -366,3 +366,33 @@
 @media (max-width: 480px) {
   .seasonCol { flex: 0 0 min(82vw, 240px); }
 }
+
+/* ── Etiqueta de emisión en vivo ─────────────────────────────────────────── */
+/* El Umbral son sesiones en directo. El rojo y el punto que late son el
+   lenguaje que ya todo el mundo reconoce para eso. */
+.portalBadgeVivo {
+  border-color: rgba(220, 38, 38, 0.7) !important;
+  background: rgba(127, 29, 29, 0.28) !important;
+  color: #ffb4b4 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.puntoVivo {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+  animation: latidoVivo 1.6s ease-in-out infinite;
+}
+
+@keyframes latidoVivo {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puntoVivo { animation: none; }
+}

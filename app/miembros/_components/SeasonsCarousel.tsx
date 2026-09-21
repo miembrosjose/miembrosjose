@@ -62,8 +62,10 @@ export function SeasonsCarousel({
   // admin vía site_texts. Se usan como cover de la tarjeta en el carrusel.
   const [portalMedia, setPortalMedia] = useState<{ ingreso?: string; objetivos?: string; umbral?: string }>({})
   // Config del Umbral del Contacto gestionada por el admin (site_texts).
+  // Enlace del grupo de la comunidad. Se configura en Gestionar temporadas.
+  const [umbralWhatsapp, setUmbralWhatsapp] = useState("")
   const [umbral, setUmbral] = useState<{ enabled: boolean; badge: string; name: string }>({
-    enabled: false, badge: "DISPONIBLE", name: "El Umbral del Contacto",
+    enabled: false, badge: "EL CONTACTO", name: "Umbral del Contacto",
   })
   useEffect(() => {
     let cancelled = false
@@ -77,11 +79,12 @@ export function SeasonsCarousel({
           objetivos: ov["portal.objetivos.video"] || "",
           umbral: ov["portal.umbral.video"] || ov["umbral.video"] || "",
         })
+        setUmbralWhatsapp((ov["umbral.cta_url"] || "").trim())
         const enabled = (ov["umbral.enabled"] || "").trim().toLowerCase()
         setUmbral({
           enabled: enabled === "si" || enabled === "sí" || enabled === "1" || enabled === "true",
-          badge: (ov["umbral.badge"] || "").trim() || "DISPONIBLE",
-          name: (ov["umbral.title"] || "").trim() || "El Umbral del Contacto",
+          badge: (ov["umbral.badge"] || "").trim() || "EL CONTACTO",
+          name: (ov["umbral.title"] || "").trim() || "Umbral del Contacto",
         })
       })
       .catch(() => {})
@@ -231,6 +234,8 @@ export function SeasonsCarousel({
     variant?: "gold" | "soon"
     badge: string
     badgeGold?: boolean
+    /** Etiqueta de emisión en vivo: roja, con su punto latiendo. */
+    badgeVivo?: boolean
     epLabel: string
     name: string
     emoji: string
@@ -253,7 +258,10 @@ export function SeasonsCarousel({
           {cfg.media
             ? <SeasonVideo src={cfg.media} />
             : <span className={styles.thumbEmoji}>{cfg.emoji}</span>}
-          <span className={`${styles.badge} ${styles.portalBadge} ${cfg.badgeGold ? styles.portalBadgeGold : ""}`}>
+          <span
+            className={`${styles.badge} ${styles.portalBadge} ${cfg.badgeGold ? styles.portalBadgeGold : ""} ${cfg.badgeVivo ? styles.portalBadgeVivo : ""}`}
+          >
+            {cfg.badgeVivo && <i className={styles.puntoVivo} aria-hidden />}
             {cfg.badge}
           </span>
         </div>
@@ -345,10 +353,14 @@ export function SeasonsCarousel({
 
       {canUmbral
         ? renderPortalCard({
-            key: "umbral", variant: "gold", badge: umbral.enabled ? umbral.badge : "BORRADOR", badgeGold: true,
+            // El Umbral son sesiones en directo, no un enlace: la tarjeta
+            // abre el portal, que es donde se explica en qué consisten y
+            // desde donde se entra a la comunidad.
+            key: "umbral", variant: "gold", badge: umbral.badge || "EN DIRECTO", badgeVivo: true,
             epLabel: "EL SIGUIENTE UMBRAL", name: umbral.name,
-            emoji: "✷", gradient: gold, metaA: "El Umbral", metaB: "Entrar",
-            media: portalMedia.umbral, onClick: onOpenUmbral,
+            emoji: "✷", gradient: gold, metaA: "Preparación interior", metaB: "Entrar",
+            media: portalMedia.umbral,
+            onClick: onOpenUmbral,
           })
         : renderLockedPortal({
             key: "umbral", category: "CONTACTO", title: "Umbral del Contacto",
