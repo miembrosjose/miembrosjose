@@ -1,0 +1,554 @@
+/* LA RED — explorar miembros.
+   Paleta y tipografías de la plataforma: violeta para estructura, dorado para
+   los datos que importan (recuentos, ubicación, funciones). Móvil primero. */
+
+.view {
+  min-height: 100dvh;
+}
+
+.main {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1040px;
+  padding: 3.5rem 1.25rem 5rem;
+}
+
+/* ── Cabecera ──────────────────────────────────────────────────────────── */
+.header {
+  margin-bottom: 2rem;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold, #d9b866);
+  margin: 0 0 0.6rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 6vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--text-primary, #f3f6fa);
+  margin: 0 0 0.75rem;
+}
+
+.lead {
+  font-size: 0.97rem;
+  line-height: 1.65;
+  color: var(--text-secondary, #a8a8c0);
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* Recuentos reales — nunca hardcodeados */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 1.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(217, 184, 102, 0.2);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.statNum {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gold-soft, #e6cf95);
+}
+
+.statLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6a6a85);
+}
+
+/* ── Filtros ───────────────────────────────────────────────────────────── */
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+
+.searchWrap {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted, #6a6a85);
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  background: rgba(12, 12, 20, 0.6);
+  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.08));
+  color: var(--text-primary, #f3f6fa);
+  font-size: 16px; /* 16px evita el zoom automático de iOS al enfocar */
+  padding: 0.78rem 2.4rem 0.78rem 2.4rem;
+  transition: border-color 200ms ease;
+}
+
+.search:focus {
+  outline: none;
+  border-color: rgba(217, 184, 102, 0.45);
+}
+
+.search::placeholder {
+  color: var(--text-muted, #6a6a85);
+}
+
+.searchClear {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted, #6a6a85);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+}
+
+.searchClear:hover {
+  color: var(--text-primary, #f3f6fa);
+}
+
+.selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.select {
+  width: 100%;
+  background: rgba(12, 12, 20, 0.6);
+  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.08));
+  color: var(--text-primary, #f3f6fa);
+  font-size: 16px;
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+}
+
+.select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.select:focus {
+  outline: none;
+  border-color: rgba(217, 184, 102, 0.45);
+}
+
+.limpiar {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6a6a85);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.limpiar:hover {
+  color: var(--gold-soft, #e6cf95);
+}
+
+/* ── Recuento de resultados ────────────────────────────────────────────── */
+.count {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold, #d9b866);
+  margin: 0 0 1.1rem;
+}
+
+/* ── Estados: cargando, error, vacío ───────────────────────────────────── */
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary, #a8a8c0);
+  font-size: 0.95rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  color: var(--gold-dim, rgba(217, 184, 102, 0.5));
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.vacioIcon {
+  color: rgba(217, 184, 102, 0.45);
+}
+
+.vacioTitle {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-soft, #e6cf95);
+  margin: 0;
+}
+
+.vacioTxt {
+  margin: 0;
+  max-width: 44ch;
+  line-height: 1.6;
+  color: var(--text-muted, #6a6a85);
+  font-size: 0.9rem;
+}
+
+.errorTxt {
+  color: #e06c6c;
+  margin: 0;
+}
+
+.reintentar {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-soft, #e6cf95);
+  border: 1px solid rgba(217, 184, 102, 0.42);
+  background: rgba(217, 184, 102, 0.07);
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 200ms ease;
+}
+
+.reintentar:hover {
+  background: rgba(217, 184, 102, 0.15);
+}
+
+/* ── Rejilla de miembros ───────────────────────────────────────────────── */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.6rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 20, 0.55);
+  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.07));
+  transition: border-color 220ms ease, background 220ms ease;
+}
+
+.card:hover {
+  border-color: rgba(217, 184, 102, 0.32);
+  background: rgba(14, 15, 24, 0.85);
+}
+
+.cardMain {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+/* El Avatar de la plataforma no trae tamaño propio: lo toma del contenedor.
+   Sin esto la imagen crece hasta ocupar toda la tarjeta. */
+.cardAvatar {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+}
+
+.cardAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.cardName {
+  font-size: 0.94rem;
+  font-weight: 500;
+  color: var(--text-primary, #f3f6fa);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardUser {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--text-muted, #6a6a85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardLoc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--gold, #d9b866);
+  margin-top: 0.22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+}
+
+.rol {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #cbb9e6;
+  border: 1px solid rgba(109, 74, 155, 0.6);
+  background: rgba(109, 74, 155, 0.14);
+  padding: 0.18rem 0.4rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.msgBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #a8a8c0);
+  border-top: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.07));
+  padding: 0.58rem;
+  text-decoration: none;
+  transition: color 200ms ease, background 200ms ease;
+}
+
+.msgBtn:hover {
+  color: var(--gold-soft, #e6cf95);
+  background: rgba(217, 184, 102, 0.06);
+}
+
+/* ── Paginación ────────────────────────────────────────────────────────── */
+.masWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.8rem;
+}
+
+.mas {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-soft, #e6cf95);
+  border: 1px solid rgba(217, 184, 102, 0.42);
+  background: transparent;
+  padding: 0.75rem 1.6rem;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.mas:hover:not(:disabled) {
+  background: rgba(217, 184, 102, 0.1);
+}
+
+.mas:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* ── Móvil ─────────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .main {
+    padding: 2.5rem 1rem 4rem;
+  }
+  .stats {
+    gap: 1.4rem;
+  }
+  .statNum {
+    font-size: 1.25rem;
+  }
+  .selects {
+    grid-template-columns: 1fr;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Pestañas Lista / Mapa ─────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6a6a85);
+  background: transparent;
+  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.08));
+  padding: 0.52rem 1rem;
+  cursor: pointer;
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.tab:hover {
+  color: #e6cf95;
+}
+
+.tabOn {
+  color: #0a0a12;
+  background: #d9b866;
+  border-color: #d9b866;
+}
+
+/* ── Filtro por emblema ────────────────────────────────────────────────── */
+.emblemas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.emblema {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #cbb9e6;
+  background: rgba(109, 74, 155, 0.12);
+  border: 1px solid rgba(109, 74, 155, 0.5);
+  border-radius: 999px;
+  padding: 0.34rem 0.7rem;
+  cursor: pointer;
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.emblema:hover {
+  border-color: rgba(217, 184, 102, 0.5);
+}
+
+.emblemaOn {
+  color: #e6cf95;
+  background: rgba(217, 184, 102, 0.12);
+  border-color: rgba(217, 184, 102, 0.55);
+}
+
+.emblemaNum {
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+@media (max-width: 560px) {
+  .emblemas {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.3rem;
+    scrollbar-width: none;
+  }
+  .emblemas::-webkit-scrollbar { display: none; }
+  .emblema { white-space: nowrap; }
+}
+
+/* Aura del grado alrededor de la foto en el listado. El Avatar no tiene tamaño
+   propio —lo hereda— así que el anillo va en este envoltorio. */
+.cardAvatarWrap {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Etiqueta del grado, bajo la ubicación. */
+.cardGrado {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* La insignia destacada, colgada del retrato en el listado. */
+.cardAvatarWrap { position: relative; }
+
+.cardBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.9));
+}
+
+.cardBadge svg { width: 100%; height: 100%; }

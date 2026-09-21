@@ -1,0 +1,210 @@
+/* SOSTENER LA RED — invitación a pedir una función, dentro de Los Objetivos. */
+
+.wrap {
+  margin-top: 2.4rem;
+  padding-top: 2.2rem;
+  border-top: 1px solid rgba(217, 184, 102, 0.2);
+}
+
+.kicker {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(217, 184, 102, 0.75);
+}
+
+.titulo {
+  margin: 0 0 0.8rem;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  color: #f3f6fa;
+}
+
+.intro {
+  margin: 0 0 1.6rem;
+  max-width: 46rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #c6cbe6;
+}
+
+/* ── Aviso ──────────────────────────────────────────────────────────────── */
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(127, 29, 29, 0.14);
+  color: #fca5a5;
+  font-size: 0.8rem;
+}
+
+.error button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+}
+
+/* ── Tarjetas ───────────────────────────────────────────────────────────── */
+.lista {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.3rem;
+  border: 1px solid rgba(243, 246, 250, 0.08);
+  background: rgba(12, 12, 20, 0.5);
+  transition: border-color 220ms ease;
+}
+
+.card:hover { border-color: rgba(217, 184, 102, 0.28); }
+
+.nombre {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display, inherit);
+  font-size: 1rem;
+  color: #f3f6fa;
+}
+
+.llamado {
+  margin: 0 0 0.6rem;
+  font-style: italic;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #e6cf95;
+}
+
+.texto {
+  margin: 0 0 1rem;
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: #8b90b4;
+}
+
+/* ── Estados ────────────────────────────────────────────────────────────── */
+.estadoOk,
+.estadoEspera,
+.pronto {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.estadoOk { color: #6ee7a8; }
+.estadoEspera { color: #e6cf95; }
+.pronto { color: #6a6a85; }
+
+.estadoFila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.respuesta {
+  margin: 0 0 0.8rem;
+  padding-left: 0.8rem;
+  border-left: 2px solid rgba(243, 246, 250, 0.12);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #8b90b4;
+}
+
+/* ── Botones ────────────────────────────────────────────────────────────── */
+.pedir,
+.enviar,
+.cancelar,
+.retirar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba(217, 184, 102, 0.45);
+  background: rgba(217, 184, 102, 0.08);
+  color: #e6cf95;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.pedir { align-self: flex-start; }
+.pedir:hover,
+.enviar:hover { border-color: #e6cf95; background: rgba(217, 184, 102, 0.16); }
+
+.cancelar,
+.retirar {
+  border-color: rgba(243, 246, 250, 0.14);
+  background: transparent;
+  color: #8b90b4;
+  padding: 0.4rem 0.8rem;
+}
+
+.cancelar:hover,
+.retirar:hover { border-color: rgba(220, 38, 38, 0.5); color: #fca5a5; }
+
+.enviar:disabled,
+.cancelar:disabled,
+.retirar:disabled { cursor: wait; opacity: 0.6; }
+
+/* ── Formulario ─────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8b90b4;
+}
+
+.textarea {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(243, 246, 250, 0.12);
+  background: rgba(5, 5, 13, 0.7);
+  color: #f3f6fa;
+  font-family: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: rgba(217, 184, 102, 0.6);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .lista { grid-template-columns: 1fr; }
+}
