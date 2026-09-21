@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react"
 import { sounds } from "../_lib/sounds"
 import { getAchievementById } from "@/lib/achievements"
+import { getAchievementSvg } from "@/lib/achievement-svg"
 import styles from "./eterno-overlay.module.css"
 
 const PARTICLE_COUNT = 28
@@ -123,7 +124,7 @@ export function EternoOverlay() {
           {ach && (
             <div
               className={styles.badge}
-              dangerouslySetInnerHTML={{ __html: ach.svg }}
+              dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
             />
           )}
           <div className={styles.bigText}>ETERNO</div>

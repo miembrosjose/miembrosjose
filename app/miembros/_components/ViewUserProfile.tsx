@@ -6,16 +6,17 @@
 
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
+import { getAura, gradoMasAlto, isExclusiveSeal } from "@/lib/achievements"
+import { getAchievementSvg } from "@/lib/achievement-svg"
 import { useView } from "../_lib/view-context"
 import { api } from "../_lib/api"
-import { ProfileFollowButton } from "../u/[id]/follow-button"
-import { FollowsCountersAndModal } from "../u/[id]/follows-counters"
+import { LugarEnLaRed } from "./LugarEnLaRed"
 import styles from "./views.module.css"
 
 type PublicProfileResponse = {
   user: {
     id: string
-    email: string
+    email: string | null
     created_at: string
     full_name: string | null
     username: string | null
@@ -40,6 +41,8 @@ type PublicProfileResponse = {
     unlocked: Array<UnlockedBadge>
   }
   isFollowing: boolean
+  ubicacion: { city: string; admin1: string | null; country: string; country_code: string; label: string } | null
+  network_roles: string[]
   recentPosts: Array<{
     id: string
     title: string
@@ -55,7 +58,6 @@ type BadgeInfo = {
   id: string
   name: string
   tier: string
-  svg: string
   color: string
 }
 
@@ -65,13 +67,12 @@ type UnlockedBadge = {
   desc: string
   tier: string
   category: string
-  svg: string
   color: string
   unlocked_at: string
 }
 
 export function ViewUserProfile() {
-  const { params, setView } = useView()
+  const { params, setView, volver } = useView()
   const [data, setData] = useState<PublicProfileResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,7 +109,7 @@ export function ViewUserProfile() {
     return (
       <div className={styles.view}>
         <section className={styles.section} style={{ position: "relative" }}>
-          <CloseButton onClose={() => setView("inicio")} />
+          <CloseButton onClose={volver} />
           <p style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
             {error}
           </p>
@@ -121,7 +122,7 @@ export function ViewUserProfile() {
     return (
       <div className={styles.view}>
         <section className={styles.section} style={{ position: "relative" }}>
-          <CloseButton onClose={() => setView("inicio")} />
+          <CloseButton onClose={volver} />
           <p style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>
             Cargando perfil...
           </p>
@@ -130,7 +131,17 @@ export function ViewUserProfile() {
     )
   }
 
-  const { user, isSelf, counts, xp, rank, badges, isFollowing, recentPosts } = data
+  const { user, isSelf, counts, xp, rank, badges, recentPosts, ubicacion, network_roles } = data
+
+  // EL AURA — el color del grado más alto que esta persona ha alcanzado en el
+  // Camino, o el del Embajador si lo es. Rodea la foto para que se reconozca
+  // sin leer nada. El Embajador manda sobre el grado: es la distinción que el
+  // administrador concede a mano.
+  const idsDesbloqueados = badges.unlocked.map((b) => b.id)
+  const idAura = idsDesbloqueados.includes("embajador_galactico")
+    ? "embajador_galactico"
+    : gradoMasAlto(idsDesbloqueados)
+  const aura = getAura(idAura)
   const fullName = user.full_name || (user.email ? user.email.split("@")[0] : "Miembro")
   const memberSince = new Date(user.created_at).toLocaleDateString("es-419", {
     month: "long",
@@ -140,25 +151,47 @@ export function ViewUserProfile() {
   return (
     <div className={styles.view}>
       <main style={{ margin: "0 auto", width: "100%", maxWidth: 880, padding: "4rem 1.5rem", position: "relative" }}>
-        <CloseButton onClose={() => setView("inicio")} />
+        <CloseButton onClose={volver} />
+        {aura && (
+          <style>{`
+            @keyframes auraRespirar {
+              0%, 100% { filter: brightness(1) }
+              50%      { filter: brightness(1.25) }
+            }
+            .aura-viva { animation: auraRespirar 4s ease-in-out infinite }
+            @media (prefers-reduced-motion: reduce) { .aura-viva { animation: none } }
+          `}</style>
+        )}
         {/* Header com avatar + identidade */}
         <header style={{ marginBottom: "3rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", alignItems: "flex-start" }}>
             <div style={{ position: "relative", width: 128, height: 128, flexShrink: 0 }}>
+              {/* Antes había aquí un disco de degradado cónico detrás de la
+                  foto: a 128px se leía como una mancha sólida de color, no
+                  como un aura. El halo va ahora en las sombras del propio
+                  retrato —un anillo fino y un resplandor suave, que es lo que
+                  hace bonito al sello del admin— en vez de en una capa aparte. */}
               <div
-                className="rounded-full"
+                className={`rounded-full${aura?.vivo && !user.is_admin ? " aura-viva" : ""}`}
                 style={{
+                  position: "relative",
                   width: 128,
                   height: 128,
                   overflow: "hidden",
-                  // Border branca exclusiva pra admin (figura simbólica).
-                  // Outros users sem borda colorida — feature removida.
+                  // El admin conserva su borde blanco. Para el resto, el borde
+                  // lo pone el grado alcanzado en el Camino.
                   border: user.is_admin
                     ? "3px solid #ffffff"
-                    : "1px solid var(--border-medium)",
+                    : aura
+                      ? `2px solid ${aura.color2}`
+                      : "1px solid var(--border-medium)",
+                  // Tres capas: el filo del color vivo, el halo cercano y el
+                  // resplandor abierto. Juntas dan profundidad sin tapar nada.
                   boxShadow: user.is_admin
                     ? "0 0 16px #ffffff66"
-                    : undefined,
+                    : aura
+                      ? `0 0 0 1px ${aura.color}, 0 0 18px ${aura.color}88, 0 0 42px ${aura.color}44`
+                      : undefined,
                   background: "var(--bg-elevated)",
                 }}
               >
@@ -191,7 +224,10 @@ export function ViewUserProfile() {
                 const isAdminSeal = badges.featured_ach.id === "admin_seal"
                 const isTopoSeal = badges.featured_ach.id === "el_topo"
                 const isRevisaoSeal = badges.featured_ach.id === "product_revisao"
-                const isExclusive = isAdminSeal || isTopoSeal || isRevisaoSeal
+                // isExclusiveSeal() es la fuente de verdad y ya conoce al
+                // Embajador Galáctico. La lista escrita a mano que había aquí
+                // no, y por eso su insignia salía dentro de un recuadro oscuro.
+                const isExclusive = isExclusiveSeal(badges.featured_ach.id)
                 return (
                   <div
                     className="rounded-full"
@@ -217,7 +253,7 @@ export function ViewUserProfile() {
                         : undefined,
                     }}
                     title={badges.featured_ach.name}
-                    dangerouslySetInnerHTML={{ __html: badges.featured_ach.svg }}
+                    dangerouslySetInnerHTML={{ __html: getAchievementSvg(badges.featured_ach.id) }}
                   />
                 )
               })()}
@@ -239,7 +275,7 @@ export function ViewUserProfile() {
                       : undefined,
                   }}
                   title={badges.star_ach.name}
-                  dangerouslySetInnerHTML={{ __html: badges.star_ach.svg }}
+                  dangerouslySetInnerHTML={{ __html: getAchievementSvg(badges.star_ach.id) }}
                 />
               )}
               {/* Llama destacada — top-left (Eterno topo brilha vermelho) */}
@@ -260,7 +296,7 @@ export function ViewUserProfile() {
                       : undefined,
                   }}
                   title={badges.flame_ach.name}
-                  dangerouslySetInnerHTML={{ __html: badges.flame_ach.svg }}
+                  dangerouslySetInnerHTML={{ __html: getAchievementSvg(badges.flame_ach.id) }}
                 />
               )}
             </div>
@@ -329,22 +365,15 @@ export function ViewUserProfile() {
                   {xp.xp_in_level} / {xp.xp_for_level} XP · {xp.percent}%
                 </p>
               </div>
+              <LugarEnLaRed ubicacion={ubicacion} roles={network_roles} soloLectura={!isSelf} />
+
               {user.niche && (
                 <p style={{ marginTop: "0.75rem", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.25em", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
                   Nicho · <span style={{ color: "var(--text-primary)" }}>{user.niche}</span>
                 </p>
               )}
 
-              <div style={{ marginTop: "0.75rem" }}>
-                <FollowsCountersAndModal
-                  userId={userId}
-                  followersCount={counts.followers}
-                  followingCount={counts.following}
-                />
-              </div>
-
               <div style={{ marginTop: "1rem", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.75rem" }}>
-                {!isSelf && <ProfileFollowButton targetId={userId} initialFollowing={isFollowing} />}
                 {!isSelf && (
                   <button
                     type="button"
@@ -494,7 +523,7 @@ function BadgeCard({ ach, label }: { ach: BadgeInfo; label: string }) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", border: "1px solid var(--border-subtle)", background: "rgba(10, 10, 15, 0.5)", padding: "0.75rem", textAlign: "center" }}>
       <div
         style={{ width: 64, height: 64, color: ach.color }}
-        dangerouslySetInnerHTML={{ __html: ach.svg }}
+        dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
       />
       <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "var(--text-primary)", fontFamily: "var(--font-mono)", margin: 0 }}>
         {ach.name}
@@ -538,7 +567,7 @@ function UnlockedBadgeCard({ badge }: { badge: UnlockedBadge }) {
             ? "revisaoBadgeGlow 2.4s ease-in-out infinite"
             : undefined,
         }}
-        dangerouslySetInnerHTML={{ __html: badge.svg }}
+        dangerouslySetInnerHTML={{ __html: getAchievementSvg(badge.id) }}
       />
       <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "var(--text-primary)", fontFamily: "var(--font-mono)", margin: 0, lineHeight: 1.2 }}>
         {badge.name}
@@ -551,20 +580,24 @@ function UnlockedBadgeCard({ badge }: { badge: UnlockedBadge }) {
 }
 
 function CloseButton({ onClose }: { onClose: () => void }) {
+  // Fija, no absoluta. Dentro del <main> quedaba a 16px del borde superior de
+  // la columna, que en escritorio cae DEBAJO de la barra de navegación (fija,
+  // unos 80px) — por eso no se veía. Y en móvil quedaba pegada al borde.
+  // El offset deja sitio a la barra y a la muesca del teléfono.
   return (
     <button
       type="button"
       onClick={onClose}
-      aria-label="Cerrar"
-      className="rounded-full"
+      aria-label="Cerrar y volver"
       style={{
-        position: "absolute",
+        position: "fixed",
+        top: "calc(env(safe-area-inset-top, 0px) + 84px)",
         right: 16,
-        top: 16,
-        zIndex: 5,
-        width: 36,
-        height: 36,
-        background: "rgba(10, 10, 15, 0.85)",
+        zIndex: 50,
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        background: "rgba(10, 10, 15, 0.88)",
         border: "1px solid var(--border-subtle)",
         backdropFilter: "blur(8px)",
         color: "var(--text-secondary)",
@@ -578,3 +611,4 @@ function CloseButton({ onClose }: { onClose: () => void }) {
     </button>
   )
 }
+

@@ -19,6 +19,35 @@ import type { OwnedProduct } from "./products"
 
 const STORAGE_KEY = "app_unlocked_achievements"
 
+/**
+ * Insignias que SOLO concede el servidor: las da un administrador o una
+ * compra, nunca el avance del propio usuario.
+ *
+ * Para estas, el servidor es la única autoridad. El resto se sincroniza en
+ * los dos sentidos —lo que se ganó sin conexión se sube después— pero aquí
+ * eso sería un agujero: al retirarle a alguien el Embajador Galáctico, su
+ * navegador conservaba la copia local y el «catch-up» se la devolvía al
+ * servidor en la siguiente sincronización. La retirada se deshacía sola.
+ */
+const SOLO_SERVIDOR = new Set([
+  "admin_seal",
+  "embajador_galactico",
+  "practica_profunda",
+  "rol_organizador",
+  "rol_cartografo",
+  "rol_colaborador",
+  "rol_instructor",
+  // Retiradas del catálogo, pero siguen concediéndose por compra:
+  "el_topo",
+  "el_estudio",
+  "product_revisao",
+  "product_creativos",
+  "product_andromeda",
+  "product_analytics",
+  "product_minivsl",
+  "product_bonus_ganchos",
+])
+
 type UnlockedMap = Record<string, { unlockedAt: string }>
 
 function readUnlocked(): UnlockedMap {
@@ -81,14 +110,24 @@ export async function syncUnlockedAchievementsFromServer(): Promise<UnlockedMap>
     }
   }
 
+  // 3b. Las que solo concede el servidor y YA NO están allí se borran de la
+  // copia local. Es el otro lado de la autoridad: si se retiraron, se
+  // retiraron de verdad y deben desaparecer también de este navegador.
+  for (const id of Object.keys(merged)) {
+    if (SOLO_SERVIDOR.has(id) && !serverIds.has(id)) delete merged[id]
+  }
+
   writeUnlocked(merged)
 
-  // 4. Catch-up: IDs em localStorage mas NÃO no server → POST pra cada um
-  // Isso cobre: user desbloqueou no PC offline, depois logou no celular.
-  // Como /api/profile/insignia-unlocked já é idempotente (dedup via xp_events
-  // E o upsert em user_unlocked_achievements ignora duplicados), seguro
-  // chamar pra todas as insignias locais.
-  const localOnly = Object.keys(local).filter((id) => !serverIds.has(id))
+  // 4. Catch-up: IDs en el navegador pero NO en el servidor → se suben.
+  // Cubre a quien avanzó sin conexión y luego entró desde otro aparato.
+  // /api/profile/insignia-unlocked es idempotente, así que repetir no duplica.
+  //
+  // Las de SOLO_SERVIDOR quedan fuera a propósito: subirlas sería devolver
+  // algo que un administrador acaba de retirar.
+  const localOnly = Object.keys(local).filter(
+    (id) => !serverIds.has(id) && !SOLO_SERVIDOR.has(id),
+  )
   if (localOnly.length > 0) {
     await Promise.all(
       localOnly.map((id) =>
@@ -145,13 +184,11 @@ export function checkWelcome() {
   unlockAchievement("welcome")
 }
 
-// Insignias de aulas T1: EP2=Estratega, EP3=MiniVSL, EP4=Copywriter, EP5=Constructor
-// (EP1=Introducción cobre o "first_lesson" que vem do markEpisodeWatched genérico)
+// «144» — la primera insignia de todos, al ver el capítulo 1 de la
+// Temporada 1. Las de los capítulos 2 a 5 están retiradas del catálogo, así
+// que ya no se conceden; quien las tenga las conserva sin verlas.
 const AGENT_BY_EPISODE: Array<{ ep: number; id: string }> = [
-  { ep: 2, id: "agent_estratega" },
-  { ep: 3, id: "agent_minivsl" },
-  { ep: 4, id: "agent_copywriter" },
-  { ep: 5, id: "agent_constructor" },
+  { ep: 1, id: "agent_estratega" },
 ]
 
 export function checkAgentAchievements() {

@@ -480,3 +480,17 @@ html:has(.miembros-shell) {
     left: -75%;
   }
 }
+
+/* Aura genérica de insignia. El color viene del catálogo por --g1/--g2,
+ * así no hace falta un @keyframes nuevo cada vez que se añade una. */
+@keyframes auraBadgeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px var(--g1))
+      drop-shadow(0 0 7px var(--g2));
+  }
+  50% {
+    filter: drop-shadow(0 0 7px var(--g1))
+      drop-shadow(0 0 14px var(--g2))
+      drop-shadow(0 0 22px var(--g1));
+  }
+}

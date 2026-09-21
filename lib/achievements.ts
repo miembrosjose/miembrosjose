@@ -20,11 +20,17 @@ export type AchievementCategory = "progression" | "products" | "agents" | "commu
 
 export type Achievement = {
   id: string
+  /**
+   * Retirada del catálogo visible. No se borra: el webhook de Stripe y las
+   * rutas de admin conceden algunas de estas por id, y hay clientes que ya
+   * las tienen. Borrarlas rompería esos flujos y haría desaparecer lo que
+   * alguien compró. Se dejan de mostrar, que es lo que se quería.
+   */
+  retirada?: boolean
   tier: AchievementTier
   category: AchievementCategory
   name: string
   desc: string
-  svg: string
   productKey?: string
 }
 
@@ -36,11 +42,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     // estúdio). Reusa o mesmo glow do el_topo (topoBadgeGlow) — diferencia só
     // pelo símbolo central.
     id: "el_estudio",
+    retirada: true,
     tier: "topo",
     category: "exclusive",
     name: "Servicio Premium A",
     desc: "Insignia exclusiva — Servicio Premium A",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="estudio-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fca5a5"/><stop offset="20%" stop-color="#ef4444"/><stop offset="50%" stop-color="#b91c1c"/><stop offset="80%" stop-color="#7f1d1d"/><stop offset="100%" stop-color="#3f0a0a"/></linearGradient><linearGradient id="estudio-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="50%" stop-color="#7f1d1d"/><stop offset="100%" stop-color="#3f0a0a"/></linearGradient><radialGradient id="estudio-spark" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fef2f2" stop-opacity="1"/><stop offset="40%" stop-color="#fca5a5" stop-opacity="0.85"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></radialGradient><radialGradient id="estudio-glow" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#fca5a5" stop-opacity="0.4"/><stop offset="50%" stop-color="#ef4444" stop-opacity="0.15"/><stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/></radialGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#estudio-shield)" stroke="url(#estudio-grad)" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#ef4444" stroke-width="0.7" opacity="0.6"/><circle cx="32" cy="36" r="22" fill="url(#estudio-glow)"/><g transform="translate(0, 6)"><rect x="18" y="18" width="28" height="6" fill="url(#estudio-grad)" stroke="#fca5a5" stroke-width="0.8" stroke-linejoin="round" rx="0.5"/><polygon points="18,18 22,14 26,18" fill="#fef2f2" stroke="#ef4444" stroke-width="0.6" stroke-linejoin="round"/><polygon points="26,18 30,14 34,18" fill="#7f1d1d" stroke="#fca5a5" stroke-width="0.6" stroke-linejoin="round"/><polygon points="34,18 38,14 42,18" fill="#fef2f2" stroke="#ef4444" stroke-width="0.6" stroke-linejoin="round"/><polygon points="42,18 46,14 50,18 46,18" fill="#7f1d1d" stroke="#fca5a5" stroke-width="0.6" stroke-linejoin="round"/><rect x="20" y="26" width="24" height="20" fill="url(#estudio-shield)" stroke="#ef4444" stroke-width="0.8" stroke-linejoin="round"/><circle cx="32" cy="36" r="6" fill="none" stroke="#fca5a5" stroke-width="1.2"/><circle cx="32" cy="36" r="2.5" fill="url(#estudio-grad)" stroke="#fef2f2" stroke-width="0.5"/><line x1="32" y1="30" x2="32" y2="42" stroke="#fca5a5" stroke-width="0.5" opacity="0.7"/><line x1="26" y1="36" x2="38" y2="36" stroke="#fca5a5" stroke-width="0.5" opacity="0.7"/><circle cx="14" cy="22" r="1.6" fill="url(#estudio-spark)"/><circle cx="50" cy="22" r="1.8" fill="url(#estudio-spark)"/><circle cx="16" cy="46" r="1.4" fill="url(#estudio-spark)"/><circle cx="48" cy="46" r="1.4" fill="url(#estudio-spark)"/><circle cx="32" cy="52" r="1.7" fill="url(#estudio-spark)"/><line x1="12" y1="14" x2="16" y2="18" stroke="#fca5a5" stroke-width="0.6" opacity="0.5"/><line x1="52" y1="14" x2="48" y2="18" stroke="#fca5a5" stroke-width="0.6" opacity="0.5"/></g></svg>`,
   },
   {
     // Insignia EXCLUSIVA pra clientes pra quem a Los 144000 construiu o embudo
@@ -48,11 +54,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     // com coroa, picos de montanha e estrela radiante. CSS aplica glow vermelho
     // animado (topoBadgeGlow). Sem fundo/border — só o SVG com brilho próprio.
     id: "el_topo",
+    retirada: true,
     tier: "topo",
     category: "exclusive",
     name: "Servicio Premium B",
     desc: "Insignia exclusiva — Servicio Premium B",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="topo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#dc2626"/><stop offset="35%" stop-color="#7f1d1d"/><stop offset="65%" stop-color="#450a0a"/><stop offset="100%" stop-color="#1a0202"/></linearGradient><linearGradient id="topo-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#7f1d1d"/><stop offset="50%" stop-color="#450a0a"/><stop offset="100%" stop-color="#1a0202"/></linearGradient><radialGradient id="topo-spark" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fca5a5" stop-opacity="1"/><stop offset="50%" stop-color="#dc2626" stop-opacity="0.6"/><stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/></radialGradient><radialGradient id="topo-star" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fef2f2"/><stop offset="40%" stop-color="#fca5a5"/><stop offset="100%" stop-color="#dc2626"/></radialGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#topo-shield)" stroke="url(#topo-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#dc2626" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 26 4 L 28 8 L 32 6 L 36 8 L 38 4 L 38 10 L 26 10 Z" fill="url(#topo-grad)" stroke="#fca5a5" stroke-width="0.6" stroke-linejoin="round"/><circle cx="28" cy="6" r="0.8" fill="#fca5a5"/><circle cx="32" cy="4" r="1" fill="#fca5a5"/><circle cx="36" cy="6" r="0.8" fill="#fca5a5"/><path d="M 14 38 L 22 22 L 28 32 L 32 18 L 36 32 L 42 22 L 50 38 Z" fill="url(#topo-grad)" stroke="#7f1d1d" stroke-width="0.8" stroke-linejoin="round" opacity="0.95"/><path d="M 16 38 L 22 24 L 28 32" fill="none" stroke="#fca5a5" stroke-width="0.6" opacity="0.5" stroke-linejoin="round"/><path d="M 32 19 L 36 31" fill="none" stroke="#fca5a5" stroke-width="0.6" opacity="0.5"/><path d="M 32 18 L 33.5 23 L 38.5 23 L 34.5 26 L 36 31 L 32 28 L 28 31 L 29.5 26 L 25.5 23 L 30.5 23 Z" fill="url(#topo-star)" stroke="#fef2f2" stroke-width="0.5" stroke-linejoin="round"/><circle cx="32" cy="24" r="1.2" fill="#fef2f2"/><circle cx="18" cy="20" r="1.4" fill="url(#topo-spark)"/><circle cx="46" cy="20" r="1.6" fill="url(#topo-spark)"/><circle cx="20" cy="44" r="1.2" fill="url(#topo-spark)"/><circle cx="44" cy="44" r="1.2" fill="url(#topo-spark)"/><circle cx="32" cy="50" r="1.5" fill="url(#topo-spark)"/><line x1="14" y1="14" x2="18" y2="18" stroke="#fca5a5" stroke-width="0.5" opacity="0.4"/><line x1="50" y1="14" x2="46" y2="18" stroke="#fca5a5" stroke-width="0.5" opacity="0.4"/></g></svg>`,
   },
   {
     // Insignia EXCLUSIVA do administrador. Filtrada pra só aparecer pra is_admin=true
@@ -61,25 +67,24 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "admin_seal",
     tier: "diamond",
     category: "exclusive",
-    name: "Sello del Admin",
+    name: "Admin",
     desc: "Insignia exclusiva del administrador",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="adm-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#b9f2ff"/><stop offset="35%" stop-color="#ffffff"/><stop offset="65%" stop-color="#c9a961"/><stop offset="100%" stop-color="#b9f2ff"/></linearGradient><radialGradient id="adm-spark" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#adm-grad)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity="0.95"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.6"/><g transform="translate(0, 8)"><path d="M 32 16 L 35.5 27 L 47 27 L 37.5 33.5 L 41 44.5 L 32 38 L 23 44.5 L 26.5 33.5 L 17 27 L 28.5 27 Z" fill="#fff" stroke="#c9a961" stroke-width="0.6" stroke-linejoin="round"/><circle cx="32" cy="30" r="2.2" fill="#b9f2ff" stroke="#fff" stroke-width="0.5"/><circle cx="20" cy="20" r="1.4" fill="url(#adm-spark)"/><circle cx="44" cy="20" r="1.6" fill="url(#adm-spark)"/><circle cx="46" cy="42" r="1.2" fill="url(#adm-spark)"/><circle cx="18" cy="42" r="1.2" fill="url(#adm-spark)"/><circle cx="32" cy="50" r="1.5" fill="url(#adm-spark)"/></g></svg>`,
   },
   {
     id: "welcome",
+    retirada: true,
     tier: "bronze",
     category: "progression",
     name: "Bienvenida",
     desc: "Has entrado en la plataforma",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 32 18 L 35 28 L 45 28 L 37 34 L 40 44 L 32 38 L 24 44 L 27 34 L 19 28 L 29 28 Z" fill="currentColor" opacity="0.85"/><line x1="32" y1="14" x2="32" y2="10" stroke="currentColor" stroke-width="1.2" opacity="0.6"/><line x1="20" y1="20" x2="16" y2="16" stroke="currentColor" stroke-width="1" opacity="0.5"/><line x1="44" y1="20" x2="48" y2="16" stroke="currentColor" stroke-width="1" opacity="0.5"/><path d="M 18 50 L 32 56 L 46 50" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7"/></g></svg>`,
   },
   {
     id: "first_lesson",
+    retirada: true,
     tier: "bronze",
     category: "progression",
     name: "Primera Clase",
     desc: "Concluiste tu primera clase",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><rect x="20" y="22" width="24" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><polygon points="28,26 28,34 36,30" fill="currentColor"/><path d="M 20 22 L 22 18 L 26 18 L 24 22 M 28 22 L 30 18 L 34 18 L 32 22 M 36 22 L 38 18 L 42 18 L 40 22" stroke="currentColor" stroke-width="1" fill="none" stroke-linejoin="round" opacity="0.8"/><path d="M 14 38 Q 18 44 18 50" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/><path d="M 50 38 Q 46 44 46 50" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/></g></svg>`,
   },
   {
     id: "agent_estratega",
@@ -89,82 +94,160 @@ export const ACHIEVEMENTS: Achievement[] = [
     // Temporada 1 (ya cableado en AGENT_BY_EPISODE → ep:2 en achievements-unlock).
     name: "144",
     desc: "Completaste el capítulo 2 de la Temporada 1",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="c144sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2566"/><stop offset="55%" stop-color="#1a1030"/><stop offset="100%" stop-color="#080512"/></linearGradient><linearGradient id="c144fr" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bca"/><stop offset="50%" stop-color="#6D4A9B"/><stop offset="100%" stop-color="#4A3170"/></linearGradient><radialGradient id="c144neb" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#8a63b8" stop-opacity="0.7"/><stop offset="60%" stop-color="#4A3170" stop-opacity="0.22"/><stop offset="100%" stop-color="#4A3170" stop-opacity="0"/></radialGradient><radialGradient id="c144pl" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#d9c8f2"/><stop offset="55%" stop-color="#6D4A9B"/><stop offset="100%" stop-color="#2a1a4a"/></radialGradient><radialGradient id="c144st" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#c144sky)" stroke="url(#c144fr)" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="url(#c144neb)"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#8a63b8" stroke-width="0.7" opacity="0.5"/><g transform="translate(0,3)"><ellipse cx="32" cy="34" rx="13" ry="4.8" fill="none" stroke="#a78bca" stroke-width="1.6" opacity="0.85" transform="rotate(-18 32 34)"/><circle cx="32" cy="33" r="7.5" fill="url(#c144pl)" stroke="#d9c8f2" stroke-width="0.6"/><circle cx="29.5" cy="30.5" r="1.4" fill="#ffffff" opacity="0.6"/></g><circle cx="18" cy="18" r="1.5" fill="url(#c144st)"/><circle cx="46" cy="16" r="1.9" fill="url(#c144st)"/><circle cx="49" cy="41" r="1.4" fill="url(#c144st)"/><circle cx="16" cy="43" r="1.3" fill="url(#c144st)"/><circle cx="24" cy="51" r="1.5" fill="url(#c144st)"/><circle cx="40" cy="53" r="1.2" fill="url(#c144st)"/><path d="M 44 23 l 0.7 2 2 0.7 -2 0.7 -0.7 2 -0.7 -2 -2 -0.7 2 -0.7 z" fill="#ffffff" opacity="0.9"/></svg>`,
   },
   {
     id: "agent_minivsl",
+    retirada: true,
     tier: "bronze",
     category: "progression",
     name: "Agente 2",
     desc: "Concluiste la clase del Agente 2",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><rect x="18" y="22" width="22" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="26" cy="29" r="4" fill="none" stroke="currentColor" stroke-width="1.2"/><polygon points="24,27 24,31 28,29" fill="currentColor"/><rect x="40" y="24" width="6" height="4" fill="currentColor" opacity="0.7"/><rect x="18" y="18" width="22" height="3" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.6"/><line x1="22" y1="18" x2="22" y2="21" stroke="currentColor" stroke-width="0.4" opacity="0.5"/><line x1="26" y1="18" x2="26" y2="21" stroke="currentColor" stroke-width="0.4" opacity="0.5"/><line x1="30" y1="18" x2="30" y2="21" stroke="currentColor" stroke-width="0.4" opacity="0.5"/><line x1="34" y1="18" x2="34" y2="21" stroke="currentColor" stroke-width="0.4" opacity="0.5"/></g></svg>`,
   },
   {
     id: "agent_copywriter",
+    retirada: true,
     tier: "bronze",
     category: "progression",
     name: "Agente 3",
     desc: "Concluiste la clase del Agente 3",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 20 38 L 42 16 L 46 12 L 44 16 L 22 40 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><line x1="24" y1="34" x2="42" y2="16" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><line x1="26" y1="36" x2="44" y2="18" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><circle cx="22" cy="40" r="2" fill="currentColor"/><line x1="18" y1="44" x2="42" y2="44" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/><line x1="18" y1="48" x2="36" y2="48" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.4"/></g></svg>`,
   },
   {
     id: "agent_constructor",
+    retirada: true,
     tier: "bronze",
     category: "progression",
     name: "Agente 4",
     desc: "Concluiste la clase del Agente 4",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><line x1="32" y1="14" x2="22" y2="36" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="32" y1="14" x2="42" y2="36" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="32" cy="14" r="2" fill="currentColor"/><circle cx="22" cy="36" r="1.4" fill="currentColor"/><circle cx="42" cy="36" r="1.4" fill="currentColor"/><line x1="18" y1="30" x2="46" y2="30" stroke="currentColor" stroke-width="1" opacity="0.7"/><line x1="22" y1="30" x2="22" y2="33" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="28" y1="30" x2="28" y2="33" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="32" y1="30" x2="32" y2="33" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="36" y1="30" x2="36" y2="33" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="42" y1="30" x2="42" y2="33" stroke="currentColor" stroke-width="0.6" opacity="0.5"/></g></svg>`,
+  },
+  {
+    // Primer grado del Camino: se concede al entrar en la Temporada 1, antes
+    // de completarla. Marca a quien empezó, no a quien terminó.
+    id: "semilla_estelar",
+    retirada: true,
+    tier: "bronze",
+    category: "progression",
+    name: "Semilla Estelar",
+    desc: "Estás recorriendo la Temporada 1 del Camino",
+  },
+  {
+    // EMBAJADOR GALÁCTICO — no se desbloquea con el avance. La concede el
+    // administrador a mano, persona por persona, como representante de su país
+    // dentro de la Red. Por eso lleva gradientes propios en vez de currentColor:
+    // tiene identidad fija, como el Sello del Admin.
+    id: "embajador_galactico",
+    tier: "diamond",
+    category: "exclusive",
+    name: "Embajador Galáctico",
+    desc: "Representa a la Red en su país",
+  },
+  {
+    // La concede el administrador al APROBAR un lugar propuesto para el Mapa
+    // Cósmico. No se pide: llega cuando la aportación entra en el mapa.
+    id: "faro_territorio",
+    tier: "gold",
+    category: "exclusive",
+    name: "Faro del Territorio",
+    desc: "Tu aportación encendió un punto del Mapa Cósmico",
+  },
+  {
+    // Se concede al adquirir las Transmisiones.
+    id: "bibliotecario_cosmico",
+    tier: "gold",
+    category: "products",
+    name: "Bibliotecario Cósmico",
+    desc: "Tienes acceso al archivo de Transmisiones",
+  },
+  {
+    // INSTRUCTOR DE LOS 144.000 — quien conduce la formación de un grupo de
+    // contacto. Hexagrama abierto en dos mitades con una llama entre ellas:
+    // lo que se recibe y lo que se entrega. Alrededor, doce puntos: los que
+    // escuchan.
+    id: "rol_instructor",
+    tier: "diamond",
+    category: "exclusive",
+    name: "Instructor de Los 144.000",
+    desc: "Conduce la formación de un grupo de contacto",
+  },
+  {
+    // Las tres funciones de la Red también dejan marca. Se conceden y se
+    // retiran junto con el rol: no son un premio aparte que haya que recordar
+    // dar a mano.
+    id: "rol_organizador",
+    tier: "gold",
+    category: "exclusive",
+    name: "Organizador de Encuentros",
+    desc: "Convoca a la Red en su ciudad",
+  },
+  {
+    id: "rol_cartografo",
+    tier: "gold",
+    category: "exclusive",
+    name: "Cartógrafo",
+    desc: "Documenta los lugares del Mapa Cósmico",
+  },
+  {
+    id: "rol_colaborador",
+    tier: "gold",
+    category: "exclusive",
+    name: "Colaborador",
+    desc: "Sostiene el Archivo por dentro",
+  },
+  {
+    // Se concede al adquirir la PRIMERA práctica premium, cualquiera de ellas.
+    // Una sola insignia para todas: una por meditación haría crecer el
+    // catálogo cada vez que se publica una práctica nueva.
+    id: "practica_profunda",
+    tier: "gold",
+    category: "products",
+    name: "Práctica Profunda",
+    desc: "Adquiriste una práctica premium",
   },
   {
     id: "season_1_complete",
     tier: "bronze",
     category: "progression",
-    name: "Temporada 1 Completa",
-    desc: "Concluiste la Temporada 1",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 20 26 L 22 18 L 26 24 L 32 14 L 38 24 L 42 18 L 44 26 L 20 26 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="22" cy="18" r="1.2" fill="currentColor"/><circle cx="32" cy="14" r="1.5" fill="currentColor"/><circle cx="42" cy="18" r="1.2" fill="currentColor"/><rect x="18" y="28" width="28" height="3" fill="currentColor" opacity="0.85"/><line x1="22" y1="54" x2="42" y2="54" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></g></svg>`,
+    name: "Semilla Estelar",
+    desc: "Completaste la Temporada 1 del Camino",
   },
   {
     id: "season_2_complete",
-    tier: "bronze",
+    tier: "silver",
     category: "progression",
-    name: "Temporada 2 Completa",
-    desc: "Concluiste la Temporada 2",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><line x1="32" y1="16" x2="22" y2="36" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="32" y1="16" x2="42" y2="36" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="32" cy="16" r="2" fill="currentColor"/><circle cx="22" cy="36" r="1.5" fill="currentColor"/><circle cx="42" cy="36" r="1.5" fill="currentColor"/><line x1="18" y1="30" x2="46" y2="30" stroke="currentColor" stroke-width="1.2" opacity="0.7"/><line x1="20" y1="58" x2="44" y2="58" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></g></svg>`,
+    name: "Activador de la Red",
+    desc: "Completaste la Temporada 2 del Camino",
   },
   {
     id: "season_3_complete",
-    tier: "bronze",
+    tier: "gold",
     category: "progression",
-    name: "Temporada 3 Completa",
-    desc: "Concluiste la Temporada 3",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><circle cx="32" cy="28" r="11" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="32" cy="28" r="7" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/><circle cx="32" cy="28" r="3" fill="currentColor"/><circle cx="29" cy="25" r="1.5" fill="currentColor" opacity="0.4"/><line x1="20" y1="58" x2="44" y2="58" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></g></svg>`,
+    name: "Guardián de la Red",
+    desc: "Completaste la Temporada 3 del Camino",
   },
   {
     id: "season_4_complete",
-    tier: "bronze",
+    tier: "platinum",
     category: "progression",
-    name: "Temporada 4 Completa",
-    desc: "Concluiste la Temporada 4",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><circle cx="32" cy="28" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="32" cy="28" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/><line x1="32" y1="14" x2="32" y2="20" stroke="currentColor" stroke-width="1.5"/><line x1="32" y1="36" x2="32" y2="42" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="28" x2="24" y2="28" stroke="currentColor" stroke-width="1.5"/><line x1="40" y1="28" x2="46" y2="28" stroke="currentColor" stroke-width="1.5"/><rect x="30" y="26" width="4" height="4" fill="currentColor"/></g></svg>`,
+    name: "Arquitecto Cósmico",
+    desc: "Completaste la Temporada 4 del Camino",
   },
   {
     id: "vip_community",
+    retirada: true,
     tier: "silver",
     category: "progression",
     name: "Círculo VIP",
     desc: "Entraste a la comunidad privada",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/><path d="M 14 12 L 50 12 L 50 36 Q 50 50 32 58 Q 14 50 14 36 Z" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.4"/><g transform="translate(0, 8)"><path d="M 18 24 Q 22 20 26 24 Q 22 28 18 24" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M 46 24 Q 42 20 38 24 Q 42 28 46 24" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M 16 32 Q 20 28 24 32 Q 20 36 16 32" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M 48 32 Q 44 28 40 32 Q 44 36 48 32" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M 26 22 L 32 38 L 38 22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M 32 14 L 33.5 17 L 36.5 17 L 34 19 L 35 22 L 32 20 L 29 22 L 30 19 L 27.5 17 L 30.5 17 Z" fill="currentColor" opacity="0.9"/></g></svg>`,
   },
   {
     // Insignia rara — só desbloqueia quando user assiste TODOS os episódios
     // de TODAS as temporadas (T1-T4). Tier gold = aparece como FOMO
     // pra outros users (silver+ broadcast).
     id: "training_complete",
+    retirada: true,
     tier: "gold",
     category: "progression",
     name: "Entrenamiento Completo",
     desc: "Concluiste todas las clases de todas las temporadas",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.6"/><path d="M 14 12 L 50 12 L 50 36 Q 50 50 32 58 Q 14 50 14 36 Z" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.35"/><g transform="translate(0, 8)"><path d="M 32 14 L 35.5 26 L 47 26 L 37.5 33 L 41 45 L 32 38 L 23 45 L 26.5 33 L 17 26 L 28.5 26 Z" fill="currentColor" opacity="0.95"/><circle cx="32" cy="29" r="2.2" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.7"/><circle cx="20" cy="20" r="1" fill="currentColor" opacity="0.7"/><circle cx="44" cy="20" r="1" fill="currentColor" opacity="0.7"/><circle cx="18" cy="38" r="1" fill="currentColor" opacity="0.6"/><circle cx="46" cy="38" r="1" fill="currentColor" opacity="0.6"/><line x1="14" y1="14" x2="17" y2="17" stroke="currentColor" stroke-width="0.8" opacity="0.5"/><line x1="50" y1="14" x2="47" y2="17" stroke="currentColor" stroke-width="0.8" opacity="0.5"/><path d="M 22 50 L 32 54 L 42 50" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`,
   },
   {
     // Bonus 1 — desbloqueado via comentário em
@@ -173,48 +256,48 @@ export const ACHIEVEMENTS: Achievement[] = [
     // Posicionado logo após training_complete e antes dos products pagos
     // pra ser a "primeira insignia de produto" da hierarquia.
     id: "product_bonus_ganchos",
+    retirada: true,
     tier: "silver",
     category: "products",
     productKey: "Bonus 1",
     name: "Bonus 1",
     desc: "Desbloqueaste el Bonus 1",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hook-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#d1d5db"/><stop offset="50%" stop-color="#9ca3af"/><stop offset="100%" stop-color="#4b5563"/></linearGradient><linearGradient id="hook-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f3f4f6"/><stop offset="50%" stop-color="#d1d5db"/><stop offset="100%" stop-color="#9ca3af"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#hook-shield)" stroke="url(#hook-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#f3f4f6" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><path d="M 32 14 Q 26 16 24 22 Q 22 28 26 32 Q 30 36 36 34 Q 40 32 40 28" fill="none" stroke="#f9fafb" stroke-width="2.2" stroke-linecap="round"/><circle cx="40" cy="28" r="2.5" fill="#f9fafb"/><circle cx="20" cy="20" r="1.4" fill="#f3f4f6" opacity="0.85"/><circle cx="44" cy="20" r="1.4" fill="#f3f4f6" opacity="0.85"/><circle cx="22" cy="40" r="1.2" fill="#f3f4f6" opacity="0.7"/><circle cx="42" cy="40" r="1.2" fill="#f3f4f6" opacity="0.7"/><line x1="22" y1="22" x2="20" y2="20" stroke="#f9fafb" stroke-width="0.5" opacity="0.6"/><line x1="42" y1="22" x2="44" y2="20" stroke="#f9fafb" stroke-width="0.5" opacity="0.6"/></g></svg>`,
   },
   {
     id: "product_creativos",
+    retirada: true,
     tier: "gold",
     category: "products",
     productKey: "Producto 1",
     name: "Producto 1",
     desc: "Adquiriste el Producto 1",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="creat-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c9a961"/><stop offset="50%" stop-color="#8a7236"/><stop offset="100%" stop-color="#4a3d1c"/></linearGradient><linearGradient id="creat-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#c9a961"/><stop offset="100%" stop-color="#8a7236"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#creat-shield)" stroke="url(#creat-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fde68a" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><rect x="20" y="22" width="24" height="18" rx="1" fill="rgba(254,230,138,0.18)" stroke="#fde68a" stroke-width="1.4"/><line x1="20" y1="28" x2="44" y2="28" stroke="#fde68a" stroke-width="0.8" opacity="0.7"/><circle cx="24" cy="25" r="0.8" fill="#fde68a"/><circle cx="27" cy="25" r="0.8" fill="#fde68a"/><circle cx="30" cy="25" r="0.8" fill="#fde68a"/><path d="M 24 33 L 28 31 L 32 35 L 36 32 L 40 36" stroke="#fde68a" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M 28 14 L 30 10 L 32 14 L 36 16 L 32 18 L 30 22 L 28 18 L 24 16 Z" fill="#fef2f2" opacity="0.95"/></g></svg>`,
   },
   {
     id: "product_andromeda",
+    retirada: true,
     tier: "gold",
     category: "products",
     productKey: "Producto 2",
     name: "Producto 2",
     desc: "Adquiriste el Producto 2",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="andr-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c9a961"/><stop offset="50%" stop-color="#8a7236"/><stop offset="100%" stop-color="#4a3d1c"/></linearGradient><linearGradient id="andr-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#c9a961"/><stop offset="100%" stop-color="#8a7236"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#andr-shield)" stroke="url(#andr-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fde68a" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><line x1="32" y1="28" x2="22" y2="22" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><line x1="32" y1="28" x2="42" y2="22" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><line x1="32" y1="28" x2="20" y2="34" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><line x1="32" y1="28" x2="44" y2="34" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><line x1="32" y1="28" x2="32" y2="18" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><line x1="32" y1="28" x2="32" y2="40" stroke="#fde68a" stroke-width="0.6" opacity="0.6"/><circle cx="32" cy="28" r="2.5" fill="#fef2f2"/><circle cx="22" cy="22" r="1.4" fill="#fde68a"/><circle cx="42" cy="22" r="1.4" fill="#fde68a"/><circle cx="20" cy="34" r="1.2" fill="#fde68a" opacity="0.85"/><circle cx="44" cy="34" r="1.2" fill="#fde68a" opacity="0.85"/><circle cx="32" cy="18" r="1.2" fill="#fde68a" opacity="0.85"/><circle cx="32" cy="40" r="1.2" fill="#fde68a" opacity="0.85"/></g></svg>`,
   },
   {
     id: "product_analytics",
+    retirada: true,
     tier: "gold",
     category: "products",
     productKey: "Producto 3",
     name: "Producto 3",
     desc: "Adquiriste el Producto 3",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="anal-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c9a961"/><stop offset="50%" stop-color="#8a7236"/><stop offset="100%" stop-color="#4a3d1c"/></linearGradient><linearGradient id="anal-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#c9a961"/><stop offset="100%" stop-color="#8a7236"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#anal-shield)" stroke="url(#anal-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fde68a" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><line x1="20" y1="38" x2="44" y2="38" stroke="#fde68a" stroke-width="1" opacity="0.8"/><line x1="20" y1="14" x2="20" y2="38" stroke="#fde68a" stroke-width="1" opacity="0.8"/><rect x="22" y="30" width="3" height="8" fill="#fde68a" opacity="0.9"/><rect x="27" y="24" width="3" height="14" fill="#fde68a" opacity="0.9"/><rect x="32" y="20" width="3" height="18" fill="#fef2f2" opacity="0.95"/><rect x="37" y="16" width="3" height="22" fill="#fef2f2"/><path d="M 22 32 L 28 26 L 33 22 L 38 18" stroke="#fef2f2" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="38" cy="18" r="1.8" fill="#fef2f2"/></g></svg>`,
   },
   {
     id: "product_minivsl",
+    retirada: true,
     tier: "gold",
     category: "products",
     productKey: "Upsell 1",
     name: "Upsell 1",
     desc: "Adquiriste el Upsell 1",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vsl-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c9a961"/><stop offset="50%" stop-color="#8a7236"/><stop offset="100%" stop-color="#4a3d1c"/></linearGradient><linearGradient id="vsl-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#c9a961"/><stop offset="100%" stop-color="#8a7236"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#vsl-shield)" stroke="url(#vsl-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fde68a" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><rect x="18" y="22" width="28" height="18" rx="2" fill="rgba(254,230,138,0.15)" stroke="#fde68a" stroke-width="1.5"/><polygon points="28,28 28,38 38,33" fill="#fef2f2"/><rect x="14" y="20" width="4" height="22" fill="rgba(254,230,138,0.1)" stroke="#fde68a" stroke-width="0.8" opacity="0.8"/><rect x="46" y="20" width="4" height="22" fill="rgba(254,230,138,0.1)" stroke="#fde68a" stroke-width="0.8" opacity="0.8"/><line x1="14" y1="24" x2="18" y2="24" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/><line x1="14" y1="30" x2="18" y2="30" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/><line x1="14" y1="36" x2="18" y2="36" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/><line x1="46" y1="24" x2="50" y2="24" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/><line x1="46" y1="30" x2="50" y2="30" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/><line x1="46" y1="36" x2="50" y2="36" stroke="#fde68a" stroke-width="0.6" opacity="0.7"/></g></svg>`,
   },
   {
     // Servicio Premium — produto premium (tratamento exclusive: glow dourado
@@ -222,12 +305,12 @@ export const ACHIEVEMENTS: Achievement[] = [
     // dos outros products pra ser visualmente o "topo" da hierarquia
     // de produtos.
     id: "product_revisao",
+    retirada: true,
     tier: "gold",
     category: "products",
     productKey: "Servicio Premium",
     name: "Servicio Premium",
     desc: "Adquiriste el Servicio Premium",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="revi-shield" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c9a961"/><stop offset="50%" stop-color="#8a7236"/><stop offset="100%" stop-color="#4a3d1c"/></linearGradient><linearGradient id="revi-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#c9a961"/><stop offset="100%" stop-color="#8a7236"/></linearGradient></defs><path d="M 8 6 L 56 6 L 56 36 Q 56 56 32 66 Q 8 56 8 36 Z" fill="url(#revi-shield)" stroke="url(#revi-grad)" stroke-width="1.8" stroke-linejoin="round"/><path d="M 12 10 L 52 10 L 52 36 Q 52 52 32 60 Q 12 52 12 36 Z" fill="none" stroke="#fde68a" stroke-width="0.6" opacity="0.5"/><g transform="translate(0, 8)"><circle cx="28" cy="26" r="9" fill="rgba(254,230,138,0.15)" stroke="#fef2f2" stroke-width="1.8"/><line x1="34" y1="32" x2="42" y2="40" stroke="#fef2f2" stroke-width="2.2" stroke-linecap="round"/><line x1="24" y1="26" x2="32" y2="26" stroke="#fde68a" stroke-width="0.9" opacity="0.85"/><line x1="24" y1="23" x2="29" y2="23" stroke="#fde68a" stroke-width="0.9" opacity="0.85"/><line x1="24" y1="29" x2="30" y2="29" stroke="#fde68a" stroke-width="0.9" opacity="0.85"/></g></svg>`,
   },
 
   // ─── COMUNIDAD (rank por número de posts no fórum) ─────────────────────
@@ -237,59 +320,50 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "rank_recluta",
     tier: "bronze",
     category: "community",
-    name: "Rank 1",
-    desc: "1+ post",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 8 L 38 30 L 60 36 L 38 42 L 32 64 L 26 42 L 4 36 L 26 30 Z" fill="currentColor" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round"/></svg>`,
+    name: "Mónada",
+    desc: "El primer círculo. Has empezado a hablar. · 1+ publicaciones",
   },
   {
     id: "rank_agente",
     tier: "bronze",
     category: "community",
-    name: "Rank 2",
-    desc: "10+ posts",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 6 L 39 28 L 62 28 L 43 42 L 50 64 L 32 50 L 14 64 L 21 42 L 2 28 L 25 28 Z" fill="currentColor" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round"/></svg>`,
+    name: "Vesica Piscis",
+    desc: "Dos círculos se cruzan: ya no escribes solo. · 10+ publicaciones",
   },
   {
     id: "rank_operador",
     tier: "silver",
     category: "community",
-    name: "Rank 3",
-    desc: "50+ posts",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 4 L 42 20 L 62 20 L 52 36 L 62 52 L 42 52 L 32 68 L 22 52 L 2 52 L 12 36 L 2 20 L 22 20 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"/></svg>`,
+    name: "Triqueta",
+    desc: "Tres centros sostienen la conversación. · 50+ publicaciones",
   },
   {
     id: "rank_estratega",
     tier: "silver",
     category: "community",
-    name: "Rank 4",
-    desc: "100+ posts",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 4 L 36 32 L 64 36 L 36 40 L 32 68 L 28 40 L 0 36 L 28 32 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"/><line x1="14" y1="18" x2="28" y2="32" stroke="currentColor" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/><line x1="50" y1="18" x2="36" y2="32" stroke="currentColor" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/><line x1="14" y1="54" x2="28" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/><line x1="50" y1="54" x2="36" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/></svg>`,
+    name: "Cuaternario",
+    desc: "Cuatro círculos: la base ya es estable. · 100+ publicaciones",
   },
   {
     id: "rank_capo",
     tier: "gold",
     category: "community",
-    name: "Rank 5",
-    desc: "200+ posts",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 4 L 36 26 L 56 14 L 44 34 L 64 36 L 44 38 L 56 58 L 36 46 L 32 68 L 28 46 L 8 58 L 20 38 L 0 36 L 20 34 L 8 14 L 28 26 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"/><circle cx="32" cy="36" r="3" fill="rgba(0,0,0,0.4)"/></svg>`,
+    name: "Pentada",
+    desc: "Cinco. La forma empieza a girar. · 200+ publicaciones",
   },
   {
     id: "rank_padrino",
     tier: "gold",
     category: "community",
-    name: "Rank 6",
-    desc: "300+ posts",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><g fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"><path d="M 32 4 L 34 32 L 32 36 L 30 32 Z"/><path d="M 60 36 L 36 34 L 32 36 L 36 38 Z"/><path d="M 32 68 L 30 40 L 32 36 L 34 40 Z"/><path d="M 4 36 L 28 38 L 32 36 L 28 34 Z"/><path d="M 52 16 L 36 32 L 32 36 L 36 32 Z" opacity="0.85"/><path d="M 52 56 L 36 40 L 32 36 L 36 40 Z" opacity="0.85"/><path d="M 12 56 L 28 40 L 32 36 L 28 40 Z" opacity="0.85"/><path d="M 12 16 L 28 32 L 32 36 L 28 32 Z" opacity="0.85"/></g><circle cx="32" cy="36" r="4" fill="currentColor"/></svg>`,
+    name: "Semilla de la Vida",
+    desc: "Seis alrededor de uno. El patrón está completo. · 300+ publicaciones",
   },
   {
     id: "rank_leyenda",
     tier: "topo",
     category: "community",
-    name: "Rank 7",
-    desc: "500+ posts",
-    // Tier topo (vermelho da marca) + glow animado igual Servicio Premium B — estrela
-    // suprema da comunidad. Renderização aplica topoBadgeGlow.
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="leyenda-star" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fef2f2"/><stop offset="40%" stop-color="#fca5a5"/><stop offset="80%" stop-color="#dc2626"/><stop offset="100%" stop-color="#7f1d1d"/></radialGradient></defs><circle cx="32" cy="36" r="30" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><circle cx="32" cy="36" r="22" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><path d="M 32 8 L 39 28 L 60 28 L 43 41 L 50 62 L 32 49 L 14 62 L 21 41 L 4 28 L 25 28 Z" fill="url(#leyenda-star)" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round"/><circle cx="32" cy="36" r="3" fill="#fef2f2"/></svg>`,
+    name: "Flor de la Vida",
+    desc: "Diecinueve círculos. La geometría entera. · 500+ publicaciones",
   },
 
   // ─── TIEMPO (dias únicos de acceso à plataforma) ────────────────────────
@@ -297,35 +371,29 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "time_devoto",
     tier: "bronze",
     category: "time",
-    name: "Tiempo 1",
-    desc: "7 días únicos",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 32 8 Q 22 24 22 40 Q 22 58 32 62 Q 42 58 42 40 Q 42 24 32 8 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"/><path d="M 32 24 Q 27 32 27 42 Q 27 50 32 52 Q 37 50 37 42 Q 37 32 32 24 Z" fill="rgba(255,255,255,0.4)"/></svg>`,
+    name: "Tetraedro",
+    desc: "La primera forma. 7 días de presencia",
   },
   {
     id: "time_habitue",
     tier: "silver",
     category: "time",
-    name: "Tiempo 2",
-    desc: "30 días únicos",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="42" width="20" height="22" fill="currentColor" opacity="0.85"/><line x1="22" y1="46" x2="42" y2="46" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><path d="M 32 6 Q 20 18 20 30 Q 20 42 32 46 Q 44 42 44 30 Q 44 18 32 6 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4" stroke-linejoin="round"/><path d="M 32 16 Q 26 24 26 32 Q 26 38 32 40 Q 38 38 38 32 Q 38 24 32 16 Z" fill="rgba(255,255,255,0.5)"/></svg>`,
+    name: "Merkaba",
+    desc: "Dos tetraedros girando. 30 días de presencia",
   },
   {
     id: "time_veterano",
     tier: "gold",
     category: "time",
-    name: "Tiempo 3",
-    desc: "60 días únicos",
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><path d="M 6 60 L 58 60 L 52 66 L 12 66 Z" fill="currentColor" opacity="0.7"/><line x1="14" y1="62" x2="50" y2="55" stroke="currentColor" stroke-width="2" opacity="0.6"/><line x1="50" y1="62" x2="14" y2="55" stroke="currentColor" stroke-width="2" opacity="0.6"/><path d="M 32 6 Q 18 18 18 38 Q 18 52 32 58 Q 46 52 46 38 Q 46 18 32 6 Z" fill="currentColor" stroke="currentColor" stroke-width="0.4"/><path d="M 32 18 Q 24 28 24 40 Q 24 50 32 54 Q 40 50 40 40 Q 40 28 32 18 Z" fill="rgba(255,255,255,0.5)"/><path d="M 14 36 Q 8 44 8 50 Q 8 56 14 58 Q 20 56 20 50 Q 20 44 14 36 Z" fill="currentColor" opacity="0.7"/><path d="M 50 36 Q 44 44 44 50 Q 44 56 50 58 Q 56 56 56 50 Q 56 44 50 36 Z" fill="currentColor" opacity="0.7"/></svg>`,
+    name: "Cubo de Metatrón",
+    desc: "Todos los sólidos contenidos. 60 días de presencia",
   },
   {
     id: "time_eterno",
     tier: "topo",
     category: "time",
-    name: "Tiempo 4",
-    desc: "90 días únicos",
-    // Tier topo (vermelho da marca) + glow animado igual Servicio Premium B — chama
-    // suprema do tempo. Renderização aplica topoBadgeGlow nos componentes.
-    svg: `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="eterno-flame" cx="50%" cy="55%" r="50%"><stop offset="0%" stop-color="#fef2f2"/><stop offset="40%" stop-color="#fca5a5"/><stop offset="80%" stop-color="#dc2626"/><stop offset="100%" stop-color="#7f1d1d"/></radialGradient></defs><circle cx="32" cy="36" r="30" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.5"/><circle cx="32" cy="36" r="22" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.4"/><path d="M 32 6 Q 16 18 16 40 Q 16 56 32 62 Q 48 56 48 40 Q 48 18 32 6 Z" fill="url(#eterno-flame)" stroke="currentColor" stroke-width="0.4"/><path d="M 32 18 Q 22 30 22 42 Q 22 52 32 56 Q 42 52 42 42 Q 42 30 32 18 Z" fill="rgba(254,242,242,0.6)"/><circle cx="32" cy="46" r="3" fill="#fef2f2"/><circle cx="6" cy="14" r="1.4" fill="currentColor"/><circle cx="58" cy="14" r="1.4" fill="currentColor"/><circle cx="6" cy="56" r="1.2" fill="currentColor" opacity="0.7"/><circle cx="58" cy="56" r="1.2" fill="currentColor" opacity="0.7"/></svg>`,
+    name: "Toroide",
+    desc: "El flujo que vuelve sobre sí. 90 días de presencia",
   },
 ]
 
@@ -419,7 +487,8 @@ export function isExclusiveSeal(badgeId: string | null | undefined): boolean {
     badgeId === "admin_seal" ||
     badgeId === "el_topo" ||
     badgeId === "el_estudio" ||
-    badgeId === "product_revisao"
+    badgeId === "product_revisao" ||
+    badgeId === "embajador_galactico"
   )
 }
 
@@ -430,3 +499,106 @@ export function getAchievementById(id: string): Achievement | undefined {
 export function getTierColor(tier: AchievementTier): string {
   return TIER_COLORS[tier]
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AURAS DEL CAMINO
+// ═══════════════════════════════════════════════════════════════════════════
+// Cada grado del Camino tiene su propio color, y ese color no se queda en la
+// insignia: rodea la foto de perfil, tiñe el punto en el Mapa de la Red y
+// marca la tarjeta en el listado. Así se reconoce a alguien de un vistazo, sin
+// tener que leer nada.
+//
+// Los grados son SEÑALES DE RECORRIDO, no rangos de autoridad. Quien llegó más
+// lejos no manda sobre nadie: solo ha andado más camino.
+
+export type Aura = {
+  /** Color base del anillo y del halo. */
+  color: string
+  /** Segundo color, para el degradado del anillo. */
+  color2: string
+  /** Nombre corto para las pastillas de filtro. */
+  corto: string
+  /** El anillo late en vez de quedarse quieto. Solo los dos últimos grados. */
+  vivo: boolean
+}
+
+export const AURAS: Record<string, Aura> = {
+  // ── El Camino: una temporada, un grado ───────────────────────────────────
+  season_1_complete: { color: "#8fc46a", color2: "#e8ffc4", corto: "Semilla",    vivo: false },
+  season_2_complete: { color: "#8b6fd8", color2: "#7ee8fa", corto: "Activador",  vivo: false },
+  season_3_complete: { color: "#d9b866", color2: "#ffeab8", corto: "Guardián",   vivo: true  },
+  season_4_complete: { color: "#c9cbe0", color2: "#ffffff", corto: "Arquitecto", vivo: true  },
+
+  // ── Concedidas a mano ────────────────────────────────────────────────────
+  embajador_galactico: { color: "#3b82f6", color2: "#7ee8fa", corto: "Embajador", vivo: true },
+  admin_seal:          { color: "#b9f2ff", color2: "#ffffff", corto: "Admin",     vivo: true },
+
+  // ── Primera clase del Camino ─────────────────────────────────────────────
+  agent_estratega:     { color: "#6D4A9B", color2: "#a78bca", corto: "144",       vivo: false },
+  practica_profunda:   { color: "#8b8fe0", color2: "#ffd98a", corto: "Práctica",  vivo: false },
+
+  // ── Funciones de la Red ──────────────────────────────────────────────────
+  rol_organizador:     { color: "#d9873a", color2: "#ffd98a", corto: "Organizador", vivo: true },
+  rol_cartografo:      { color: "#2f9a8a", color2: "#7fe8d0", corto: "Cartógrafo",  vivo: true },
+  rol_colaborador:     { color: "#a05fd0", color2: "#e8b8ff", corto: "Colaborador", vivo: true },
+  rol_instructor:      { color: "#2f8a7a", color2: "#9ff5e4", corto: "Instructor",  vivo: true },
+
+  // ── Aportaciones ─────────────────────────────────────────────────────────
+  faro_territorio:       { color: "#3f9fd0", color2: "#ffe9a8", corto: "Faro",          vivo: true },
+  bibliotecario_cosmico: { color: "#b08bd8", color2: "#ffe0a8", corto: "Bibliotecario", vivo: true },
+
+  // ── Estrellas: la Flor de la Vida, círculo a círculo ─────────────────────
+  rank_recluta:   { color: "#2f6fa8", color2: "#8fd4ff", corto: "Mónada",   vivo: false },
+  rank_agente:    { color: "#2f8a6a", color2: "#9be8d0", corto: "Vesica",   vivo: false },
+  rank_operador:  { color: "#5f8a2f", color2: "#c9e88f", corto: "Triqueta", vivo: false },
+  rank_estratega: { color: "#b08430", color2: "#ffe08a", corto: "Cuaternario", vivo: false },
+  rank_capo:      { color: "#b05f30", color2: "#ffb88a", corto: "Pentada",  vivo: false },
+  rank_padrino:   { color: "#7a3fb0", color2: "#e0a8ff", corto: "Semilla",  vivo: true  },
+  rank_leyenda:   { color: "#d9b866", color2: "#ffffff", corto: "Flor",     vivo: true  },
+
+  // ── Llamas: los sólidos del origen ───────────────────────────────────────
+  time_devoto:    { color: "#b0662f", color2: "#ffd08a", corto: "Tetraedro", vivo: false },
+  time_habitue:   { color: "#3f4fb0", color2: "#8fd4ff", corto: "Merkaba",   vivo: false },
+  time_veterano:  { color: "#6a2fb0", color2: "#e0a8ff", corto: "Metatrón",  vivo: true  },
+  time_eterno:    { color: "#d9b866", color2: "#ffffff", corto: "Toroide",   vivo: true  },
+}
+
+/**
+ * Orden en que se muestran los filtros de La Red. El Embajador va primero
+ * porque es la distinción que el administrador concede; luego el Camino, de
+ * principio a fin.
+ */
+export const ORDEN_AURAS = [
+  "embajador_galactico",
+  "season_1_complete",
+  "season_2_complete",
+  "season_3_complete",
+  "season_4_complete",
+] as const
+
+export function getAura(badgeId: string | null | undefined): Aura | undefined {
+  return badgeId ? AURAS[badgeId] : undefined
+}
+
+/**
+ * Los grados que forman el Camino, en orden. Sirve para saber cuál es el más
+ * avanzado que alguien ha alcanzado.
+ */
+export const CAMINO = [
+  "season_1_complete",
+  "season_2_complete",
+  "season_3_complete",
+  "season_4_complete",
+] as const
+
+/** El grado más avanzado de una lista de insignias desbloqueadas. */
+export function gradoMasAlto(desbloqueadas: string[]): string | null {
+  const set = new Set(desbloqueadas)
+  for (let i = CAMINO.length - 1; i >= 0; i--) {
+    if (set.has(CAMINO[i])) return CAMINO[i]
+  }
+  return null
+}
+
+/** El catálogo que se muestra: todo menos lo retirado. */
+export const ACHIEVEMENTS_VISIBLES = ACHIEVEMENTS.filter((a) => !a.retirada)

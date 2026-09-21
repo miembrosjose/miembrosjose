@@ -7,6 +7,7 @@
 import { useView } from "../_lib/view-context"
 import { useIsOnline, ONLINE_BOX_SHADOW } from "../_lib/online-presence"
 import { getAchievementById, getTierColor } from "@/lib/achievements"
+import { getAchievementSvg } from "@/lib/achievement-svg"
 import { CircleImg } from "./CircleImg"
 import type { ForumAuthor } from "../_lib/types"
 
@@ -94,7 +95,7 @@ export function AvatarBadge({ badgeId }: { badgeId?: string | null }) {
           ? "revisaoBadgeGlow 2.4s ease-in-out infinite"
           : undefined,
       }}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }
@@ -117,7 +118,7 @@ export function AvatarStarSmall({ starId }: { starId?: string | null }) {
           ? "topoBadgeGlow 2.4s ease-in-out infinite"
           : undefined,
       }}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }
@@ -140,7 +141,7 @@ export function AvatarFlameSmall({ flameId }: { flameId?: string | null }) {
           ? "topoBadgeGlow 2.4s ease-in-out infinite"
           : undefined,
       }}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }

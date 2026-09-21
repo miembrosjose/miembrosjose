@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { concederInsignia } from "@/lib/conceder-insignia"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -34,6 +35,14 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const admin = getSupabaseAdmin()
   const { data, error } = await admin.from("contact_places").update(patch).eq("id", id).select("*").single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // FARO DEL TERRITORIO — al aprobar la aportación, quien la propuso recibe
+  // su insignia. Se concede solo al publicar, no al editar un punto ya
+  // publicado, y solo si hubo alguien detrás de la propuesta.
+  if (b.status === "published" && data?.created_by_id) {
+    await concederInsignia(data.created_by_id as string, "faro_territorio")
+  }
+
   return NextResponse.json({ ok: true, place: data })
 }
 

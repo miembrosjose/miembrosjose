@@ -4,7 +4,9 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { ACHIEVEMENTS, computeCommunityRank, applyAdminRankOverride, getAchievementById, getTierColor } from "@/lib/achievements"
+import { getNetworkRoles } from "@/lib/red/roles"
+import { nombrePais } from "@/lib/red/paises"
+import { ACHIEVEMENTS_VISIBLES, ACHIEVEMENTS, computeCommunityRank, applyAdminRankOverride, getAchievementById, getTierColor } from "@/lib/achievements"
 import { computeLevel, applyAdminLevelOverride } from "@/lib/xp"
 
 export const dynamic = "force-dynamic"
@@ -115,13 +117,14 @@ export async function GET(
     (unlockedRows || []).map((r) => [r.achievement_id, r.unlocked_at]),
   )
 
-  const unlockedBadges = ACHIEVEMENTS.filter((ach) => unlockedSet.has(ach.id)).map((ach) => ({
+  // Las retiradas no se listan aunque alguien las tenga concedidas: siguen
+  // en la base por los flujos de compra, pero no se muestran.
+  const unlockedBadges = ACHIEVEMENTS_VISIBLES.filter((ach) => unlockedSet.has(ach.id)).map((ach) => ({
     id: ach.id,
     name: ach.name,
     desc: ach.desc,
     tier: ach.tier,
     category: ach.category,
-    svg: ach.svg,
     color: getTierColor(ach.tier),
     unlocked_at: unlockedSet.get(ach.id) as string,
   }))
@@ -137,19 +140,47 @@ export async function GET(
         desc: adm.desc,
         tier: adm.tier,
         category: adm.category,
-        svg: adm.svg,
         color: getTierColor(adm.tier),
         unlocked_at: target.created_at,
       })
     }
   }
 
+  const isSelf = viewer.id === id
+
+  // ── Lugar en la Red: ubicación (si la comparte) y roles funcionales ──────
+  // La ciudad solo se entrega si su dueño activó show_city, o si es él mismo.
+  // El país no se expone: se usa para recuentos agregados, no en el perfil.
+  const [{ data: locRow }, networkRoles] = await Promise.all([
+    admin
+      .from("member_location")
+      .select("country_code, show_city, network_cities(name, admin1)")
+      .eq("user_id", id)
+      .maybeSingle(),
+    getNetworkRoles(id),
+  ])
+
+  const locVisible = !!locRow && (isSelf || locRow.show_city === true)
+  const locCity = (locRow?.network_cities as unknown as { name: string; admin1: string | null } | null) || null
+  const ubicacion = locVisible && locCity
+    ? {
+        city: locCity.name,
+        admin1: locCity.admin1,
+        country_code: locRow!.country_code,
+        country: nombrePais(locRow!.country_code),
+        label: `${locCity.name}, ${nombrePais(locRow!.country_code)}`,
+      }
+    : null
+
   return NextResponse.json({
     user: {
       id: target.id,
-      email: target.email,
+      // El email NUNCA sale hacia otro miembro: solo el propio dueño lo recibe.
+      // La interfaz solo lo usaba como respaldo del nombre, así que ese respaldo
+      // se calcula aquí y el dato personal no viaja.
+      email: isSelf ? target.email : null,
       created_at: target.created_at,
-      full_name: meta.full_name || null,
+      full_name: meta.full_name || target.email?.split("@")[0] || "Miembro",
       username: meta.username || null,
       bio: meta.bio || null,
       niche: meta.niche || null,
@@ -162,7 +193,9 @@ export async function GET(
       is_admin: targetIsAdmin,
       unique_login_days: meta.unique_login_days || 0,
     },
-    isSelf: viewer.id === id,
+    isSelf,
+    ubicacion,
+    network_roles: networkRoles,
     counts: {
       posts: postCount || 0,
       replies: replyCount || 0,
@@ -182,16 +215,16 @@ export async function GET(
     },
     badges: {
       rank_ach: rankAch
-        ? { id: rankAch.id, name: rankAch.name, tier: rankAch.tier, svg: rankAch.svg, color: getTierColor(rankAch.tier) }
+        ? { id: rankAch.id, name: rankAch.name, tier: rankAch.tier, color: getTierColor(rankAch.tier) }
         : null,
       featured_ach: featuredAch
-        ? { id: featuredAch.id, name: featuredAch.name, tier: featuredAch.tier, svg: featuredAch.svg, color: getTierColor(featuredAch.tier) }
+        ? { id: featuredAch.id, name: featuredAch.name, tier: featuredAch.tier, color: getTierColor(featuredAch.tier) }
         : null,
       star_ach: starAch && starAch.category === "community"
-        ? { id: starAch.id, name: starAch.name, tier: starAch.tier, svg: starAch.svg, color: getTierColor(starAch.tier) }
+        ? { id: starAch.id, name: starAch.name, tier: starAch.tier, color: getTierColor(starAch.tier) }
         : null,
       flame_ach: flameAch && flameAch.category === "time"
-        ? { id: flameAch.id, name: flameAch.name, tier: flameAch.tier, svg: flameAch.svg, color: getTierColor(flameAch.tier) }
+        ? { id: flameAch.id, name: flameAch.name, tier: flameAch.tier, color: getTierColor(flameAch.tier) }
         : null,
       unlocked: unlockedBadges,
     },

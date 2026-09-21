@@ -1,16 +1,23 @@
 "use client"
 
 import { useState, useTransition, useRef, useEffect } from "react"
+import { UbicacionRed } from "@/app/miembros/_components/UbicacionRed"
 import { useRouter } from "next/navigation"
-import { ACHIEVEMENTS, getAchievementById, getTierColor, type Achievement } from "@/lib/achievements"
+import { ACHIEVEMENTS_VISIBLES, getAura, ACHIEVEMENTS, getAchievementById, getTierColor, type Achievement } from "@/lib/achievements"
+import { getAchievementSvg } from "@/lib/achievement-svg"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { LegalLinks } from "@/components/legal/legal-links"
 
 const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
 
-// Le localStorage do prototipo (mesmo subdomínio miembros.SEU_DOMINIO.com)
-// pra saber quais insignias o user já desbloqueou.
+// Insignias desbloqueadas guardadas en el navegador. Es una herencia del
+// prototipo: la fuente de verdad es la tabla user_unlocked_achievements, que
+// se lee abajo desde /api/profile/unlocked-achievements.
+//
+// Se conserva y se SUMA a lo del servidor, no se sustituye: si alguien tiene
+// avance registrado solo en este navegador y todavía no llegó a la base, no
+// debe perderlo al abrir esta pantalla.
 function getUnlockedAchievementIds(): Set<string> {
   if (typeof window === "undefined") return new Set()
   try {
@@ -177,7 +184,25 @@ export function ProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    // Lo del navegador se pinta de inmediato; lo del servidor llega enseguida
+    // y se une. Sin esto, desbloquear algo en la base —por ejemplo el
+    // Embajador Galáctico que concede el panel de admin— no se veía aquí y las
+    // insignias seguían apareciendo bloqueadas.
     setUnlockedIds(getUnlockedAchievementIds())
+
+    let vivo = true
+    fetch("/api/profile/unlocked-achievements", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!vivo || !d) return
+        const delServidor: string[] = (d.unlocked || [])
+          .map((x: { achievement_id?: string }) => x?.achievement_id)
+          .filter(Boolean)
+        if (delServidor.length === 0) return
+        setUnlockedIds((prev) => new Set([...prev, ...delServidor]))
+      })
+      .catch(() => { /* se sigue con lo que haya en el navegador */ })
+    return () => { vivo = false }
   }, [])
 
   function selectStar(starId: string | null) {
@@ -470,15 +495,24 @@ export function ProfileForm({
             <AvatarStarOverlay starId={featuredStarId} />
             <AvatarFlameOverlay flameId={featuredFlameId} />
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFilePick}
               disabled={isAvatarPending}
-              className="block w-full text-sm text-[#a0a0b0] file:mr-4 file:border-0 file:bg-[#1a1a24] file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-[0.2em] file:text-[#F3F6FA] hover:file:bg-[#2a2a35] [font-family:var(--font-geist-sans)]"
+              className="sr-only"
+              aria-label="Elegir una foto de perfil"
             />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isAvatarPending}
+              className="w-full max-w-full border border-[#2a2a35] bg-[#1a1a24] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#F3F6FA] transition-colors hover:bg-[#2a2a35] disabled:opacity-60 [font-family:var(--font-geist-sans)]"
+            >
+              Elegir foto
+            </button>
             <p className="text-xs text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
               Se convertirá automáticamente a WebP (cuadrada, max 512×512).
             </p>
@@ -497,8 +531,8 @@ export function ProfileForm({
         subtitle="Aparece en la esquina inferior derecha de tu foto."
         achievements={
           isAdmin
-            ? ACHIEVEMENTS.filter((a) => a.category !== "community" && a.category !== "time")
-            : ACHIEVEMENTS.filter(
+            ? ACHIEVEMENTS_VISIBLES.filter((a) => a.category !== "community" && a.category !== "time")
+            : ACHIEVEMENTS_VISIBLES.filter(
                 (a) => a.id !== "admin_seal" && a.category !== "community" && a.category !== "time",
               )
         }
@@ -514,7 +548,7 @@ export function ProfileForm({
       <BadgeSection
         title="Estrella destacada"
         subtitle="Aparece en la esquina superior derecha de tu foto."
-        achievements={ACHIEVEMENTS.filter((a) => a.category === "community")}
+        achievements={ACHIEVEMENTS_VISIBLES.filter((a) => a.category === "community")}
         unlockedIds={unlockedIds}
         selectedId={featuredStarId}
         onSelect={selectStar}
@@ -527,7 +561,7 @@ export function ProfileForm({
       <BadgeSection
         title="Llama destacada"
         subtitle="Aparece en la esquina superior izquierda de tu foto."
-        achievements={ACHIEVEMENTS.filter((a) => a.category === "time")}
+        achievements={ACHIEVEMENTS_VISIBLES.filter((a) => a.category === "time")}
         unlockedIds={unlockedIds}
         selectedId={featuredFlameId}
         onSelect={selectFlame}
@@ -556,6 +590,16 @@ export function ProfileForm({
           <StatusMsg s={nameState} />
         </div>
       </form>
+
+      {/* TU LUGAR EN LA RED — país, ciudad y su privacidad */}
+      <section className={sectionCls}>
+        <h2 className={sectionTitleCls}>Tu lugar en la Red</h2>
+        <p className="mb-6 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Completa tu ubicación para descubrir miembros de 144 mil cerca de ti. Trabajamos solo a
+          nivel de ciudad: nunca guardamos tu domicilio ni tu ubicación en tiempo real.
+        </p>
+        <UbicacionRed inputCls={inputCls} labelCls={labelCls} btnCls={btnCls} />
+      </section>
 
       {/* SOBRE VOS — username, bio, nicho, instagram */}
       <form onSubmit={saveAbout} className={sectionCls}>
@@ -787,12 +831,11 @@ function AvatarBadgeOverlay({ badgeId }: { badgeId: string | null }) {
   if (!badgeId) return null
   const ach = getAchievementById(badgeId)
   if (!ach) return null
-  const isAdminSeal = badgeId === "admin_seal"
-  const isTopoSeal = badgeId === "el_topo"
-  const isRevisaoSeal = badgeId === "product_revisao"
-  // Insignia cósmica autocontenida (SVG con cielo propio) → sin círculo negro.
-  const isCosmic = badgeId === "agent_estratega"
-  const noFrame = isAdminSeal || isTopoSeal || isRevisaoSeal || isCosmic
+  // Todas las insignias del catálogo actual traen su propio cielo y su
+  // propio color: ninguna necesita el círculo negro de marco, y las que
+  // tienen aura declarada brillan solas.
+  const aura = getAura(badgeId)
+  const noFrame = true
   return (
     <div
       className={
@@ -802,16 +845,16 @@ function AvatarBadgeOverlay({ badgeId }: { badgeId: string | null }) {
       }
       style={{
         color: getTierColor(ach.tier),
-        animation: isAdminSeal
-          ? "admBadgeGlow 2.4s ease-in-out infinite"
-          : isTopoSeal
-          ? "topoBadgeGlow 2.4s ease-in-out infinite"
-          : isRevisaoSeal
-          ? "revisaoBadgeGlow 2.4s ease-in-out infinite"
-          : undefined,
+        ...(aura
+          ? {
+              ["--g1" as string]: `${aura.color}cc`,
+              ["--g2" as string]: `${aura.color2}88`,
+              animation: "auraBadgeGlow 2.6s ease-in-out infinite",
+            }
+          : {}),
       }}
       title={ach.name}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }
@@ -822,17 +865,22 @@ function AvatarStarOverlay({ starId }: { starId: string | null }) {
   if (!starId) return null
   const ach = getAchievementById(starId)
   if (!ach || ach.category !== "community") return null
+  const aura = getAura(starId)
   return (
     <div
       className="absolute -top-1 -right-1 flex h-9 w-9 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
       style={{
         color: getTierColor(ach.tier),
-        animation: ach.tier === "topo"
-          ? "topoBadgeGlow 2.4s ease-in-out infinite"
-          : undefined,
+        ...(aura
+          ? {
+              ["--g1" as string]: `${aura.color}cc`,
+              ["--g2" as string]: `${aura.color2}88`,
+              animation: "auraBadgeGlow 2.6s ease-in-out infinite",
+            }
+          : {}),
       }}
       title={ach.name}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }
@@ -843,17 +891,22 @@ function AvatarFlameOverlay({ flameId }: { flameId: string | null }) {
   if (!flameId) return null
   const ach = getAchievementById(flameId)
   if (!ach || ach.category !== "time") return null
+  const aura = getAura(flameId)
   return (
     <div
       className="absolute -top-1 -left-1 flex h-9 w-9 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
       style={{
         color: getTierColor(ach.tier),
-        animation: ach.tier === "topo"
-          ? "topoBadgeGlow 2.4s ease-in-out infinite"
-          : undefined,
+        ...(aura
+          ? {
+              ["--g1" as string]: `${aura.color}cc`,
+              ["--g2" as string]: `${aura.color2}88`,
+              animation: "auraBadgeGlow 2.6s ease-in-out infinite",
+            }
+          : {}),
       }}
       title={ach.name}
-      dangerouslySetInnerHTML={{ __html: ach.svg }}
+      dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
     />
   )
 }
@@ -945,7 +998,7 @@ function BadgeSection({
               <div
                 className="h-14 w-14 [&_svg]:h-full [&_svg]:w-full"
                 style={{ color, opacity: unlocked ? 1 : 0.25 }}
-                dangerouslySetInnerHTML={{ __html: ach.svg }}
+                dangerouslySetInnerHTML={{ __html: getAchievementSvg(ach.id) }}
               />
               <div className="flex min-h-[3.5rem] flex-col items-center justify-start gap-1">
                 <span

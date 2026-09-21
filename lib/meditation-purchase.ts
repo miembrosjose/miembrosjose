@@ -133,4 +133,23 @@ export async function registerMeditationEntitlement(args: {
     },
     { onConflict: "user_id,meditation_id", ignoreDuplicates: true },
   )
+
+  // PRÁCTICA PROFUNDA — una sola insignia para todas las meditaciones
+  // premium. Se concede con la primera compra; las siguientes no cambian
+  // nada. Se comprueba antes de insertar en vez de confiar en una
+  // restricción única, igual que el resto de concesiones de la plataforma.
+  const { data: yaLaTiene } = await admin
+    .from("user_unlocked_achievements")
+    .select("achievement_id")
+    .eq("user_id", args.userId)
+    .eq("achievement_id", "practica_profunda")
+    .limit(1)
+
+  if (!yaLaTiene || yaLaTiene.length === 0) {
+    const { error } = await admin
+      .from("user_unlocked_achievements")
+      .insert({ user_id: args.userId, achievement_id: "practica_profunda" })
+    // La compra ya está registrada: si la insignia falla, no se deshace nada.
+    if (error) console.error("[meditation-purchase] practica_profunda", error.message)
+  }
 }

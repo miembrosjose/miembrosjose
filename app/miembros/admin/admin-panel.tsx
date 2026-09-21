@@ -17,6 +17,7 @@ import {
   CreditCard,
   ChevronRight,
   RotateCcw,
+  Network,
 } from "lucide-react"
 
 type Tab =
@@ -28,7 +29,12 @@ type Tab =
   | "messages"
   | "subs"
   | "resetprogress"
+  | "redroles"
 
+const RedRoles = dynamic(
+  () => import("./_tabs/RedRoles").then((m) => m.RedRoles),
+  { ssr: false },
+)
 const GrantProduct = dynamic(
   () => import("./_tabs/GrantProduct").then((m) => m.GrantProduct),
   { ssr: false },
@@ -112,6 +118,12 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Mensagens Diretas",
         description: "Moderação de DMs entre membros",
         icon: MessageSquare,
+      },
+      {
+        id: "redroles",
+        label: "Roles de La Red",
+        description: "Embajadores Galácticos y funciones: Organizador, Facilitador…",
+        icon: Network,
       },
       {
         id: "resetprogress",
@@ -300,6 +312,7 @@ export function AdminPanel() {
           {tab === "access" && <RevokedAccess />}
           {tab === "messages" && <MessagesModeration />}
           {tab === "resetprogress" && <ResetProgress />}
+          {tab === "redroles" && <RedRoles />}
         </div>
       </main>
     </div>

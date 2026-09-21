@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { getAchievementById, type Achievement, type AchievementTier } from "@/lib/achievements"
+import { getAchievementSvg } from "@/lib/achievement-svg"
 import { getSoundForAchievement } from "../_lib/sounds"
 import styles from "./achievement-toast.module.css"
 
@@ -93,7 +94,7 @@ export function AchievementToast() {
       <div className={styles.frame}>
         <div
           className={styles.icon}
-          dangerouslySetInnerHTML={{ __html: current.svg }}
+          dangerouslySetInnerHTML={{ __html: getAchievementSvg(current.id) }}
         />
         <div className={styles.content}>
           <div className={styles.eyebrow}>Insignia desbloqueada</div>
