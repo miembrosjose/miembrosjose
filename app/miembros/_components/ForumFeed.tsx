@@ -5,7 +5,7 @@
 // openEditModal/openReportModal.
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal, ChevronDown, Compass } from "lucide-react"
 import { api } from "../_lib/api"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
@@ -38,6 +38,18 @@ export function ForumFeed() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [activeTag, setActiveTag] = useState<string | null>(null)
+
+  // ── EL TEMARIO DEL CAMINO ────────────────────────────────────────────────
+  // Los doce temas fijados son un índice, no una conversación. Al estar
+  // fijados ocupaban la entrada entera: quien llegaba veía doce publicaciones
+  // del administrador antes que una sola palabra de la comunidad.
+  //
+  // Ahora la lista de abajo es la conversación, y el temario vive aquí
+  // arriba, plegado y en una sola línea. Se abre a voluntad, enseña solo los
+  // títulos, y cada título despliega su tema donde está.
+  const [temarioAbierto, setTemarioAbierto] = useState(false)
+  const [temario, setTemario] = useState<TForumPost[] | null>(null)
+  const [temaAbierto, setTemaAbierto] = useState<string | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
 
@@ -52,6 +64,17 @@ export function ForumFeed() {
     const s = p.toString()
     return s ? `/api/forum/posts?${s}` : "/api/forum/posts"
   }, [debouncedSearch, activeTag])
+
+  // Se pide una sola vez, y solo si alguien abre el temario: quien entra a
+  // leer a la comunidad no paga por traerse doce textos que no va a mirar.
+  useEffect(() => {
+    if (!temarioAbierto || temario !== null) return
+    let vivo = true
+    api<FeedResponse>("/api/forum/posts?origen=camino&limit=50")
+      .then((d) => { if (vivo) setTemario(d.posts || []) })
+      .catch(() => { if (vivo) setTemario([]) })
+    return () => { vivo = false }
+  }, [temarioAbierto, temario])
 
   // Debounce del input de búsqueda.
   useEffect(() => {
@@ -300,6 +323,69 @@ export function ForumFeed() {
         </button>
       </div>
 
+      {/* ── El temario del Camino, plegado ──────────────────────────────
+          Una sola línea. Dentro, los títulos; cada uno abre su tema donde
+          está. Así el índice del Camino sigue a mano sin ser lo primero ni
+          lo único que se ve al entrar. */}
+      <div className={styles.temario}>
+        <button
+          type="button"
+          className={styles.temarioCabecera}
+          onClick={() => setTemarioAbierto((v) => !v)}
+          aria-expanded={temarioAbierto}
+        >
+          <Compass size={14} aria-hidden />
+          <span className={styles.temarioTitulo}>Temario del Camino</span>
+          <span className={styles.temarioPista}>
+            {temario ? `${temario.length} temas` : "los temas de cada temporada"}
+          </span>
+          <ChevronDown
+            size={15}
+            aria-hidden
+            className={temarioAbierto ? styles.temarioFlechaAbierta : styles.temarioFlecha}
+          />
+        </button>
+
+        {temarioAbierto && (
+          <div className={styles.temarioLista}>
+            {temario === null && <p className={styles.temarioCargando}>Cargando el temario…</p>}
+            {temario?.length === 0 && (
+              <p className={styles.temarioCargando}>Todavía no hay temas fijados.</p>
+            )}
+            {temario?.map((t) => (
+              <div key={t.id}>
+                <button
+                  type="button"
+                  className={temaAbierto === t.id ? styles.temaTituloAbierto : styles.temaTitulo}
+                  onClick={() => setTemaAbierto((cur) => (cur === t.id ? null : t.id))}
+                  aria-expanded={temaAbierto === t.id}
+                >
+                  <span>{t.title}</span>
+                  <ChevronDown
+                    size={14}
+                    aria-hidden
+                    className={temaAbierto === t.id ? styles.temarioFlechaAbierta : styles.temarioFlecha}
+                  />
+                </button>
+                {temaAbierto === t.id && (
+                  <div data-post-title={t.title}>
+                    <ForumPost
+                      post={t}
+                      onEdit={handleEdit}
+                      onReport={handleReport}
+                      onDelete={handleDelete}
+                      onDeleteAdmin={handleDeleteAdmin}
+                      onEditReply={handleEditReply}
+                      onReportReply={handleReportReply}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Las siete categorías son vocabulario de la casa y ocupaban toda la
           entrada del foro. Plegadas, lo primero que se ve es lo que ha
           escrito la gente; quien quiera filtrar, abre. */}
@@ -339,11 +425,11 @@ export function ForumFeed() {
 
       {!loading && !error && posts.length === 0 && (
         <div className={styles.empty}>
-          <p className={styles.emptyKicker}>{filtering ? "Sin resultados" : "Aún no hay publicaciones"}</p>
+          <p className={styles.emptyKicker}>{filtering ? "Sin resultados" : "Aún no hay conversación"}</p>
           <p className={styles.emptyMsg}>
             {filtering
-              ? "Probá con otras palabras o quitá el filtro de categoría."
-              : "Sé el primero en abrir una conversación."}
+              ? "Prueba con otras palabras o quita el filtro de categoría."
+              : "Sé la primera persona en abrir una. Si buscas por dónde empezar, el temario del Camino está arriba."}
           </p>
         </div>
       )}

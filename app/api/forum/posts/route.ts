@@ -1,7 +1,17 @@
 // API — listagem e criação de posts do fórum.
 //
-// GET /api/forum/posts?limit=20&before=<created_at_iso>
+// GET /api/forum/posts?limit=20&before=<created_at_iso>&origen=camino|comunidad
 //   Lista posts ordenados por mais recente. Suporta cursor (before).
+//
+//   ── POR QUÉ HAY DOS ORÍGENES ──────────────────────────────────────────
+//   Los doce temas fijados son el temario del Camino: un índice, no una
+//   conversación. Iban mezclados con el resto y, al estar fijados, ocupaban
+//   la entrada entera del foro: quien llegaba veía doce publicaciones del
+//   administrador antes que una sola palabra de la comunidad.
+//
+//   Por defecto esta ruta devuelve AHORA la conversación, sin los fijados.
+//   El temario se pide aparte con ?origen=camino y la pantalla lo enseña
+//   plegado, como lo que es: una lista de temas para abrir cuando se quiera.
 //   Retorna posts + flag liked_by_me pra UI exibir botão de like correto.
 //   Resposta inclui nextCursor (created_at do último post) quando há mais
 //   resultados; null quando alcançou o fim.
@@ -42,19 +52,25 @@ export async function GET(req: NextRequest) {
   const rawQ = (searchParams.get("q") || "").trim().slice(0, 80)
   const q = rawQ.replace(/[,()%*\\]/g, " ").replace(/\s+/g, " ").trim()
   const tag = (searchParams.get("tag") || "").trim().slice(0, 30).toUpperCase()
+  // "camino" = los temas fijados; cualquier otra cosa = la conversación.
+  const soloElCamino = searchParams.get("origen") === "camino"
 
   let query = supabase
     .from("forum_posts")
     .select("id, user_id, author_name, author_username, author_avatar, author_avatar_url, author_badge_id, author_star_id, author_flame_id, author_avatar_border, author_is_admin, title, body, image_url, tags, likes_count, dislikes_count, replies_count, hot, created_at, pinned, pin_order, edited_at")
-    .order("pinned", { ascending: false })
-    .order("pin_order", { ascending: true })
-    .order("created_at", { ascending: false })
+    .eq("pinned", soloElCamino)
     .limit(limit)
-  if (before) {
-    // Em paginação, exclui pinneds — eles vieram no batch inicial e
-    // duplicariam aqui (created_at antigo poderia bater no cursor).
-    query = query.lt("created_at", before).eq("pinned", false)
-  }
+
+  // El temario va en el orden del Camino, que es lo que significa: primero el
+  // Portal de Ingreso, después la Temporada 1, y así. La conversación va por
+  // lo más reciente, que es lo que significa allí.
+  query = soloElCamino
+    ? query.order("pin_order", { ascending: true })
+    : query.order("created_at", { ascending: false })
+
+  // El cursor solo tiene sentido en la conversación: el temario son doce y
+  // caben de una vez.
+  if (before && !soloElCamino) query = query.lt("created_at", before)
   // Filtros: buscan en título + cuerpo (q) y por tag exacto (categoría).
   if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`)
   if (tag) query = query.contains("tags", [tag])

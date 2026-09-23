@@ -169,6 +169,41 @@
   margin: 0 0 1.1rem;
 }
 
+/* El mismo cuerpo, recortado a ocho líneas con un desvanecido al final.
+   Se usa -webkit-line-clamp porque funciona en todos los navegadores que
+   importan aquí y no necesita medir nada en JavaScript. */
+.bodyRecortado {
+  composes: body;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.4rem;
+  /* El texto se apaga hacia abajo en vez de cortarse en seco. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
+}
+
+.leerMas {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  margin: 0 0 1rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 184, 102, 0.3);
+  background: transparent;
+  color: #d9b866;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.leerMas:hover { border-color: #e6cf95; color: #e6cf95; }
+
 .body p {
   margin: 0;
 }
@@ -892,4 +927,97 @@
 
 @media (prefers-reduced-motion: reduce) {
   .composerCerrado { transition: none; }
+}
+
+/* ── El temario del Camino ─────────────────────────────────────────────── */
+/* Los doce temas fijados son un índice, no una conversación. Mezclados con el
+   resto ocupaban la entrada entera del foro: doce publicaciones del
+   administrador antes que una sola palabra de la comunidad. Aquí ocupan una
+   línea, y se abren cuando alguien quiere. */
+.temario {
+  margin: 0 0 1.2rem;
+  border: 1px solid rgba(217, 184, 102, 0.22);
+  border-radius: 14px;
+  background: rgba(217, 184, 102, 0.04);
+  overflow: hidden;
+}
+
+.temarioCabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 46px;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  background: transparent;
+  color: #d9b866;
+  text-align: left;
+  cursor: pointer;
+}
+
+.temarioTitulo {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Desaparece en pantallas estrechas: el título ya dice lo que es. */
+.temarioPista {
+  flex: 1;
+  font-size: 0.72rem;
+  color: #8b8b9e;
+}
+
+@media (max-width: 460px) {
+  .temarioPista { display: none; }
+}
+
+.temarioFlecha,
+.temarioFlechaAbierta {
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: transform 200ms ease;
+}
+
+.temarioFlechaAbierta { transform: rotate(180deg); }
+
+.temarioLista {
+  border-top: 1px solid rgba(217, 184, 102, 0.16);
+  padding: 0.4rem;
+}
+
+.temarioCargando {
+  margin: 0;
+  padding: 0.8rem;
+  font-size: 0.8rem;
+  color: #8b8b9e;
+}
+
+.temaTitulo,
+.temaTituloAbierto {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  /* 44px es el mínimo para que un pulgar acierte sin ampliar la pantalla. */
+  min-height: 44px;
+  padding: 0.6rem 0.7rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #c9c9d8;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.temaTitulo:hover { background: rgba(255, 255, 255, 0.04); color: #f3f6fa; }
+
+.temaTituloAbierto {
+  background: rgba(217, 184, 102, 0.09);
+  color: #e6cf95;
 }

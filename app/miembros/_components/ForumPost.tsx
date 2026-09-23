@@ -29,6 +29,12 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
   const { user, isAdmin } = useAuth()
   const isOwn = !!user && user.id === post.user_id
 
+  // Cuándo un mensaje es "largo". El umbral sale de mirar los del foro: los
+  // de la comunidad rara vez pasan de ahí y se ven enteros; los del temario,
+  // que son textos guiados, siempre lo pasan y se recortan.
+  const largo = post.body.length > 520
+  const [desplegado, setDesplegado] = useState(false)
+
   const [repliesOpen, setRepliesOpen] = useState(false)
   const [replies, setReplies] = useState<ForumReply[] | null>(null)
   const [replyText, setReplyText] = useState("")
@@ -226,10 +232,24 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
         )}
 
         <h3 className={styles.title}>{post.title}</h3>
+        {/* Un texto largo desplegado entero empuja el siguiente post fuera de
+            la pantalla, y el foro deja de leerse como una conversación. Se
+            recorta y se abre a voluntad. El límite está alto a propósito: la
+            mayoría de los mensajes caben enteros y no ven ningún botón. */}
         <div
-          className={styles.body}
+          className={largo && !desplegado ? styles.bodyRecortado : styles.body}
           dangerouslySetInnerHTML={{ __html: renderRichBody(post.body) }}
         />
+        {largo && (
+          <button
+            type="button"
+            className={styles.leerMas}
+            onClick={() => setDesplegado((v) => !v)}
+            aria-expanded={desplegado}
+          >
+            {desplegado ? "Mostrar menos" : "Leer más"}
+          </button>
+        )}
 
         {post.image_url && (
           isVideoUrl(post.image_url) ? (
