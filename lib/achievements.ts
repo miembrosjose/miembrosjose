@@ -423,6 +423,19 @@ const RANK_TIERS: Array<{ min: number; label: string; tier: AchievementTier | nu
   { min: 500,  label: "Rank 7",   tier: "topo",      badge_id: "rank_leyenda" },
 ]
 
+/**
+ * Las patentes de comunidad hasta un nivel dado, incluida la suya.
+ *
+ * Se conservan las anteriores: quien llega a Rank 4 no deja de haber sido
+ * Rank 1. Sirve para saber qué puede lucir alguien sin tener que guardar una
+ * fila por cada peldaño.
+ */
+export function rangosHasta(level: number): string[] {
+  return RANK_TIERS.slice(0, level + 1)
+    .map((t) => t.badge_id)
+    .filter((x): x is string => Boolean(x))
+}
+
 export function computeCommunityRank(postCount: number): CommunityRank {
   let level = 0
   for (let i = RANK_TIERS.length - 1; i >= 0; i--) {

@@ -9,11 +9,24 @@
 //   - products: 0 (compra ja deu +1 level)
 //
 // Dedup: cada user só ganha XP UMA vez por insignia (verifica xp_events).
+//
+// ── LO QUE SE COMPRUEBA ANTES DE CONCEDER ──────────────────────────────────
+// Este endpoint concedía CUALQUIER insignia del catálogo a quien la pidiera.
+// Una línea en la consola del navegador bastaba para ponerse «Instructor de
+// Los 144.000» o «Embajador Galáctico», y el sincronizador lo hacía solo: la
+// copia del navegador se subía entera en cada arranque, así que reiniciar el
+// avance de alguien no servía de nada.
+//
+// Ahora se pregunta a lib/insignias-ganadas: ¿los HECHOS del servidor
+// —capítulos vistos, días de acceso, aportaciones, compras— respaldan esta
+// insignia? Si no, se rechaza. Las que concede la administración no pasan
+// por aquí: se escriben en la tabla desde los endpoints de admin.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
+import { AUTODECLARABLES, insigniasGanadas } from "@/lib/insignias-ganadas"
 import { emitCommunityEvent } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
@@ -40,6 +53,15 @@ export async function POST(req: NextRequest) {
 
   const ach = getAchievementById(id)
   if (!ach) return NextResponse.json({ error: "Insignia inválida" }, { status: 400 })
+
+  // El servidor no se fía de quien pide: comprueba.
+  const ganadas = AUTODECLARABLES.has(id) ? null : await insigniasGanadas(user)
+  if (ganadas && !ganadas.has(id)) {
+    return NextResponse.json(
+      { error: "Esa insignia no se ha ganado todavía.", concedida: false },
+      { status: 403 },
+    )
+  }
 
   const xpAmount = XP_BY_CATEGORY[ach.category] ?? 0
   const admin = getSupabaseAdmin()

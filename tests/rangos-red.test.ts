@@ -101,3 +101,32 @@ test("filtrar por un grado devuelve a quien se quedó ahí, no a quien pasó", (
   assert.equal(total.length, new Set(total).size)
   assert.equal(total.length, padron.size)
 })
+
+// ── Las patentes de comunidad que puede lucir alguien ───────────────────────
+//
+// POR QUÉ ESTÁ AQUÍ: durante un tiempo el selector del perfil sacaba las
+// insignias de una copia en localStorage, y cualquiera podía lucir un rol de
+// la Red o el Sello del Admin sin tenerlos. Ahora el servidor las deduce de
+// los hechos; `rangosHasta` es la parte de esa deducción que no toca la base
+// de datos y sí se puede probar.
+
+import { rangosHasta, computeCommunityRank } from "../lib/achievements"
+
+test("se conservan las patentes anteriores, no solo la última", () => {
+  // Rank 3 (50 aportaciones) conserva las dos de debajo.
+  const nivel = computeCommunityRank(50).level
+  assert.deepEqual(rangosHasta(nivel), ["rank_recluta", "rank_agente", "rank_operador"])
+})
+
+test("sin aportaciones no hay ninguna patente", () => {
+  assert.deepEqual(rangosHasta(computeCommunityRank(0).level), [])
+})
+
+test("la primera aportación da la primera patente y solo esa", () => {
+  assert.deepEqual(rangosHasta(computeCommunityRank(1).level), ["rank_recluta"])
+})
+
+test("nadie alcanza la última patente por debajo de su umbral", () => {
+  assert.equal(rangosHasta(computeCommunityRank(499).level).includes("rank_leyenda"), false)
+  assert.equal(rangosHasta(computeCommunityRank(500).level).includes("rank_leyenda"), true)
+})

@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
+import { insigniasDisponibles } from "@/lib/insignias-ganadas"
 
 export const dynamic = "force-dynamic"
 
@@ -34,16 +35,13 @@ export async function PATCH(req: NextRequest) {
     if (!ach || ach.category !== "community") {
       return NextResponse.json({ error: "Insignia inválida pra estrella" }, { status: 400 })
     }
-    // Verifica que o user desbloqueou
-    const admin = getSupabaseAdmin()
-    const { data: unlock } = await admin
-      .from("user_unlocked_achievements")
-      .select("achievement_id")
-      .eq("user_id", user.id)
-      .eq("achievement_id", id)
-      .limit(1)
-      .maybeSingle()
-    if (!unlock) {
+    // Mirar solo la tabla no bastaba: el navegador podía rellenarla a
+    // través de /api/profile/insignia-unlocked, que concedía cualquier cosa.
+    // insigniasDisponibles mira además los hechos —aportaciones al foro— y
+    // así una patente de comunidad vale por lo que se escribió, no por lo
+    // que alguien haya conseguido guardar.
+    const suyas = await insigniasDisponibles(user)
+    if (!suyas.has(id)) {
       return NextResponse.json({ error: "Estrella no desbloqueada" }, { status: 403 })
     }
   }

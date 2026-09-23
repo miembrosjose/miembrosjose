@@ -28,6 +28,9 @@ const NAV_ITEMS: NavItem[] = [
   // categoría en base de datos siguen siendo "biblioteca": renombrarlas
   // rompería los enlaces guardados y los productos ya cargados.
   { label: "Recursos", view: "inicio", anchor: "biblioteca" },
+  // Al revés que la anterior: aquí el ancla es "libreria" y el nombre visible
+  // «Biblioteca», porque "biblioteca" ya estaba cogido. Ver view-context.
+  { label: "Biblioteca", view: "inicio", anchor: "libreria" },
   // «La Red» sustituye a la antigua pestaña «Miembros»: hace lo mismo y además
   // explora por territorio. La vista miembros_lista sigue existiendo y es
   // accesible por /miembros/personas, pero sale del menú para no duplicar.

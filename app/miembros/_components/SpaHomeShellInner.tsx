@@ -260,8 +260,15 @@ export function SpaHomeShellInner() {
         const resetAt = data?.reset_at
         if (!resetAt) return
         if (localStorage.getItem("los144k_reset_applied") === resetAt) return
+        // "app_unlocked_achievements" es la clave que faltaba, y era la que
+        // hacía inútil el reinicio: se vaciaba el servidor, el navegador se
+        // quedaba con su copia y la volvía a subir entera al recargar.
         Object.keys(localStorage)
-          .filter((k) => k.startsWith("app_episode_progress") || k.startsWith("los144k_"))
+          .filter((k) =>
+            k.startsWith("app_episode_progress") ||
+            k.startsWith("app_unlocked_achievements") ||
+            k.startsWith("los144k_"),
+          )
           .forEach((k) => { if (k !== "los144k_reset_applied") localStorage.removeItem(k) })
         await fetch("/api/profile/reset-progress", { method: "POST", credentials: "include" }).catch(() => {})
         localStorage.setItem("los144k_reset_applied", resetAt)
@@ -747,6 +754,39 @@ function ViewInicio({
           leadingCard={<><NumerologiaCosmica /><CodigoOrigen /><CartografiaEstelar /><LugaresContacto /></>}
           hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p) || isCodigoOrigenToolProduct(p) || isCartografiaToolProduct(p)}
         />
+      </section>
+
+      {/* BIBLIOTECA — productos categoría "libreria".
+          El nombre de la categoría y el del rótulo no coinciden a propósito:
+          "biblioteca" ya era la categoría de la sección de arriba, que de cara
+          a quien mira se llama «Recursos». Ver _lib/view-context.tsx. */}
+      <section id="libreria" className={styles.section}>
+        <header className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionKicker} style={{ color: "#7fc9bd" }}>Para estudiar</p>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionDivider} style={{ background: "#4a9b8e" }} />
+              Biblioteca
+            </h2>
+          </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => { setProductsManagerCategory("libreria"); setProductsManagerOpen(true) }}
+              aria-label="Gestionar productos"
+              title="Gestionar productos"
+              className="inline-flex items-center justify-center border border-[#4a9b8e]/50 bg-[#4a9b8e]/10 px-3 py-2 text-[#7fc9bd] transition-colors hover:border-[#4a9b8e] hover:bg-[#4a9b8e]/25 hover:text-[#F3F6FA]"
+              style={{ borderRadius: 8 }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.2em] [font-family:var(--font-mono)]">Gestionar</span>
+            </button>
+          )}
+        </header>
+        <TiendaCarousel category="libreria" />
       </section>
 
       {/* TIENDA — sección aparte, estilo dorado (diferenciado de Biblioteca) */}

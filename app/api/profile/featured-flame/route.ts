@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
+import { insigniasDisponibles } from "@/lib/insignias-ganadas"
 
 export const dynamic = "force-dynamic"
 
@@ -34,15 +35,11 @@ export async function PATCH(req: NextRequest) {
     if (!ach || ach.category !== "time") {
       return NextResponse.json({ error: "Insignia inválida pra llama" }, { status: 400 })
     }
-    const admin = getSupabaseAdmin()
-    const { data: unlock } = await admin
-      .from("user_unlocked_achievements")
-      .select("achievement_id")
-      .eq("user_id", user.id)
-      .eq("achievement_id", id)
-      .limit(1)
-      .maybeSingle()
-    if (!unlock) {
+    // Las llamas salen de los días únicos de acceso, que los cuenta el
+    // servidor. Comprobarlo contra la tabla dejaba pasar lo que el navegador
+    // hubiera subido por su cuenta.
+    const suyas = await insigniasDisponibles(user)
+    if (!suyas.has(id)) {
       return NextResponse.json({ error: "Llama no desbloqueada" }, { status: 403 })
     }
   }

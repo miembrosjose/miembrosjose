@@ -7,6 +7,28 @@
   gap: 1rem;
 }
 
+/* ── Rejilla compacta ─────────────────────────────────────────────────────
+   Para «Recursos de los 144000» y «Biblioteca». Sus tarjetas son módulos,
+   no escaparate: deben leerse como una estantería y quedar por debajo de los
+   carteles de temporada (280px), que son lo principal de la portada.
+
+   La Tienda NO la usa: allí la tarjeta es el producto y su tamaño se queda
+   como está. */
+.gridCompacto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(118px, 30vw, 152px), 1fr));
+  gap: 0.85rem;
+}
+
+/* El texto también encoge. Sin esto, el mismo cuerpo de 1.1rem de relleno y
+   un título de 1.05rem dentro de una tarjeta de 152px dejaba la portada
+   ocupando dos líneas y el pie rozando el borde. */
+.gridCompacto .body { padding: 0.75rem 0.75rem 0.85rem; gap: 0.4rem; }
+.gridCompacto .body::before { left: 0.75rem; right: 0.75rem; }
+.gridCompacto .name { font-size: 0.86rem; padding-bottom: 0.3rem; }
+.gridCompacto .footer { font-size: 0.68rem; }
+.gridCompacto .access { font-size: 0.55rem; letter-spacing: 0.14em; padding: 0.28rem 0.5rem; }
+
 /* Mobile: vira carrossel horizontal estilo Netflix.
  * Cards um ao lado do outro com scroll horizontal + scroll-snap.
  * Padding/margin negativos pra alinhar com edge da tela mas não cortar
@@ -39,6 +61,26 @@
     flex: 0 0 min(55vw, 200px);
     scroll-snap-align: start;
   }
+
+  /* En móvil la rejilla se vuelve carrusel: el ancho lo manda la tarjeta, no
+     la columna, así que la versión compacta necesita su propia medida. */
+  .gridCompacto {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0.6rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 0.5rem 1rem 1.25rem;
+    margin: -0.5rem -1rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-red) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .gridCompacto::-webkit-scrollbar { height: 4px; }
+  .gridCompacto::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+  .gridCompacto::-webkit-scrollbar-thumb { background: var(--accent-red); border-radius: 2px; }
+  .gridCompacto .card { flex: 0 0 min(38vw, 148px); }
 }
 
 .card {

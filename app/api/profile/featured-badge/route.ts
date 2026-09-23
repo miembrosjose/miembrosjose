@@ -3,18 +3,23 @@
 // PATCH /api/profile/featured-badge
 //   Body: { badge_id: string | null }
 //   - badge_id = null         → remove insignia destacada
-//   - badge_id = string       → valida que existe em lib/achievements.ts
+//   - badge_id = string       → valida que existe Y que el user la tiene
 //   Salva em user.user_metadata.featured_badge_id.
 //
-// NOTA: a verificação "user tem essa insignia desbloqueada?" é client-side
-// (localStorage do prototipo). Server NÃO valida ownership porque a fonte
-// de verdade do unlocked ainda é localStorage. Se algum dia migrar pra
-// Supabase, validar aqui.
+// LA COMPROBACIÓN DE PROPIEDAD SE HACE AQUÍ, en el servidor. Antes no se
+// hacía en ningún sitio —el comentario de este archivo decía que la fuente de
+// verdad era el localStorage del prototipo— y cualquiera podía lucir el Sello
+// del Admin, el Embajador Galáctico o un rol de la Red sin tenerlos.
+//
+// Las otras dos insignias destacadas (estrella y llama) sí comprobaban, pero
+// contra una tabla que el propio navegador podía rellenar. Ahora las tres
+// preguntan a lib/insignias-ganadas.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
+import { insigniasDisponibles } from "@/lib/insignias-ganadas"
 import { isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
@@ -38,6 +43,16 @@ export async function PATCH(req: NextRequest) {
 
   if (badgeId && !getAchievementById(badgeId)) {
     return NextResponse.json({ error: "Invalid badge_id" }, { status: 400 })
+  }
+
+  if (badgeId) {
+    const suyas = await insigniasDisponibles(user)
+    if (!suyas.has(badgeId)) {
+      return NextResponse.json(
+        { error: "Esa insignia no es tuya todavía." },
+        { status: 403 },
+      )
+    }
   }
 
   const { error } = await supabase.auth.updateUser({

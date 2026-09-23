@@ -9,26 +9,18 @@ import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { LegalLinks } from "@/components/legal/legal-links"
 
-const STORAGE_KEY_ACHIEVEMENTS = "app_unlocked_achievements"
-
-// Insignias desbloqueadas guardadas en el navegador. Es una herencia del
-// prototipo: la fuente de verdad es la tabla user_unlocked_achievements, que
-// se lee abajo desde /api/profile/unlocked-achievements.
+// ── POR QUÉ AQUÍ YA NO SE LEE EL NAVEGADOR ─────────────────────────────────
+// Este formulario sumaba a la lista del servidor una copia guardada en
+// localStorage ("app_unlocked_achievements"), herencia del prototipo. Esa
+// suma era el agujero: bastaba con lo que hubiera en ese cajón para que el
+// selector ofreciera insignias que la persona no había ganado —roles de la
+// Red, el Sello del Admin, temporadas sin completar—, y reiniciar el avance
+// no servía de nada porque el navegador lo volvía a subir.
 //
-// Se conserva y se SUMA a lo del servidor, no se sustituye: si alguien tiene
-// avance registrado solo en este navegador y todavía no llegó a la base, no
-// debe perderlo al abrir esta pantalla.
-function getUnlockedAchievementIds(): Set<string> {
-  if (typeof window === "undefined") return new Set()
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS)
-    if (!raw) return new Set()
-    const obj = JSON.parse(raw) as Record<string, unknown>
-    return new Set(Object.keys(obj))
-  } catch {
-    return new Set()
-  }
-}
+// La lista viene ahora SOLO de /api/profile/unlocked-achievements, que
+// devuelve lo concedido por la administración más lo que el servidor puede
+// demostrar. Y los tres endpoints de insignia destacada lo comprueban otra
+// vez al guardar, por si esta pantalla se equivoca.
 
 /**
  * Converte File de imagem (qualquer formato suportado pelo browser) pra
@@ -184,12 +176,6 @@ export function ProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    // Lo del navegador se pinta de inmediato; lo del servidor llega enseguida
-    // y se une. Sin esto, desbloquear algo en la base —por ejemplo el
-    // Embajador Galáctico que concede el panel de admin— no se veía aquí y las
-    // insignias seguían apareciendo bloqueadas.
-    setUnlockedIds(getUnlockedAchievementIds())
-
     let vivo = true
     fetch("/api/profile/unlocked-achievements", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
@@ -198,10 +184,11 @@ export function ProfileForm({
         const delServidor: string[] = (d.unlocked || [])
           .map((x: { achievement_id?: string }) => x?.achievement_id)
           .filter(Boolean)
-        if (delServidor.length === 0) return
-        setUnlockedIds((prev) => new Set([...prev, ...delServidor]))
+        // Se SUSTITUYE, no se suma: la respuesta del servidor es la lista
+        // entera. Si alguien perdió un rol, aquí deja de poder lucirlo.
+        setUnlockedIds(new Set(delServidor))
       })
-      .catch(() => { /* se sigue con lo que haya en el navegador */ })
+      .catch(() => { /* sin respuesta, nada seleccionable: es lo prudente */ })
     return () => { vivo = false }
   }, [])
 

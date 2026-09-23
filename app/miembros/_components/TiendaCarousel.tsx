@@ -57,6 +57,8 @@ export function TiendaCarousel({
   const [openProduct, setOpenProduct] = useState<DbProduct | null>(null)
   const [checkoutProduct, setCheckoutProduct] = useState<DbProduct | null>(null)
   const isTienda = variant === "tienda"
+  // La Tienda conserva su tamaño; las secciones de módulos van compactas.
+  const rejilla = isTienda ? styles.grid : styles.gridCompacto
 
   // Filtra por categoría (sin categoría = "biblioteca") y ordena por fecha.
   const orderedProducts = useMemo(
@@ -96,7 +98,7 @@ export function TiendaCarousel({
 
   if (loading) {
     return (
-      <div className={styles.grid}>
+      <div className={rejilla}>
         {leadingCard}
       </div>
     )
@@ -104,7 +106,7 @@ export function TiendaCarousel({
 
   if (orderedProducts.length === 0) {
     return (
-      <div className={styles.grid}>
+      <div className={rejilla}>
         {leadingCard}
         {!leadingCard && (
           <p style={{ textAlign: "center", color: "#a8a8c0", fontSize: "0.85rem", padding: "2rem 0" }}>
@@ -116,7 +118,7 @@ export function TiendaCarousel({
   }
 
   return (
-    <div className={styles.grid}>
+    <div className={rejilla}>
       {leadingCard}
       {orderedProducts.map((p) => {
         const userHasAccess = hasAccess(p.id) || isAdminOverride

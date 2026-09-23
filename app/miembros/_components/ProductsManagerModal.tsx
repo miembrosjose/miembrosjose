@@ -683,6 +683,7 @@ function ProductEditor({
                   className="w-full border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
                   style={{ borderRadius: 6 }}>
             <option value="biblioteca">Recursos de los 144000</option>
+            <option value="libreria">Biblioteca</option>
             <option value="tienda">Tienda</option>
           </select>
         </div>
@@ -1102,6 +1103,7 @@ function AddProductForm({
                 className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
                 style={{ borderRadius: 6 }}>
           <option value="biblioteca">Recursos de los 144000</option>
+          <option value="libreria">Biblioteca</option>
           <option value="tienda">Tienda</option>
         </select>
       </div>

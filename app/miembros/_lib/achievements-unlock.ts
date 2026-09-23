@@ -119,27 +119,21 @@ export async function syncUnlockedAchievementsFromServer(): Promise<UnlockedMap>
 
   writeUnlocked(merged)
 
-  // 4. Catch-up: IDs en el navegador pero NO en el servidor → se suben.
-  // Cubre a quien avanzó sin conexión y luego entró desde otro aparato.
-  // /api/profile/insignia-unlocked es idempotente, así que repetir no duplica.
+  // 4. AQUÍ HABÍA UNA SUBIDA, Y SE HA QUITADO.
   //
-  // Las de SOLO_SERVIDOR quedan fuera a propósito: subirlas sería devolver
-  // algo que un administrador acaba de retirar.
-  const localOnly = Object.keys(local).filter(
-    (id) => !serverIds.has(id) && !SOLO_SERVIDOR.has(id),
-  )
-  if (localOnly.length > 0) {
-    await Promise.all(
-      localOnly.map((id) =>
-        fetch("/api/profile/insignia-unlocked", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ insignia_id: id }),
-        }).catch(() => null)
-      )
-    )
-  }
+  // Lo que estaba en el navegador y no en el servidor se subía "por si acaso",
+  // para no perder el avance de quien hubiera trabajado sin conexión. En la
+  // práctica hacía otra cosa: convertía el localStorage en la autoridad. Como
+  // /api/profile/insignia-unlocked concedía cualquier insignia del catálogo a
+  // quien la pidiera, este bucle le daba a cada persona todo lo que hubiera
+  // en su cajón del navegador, y reiniciar el avance de alguien no servía de
+  // nada porque al recargar se volvía a subir entero.
+  //
+  // Ya no hace falta para nada: el servidor DEDUCE las insignias de los
+  // hechos que él mismo guarda —capítulos vistos, días de acceso,
+  // aportaciones, compras— en lib/insignias-ganadas.ts. El avance sin
+  // conexión sigue llegando por su propio camino, /api/profile/episode-
+  // progress, y de ahí salen las insignias solas.
 
   return merged
 }

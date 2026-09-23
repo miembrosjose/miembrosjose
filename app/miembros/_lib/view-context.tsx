@@ -32,7 +32,13 @@ const VALID_VIEWS: ViewKey[] = [
   "red",
 ]
 
-export type Anchor = "cursos" | "biblioteca" | "tienda" | "servicios" | null
+// "biblioteca" es el ancla de la sección que de cara a quien mira se llama
+// «Recursos de los 144000». El nombre se quedó del primer diseño y renombrarlo
+// rompería los enlaces guardados.
+//
+// La sección que SÍ se llama «Biblioteca» es "libreria". Dos nombres cruzados
+// es feo, y menos feo que migrar la categoría de todos los productos.
+export type Anchor = "cursos" | "biblioteca" | "libreria" | "tienda" | "servicios" | null
 
 export type RedTab = "pulso" | "foro" | "lista" | "mapa" | "encuentros"
 
