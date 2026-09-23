@@ -11,7 +11,7 @@ import type { ContenidoPortal } from "../tipos"
 export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
   m1: {
     id: "m1",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 1, la Nebulosa del Cangrejo, es el resto de una estrella que estalló como supernova en el año 1054. El suceso fue registrado por astrónomos chinos, japoneses y árabes, que anotaron una estrella nueva visible incluso de día durante semanas. En su centro queda un púlsar que gira treinta veces por segundo, a unos seis mil quinientos años luz.",
     esencia: "lo que queda después · resto fértil · consecuencia de una ruptura",
@@ -86,7 +86,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   m57: {
     id: "m57",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 57, la Nebulosa del Anillo, se encuentra en la constelación de Lyra, a unos dos mil trescientos años luz. Es una nebulosa planetaria: la capa de gas que una estrella parecida al Sol expulsó al agotar su combustible. En el centro del anillo queda el núcleo desnudo de esa estrella, ahora una enana blanca. El nombre no guarda relación con los planetas.",
     esencia: "desprenderse · lo que se suelta al final · núcleo a la vista",
@@ -161,7 +161,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   omega_centauri: {
     id: "omega_centauri",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Omega Centauri es el cúmulo globular más grande de la Vía Láctea, situado a unos diecisiete mil años luz y formado por cerca de diez millones de estrellas muy antiguas. Su composición sugiere que no se formó como un cúmulo ordinario, sino que podría ser el núcleo de una galaxia pequeña absorbida por la nuestra hace mucho tiempo.",
     esencia: "multitud antigua · lo heredado en común · pertenencia sin elección",
@@ -236,7 +236,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   m13: {
     id: "m13",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 13, el Gran Cúmulo de Hércules, reúne unas trescientas mil estrellas a unos veintidós mil años luz. En 1974 fue el destino simbólico del mensaje de radio emitido desde el radiotelescopio de Arecibo, un intento deliberado de enviar información codificada fuera del sistema solar. El mensaje tardará miles de años en llegar.",
     esencia: "mensaje sin respuesta · emitir sin garantía · densidad silenciosa",
@@ -311,7 +311,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   virgo_m87: {
     id: "virgo_m87",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 87 es una galaxia elíptica gigante situada en el centro del Cúmulo de Virgo, a unos cincuenta y tres millones de años luz. En su núcleo hay un agujero negro supermasivo que en 2019 se convirtió en el primero del que se obtuvo una imagen directa, mediante una red de radiotelescopios repartidos por todo el planeta.",
     esencia: "centro de un conjunto mayor · gravedad silenciosa · peso sin ruido",
@@ -386,7 +386,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   gran_atractor: {
     id: "gran_atractor",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "El Gran Atractor es una concentración de masa en dirección a la constelación de Norma, a unos doscientos millones de años luz, hacia la que se desplazan la Vía Láctea y todo su grupo de galaxias a unos seiscientos kilómetros por segundo. Su observación es difícil porque el disco de nuestra propia galaxia se interpone en esa dirección y bloquea gran parte de la vista.",
     esencia: "atracción no elegida · dirección de fondo · lo que no se puede mirar de frente",
@@ -461,7 +461,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   shapley: {
     id: "shapley",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "El Supercúmulo de Shapley es la mayor concentración de galaxias del universo cercano, situada a unos seiscientos cincuenta millones de años luz en dirección a la constelación de Centauro. Reúne miles de galaxias y se considera una de las principales causas del movimiento conjunto de nuestro grupo local a través del espacio.",
     esencia: "escala mayor · lo que excede cualquier cálculo · relativización",
@@ -536,7 +536,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   procyon: {
     id: "procyon",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Procyon es la estrella más brillante del Can Menor y una de las más cercanas al Sol, a 11.5 años luz. Es un sistema doble formado por una estrella algo mayor que el Sol y una enana blanca. Su nombre procede del griego y significa antes del perro: se eleva sobre el horizonte poco antes que Sirio.",
     esencia: "anticipación · llegar antes · preparar el terreno",
@@ -611,7 +611,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   tau_ceti: {
     id: "tau_ceti",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Tau Ceti es una estrella muy parecida al Sol en tipo y temperatura, situada a doce años luz en dirección a la constelación de la Ballena. Por esa semejanza fue uno de los dos primeros objetivos del proyecto Ozma, la primera búsqueda sistemática de señales de radio de origen no natural, realizada en 1960. A su alrededor se ha detectado un amplio disco de escombros.",
     esencia: "semejanza · lo parecido y distinto · el reconocimiento que falla",
@@ -686,7 +686,7 @@ export const PORTALES_RESTO_4: Record<string, ContenidoPortal> = {
 
   epsilon_eridani: {
     id: "epsilon_eridani",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Epsilon Eridani es una estrella anaranjada situada a 10.5 años luz, más joven que el Sol: tiene menos de mil millones de años, frente a los cuatro mil seiscientos del nuestro. Fue, junto con Tau Ceti, uno de los dos primeros objetivos del proyecto Ozma en 1960. Conserva a su alrededor discos de material y se le ha detectado al menos un planeta.",
     esencia: "lo que está empezando · sistema joven · aún en formación",

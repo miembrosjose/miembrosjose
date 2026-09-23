@@ -13,7 +13,7 @@ import type { ContenidoPortal } from "../tipos"
 export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
   aldebaran: {
     id: "aldebaran",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Aldebarán es una estrella gigante anaranjada en dirección a la constelación de Tauro, a unos 65 años luz. Visualmente aparece dentro del cúmulo de las Híades, pero no forma parte de él: está a menos de la mitad de distancia y solo coincide en la línea de visión. Ain, en cambio, sí es una estrella del cúmulo.",
     esencia: "integridad · dirección · lo que se elige sostener",
@@ -88,7 +88,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   fomalhaut: {
     id: "fomalhaut",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Fomalhaut es una estrella blanca en dirección a la constelación del Pez Austral, a unos 25 años luz. Destaca por encontrarse en una región del cielo pobre en estrellas brillantes, lo que la hace visible en solitario. A su alrededor se ha observado un extenso disco de polvo y escombros, material sobrante de la formación del sistema.",
     esencia: "claridad solitaria · destilación · propósito",
@@ -163,7 +163,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   spica: {
     id: "spica",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Spica es la estrella más brillante de la constelación de Virgo, a unos 250 años luz. Es en realidad un sistema binario muy cerrado: dos estrellas azules que se orbitan en apenas cuatro días, tan próximas que la atracción mutua las deforma. Se encuentra muy cerca de la eclíptica, por lo que la Luna y los planetas pasan con frecuencia junto a ella.",
     esencia: "precisión · oficio · fruto del trabajo fino",
@@ -238,7 +238,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   altair: {
     id: "altair",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Altair es la estrella más brillante de la constelación del Águila, a 16.7 años luz, una de las más cercanas visibles a simple vista. Gira sobre sí misma a gran velocidad —completa una rotación en unas nueve horas frente a los veinticinco días del Sol—, lo que la deforma hasta hacerla sensiblemente más ancha por el ecuador que por los polos.",
     esencia: "agilidad · respuesta rápida · alcance corto",
@@ -313,7 +313,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   deneb: {
     id: "deneb",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Deneb es una supergigante blanca en la constelación del Cisne y una de las estrellas más luminosas conocidas. Su distancia es incierta, estimada entre mil quinientos y dos mil seiscientos años luz: pese a estar tan lejos, figura entre las más brillantes del cielo. En la misma constelación se encuentra Albireo, una pareja de estrellas de colores contrastados visible con un telescopio pequeño.",
     esencia: "alcance · lo que llega lejos · señal a distancia",
@@ -388,7 +388,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   polaris: {
     id: "polaris",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Polaris es la estrella más brillante de la Osa Menor, a unos 433 años luz. Actualmente se encuentra a menos de un grado del polo norte celeste, por lo que apenas se desplaza en el cielo durante la noche y sirve de referencia de orientación. Esa posición no es permanente: el eje terrestre describe un círculo de unos veintiséis mil años y otras estrellas ocuparán ese lugar.",
     esencia: "referencia · orientación · punto fijo provisional",
@@ -463,7 +463,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   capella: {
     id: "capella",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Capella es la estrella más brillante de la constelación del Cochero, a unos 43 años luz. Lo que a simple vista parece una sola estrella son en realidad cuatro: dos gigantes amarillas que se orbitan muy próximas y un segundo par de enanas rojas mucho más tenues. Su nombre procede del latín y significa cabrita.",
     esencia: "sustento · cuidado práctico · lo que alimenta",
@@ -538,7 +538,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   canopus: {
     id: "canopus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Canopus es la segunda estrella más brillante del cielo nocturno, en la constelación de la Quilla, a unos 310 años luz. Visible sobre todo desde el hemisferio sur, ha sido durante siglos una referencia de navegación marítima, y las sondas espaciales la han utilizado como punto de calibración para orientarse fuera de la Tierra.",
     esencia: "rumbo · el segundo lugar · referencia para otros",
@@ -613,7 +613,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   achernar: {
     id: "achernar",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Achernar es la estrella más brillante de la constelación de Erídano, a unos 139 años luz, visible desde el hemisferio sur. Es la estrella brillante que gira más rápido sobre sí misma de las conocidas: la fuerza centrífuga la deforma hasta hacerla más de un cincuenta por ciento más ancha por el ecuador que por los polos. Su nombre procede del árabe y significa el fin del río.",
     esencia: "desenlace · cierre · el final del recorrido",
@@ -688,7 +688,7 @@ export const PORTALES_RESTO_1: Record<string, ContenidoPortal> = {
 
   geminis: {
     id: "geminis",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Cástor y Pólux son las dos estrellas más brillantes de la constelación de Géminis. Pese a aparecer juntas en el cielo, no están relacionadas: Pólux es una gigante anaranjada a 34 años luz con un planeta confirmado, mientras que Cástor es un sistema de seis estrellas situado a 51. Pólux brilla más que Cástor, aunque la nomenclatura tradicional asigna la primera letra a esta última.",
     esencia: "dos a la vez · complementariedad · alternancia",

@@ -11,7 +11,7 @@ import type { ContenidoPortal } from "../tipos"
 export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
   hydra: {
     id: "hydra",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Hidra es la constelación más extensa del cielo: se despliega a lo largo de más de cien grados, de modo que sus extremos nunca resultan visibles a la vez desde un mismo lugar y momento. Su única estrella brillante, Alphard, es una gigante anaranjada situada a unos 177 años luz en una región del cielo notablemente vacía, lo que le valió un nombre árabe que significa la solitaria.",
     esencia: "extensión · lo que no se abarca de una vez · continuidad larga",
@@ -86,7 +86,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   corvus: {
     id: "corvus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Cuervo es una constelación pequeña del hemisferio sur celeste, formada por cuatro estrellas que dibujan un cuadrilátero compacto y fácilmente reconocible pese a su tamaño modesto. Gienah, la más brillante, se encuentra a unos 154 años luz, y Algorab es un sistema doble.",
     esencia: "señal breve · mensaje que llega · lo que se dice y se va",
@@ -161,7 +161,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   phoenix: {
     id: "phoenix",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Fénix es una constelación del hemisferio sur, una de las que los navegantes neerlandeses cartografiaron a finales del siglo XVI: no procede de la tradición antigua, sino de la exploración de cielos que en Europa no se habían registrado. Su estrella principal, Ankaa, es una gigante anaranjada a unos 85 años luz.",
     esencia: "recomenzar · lo que se rehace distinto · después de la pérdida",
@@ -236,7 +236,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   grus: {
     id: "grus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Grulla es una constelación del hemisferio sur, cartografiada también por los navegantes neerlandeses del siglo XVI a partir de estrellas que antes se asignaban al Pez Austral. Su estrella principal, Alnair, es una estrella azul situada a unos 101 años luz.",
     esencia: "migración · dejar un sitio a tiempo · lectura de la estación",
@@ -311,7 +311,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   aquarius: {
     id: "aquarius",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Acuario es una constelación zodiacal de estrellas poco brillantes. Esa apariencia tenue es engañosa: sus dos principales, Sadalsuud y Sadalmelik, son supergigantes muy luminosas que se encuentran a más de quinientos años luz, de modo que su débil brillo aparente se debe únicamente a la distancia.",
     esencia: "lo que se aporta sin verse · distancia · brillo no evidente",
@@ -386,7 +386,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   capricornus: {
     id: "capricornus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Capricornio es una de las constelaciones zodiacales de menor tamaño y brillo. Su estrella más destacada, Deneb Algedi, se encuentra a unos 39 años luz y es un sistema binario eclipsante: sus componentes se ocultan mutuamente de forma periódica, produciendo una leve variación de brillo.",
     esencia: "ascenso lento · terreno firme · paso a paso",
@@ -461,7 +461,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   sagittarius: {
     id: "sagittarius",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Sagitario es una constelación zodiacal del hemisferio sur celeste. En su dirección se encuentra el centro de la Vía Láctea, lo que la convierte en la región del cielo con mayor densidad de estrellas y nubes interestelares. Kaus Australis, su estrella más brillante, está a unos 143 años luz, y Nunki a 228.",
     esencia: "dirección elegida · apuntar lejos · abundancia de opciones",
@@ -536,7 +536,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   sculptor: {
     id: "sculptor",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Escultor es una constelación tenue del hemisferio sur, nombrada en el siglo XVIII. En su dirección se encuentra el polo sur galáctico: mirar hacia allí es mirar perpendicularmente al plano de nuestra galaxia, fuera de su disco de estrellas y polvo, por lo que es una de las ventanas más despejadas hacia las galaxias lejanas.",
     esencia: "dar forma · quitar lo que sobra · trabajo paciente sobre lo propio",
@@ -611,7 +611,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   m31: {
     id: "m31",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 31 es la Galaxia de Andrómeda, la galaxia espiral grande más próxima a la Vía Láctea, situada a unos dos millones y medio de años luz. Es el objeto más lejano que puede verse a simple vista. A diferencia de la mayoría de las galaxias, se acerca a nosotros: dentro de varios miles de millones de años ambas interactuarán.",
     esencia: "escala · lo que se ve entero desde lejos · otro sistema completo",
@@ -686,7 +686,7 @@ export const PORTALES_RESTO_3: Record<string, ContenidoPortal> = {
 
   m42: {
     id: "m42",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Messier 42, la Nebulosa de Orión, es una región de formación estelar situada a unos mil trescientos años luz, visible a simple vista como una mancha difusa en la espada de Orión. En su interior el gas se está condensando en estrellas nuevas: es uno de los lugares más cercanos donde puede observarse ese proceso en curso.",
     esencia: "gestación · lo que aún no tiene forma · proceso en curso",

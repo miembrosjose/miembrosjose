@@ -8,7 +8,7 @@ export const PORTALES_PRINCIPALES_B: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   andromeda: {
     id: "andromeda",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Andrómeda es una constelación del hemisferio norte. Su estrella Alpheratz se comparte visualmente con el cuadrado de Pegaso, del que formó parte en las cartas antiguas. En dirección a esta constelación se encuentra M31, la galaxia espiral grande más cercana a la nuestra, que es el objeto más lejano visible a simple vista desde la Tierra.",
     esencia: "libertad · expansión · perspectiva",
@@ -96,7 +96,7 @@ export const PORTALES_PRINCIPALES_B: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   alfa_centauri: {
     id: "alfa_centauri",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Alfa Centauri es el sistema estelar más cercano al Sol, a 4.37 años luz, visible desde el hemisferio sur. Está formado por al menos tres estrellas: Rigil Kentaurus y Toliman, similares al Sol y orbitándose mutuamente, y Próxima Centauri, una enana roja mucho más tenue que es, de las tres, la más cercana a nosotros.",
     esencia: "proximidad · encarnación · puente entre mundos",
@@ -184,7 +184,7 @@ export const PORTALES_PRINCIPALES_B: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   antares: {
     id: "antares",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Antares es una supergigante roja en dirección a la constelación de Escorpio, a unos 550 años luz. Es una de las estrellas de mayor tamaño conocidas: situada en el lugar del Sol, su superficie alcanzaría más allá de la órbita de Marte. Su nombre procede del griego y alude a su semejanza de color con el planeta Marte.",
     esencia: "intensidad · transformación · voluntad",
@@ -272,7 +272,7 @@ export const PORTALES_PRINCIPALES_B: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   regulus: {
     id: "regulus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Regulus es un sistema estelar múltiple en dirección a la constelación de Leo, a unos 79 años luz. Su estrella principal gira sobre sí misma a gran velocidad, lo que la deforma hasta darle una forma marcadamente achatada. Es una de las estrellas brillantes más próximas a la eclíptica, la franja por la que se desplazan el Sol y los planetas vistos desde la Tierra.",
     esencia: "liderazgo · corazón · uso consciente del poder",
@@ -360,7 +360,7 @@ export const PORTALES_PRINCIPALES_B: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   centro_galactico: {
     id: "centro_galactico",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "El centro de la Vía Láctea se encuentra en dirección a la constelación de Sagitario, a unos 26.000 años luz. Allí está Sagitario A*, un agujero negro supermasivo con una masa equivalente a unos cuatro millones de soles, alrededor del cual orbita todo el disco de la galaxia, incluido el Sol. No es un objeto visible a simple vista: la línea de visión está bloqueada por polvo interestelar.",
     esencia: "origen · eje · retorno al centro",

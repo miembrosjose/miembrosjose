@@ -18,6 +18,23 @@
 // `estado` es un control interno de redacción. La interfaz NUNCA lo enseña.
 // Un portal activo entrega siempre lectura completa; si no la tuviera, el
 // fallo es de contenido y las pruebas lo detienen antes de llegar a nadie.
+//
+// ── QUÉ SIGNIFICA CADA ESTADO ──────────────────────────────────────────────
+//   seed     · esqueleto con los campos puestos, todavía sin redactar.
+//   draft    · redactado entero, sin pasar por la revisión editorial.
+//   reviewed · redactado y comprobado contra las reglas del módulo.
+//
+// «reviewed» no es una opinión: es lo que certifica
+// `tests/cartografia-revision.test.ts`, que comprueba los cincuenta portales
+// campo por campo —que ninguno afirme procedencia, prediga o diagnostique,
+// que no cite fuentes vetadas, que cada campo tenga sustancia, que las
+// preguntas sean preguntas y que nada esté copiado de otro portal—.
+//
+// Durante meses los cincuenta estuvieron en «draft» y ninguno llegó a
+// «reviewed», porque no había escrito en ninguna parte qué había que cumplir
+// para merecerlo. Una marca que no se puede ganar no informa de nada. Ahora
+// se puede ganar, y se pierde sola: si alguien reescribe un portal y rompe
+// una regla, la prueba lo para.
 
 export type EstadoContenido = "seed" | "draft" | "reviewed"
 

@@ -16,7 +16,7 @@ export const PORTALES_PRINCIPALES: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   pleyades: {
     id: "pleyades",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Las Pléyades son un cúmulo abierto de estrellas situado en dirección a la constelación de Tauro, a unos 444 años luz. Contiene varios centenares de estrellas nacidas del mismo material hace aproximadamente cien millones de años, de las cuales seis o siete resultan visibles a simple vista. A diferencia de una constelación, sus estrellas sí están físicamente relacionadas entre sí.",
     esencia: "memoria del vínculo · pertenencia · sensibilidad colectiva",
@@ -104,7 +104,7 @@ export const PORTALES_PRINCIPALES: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   sirio: {
     id: "sirio",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Sirio es la estrella más brillante del cielo nocturno, en dirección a la constelación del Can Mayor, a 8.6 años luz. Es un sistema doble: Sirio A, una estrella blanca de la secuencia principal, y Sirio B, una enana blanca del tamaño aproximado de la Tierra pero con una masa comparable a la del Sol. Su salida heliaca marcaba el año en el antiguo Egipto.",
     esencia: "servicio consciente · disciplina · transmisión",
@@ -192,7 +192,7 @@ export const PORTALES_PRINCIPALES: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   arcturus: {
     id: "arcturus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Arcturus es una estrella gigante roja en dirección a la constelación del Boyero, a unos 37 años luz. Es la estrella más brillante del hemisferio norte celeste y la cuarta del cielo entero. Se mueve por el espacio en una dirección muy distinta a la de las estrellas de su entorno, lo que indica que probablemente procede de otra población estelar de la galaxia.",
     esencia: "arquitectura · patrones · inteligencia sistémica",
@@ -280,7 +280,7 @@ export const PORTALES_PRINCIPALES: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   lyra: {
     id: "lyra",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Lyra es una constelación pequeña del hemisferio norte dominada por Vega, a 25 años luz, la quinta estrella más brillante del cielo. Vega fue la primera estrella fotografiada y sirvió durante décadas como referencia de magnitud cero. Por el movimiento del eje terrestre, fue estrella polar hace unos catorce mil años y volverá a serlo dentro de otros doce mil.",
     esencia: "soberanía · creación · individualidad",
@@ -368,7 +368,7 @@ export const PORTALES_PRINCIPALES: Record<string, ContenidoPortal> = {
   // ────────────────────────────────────────────────────────────────────────
   orion: {
     id: "orion",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Orión es una constelación ecuatorial visible desde casi toda la Tierra. Sus estrellas principales no forman un sistema físico: Betelgeuse, una supergigante roja, está a unos 550 años luz, mientras que Rigel, una supergigante azul, se encuentra a unos 860. Las tres estrellas del cinturón —Alnitak, Alnilam y Mintaka— sí comparten origen aproximado dentro de la misma región de formación estelar.",
     esencia: "polaridad · discernimiento · integración del conflicto",

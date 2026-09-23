@@ -12,7 +12,7 @@ import type { ContenidoPortal } from "../tipos"
 export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
   perseo: {
     id: "perseo",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Perseo es una constelación del hemisferio norte. Algol es una binaria eclipsante: cada 2.87 días una de sus estrellas pasa por delante de la otra y el brillo del conjunto desciende de forma visible a simple vista, lo que la convirtió en una de las primeras estrellas variables identificadas. Mirfak, la más brillante de la constelación, es una supergigante a unos 510 años luz.",
     esencia: "intermitencia · lo que aparece y se retira · ritmo propio",
@@ -87,7 +87,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   casiopea: {
     id: "casiopea",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Casiopea es una constelación circumpolar del hemisferio norte, reconocible por la forma de W que dibujan sus cinco estrellas principales. Al no ponerse nunca bajo el horizonte desde latitudes medias del norte, permanece visible durante todo el año. Schedar es una gigante anaranjada a unos 228 años luz y Caph se encuentra a 54.",
     esencia: "presencia constante · forma reconocible · permanecer a la vista",
@@ -162,7 +162,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   cefeo: {
     id: "cefeo",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Cefeo es una constelación circumpolar del hemisferio norte, de estrellas menos brillantes que las de sus vecinas. Alderamin, la principal, está a unos 49 años luz y gira sobre sí misma a gran velocidad. Por el desplazamiento del eje terrestre, esta estrella ocupará la posición de referencia del polo norte celeste dentro de unos cinco mil quinientos años.",
     esencia: "lo que aún no llega · preparación · turno futuro",
@@ -237,7 +237,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   draco: {
     id: "draco",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Draco es una constelación larga que rodea el polo norte celeste. Thuban, designada como su estrella alfa, ocupó la posición de referencia del polo hace unos cuatro mil setecientos años, en la época de las grandes pirámides egipcias. Eltanin, más brillante en la actualidad, se encuentra a 154 años luz y se acerca a nosotros: dentro de un millón y medio de años será la estrella más brillante del cielo.",
     esencia: "lo que fue central · memoria larga · custodia",
@@ -312,7 +312,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   ofiuco: {
     id: "ofiuco",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Ofiuco es una constelación ecuatorial extensa, representada tradicionalmente como una figura que sostiene una serpiente. El Sol atraviesa parte de ella a comienzos de diciembre, aunque no figura entre las doce constelaciones del zodiaco tradicional. Su estrella principal, Rasalhague, se encuentra a unos 48 años luz.",
     esencia: "lo que no encaja en la lista · el caso aparte · categoría propia",
@@ -387,7 +387,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   hercules: {
     id: "hercules",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Hércules es una constelación amplia del hemisferio norte. Rasalgethi es una supergigante roja variable situada a unos 360 años luz, y Kornephoros, pese a su designación secundaria, brilla más. En dirección a esta constelación se encuentra el punto hacia el que se desplaza el Sol dentro de la galaxia, llamado ápex solar.",
     esencia: "esfuerzo sostenido · carga asumida · fuerza sin público",
@@ -462,7 +462,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   pegaso: {
     id: "pegaso",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Pegaso es una constelación del hemisferio norte reconocible por el gran cuadrado que forman cuatro estrellas, una de las cuales, Alpheratz, se asigna hoy a Andrómeda. En dirección a esta constelación se descubrió en 1995 el primer planeta en órbita alrededor de una estrella parecida al Sol, un hallazgo que abrió el estudio sistemático de los sistemas planetarios.",
     esencia: "marco amplio · lo que se descubre mirando · apertura",
@@ -537,7 +537,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   crux: {
     id: "crux",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "La Cruz del Sur es la constelación más pequeña del cielo y una de las más reconocibles del hemisferio sur. Sus cuatro estrellas principales sirven para localizar el polo sur celeste, que no cuenta con una estrella brillante que lo señale. Gacrux, la más cercana de ellas, es la gigante roja más próxima a nosotros, a unos 88 años luz.",
     esencia: "orientación sin señal · deducir el centro · pequeño y preciso",
@@ -612,7 +612,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   centaurus: {
     id: "centaurus",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Centauro es una constelación amplia del hemisferio sur que rodea parcialmente a la Cruz del Sur. Su estrella Hadar, también llamada Agena, es una gigante azul situada a unos 390 años luz y una de las más brillantes del cielo. Junto con Rigil Kentaurus forma el par de punteros que se utiliza para localizar la Cruz del Sur.",
     esencia: "doble naturaleza · instinto y criterio · convivencia interna",
@@ -687,7 +687,7 @@ export const PORTALES_RESTO_2: Record<string, ContenidoPortal> = {
 
   libra: {
     id: "libra",
-    estado: "draft",
+    estado: "reviewed",
     astronomia:
       "Libra es una constelación zodiacal del hemisferio sur celeste. Sus dos estrellas principales, Zubenelgenubi y Zubeneschamali, conservan nombres árabes que significan pinza del sur y pinza del norte: en la Antigüedad se consideraban parte de la constelación de Escorpio, y solo después pasaron a formar una constelación propia.",
     esencia: "equilibrio activo · reparto · lo que se pesa cada vez",
