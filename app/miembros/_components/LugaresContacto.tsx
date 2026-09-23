@@ -108,7 +108,20 @@ export function LugaresContacto() {
     document.body.style.top = `-${y}px`
     document.body.style.width = "100%"
 
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (selectedRef.current) setSelected(null); else setOpen(false) } }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      // Chrome de Android emite un Escape al esconder el teclado en pantalla,
+      // y esconderlo es lo que pasa al tocar un botón después de escribir. Si
+      // el foco está en un campo, Escape solo sale del campo.
+      const destino = (e.target as HTMLElement | null) ?? document.activeElement
+      if (destino instanceof HTMLElement &&
+          (destino.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(destino.tagName))) {
+        destino.blur()
+        return
+      }
+      if (selectedRef.current) setSelected(null)
+      else setOpen(false)
+    }
     const onLocal = () => { setPlaces((p) => [...p]) }
     window.addEventListener("keydown", onKey)
     window.addEventListener(LUGARES_CHANGED_EVENT, onLocal)

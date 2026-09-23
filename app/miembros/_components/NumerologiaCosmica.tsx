@@ -23,6 +23,7 @@ import { useProductAccess } from "../_lib/use-product-access"
 import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
+import { PanelFallo } from "./PanelFallo"
 
 const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"
@@ -203,6 +204,8 @@ export function NumerologiaCosmica() {
             style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
           >
             <div style={{ maxWidth: 720, margin: "0 auto", padding: "clamp(1.4rem,4vw,2.6rem) clamp(1.1rem,4vw,2rem) 4rem" }}>
+              {/* Si algo falla al dibujar, el panel se queda y lo dice. */}
+              <PanelFallo modulo="Numerología Cósmica" onReiniciar={() => setStage("form")}>
               {stage === "form" ? (
                 <FormView
                   nombre={nombre} setNombre={setNombre}
@@ -235,6 +238,7 @@ export function NumerologiaCosmica() {
                   onActivarManual={activarManual}
                 />
               ) : null}
+              </PanelFallo>
             </div>
           </div>
         </Overlay>,

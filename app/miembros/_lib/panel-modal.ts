@@ -32,6 +32,17 @@
 //     `overflow: hidden` en el cuerpo no basta en Safari. Hay que fijarlo y
 //     compensar el desplazamiento, y devolverlo al cerrar para no perder el
 //     sitio donde estaba la persona. Lo hacía solo uno de los cuatro.
+//
+// 4 · EN EL MÓVIL, CERRAR EL TECLADO CERRABA EL PANEL.
+//     Chrome en Android emite un `keydown` con la tecla Escape cuando se
+//     oculta el teclado en pantalla, y ocultarlo es justo lo que pasa al
+//     tocar un botón después de haber escrito en un campo. El panel entero
+//     se cerraba en el momento de pulsar el botón principal, sin que nadie
+//     hubiera tocado ninguna tecla.
+//
+//     Ahora Escape se comporta como en cualquier formulario: si el foco está
+//     en un campo, la primera pulsación solo sale del campo; solo la segunda
+//     —ya fuera— cierra el panel.
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
@@ -95,7 +106,17 @@ export function usePanelAPantallaCompleta(onClose: () => void): {
     document.body.style.top = `-${y}px`
     document.body.style.width = "100%"
 
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") cerrar.current() }
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      if (escapeEsDelTeclado(e)) {
+        // Sale del campo y no cierra nada. Quien quiera cerrar de verdad
+        // vuelve a pulsar Escape, ya sin el foco dentro del formulario.
+        const el = document.activeElement
+        if (el instanceof HTMLElement) el.blur()
+        return
+      }
+      cerrar.current()
+    }
     window.addEventListener("keydown", esc)
 
     return () => {
@@ -121,4 +142,25 @@ export function usePanelAPantallaCompleta(onClose: () => void): {
   }, [])
 
   return { montado, propsDelFondo: { onPointerDown, onClick } }
+}
+
+/**
+ * ¿Este Escape lo escribió una persona, o lo emitió el teclado del móvil al
+ * esconderse?
+ *
+ * No hay forma de preguntarlo directamente, pero sí de distinguir el caso que
+ * importa: el teclado en pantalla solo está abierto cuando el foco está en un
+ * campo de texto. Si el foco está ahí, se trata la pulsación como "salir del
+ * campo", que es lo que hace cualquier formulario, y el panel no se cierra.
+ *
+ * El caso real que arregla: en Chrome de Android, tocar un botón después de
+ * haber escrito en un campo esconde el teclado, y esconderlo emite un keydown
+ * de Escape. El panel se cerraba justo al pulsar el botón principal.
+ */
+function escapeEsDelTeclado(e: KeyboardEvent): boolean {
+  const destino = (e.target as HTMLElement | null) ?? document.activeElement
+  if (!(destino instanceof HTMLElement)) return false
+  if (destino.isContentEditable) return true
+  const etiqueta = destino.tagName
+  return etiqueta === "INPUT" || etiqueta === "TEXTAREA" || etiqueta === "SELECT"
 }

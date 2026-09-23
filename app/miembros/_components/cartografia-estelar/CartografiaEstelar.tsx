@@ -33,6 +33,7 @@ import { VistaPortal } from "./VistaPortal"
 import { SintesisGlobal } from "./SintesisGlobal"
 import { VistaLista, FILTROS_VACIOS, type Filtros, type Orden } from "./VistaLista"
 import { usePanelAPantallaCompleta, usePropsDelFondo } from "../../_lib/panel-modal"
+import { PanelFallo } from "../PanelFallo"
 import { useProducts } from "../../_lib/use-products"
 import { useProductAccess } from "../../_lib/use-product-access"
 import { isCartografiaToolProduct, numeroLibre, CARTOGRAFIA_PRODUCT_NUM } from "../../_lib/tool-products"
@@ -358,7 +359,14 @@ function Panel({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={onClose} aria-label="Cerrar" className={s.cerrar}>
           <X size={18} />
         </button>
-        <div className={s.scroll} ref={scrollRef}>{contenido()}</div>
+        {/* Si algo falla al dibujar, el panel se queda y lo dice. Antes el
+            fallo subía hasta el límite de error de la aplicación entera y lo
+            único que se veía era que el módulo desaparecía. */}
+        <div className={s.scroll} ref={scrollRef}>
+          <PanelFallo modulo="Cartografía Estelar 144" onReiniciar={reiniciar}>
+            {contenido()}
+          </PanelFallo>
+        </div>
 
         {/* Se confirma antes de borrar. No es grave —los datos se vuelven a
             escribir en un minuto— pero perder una cartografía que llevabas

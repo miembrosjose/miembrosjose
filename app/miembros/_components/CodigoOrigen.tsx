@@ -22,6 +22,7 @@ import { isCodigoOrigenToolProduct, numeroLibre, CODIGO_ORIGEN_PRODUCT_NUM } fro
 import prod from "./products.module.css"
 import s from "./codigo-origen.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
+import { PanelFallo } from "./PanelFallo"
 
 // Exactamente los de NumerologiaCosmica.tsx. Si allí cambian, aquí también.
 const GOLD = "#e6cf95"
@@ -156,9 +157,15 @@ function Panel({ onClose }: { onClose: () => void }) {
         </button>
 
         <div className={s.scroll}>
-          {!resultado
-            ? <Formulario onCalcular={calcular} error={error} />
-            : <Lectura r={resultado} onRehacer={() => { setNacimiento(null); setError(null) }} />}
+          {/* Si algo falla al dibujar, el panel se queda y lo dice. */}
+          <PanelFallo
+            modulo="Código de Origen"
+            onReiniciar={() => { setNacimiento(null); setError(null) }}
+          >
+            {!resultado
+              ? <Formulario onCalcular={calcular} error={error} />
+              : <Lectura r={resultado} onRehacer={() => { setNacimiento(null); setError(null) }} />}
+          </PanelFallo>
         </div>
       </div>
     </div>,
