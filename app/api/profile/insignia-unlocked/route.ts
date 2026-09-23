@@ -1,44 +1,31 @@
-// API — registra desbloqueio de insignia + concede XP.
+// API — registra el desbloqueo de una insignia.
 //
-// POST /api/profile/insignia-unlocked
-//   Body: { insignia_id: string }
+// POST /api/profile/insignia-unlocked   { insignia_id }
 //
-// Concede XP baseado na categoria:
-//   - progression (aulas/episodios): +50
-//   - community / time / agents: +200
-//   - products: 0 (compra ja deu +1 level)
+// ── QUÉ SE COMPRUEBA ANTES DE CONCEDER ─────────────────────────────────────
+// Esta ruta concedía CUALQUIER insignia del catálogo a quien la pidiera. Una
+// línea en la consola del navegador bastaba para ponerse «Instructor de Los
+// 144.000» o «Embajador Galáctico».
 //
-// Dedup: cada user só ganha XP UMA vez por insignia (verifica xp_events).
+// Ahora se pregunta a lib/insignias-ganadas: ¿los HECHOS que guarda el
+// servidor —capítulos vistos, días de acceso, aportaciones, compras—
+// respaldan esta insignia? Si no, se rechaza. Las que concede la
+// administración no pasan por aquí: se escriben desde sus propias rutas.
 //
-// ── LO QUE SE COMPRUEBA ANTES DE CONCEDER ──────────────────────────────────
-// Este endpoint concedía CUALQUIER insignia del catálogo a quien la pidiera.
-// Una línea en la consola del navegador bastaba para ponerse «Instructor de
-// Los 144.000» o «Embajador Galáctico», y el sincronizador lo hacía solo: la
-// copia del navegador se subía entera en cada arranque, así que reiniciar el
-// avance de alguien no servía de nada.
-//
-// Ahora se pregunta a lib/insignias-ganadas: ¿los HECHOS del servidor
-// —capítulos vistos, días de acceso, aportaciones, compras— respaldan esta
-// insignia? Si no, se rechaza. Las que concede la administración no pasan
-// por aquí: se escriben en la tabla desde los endpoints de admin.
+// ── POR QUÉ ESTA RUTA YA CASI NO HACE FALTA ────────────────────────────────
+// Las insignias de avance las concede el propio servidor al guardar el avance
+// (ver /api/profile/episode-progress). Esta ruta se conserva para lo que el
+// servidor no puede observar —abrir el enlace del grupo de WhatsApp— y para
+// que el navegador pueda reclamar algo que quedó sin conceder por una caída
+// de red. Conceder dos veces no duplica nada.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
-import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
 import { AUTODECLARABLES, insigniasGanadas } from "@/lib/insignias-ganadas"
-import { emitCommunityEvent } from "@/lib/notify"
+import { concederInsignia } from "@/lib/insignias-conceder"
 
 export const dynamic = "force-dynamic"
-
-const XP_BY_CATEGORY: Record<string, number> = {
-  progression: 50,
-  community: 200,
-  time: 200,
-  agents: 200,
-  products: 0, // compra ja deu +1 level
-  exclusive: 0, // admin_seal etc — não premia XP
-}
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()
@@ -46,156 +33,27 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
 
   let body: { insignia_id?: string }
-  try { body = await req.json() } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) }
+  try { body = await req.json() } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
   const id = (body.insignia_id || "").trim()
   if (!id) return NextResponse.json({ error: "insignia_id required" }, { status: 400 })
-
-  const ach = getAchievementById(id)
-  if (!ach) return NextResponse.json({ error: "Insignia inválida" }, { status: 400 })
+  if (!getAchievementById(id)) {
+    return NextResponse.json({ error: "Insignia inválida" }, { status: 400 })
+  }
 
   // El servidor no se fía de quien pide: comprueba.
-  const ganadas = AUTODECLARABLES.has(id) ? null : await insigniasGanadas(user)
-  if (ganadas && !ganadas.has(id)) {
-    return NextResponse.json(
-      { error: "Esa insignia no se ha ganado todavía.", concedida: false },
-      { status: 403 },
-    )
-  }
-
-  const xpAmount = XP_BY_CATEGORY[ach.category] ?? 0
-  const admin = getSupabaseAdmin()
-
-  // Grava na lista de unlocked do user (cross-device sync). Idempotente:
-  // PRIMARY KEY (user_id, achievement_id) + ignoreDuplicates evita erro
-  // se já existir. RLS aplica via supabase server client, mas usamos admin
-  // pra bypass simplificar (validação feita logicamente acima — id existe + auth OK).
-  const { error: unlockErr } = await admin
-    .from("user_unlocked_achievements")
-    .upsert(
-      { user_id: user.id, achievement_id: id },
-      { onConflict: "user_id,achievement_id", ignoreDuplicates: true },
-    )
-  if (unlockErr) {
-    console.error("[/api/profile/insignia-unlocked] upsert failed:", {
-      user_id: user.id,
-      achievement_id: id,
-      error: unlockErr.message,
-      code: unlockErr.code,
-    })
-    return NextResponse.json(
-      { error: "Failed to save unlock: " + unlockErr.message },
-      { status: 500 },
-    )
-  }
-
-  // Dedup XP: já recebeu XP por essa insignia? (separado do unlock — XP só
-  // é creditado 1×, mas a linha em user_unlocked_achievements é idempotente
-  // e sempre upsertada acima)
-  const { data: existing } = await admin
-    .from("xp_events")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("event_type", "insignia_unlocked")
-    .eq("source_id", id)
-    .limit(1)
-
-  if (existing && existing.length > 0) {
-    return NextResponse.json({ ok: true, dedup: true, xp_awarded: 0 })
-  }
-
-  if (xpAmount > 0) {
-    await admin.rpc("apply_xp_delta", {
-      p_user_id: user.id,
-      p_event_type: "insignia_unlocked",
-      p_xp_delta: xpAmount,
-      p_level_delta: 0,
-      p_source_table: "achievements",
-      p_source_id: id,
-    })
-  }
-
-  // Produtos: +1 level por compra (dedup próprio: event_type product_level_grant)
-  if (ach.category === "products") {
-    const { data: levelGranted } = await admin
-      .from("xp_events")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("event_type", "product_level_grant")
-      .eq("source_id", id)
-      .limit(1)
-    if (!levelGranted?.length) {
-      await admin.rpc("apply_xp_delta", {
-        p_user_id: user.id,
-        p_event_type: "product_level_grant",
-        p_xp_delta: 0,
-        p_level_delta: 1,
-        p_source_table: "achievements",
-        p_source_id: id,
-      })
+  if (!AUTODECLARABLES.has(id)) {
+    const ganadas = await insigniasGanadas(user)
+    if (!ganadas.has(id)) {
+      return NextResponse.json(
+        { error: "Esa insignia no se ha ganado todavía.", concedida: false },
+        { status: 403 },
+      )
     }
   }
 
-  // Whitelist de insignias com BROADCAST (toast lateral pros outros users):
-  //   - 5 produtos premium (Creativos, Andrómeda, Analytics, Mini VSL, Revisão)
-  //   - 4 ranks intermediários (Operador, Estratega, Capo, Padrino)
-  //   - 2 chamas time (Habitué, Veterano)
-  //   - 1 entrenamiento completo (concluiu todos os episódios)
-  //
-  // Top tier (el_topo, el_estudio, time_eterno, rank_leyenda) NÃO usa esse
-  // endpoint — vem por grant-topo/grant-estudio admin OU por triggers SQL
-  // que usam tipo public_insignia diretamente. Essas 4 disparam fullscreen
-  // overlay no client (BroadcastProvider detecta pelo title).
-  //
-  // Outras insignias (welcome, agents, seasons, vip_community, ranks bronze,
-  // time_devoto, admin_seal) só mostram toast LOCAL pro recipient — não
-  // aparecem pros outros (evita spam de FOMO em conquistas comuns).
-  const BROADCAST_IDS = new Set([
-    // Top tier (2 que passam por aqui — el_topo e el_estudio vão por endpoints
-    // dedicados grant-topo/grant-estudio). ETERNO e LEYENDA disparam fullscreen
-    // no client porque o BroadcastProvider detecta "ETERNO"/"LEYENDA" no title.
-    "time_eterno", "rank_leyenda",
-    // Products gold (5)
-    "product_creativos", "product_andromeda", "product_analytics", "product_minivsl", "product_revisao",
-    // Ranks comunidad (4 intermediários)
-    "rank_operador", "rank_estratega", "rank_capo", "rank_padrino",
-    // Tempo chamas (2)
-    "time_habitue", "time_veterano",
-    // Progressão completa
-    "training_complete",
-  ])
-  const shouldBroadcast = BROADCAST_IDS.has(ach.id)
-
-  if (shouldBroadcast) {
-    const meta = (user.user_metadata || {}) as { full_name?: string; avatar_url?: string }
-    const fullName = meta.full_name || (user.email ? user.email.split("@")[0] : "Miembro")
-    const avatarUrl = (typeof meta.avatar_url === "string" && meta.avatar_url) || null
-    const tierEmoji = ach.tier === "topo" ? "🔥" : ach.tier === "diamond" ? "💎" : ach.tier === "gold" ? "🥇" : "🥈"
-
-    // Notif pessoal pro recipient — sempre persiste no sino
-    await admin.from("notifications").insert({
-      user_id: user.id,
-      type: "public_insignia_self",
-      source_user_id: user.id,
-      source_user_name: fullName,
-      source_user_avatar_url: avatarUrl,
-      title: `Desbloqueaste "${ach.name}" ${tierEmoji}`,
-      preview: ach.desc,
-    })
-
-    // Comunidad: UNA fila en community_events (antes: fan-out a todos).
-    await emitCommunityEvent({
-      type: "public_insignia",
-      actorUserId: user.id,
-      actorName: fullName,
-      actorAvatarUrl: avatarUrl,
-      title: `${fullName} desbloqueó "${ach.name}" ${tierEmoji}`,
-      preview: ach.desc,
-      category: "badge",
-      visibility: "members",
-      priority: ach.tier === "topo" || ach.tier === "diamond" ? "highlight" : "important",
-    })
-  }
-
-  return NextResponse.json({ ok: true, xp_awarded: xpAmount, category: ach.category, broadcast: shouldBroadcast })
+  const nueva = await concederInsignia(user, id)
+  return NextResponse.json({ ok: true, concedida: true, nueva })
 }

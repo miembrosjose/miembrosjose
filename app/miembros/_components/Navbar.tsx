@@ -111,12 +111,15 @@ export function Navbar() {
   const initials = buildAvatarLetters(fullName)
   const avatarUrl = (typeof meta.avatar_url === "string" && meta.avatar_url) || null
   // La insignia ELEGIDA por el usuario (featured_badge_id) tiene prioridad.
-  // Si no eligió ninguna, el default es "admin_seal" para admin y "welcome" para
-  // el resto. Así, al cambiar la insignia en /perfil, el avatar del navbar se
-  // actualiza al instante (antes el admin quedaba fijo en admin_seal).
+  //
+  // Quien no ha elegido ninguna NO lleva ninguna. Antes el respaldo era
+  // "welcome" —la «Bienvenida», retirada del catálogo hace tiempo—, así que
+  // cada persona recién registrada aparecía con una insignia vieja que nadie
+  // le había dado y que no significaba nada. El Sello del Admin sí se queda:
+  // ese va con el cargo, no con el avance.
   const featuredBadgeId =
     (typeof meta.featured_badge_id === "string" && meta.featured_badge_id) ||
-    (isAdmin ? "admin_seal" : "welcome")
+    (isAdmin ? "admin_seal" : null)
   const featuredStarId =
     (typeof meta.featured_star_id === "string" && meta.featured_star_id) || null
   const featuredFlameId =

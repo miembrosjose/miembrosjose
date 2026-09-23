@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { otorgarLasGanadas } from "@/lib/insignias-conceder"
 
 export const dynamic = "force-dynamic"
 
@@ -65,5 +66,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  // ── Y lo que se haya ganado con este capítulo ──────────────────────────
+  //
+  // Se resuelve AQUÍ, en la misma petición y después de guardar el avance.
+  // Antes lo pedía el navegador por su cuenta, en el mismo gesto: la petición
+  // de la insignia adelantaba a la del capítulo, el servidor no encontraba el
+  // avance que la justificaba y la rechazaba. Se veía el aviso en pantalla y
+  // la insignia no quedaba en ningún sitio.
+  //
+  // Si falla, el capítulo YA está guardado y eso es lo importante: las
+  // insignias se recuperan solas la próxima vez que se marque algo.
+  let nuevas: string[] = []
+  try {
+    nuevas = await otorgarLasGanadas(user)
+  } catch (e) {
+    console.error("[/api/profile/episode-progress] insignias", e)
+  }
+
+  return NextResponse.json({ ok: true, insignias_nuevas: nuevas })
 }

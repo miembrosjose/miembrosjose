@@ -120,7 +120,8 @@ export function OnlinePresenceProvider({ children }: { children: React.ReactNode
         avatar_url: meta.avatar_url || null,
         initials: buildAvatarLetters(fullName),
         level,
-        badge_id: meta.featured_badge_id || (isAdmin ? "admin_seal" : "welcome"),
+        // Sin insignia elegida no se enseña ninguna. Ver Navbar.tsx.
+        badge_id: meta.featured_badge_id || (isAdmin ? "admin_seal" : null),
         star_id: meta.featured_star_id || null,
         flame_id: meta.featured_flame_id || null,
         is_admin: isAdmin,

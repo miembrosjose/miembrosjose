@@ -73,7 +73,8 @@ export async function GET(req: NextRequest) {
       full_name: fullName,
       username: meta.username || null,
       avatar_url: meta.avatar_url || null,
-      featured_badge_id: isAdmin ? "admin_seal" : meta.featured_badge_id || "welcome",
+      // Sin insignia elegida, ninguna: nadie nace con la «Bienvenida».
+      featured_badge_id: isAdmin ? "admin_seal" : meta.featured_badge_id || null,
       featured_star_id: meta.featured_star_id || null,
       featured_flame_id: meta.featured_flame_id || null,
       is_admin: isAdmin,

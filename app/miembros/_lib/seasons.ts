@@ -2,6 +2,8 @@
 // Episódios com vídeos + notas HTML ficam em ./episodes.ts; este arquivo
 // só lida com metadata das 5 temporadas e regras de unlock/progresso.
 
+import { anunciarInsignias } from "./insignias-aviso"
+
 export type Season = {
   num: number
   name: string
@@ -103,16 +105,28 @@ export function markEpisodeWatched(seasonNum: number, episodeNum: number): Episo
   }
   // Sincroniza pro servidor (fire-and-forget — UI não espera).
   // Idempotente: re-marcar mesmo (S, E) não dá erro server-side.
+  //
+  // La respuesta trae las insignias que ESE capítulo acaba de desbloquear. Se
+  // conceden en el servidor, donde está el avance, y se anuncian aquí. Antes
+  // el navegador las adivinaba y las pedía por su cuenta en el mismo gesto: su
+  // petición adelantaba a esta, el servidor no encontraba todavía el capítulo
+  // que las justificaba y las rechazaba. Se veía el aviso y la insignia no
+  // quedaba en ningún sitio.
   if (typeof window !== "undefined") {
     fetch("/api/profile/episode-progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ season_num: seasonNum, episode_num: episodeNum }),
-    }).catch(() => {
-      // Falha de rede: localStorage manteve o estado local; será re-sincronizado
-      // no próximo syncProgressFromServer() via merge (envia pendentes).
     })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { insignias_nuevas?: string[] } | null) => {
+        if (d?.insignias_nuevas?.length) anunciarInsignias(d.insignias_nuevas)
+      })
+      .catch(() => {
+        // Falha de rede: localStorage manteve o estado local; será re-sincronizado
+        // no próximo syncProgressFromServer() via merge (envia pendentes).
+      })
   }
   return progress
 }

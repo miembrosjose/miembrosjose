@@ -63,10 +63,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 })
   }
 
-  // Cascade: propaga a insignia em TODAS as interações públicas do user.
-  // Respeita a ESCOLHA do user (admin pode escolher Recluta, Bienvenido, etc).
-  // Fallbacks: admin → admin_seal, outros → welcome (todo user tem por default).
-  const cascadeBadgeId = badgeId || (isAdmin(user) ? "admin_seal" : "welcome")
+  // Cascade: propaga la insignia a TODAS las interacciones públicas.
+  // Respeta la ELECCIÓN de la persona.
+  //
+  // Quitarse la insignia deja los mensajes SIN insignia, no con la
+  // «Bienvenida»: esa está retirada del catálogo y ponerla era inventarle a
+  // alguien una distinción que no eligió ni ganó.
+  const cascadeBadgeId = badgeId || (isAdmin(user) ? "admin_seal" : null)
   const admin = getSupabaseAdmin()
   await Promise.all([
     admin.from("forum_posts").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),

@@ -115,7 +115,7 @@ export async function GET() {
           full_name: meta.full_name || meta.name || u.email?.split("@")[0] || "Miembro",
           username: meta.username || null,
           avatar_url: meta.avatar_url || null,
-          featured_badge_id: isAdmin ? "admin_seal" : meta.featured_badge_id || "welcome",
+          featured_badge_id: isAdmin ? "admin_seal" : meta.featured_badge_id || null,
           is_admin: isAdmin,
         }
       }
