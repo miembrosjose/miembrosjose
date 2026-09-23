@@ -48,4 +48,13 @@ export function anunciarInsignias(ids: string[]) {
 
   // Que el contador de XP vuelva a preguntar: puede haber subido de nivel.
   window.dispatchEvent(new CustomEvent("app:xp-force-sync"))
+
+  // Y que la sesión se entere de la insignia destacada.
+  //
+  // Al conceder una, el servidor la pone como destacada en user_metadata. Pero
+  // el navegador guarda su copia dentro del token: hasta que no se pide uno
+  // nuevo, el avatar del menú y el perfil siguen enseñando la de antes, y
+  // parecía que la insignia no se había puesto. Esto avisa a la sesión de que
+  // vuelva a preguntar.
+  window.dispatchEvent(new CustomEvent("app:sesion-desactualizada"))
 }

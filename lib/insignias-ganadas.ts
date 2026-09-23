@@ -144,8 +144,23 @@ export async function insigniasGanadas(user: User): Promise<Set<string>> {
     }
   }
 
-  // Nunca se cuela algo que no esté en el catálogo.
-  for (const id of [...ganadas]) if (!getAchievementById(id)) ganadas.delete(id)
+  // ── Lo retirado no se vuelve a conceder ─────────────────────────────────
+  //
+  // Una insignia `retirada` está fuera del catálogo: quien la tenga se la
+  // queda, pero no se da a nadie más. Eso incluye la «Bienvenida», la
+  // «Primera Clase», «Semilla Estelar» y las de producto.
+  //
+  // Sin esta regla pasaba algo que parecía otra cosa: cada vez que alguien
+  // marcaba un capítulo, el servidor deducía esas insignias viejas, las
+  // concedía otra vez y mandaba un aviso por cada una. Después de limpiar la
+  // tabla, la primera clase vista devolvía media docena de avisos de
+  // insignias que se acababan de borrar.
+  //
+  // Nunca se cuela tampoco algo que no esté en el catálogo.
+  for (const id of [...ganadas]) {
+    const ach = getAchievementById(id)
+    if (!ach || ach.retirada) ganadas.delete(id)
+  }
 
   return ganadas
 }

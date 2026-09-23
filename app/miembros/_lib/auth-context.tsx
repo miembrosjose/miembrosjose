@@ -74,6 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     })
 
+    // Cuando el servidor cambia algo del perfil por su cuenta —al conceder
+    // una insignia y destacarla— hay que pedir un token nuevo: el que el
+    // navegador tiene guardado lleva dentro la copia vieja de user_metadata.
+    const desactualizada = () => { void refresh() }
+    window.addEventListener("app:sesion-desactualizada", desactualizada)
+
     // Realtime: login/logout/refresh em outras abas atualiza aqui
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return
@@ -83,9 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
+      window.removeEventListener("app:sesion-desactualizada", desactualizada)
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [refresh])
 
   // is_admin vem em raw_app_meta_data (definido no Supabase Auth, não em user_metadata)
   // Mesmo critério usado em lib/admin.ts no server.

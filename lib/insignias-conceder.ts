@@ -56,7 +56,11 @@ const SE_ANUNCIAN = new Set([
  * NO comprueba nada: quien llama tiene que haberlo hecho. Devuelve true si era
  * nueva, false si ya la tenía.
  */
-export async function concederInsignia(user: User, id: string): Promise<boolean> {
+export async function concederInsignia(
+  user: User,
+  id: string,
+  opciones: { silencioso?: boolean } = {},
+): Promise<boolean> {
   const ach = getAchievementById(id)
   if (!ach) return false
 
@@ -127,6 +131,14 @@ export async function concederInsignia(user: User, id: string): Promise<boolean>
   }
 
   // ── El aviso ──
+  // `silencioso` es para cuando el servidor está recuperando de golpe lo que
+  // ya se había ganado antes. Eso no es un momento de logro: avisar de seis
+  // cosas a la vez convierte la campana en ruido y no dice nada nuevo.
+  if (opciones.silencioso) {
+    await destacarSiProcede(user, ach)
+    return true
+  }
+
   const meta = (user.user_metadata || {}) as { full_name?: string; avatar_url?: string }
   const nombre = meta.full_name || user.email?.split("@")[0] || "Miembro"
   const avatar = (typeof meta.avatar_url === "string" && meta.avatar_url) || null
@@ -234,9 +246,14 @@ export async function otorgarLasGanadas(user: User): Promise<string[]> {
   const suyas = new Set((yaTiene || []).map((r) => (r as { achievement_id: string }).achievement_id))
   const faltan = [...ganadas].filter((id) => !suyas.has(id))
 
+  // Más de dos de golpe no es que alguien acabe de lograr tres cosas: es que
+  // faltaba lo que ya tenía —una tabla recién limpiada, un reinicio, un
+  // dispositivo nuevo—. Se guarda todo, pero en silencio.
+  const esRecuperacion = faltan.length > 2
+
   const nuevas: string[] = []
   for (const id of faltan) {
-    if (await concederInsignia(user, id)) nuevas.push(id)
+    if (await concederInsignia(user, id, { silencioso: esRecuperacion })) nuevas.push(id)
   }
-  return nuevas
+  return esRecuperacion ? [] : nuevas
 }
