@@ -20,14 +20,25 @@
 // borrara el usuario antes, se perdería el correo y con él el vínculo hacia
 // la suscripción: quedaría cobrando para siempre sin forma de encontrarla.
 //
-// ── QUÉ NO BORRA, Y POR QUÉ ────────────────────────────────────────────────
-// El historial de cobros. Ni en Stripe —que no lo permite, y hace bien— ni en
-// `stripe_sales` ni en `revoked_products`. Son registros contables y en casi
-// cualquier país hay obligación de conservarlos durante años. Se informa de
-// lo que se conserva en la respuesta, para que quede a la vista.
+// ── QUÉ SE BORRA Y QUÉ NO ──────────────────────────────────────────────────
+// El criterio: STRIPE ES EL REGISTRO CONTABLE. Las facturas, los cargos, los
+// importes y el correo del cliente viven allí, no se pueden borrar, y ahí
+// seguirán. Las tablas de aquí son una COPIA para poder enseñarle sus compras
+// a la persona y darle acceso.
 //
-// Tampoco borra el Customer de Stripe: solo cancela la suscripción. Así el
-// historial de pagos sigue teniendo nombre en el panel de Stripe.
+// Cuando se elimina a alguien no hay acceso que dar ni compras que enseñar:
+// esa copia deja de tener función y lo único que hace es conservar su nombre,
+// su teléfono y su correo sin motivo. Por eso se borra entera, incluidas
+// `stripe_sales` y `account_invites`, que antes se trataban de forma
+// incoherente —se guardaba la venta pero se borraba el puente hacia ella—.
+//
+// LA EXCEPCIÓN es `revoked_products`. No es contabilidad: es el registro de
+// reembolsos, disputas y devoluciones, indexado por correo. Si se borrara,
+// quien pidiera un reembolso podría eliminar su cuenta, registrarse otra vez
+// con el mismo correo y recuperar el producto gratis. Se conserva.
+//
+// Tampoco se borra el Customer de Stripe: solo se cancela la suscripción, para
+// que el historial de pagos siga teniendo nombre en su panel.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
@@ -41,9 +52,7 @@ export const dynamic = "force-dynamic"
  * Tablas que guardan al miembro por correo y NO tienen clave foránea a
  * auth.users. Postgres no las limpia solo: hay que nombrarlas aquí.
  *
- * Deliberadamente NO están `stripe_sales` ni `revoked_products`: son el
- * registro de lo que esa persona pagó y de lo que se le revocó. Eso se
- * conserva.
+ * `revoked_products` NO está, y es a propósito: ver la cabecera.
  */
 const TABLAS_POR_CORREO: Array<{ tabla: string; columna: string }> = [
   { tabla: "member_subscriptions", columna: "email" },
@@ -51,6 +60,19 @@ const TABLAS_POR_CORREO: Array<{ tabla: string; columna: string }> = [
   { tabla: "account_invites", columna: "email" },
   { tabla: "email_send_log", columna: "email" },
   { tabla: "funnel_feedbacks", columna: "email" },
+  // La copia local de las ventas. El original está en Stripe.
+  { tabla: "stripe_sales", columna: "email" },
+]
+
+/**
+ * Las mismas tablas, por si guardan el id en vez del correo.
+ *
+ * `stripe_sales` tiene ambas columnas: hay filas antiguas enlazadas solo por
+ * correo y filas nuevas con user_id. Se barre por las dos para no dejar ni
+ * unas ni otras.
+ */
+const TABLAS_POR_ID: Array<{ tabla: string; columna: string }> = [
+  { tabla: "stripe_sales", columna: "user_id" },
 ]
 
 type Resultado = {
@@ -183,6 +205,27 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     }
   }
 
+  // ── 2b · Lo que va por id en vez de por correo ──
+  for (const { tabla, columna } of TABLAS_POR_ID) {
+    const { data, error } = await admin
+      .from(tabla)
+      .delete()
+      .eq(columna, id)
+      .select("*")
+
+    if (error) {
+      if (/does not exist|schema cache/i.test(error.message)) continue
+      console.error("[admin/members/eliminar] tabla=%s %s", tabla, error.message)
+      continue
+    }
+    const filas = Array.isArray(data) ? data.length : 0
+    if (filas > 0) {
+      const ya = resultado.tablasLimpiadas.find((t) => t.tabla === tabla)
+      if (ya) ya.filas += filas
+      else resultado.tablasLimpiadas.push({ tabla, filas })
+    }
+  }
+
   // ── 3 · El usuario, al final ──
   // Todo lo que tiene clave foránea hacia auth.users cae solo con esto.
   const { error: errBorrar } = await admin.auth.admin.deleteUser(id)
@@ -201,9 +244,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   resultado.usuarioBorrado = true
   resultado.ok = true
   resultado.conservado = [
-    "El historial de cobros en Stripe (facturas y pagos): Stripe no permite borrarlo y es un registro contable.",
+    "El historial de cobros en Stripe (facturas, cargos e importes). Es el registro contable, no se puede borrar y ahí seguirá.",
     "El Customer de Stripe: solo se canceló la suscripción, para que los pagos antiguos sigan teniendo nombre.",
-    "stripe_sales y revoked_products: son el registro de lo que pagó y de lo que se le revocó.",
+    "revoked_products: el registro de reembolsos y disputas. Si se borrara, bastaría con eliminar la cuenta y volver a registrarse para recuperar un producto devuelto.",
   ]
 
   return NextResponse.json(resultado)
