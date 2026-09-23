@@ -6,9 +6,18 @@
 //   · editar    → ser el autor Y conservar el rol de Organizador
 //   · eliminar  → solo borradores; lo publicado se cancela, nunca desaparece
 //   · apuntarse → a uno mismo, y solo a encuentros publicados
+//
+// ── MODERACIÓN ─────────────────────────────────────────────────────────────
+// Un administrador puede cancelar o eliminar CUALQUIER encuentro, incluidos
+// los ajenos y los ya cancelados. Eso no lo permite la RLS —sus policies son
+// de autor—, así que para ese caso concreto se usa el cliente de servicio,
+// SIEMPRE después de comprobar isAdmin() contra app_metadata, que solo puede
+// escribirse desde el servidor. Sin esa comprobación previa no se toca.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -112,7 +121,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ error: "Nada que cambiar" }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // El administrador modera cualquier encuentro; el resto pasa por la RLS.
+  const escritor = isAdmin(user) ? getSupabaseAdmin() : supabase
+  const { data, error } = await escritor
     .from("network_meetings")
     .update(cambios)
     .eq("id", id)
@@ -143,7 +154,9 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const id = leerId((await ctx.params).id)
   if (!id) return NextResponse.json({ error: "Id inválido" }, { status: 400 })
 
-  const { data, error } = await supabase
+  const moderando = isAdmin(user)
+  const borrador = moderando ? getSupabaseAdmin() : supabase
+  const { data, error } = await borrador
     .from("network_meetings")
     .delete()
     .eq("id", id)
@@ -158,6 +171,10 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ error: "No se pudo eliminar" }, { status: 500 })
   }
   if (!data) {
+    // Para un administrador, no encontrarlo significa que ya no existe.
+    if (moderando) {
+      return NextResponse.json({ error: "Ese encuentro ya no existe." }, { status: 404 })
+    }
     // El caso normal: ya está publicado. La policy solo permite borrar
     // borradores, a propósito.
     return NextResponse.json(

@@ -29,7 +29,7 @@ const CICLO: { n: number; titulo: string; texto: string }[] = [
 ];
 
 const RECURSOS: { k: string; texto: string }[] = [
-  { k: 'Biblioteca', texto: 'Profundiza conceptos cuando necesites ampliar información.' },
+  { k: 'Recursos', texto: 'Profundiza conceptos cuando necesites ampliar información.' },
   { k: 'Archivos complementarios', texto: 'Convierten cada episodio en mapa, sistema, código o arquitectura visual.' },
   { k: 'Transmisiones · Archivo vivo', texto: 'Amplían preguntas y revelaciones fuera del currículo de temporadas.' },
   { k: 'Mapa cósmico', texto: 'Explora lugares, nodos, retiros, discos solares y puntos de contacto.' },

@@ -24,12 +24,17 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Inicio", view: "inicio", anchor: null },
-  { label: "Biblioteca", view: "inicio", anchor: "biblioteca" },
+  // La sección se llama «Recursos» de cara a quien mira. El ancla y la
+  // categoría en base de datos siguen siendo "biblioteca": renombrarlas
+  // rompería los enlaces guardados y los productos ya cargados.
+  { label: "Recursos", view: "inicio", anchor: "biblioteca" },
   // «La Red» sustituye a la antigua pestaña «Miembros»: hace lo mismo y además
   // explora por territorio. La vista miembros_lista sigue existiendo y es
   // accesible por /miembros/personas, pero sale del menú para no duplicar.
+  // «La Red» absorbió «Comunidad»: el foro es ahora una pestaña suya. Los
+  // dos nombres significaban lo mismo y obligaban a elegir sin saber qué
+  // había detrás de cada uno.
   { label: "La Red", view: "red", anchor: null },
-  { label: "Comunidad", view: "comunidad", anchor: null },
   { label: "Transmisiones", view: "feed", anchor: null },
   { label: "Tienda", view: "inicio", anchor: "tienda" },
 ]

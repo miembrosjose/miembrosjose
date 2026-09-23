@@ -10,8 +10,11 @@
 // navegador nunca recibe el directorio entero, solo la página que está viendo.
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { ForumFeed } from "./ForumFeed"
+import { Leaderboard } from "./Leaderboard"
+import { PulsoSemana } from "./PulsoSemana"
 import Link from "next/link"
-import { MapPin, Search, MessageCircle, Users, Globe2, Loader2, X, CalendarDays } from "lucide-react"
+import { Activity, MapPin, Search, MessageCircle, MessageSquare, Users, Globe2, Loader2, X, CalendarDays } from "lucide-react"
 import dynamic from "next/dynamic"
 import { getAchievementById, getAura, ORDEN_AURAS } from "@/lib/achievements"
 import { getAchievementSvg } from "@/lib/achievement-svg"
@@ -113,10 +116,12 @@ export function ViewRed() {
   // pestaña «lista» y sin filtros, aunque estuvieras explorando el mapa. Se
   // recuerda en sessionStorage —por pestaña del navegador, sin tocar la base
   // ni el servidor— y se restaura al montar.
-  const [tab, setTab] = useState<"lista" | "mapa" | "encuentros">(() => leerMemoria().tab)
+  // Siempre Pulso al entrar. Es lo primero que hay que ver, y recordar la
+  // última pestaña hacía que cada persona entrara a un sitio distinto.
+  const [tab, setTab] = useState<"pulso" | "foro" | "lista" | "mapa" | "encuentros">("pulso")
   const [emblema, setEmblema] = useState(() => leerMemoria().emblema)
 
-  useEffect(() => { guardarMemoria({ tab, emblema }) }, [tab, emblema])
+  useEffect(() => { guardarMemoria({ emblema }) }, [emblema])
   const [mapaPaises, setMapaPaises] = useState<PaisPunto[]>([])
   const [mapaCiudades, setMapaCiudades] = useState<CiudadPunto[]>([])
   const [mapaEmblemas, setMapaEmblemas] = useState<{ id: string; count: number }[]>([])
@@ -209,15 +214,17 @@ export function ViewRed() {
   // había filtro. Con el filtro recordado entre visitas, al volver ya venía
   // puesto, el recuento no se cargaba nunca, y sin recuento no se dibujaba
   // ninguna pastilla: el filtro quedaba echado sin forma de quitarlo.
+  // Los recuentos se piden AL MONTAR, no al abrir el mapa. Las pastillas se
+    // comparten con la lista desde que dejaron de vivir solo en el mapa; con la
+    // condición de pestaña salían a cero hasta pasar por el mapa una vez.
   useEffect(() => {
-    if (tab !== "mapa") return
     let vivo = true
     fetch("/api/red/mapa", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (vivo && d) setMapaEmblemas(d.emblemas || []) })
       .catch(() => { /* las pastillas saldrán a cero */ })
     return () => { vivo = false }
-  }, [tab])
+  }, [])
 
   // Los puntos del mapa, estos sí según el filtro activo.
   useEffect(() => {
@@ -313,20 +320,23 @@ export function ViewRed() {
         </header>
 
         {/* ── Lista o mapa ──────────────────────────────────────────── */}
-        <div className={styles.tabs} role="tablist" aria-label="Forma de explorar">
+        {/* La Red absorbió lo que era "Comunidad": el foro es ahora una
+            pestaña más, no una sección aparte que sonaba a lo mismo.
+            Orden por vida: donde pasa algo primero, el territorio al final. */}
+        <div className={styles.tabs} role="tablist" aria-label="Secciones de la Red">
           <button
-            type="button" role="tab" aria-selected={tab === "lista"}
-            onClick={() => setTab("lista")}
-            className={`${styles.tab} ${tab === "lista" ? styles.tabOn : ""}`}
+            type="button" role="tab" aria-selected={tab === "pulso"}
+            onClick={() => setTab("pulso")}
+            className={`${styles.tab} ${tab === "pulso" ? styles.tabOn : ""}`}
           >
-            <Users size={13} aria-hidden /> Lista
+            <Activity size={13} aria-hidden /> Pulso
           </button>
           <button
-            type="button" role="tab" aria-selected={tab === "mapa"}
-            onClick={() => setTab("mapa")}
-            className={`${styles.tab} ${tab === "mapa" ? styles.tabOn : ""}`}
+            type="button" role="tab" aria-selected={tab === "foro"}
+            onClick={() => setTab("foro")}
+            className={`${styles.tab} ${tab === "foro" ? styles.tabOn : ""}`}
           >
-            <Globe2 size={13} aria-hidden /> Mapa
+            <MessageSquare size={13} aria-hidden /> Foro
           </button>
           <button
             type="button" role="tab" aria-selected={tab === "encuentros"}
@@ -335,6 +345,20 @@ export function ViewRed() {
           >
             <CalendarDays size={13} aria-hidden /> Encuentros
           </button>
+          <button
+            type="button" role="tab" aria-selected={tab === "lista"}
+            onClick={() => setTab("lista")}
+            className={`${styles.tab} ${tab === "lista" ? styles.tabOn : ""}`}
+          >
+            <Users size={13} aria-hidden /> Miembros
+          </button>
+          <button
+            type="button" role="tab" aria-selected={tab === "mapa"}
+            onClick={() => setTab("mapa")}
+            className={`${styles.tab} ${tab === "mapa" ? styles.tabOn : ""}`}
+          >
+            <Globe2 size={13} aria-hidden /> Mapa
+          </button>
         </div>
 
         {/* Las pastillas del Camino valen para las DOS pestañas: filtran el
@@ -342,7 +366,7 @@ export function ViewRed() {
             listaban cualquier insignia que alguien tuviera destacada. La lista
             es fija: el Embajador y los cinco grados, siempre en el mismo
             orden, incluidos los que están a cero. */}
-        {tab !== "encuentros" && (
+        {tab !== "encuentros" && tab !== "foro" && tab !== "pulso" && (
           (() => {
             const conteos = new Map(mapaEmblemas.map((e) => [e.id, e.count]))
             // Se muestran las seis SIEMPRE, también las que están a cero.
@@ -386,7 +410,16 @@ export function ViewRed() {
           })()
         )}
 
-        {tab === "encuentros" ? (
+        {tab === "pulso" ? (
+          <PulsoSemana />
+        ) : tab === "foro" ? (
+          <div className={styles.foroGrid}>
+            <Leaderboard />
+            <div style={{ minWidth: 0 }}>
+              <ForumFeed />
+            </div>
+          </div>
+        ) : tab === "encuentros" ? (
           <EncuentrosRed />
         ) : tab === "mapa" ? (
           <>
@@ -617,23 +650,23 @@ export function ViewRed() {
   )
 }
 
-// ── Memoria de la pestaña ──────────────────────────────────────────────────
+// ── Memoria de la vista ────────────────────────────────────────────────────
+// Ya NO se recuerda la pestaña: La Red entra siempre por Pulso. Solo se
+// conserva el filtro de emblema, que sí es una elección que molesta repetir.
+//
 // sessionStorage puede lanzar (ventana privada, cookies bloqueadas) o venir
 // vacío. Todo acceso va envuelto: la vista tiene que funcionar igual sin él.
 const MEMORIA = "red:vista"
-type Memoria = { tab: "lista" | "mapa" | "encuentros"; emblema: string }
+type Memoria = { emblema: string }
 
 function leerMemoria(): Memoria {
-  const vacia: Memoria = { tab: "lista", emblema: "" }
+  const vacia: Memoria = { emblema: "" }
   if (typeof window === "undefined") return vacia
   try {
     const crudo = window.sessionStorage.getItem(MEMORIA)
     if (!crudo) return vacia
     const m = JSON.parse(crudo) as Partial<Memoria>
-    return {
-      tab: m.tab === "mapa" || m.tab === "encuentros" ? m.tab : "lista",
-      emblema: typeof m.emblema === "string" ? m.emblema : "",
-    }
+    return { emblema: typeof m.emblema === "string" ? m.emblema : "" }
   } catch { return vacia }
 }
 

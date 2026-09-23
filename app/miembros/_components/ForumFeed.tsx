@@ -5,6 +5,7 @@
 // openEditModal/openReportModal.
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { SlidersHorizontal } from "lucide-react"
 import { api } from "../_lib/api"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
@@ -14,7 +15,7 @@ import { ForumComposer } from "./ForumComposer"
 import { EditModal, type EditTarget } from "./EditModal"
 import { ReportModal, type ReportTarget } from "./ReportModal"
 import { consumeForumTarget, FORUM_GOTO_EVENT } from "../_lib/forum-nav"
-import { FORUM_CATEGORIES } from "../_lib/report-types"
+import { FORUM_CATEGORIES, categoryLabel  } from "../_lib/report-types"
 import styles from "./forum.module.css"
 
 type FeedResponse = {
@@ -262,7 +263,9 @@ export function ForumFeed() {
           : p,
       ),
     )
-  }
+  }
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
+  const filtroActivo = activeTag ? categoryLabel(activeTag) : null
 
   return (
     <div ref={feedRef}>
@@ -286,11 +289,26 @@ export function ForumFeed() {
             <button type="button" className={styles.searchClear} onClick={() => setSearch("")} aria-label="Limpiar búsqueda">×</button>
           )}
         </div>
+        <button
+          type="button"
+          className={filtroActivo ? styles.filtroBotonOn : styles.filtroBoton}
+          onClick={() => setFiltrosAbiertos((v) => !v)}
+          aria-expanded={filtrosAbiertos}
+        >
+          <SlidersHorizontal size={13} aria-hidden />
+          {filtroActivo ?? "Temas"}
+        </button>
+      </div>
+
+      {/* Las siete categorías son vocabulario de la casa y ocupaban toda la
+          entrada del foro. Plegadas, lo primero que se ve es lo que ha
+          escrito la gente; quien quiera filtrar, abre. */}
+      {filtrosAbiertos && (
         <div className={styles.tagBar}>
           <button
             type="button"
             className={`${styles.tagChip} ${!activeTag ? styles.tagChipActive : ""}`}
-            onClick={() => setActiveTag(null)}
+            onClick={() => { setActiveTag(null); setFiltrosAbiertos(false) }}
           >
             Todas
           </button>
@@ -299,14 +317,13 @@ export function ForumFeed() {
               key={c.tag}
               type="button"
               className={`${styles.tagChip} ${activeTag === c.tag ? styles.tagChipActive : ""}`}
-              onClick={() => setActiveTag((cur) => (cur === c.tag ? null : c.tag))}
+              onClick={() => { setActiveTag((cur) => (cur === c.tag ? null : c.tag)); setFiltrosAbiertos(false) }}
             >
               {c.label}
             </button>
           ))}
         </div>
-      </div>
-
+      )}
       {loading && (
         <div className={styles.empty}>
           <p className={styles.emptyKicker}>Cargando...</p>

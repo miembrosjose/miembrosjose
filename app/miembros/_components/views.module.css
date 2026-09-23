@@ -114,3 +114,14 @@
     font-size: 1.35rem;
   }
 }
+
+/* Los avisos de cabecera —Pulso y próximo encuentro— llevan menos relleno que
+   una sección normal: están pegados a la navegación y no necesitan aire por
+   arriba. Con el relleno completo dejaban las temporadas muy abajo. */
+.arriba { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+.avisosArriba { display: flex; flex-direction: column; gap: 0.8rem; }
+
+@media (max-width: 768px) {
+  .arriba { padding-top: 1rem; padding-bottom: 1rem; }
+}

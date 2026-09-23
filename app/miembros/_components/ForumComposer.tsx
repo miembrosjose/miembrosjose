@@ -8,7 +8,7 @@
 // explícita de la persona.
 
 import { useState } from "react"
-import { Plus, BookLock, Send } from "lucide-react"
+import { BookLock, Send, PenLine, X } from "lucide-react"
 import { api } from "../_lib/api"
 import type { ForumPost as TForumPost } from "../_lib/types"
 import { FileUploader } from "./FileUploader"
@@ -24,7 +24,7 @@ type ComposerProps = { onCreate?: (post: TForumPost) => void }
 type Mode = "post" | "report"
 
 export function ForumComposer({ onCreate }: ComposerProps) {
-  const [open, setOpen] = useState(false)
+  const [abierto, setAbierto] = useState(false)
   const [mode, setMode] = useState<Mode>("post")
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
@@ -38,7 +38,7 @@ export function ForumComposer({ onCreate }: ComposerProps) {
   function reset() {
     setMode("post"); setTitle(""); setBody(""); setTagsRaw("")
     setCats(new Set()); setReportType(null); setReportValues({})
-    setImageUrl(null); setOpen(false)
+    setImageUrl(null); setAbierto(false)
   }
 
   function toggleCat(tag: string) {
@@ -90,21 +90,36 @@ export function ForumComposer({ onCreate }: ComposerProps) {
     }
   }
 
-  if (!open) {
-    return (
-      <button type="button" className={styles.openComposer} onClick={() => setOpen(true)}>
-        <Plus size={14} />
-        Abrir conversación o reporte
-      </button>
-    )
-  }
-
   const canSubmit = mode === "report"
     ? !!reportType && !!title.trim()
     : !!title.trim() && !!body.trim()
 
+  // Plegado por defecto: el foro debe abrir con lo que ha escrito la gente,
+  // no con un formulario en blanco esperando que escribas tú.
+  //
+  // Esta salida va DESPUÉS de todos los hooks, nunca antes: declarar un
+  // useState detrás de un return condicional cambia el número de hooks entre
+  // renders y React tira la página entera.
+  if (!abierto) {
+    return (
+      <button type="button" className={styles.composerCerrado} onClick={() => setAbierto(true)}>
+        <PenLine size={15} aria-hidden />
+        <span>Comparte una reflexión, una pregunta o una experiencia…</span>
+      </button>
+    )
+  }
+
   return (
     <div className={styles.composer}>
+      <button
+        type="button"
+        className={styles.composerPlegar}
+        onClick={() => setAbierto(false)}
+        aria-label="Cerrar el editor"
+      >
+        <X size={14} aria-hidden />
+      </button>
+
       {/* Selector de modo */}
       <div className={styles.modeRow}>
         <button type="button" className={`${styles.modeBtn} ${mode === "post" ? styles.modeBtnOn : ""}`} onClick={() => setMode("post")}>

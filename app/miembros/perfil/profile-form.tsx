@@ -569,6 +569,16 @@ export function ProfileForm({
         state={flameState}
       />
 
+      {/* TU LUGAR EN LA RED — país, ciudad y su privacidad */}
+      <section className={sectionCls}>
+        <h2 className={sectionTitleCls}>Tu lugar en la Red</h2>
+        <p className="mb-6 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Completa tu ubicación para descubrir miembros de 144 mil cerca de ti. Trabajamos solo a
+          nivel de ciudad: nunca guardamos tu domicilio ni tu ubicación en tiempo real.
+        </p>
+        <UbicacionRed inputCls={inputCls} labelCls={labelCls} btnCls={btnCls} />
+      </section>
+
       {/* NOME */}
       <form onSubmit={saveName} className={sectionCls}>
         <h2 className={sectionTitleCls}>Nombre</h2>
@@ -590,16 +600,6 @@ export function ProfileForm({
           <StatusMsg s={nameState} />
         </div>
       </form>
-
-      {/* TU LUGAR EN LA RED — país, ciudad y su privacidad */}
-      <section className={sectionCls}>
-        <h2 className={sectionTitleCls}>Tu lugar en la Red</h2>
-        <p className="mb-6 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
-          Completa tu ubicación para descubrir miembros de 144 mil cerca de ti. Trabajamos solo a
-          nivel de ciudad: nunca guardamos tu domicilio ni tu ubicación en tiempo real.
-        </p>
-        <UbicacionRed inputCls={inputCls} labelCls={labelCls} btnCls={btnCls} />
-      </section>
 
       {/* SOBRE VOS — username, bio, nicho, instagram */}
       <form onSubmit={saveAbout} className={sectionCls}>

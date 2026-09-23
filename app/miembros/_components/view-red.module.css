@@ -431,36 +431,73 @@
 }
 
 /* ── Pestañas Lista / Mapa ─────────────────────────────────────────────── */
+
+/* ── Foro ──────────────────────────────────────────────────────────────── */
+/* Lo que antes era la vista «Comunidad». Misma composición: la tabla de
+   posiciones a un lado y el foro ocupando el resto. */
+.foroGrid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 968px) {
+  .foroGrid { grid-template-columns: 1fr; gap: 1.4rem; }
+}
+
 .tabs {
   display: flex;
-  gap: 0.4rem;
-  margin-bottom: 1.1rem;
+  gap: 0.35rem;
+  margin-bottom: 1.4rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background: rgba(10, 11, 26, 0.55);
+  /* Cuatro pestañas no caben en un móvil estrecho: se deslizan en vez de
+     romperse en dos filas, que se veía desordenado. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+@media (min-width: 640px) {
+  .tabs { width: fit-content; }
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
+  flex-shrink: 0;
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-muted, #6a6a85);
+  color: var(--text-muted, #8b90b4);
   background: transparent;
-  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.08));
-  padding: 0.52rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
   cursor: pointer;
+  min-height: 42px;
+  transition: color 0.2s ease, background 0.2s ease;
   transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
 }
 
-.tab:hover {
-  color: #e6cf95;
+.tab:hover { color: #e6cf95; background: rgba(230, 207, 149, 0.07); }
+
+/* La activa se distingue por fondo propio y no por invertir el color: el
+   negro sobre dorado cortaba la página en dos. */
+.tabOn,
+.tabOn:hover {
+  color: #f3e7c6;
+  background: linear-gradient(120deg, rgba(230, 207, 149, 0.22), rgba(167, 139, 202, 0.22));
+  box-shadow: inset 0 0 0 1px rgba(230, 207, 149, 0.45);
 }
 
-.tabOn {
-  color: #0a0a12;
-  background: #d9b866;
-  border-color: #d9b866;
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
 }
 
 /* ── Filtro por emblema ────────────────────────────────────────────────── */
@@ -552,3 +589,6 @@
 }
 
 .cardBadge svg { width: 100%; height: 100%; }
+
+/* El Pulso vive entre la cabecera y las pestañas de exploración. */
+.pulsoHueco { margin-bottom: 1.6rem; }

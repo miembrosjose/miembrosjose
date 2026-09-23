@@ -13,7 +13,7 @@
 // coordenadas propias.
 
 import { useCallback, useEffect, useState } from "react"
-import { CalendarPlus, MapPin, Users, Loader2, X, Check, Clock, Pencil, MessageCircle, ChevronDown } from "lucide-react"
+import { CalendarPlus, MapPin, Users, Loader2, X, Check, Clock, Pencil, MessageCircle, ChevronDown, Video, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useView } from "../_lib/view-context"
 import styles from "./encuentros-red.module.css"
@@ -28,6 +28,8 @@ type Encuentro = {
   cupo: number | null
   estado: "borrador" | "publicado" | "cancelado"
   soy_organizador: boolean
+  /** Un administrador puede moderar cualquier encuentro, no solo los suyos. */
+  puedo_moderar?: boolean
   ciudad: { id: number; name: string; admin1: string | null } | null
   country: string
   asistentes: number
@@ -46,6 +48,16 @@ type Asistente = {
 type Pais = { code: string; name: string; flag: string }
 type Ciudad = { id: number; name: string; label: string }
 
+/** Cuánto falta, en palabras. La urgencia no depende de cuánta gente vaya. */
+function faltan(iso: string): string | null {
+  const dias = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
+  if (!Number.isFinite(dias) || dias < 0) return null
+  if (dias === 0) return "Hoy"
+  if (dias === 1) return "Mañana"
+  if (dias <= 14) return `En ${dias} días`
+  return null
+}
+
 function cuando(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleString("es-419", {
@@ -53,6 +65,19 @@ function cuando(iso: string): string {
     hour: "2-digit", minute: "2-digit",
   })
 }
+
+/**
+ * Cómo funciona un encuentro, en tres pasos.
+ *
+ * En el boceto eran cuatro e incluían "conoce a otros miembros". Con la Red
+ * empezando, ese paso no se puede cumplir: prometerlo sería mentir. Los tres
+ * que quedan funcionan desde el primer encuentro con una sola persona.
+ */
+const PASOS_ENCUENTRO = [
+  { n: "1", titulo: "Descubre", texto: "Mira lo que se ha convocado y elige uno." },
+  { n: "2", titulo: "Confirma", texto: "Di que vas. Quien organiza sabe con quién cuenta." },
+  { n: "3", titulo: "Vive y comparte", texto: "Después del encuentro, cuenta qué te llevaste." },
+]
 
 export function EncuentrosRed() {
   const [encuentros, setEncuentros] = useState<Encuentro[]>([])
@@ -120,6 +145,24 @@ export function EncuentrosRed() {
     [],
   )
 
+  // Eliminar de verdad. Solo para administradores: un encuentro con gente
+  // apuntada se cancela, no se borra. Pero la basura —pruebas, duplicados,
+  // cancelados viejos— alguien tiene que poder quitarla.
+  const eliminar = useCallback(async (id: number, titulo: string) => {
+    if (!window.confirm(`¿Eliminar definitivamente "${titulo}"? No se puede deshacer.`)) return
+    setGuardando(`d${id}`)
+    try {
+      const r = await fetch(`/api/red/encuentros/${id}`, { method: "DELETE", credentials: "include" })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d?.error || "No se pudo eliminar")
+      setEncuentros((prev) => prev.filter((e) => e.id !== id))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "No se pudo eliminar")
+    } finally {
+      setGuardando(null)
+    }
+  }, [])
+
   const cancelar = useCallback(async (id: number) => {
     setGuardando(`c${id}`)
     try {
@@ -154,6 +197,20 @@ export function EncuentrosRed() {
           onError={setError}
         />
       )}
+
+      {/* Cómo funciona. Va antes de la lista porque cuando todavía no hay
+          encuentros es lo único que explica para qué sirve esta pestaña. */}
+      <div className={styles.pasosRitual}>
+        {PASOS_ENCUENTRO.map((x) => (
+          <div key={x.n} className={styles.pasoRitual}>
+            <span className={styles.pasoRitualNum}>{x.n}</span>
+            <span className={styles.pasoRitualTextos}>
+              <span className={styles.pasoRitualTitulo}>{x.titulo}</span>
+              <span className={styles.pasoRitualTexto}>{x.texto}</span>
+            </span>
+          </div>
+        ))}
+      </div>
 
       <div className={styles.cuando} role="tablist" aria-label="Cuándo">
         <button
@@ -197,14 +254,23 @@ export function EncuentrosRed() {
       ) : (
         <ul className={styles.lista}>
           {encuentros
-            .filter((e) => e.estado !== "cancelado" || e.soy_organizador)
+            .filter((e) => e.estado !== "cancelado" || e.soy_organizador || e.puedo_moderar)
             .map((e) => (
             <li key={e.id} className={`${styles.card} ${e.estado === "cancelado" ? styles.cancelado : ""}`}>
+              <div className={styles.modalidad}>
+                {(e as { modalidad?: string }).modalidad === "online" ? (
+                  <span className={styles.enLinea}><Video size={11} aria-hidden /> En línea</span>
+                ) : (
+                  <span className={styles.presencial}><MapPin size={11} aria-hidden /> Presencial</span>
+                )}
+                {faltan(e.starts_at) && <span className={styles.cuantoFalta}>{faltan(e.starts_at)}</span>}
+              </div>
+
               <div className={styles.cabecera}>
                 <h3 className={styles.titulo}>{e.titulo}</h3>
                 {e.estado === "cancelado" && <span className={styles.sello}>Cancelado</span>}
                 {e.estado === "borrador" && <span className={styles.selloBorrador}>Borrador</span>}
-                {e.soy_organizador && (
+                {(e.soy_organizador || e.puedo_moderar) && (
                   <button
                     type="button"
                     onClick={() => setEditando(editando?.id === e.id ? null : e)}
@@ -213,6 +279,24 @@ export function EncuentrosRed() {
                     title="Editar este encuentro"
                   >
                     <Pencil size={12} aria-hidden /> Editar
+                  </button>
+                )}
+                {/* Solo administración. Va aquí y no entre las acciones de
+                    asistencia porque también hace falta sobre borradores y
+                    cancelados, que no muestran ese bloque. */}
+                {e.puedo_moderar && (
+                  <button
+                    type="button"
+                    disabled={guardando === `d${e.id}`}
+                    onClick={() => eliminar(e.id, e.titulo)}
+                    className={styles.eliminar}
+                    aria-label={`Eliminar ${e.titulo}`}
+                    title="Eliminar definitivamente (solo administración)"
+                  >
+                    {guardando === `d${e.id}`
+                      ? <Loader2 size={12} className={styles.spin} aria-hidden />
+                      : <Trash2 size={12} aria-hidden />}
+                    Eliminar
                   </button>
                 )}
               </div>
@@ -285,7 +369,7 @@ export function EncuentrosRed() {
                   >
                     Quizás
                   </button>
-                  {e.soy_organizador && (
+                  {(e.soy_organizador || e.puedo_moderar) && (
                     <button
                       type="button"
                       disabled={guardando === `c${e.id}`}
@@ -321,6 +405,10 @@ function Formulario({
   const editar = encuentro !== undefined
 
   const [paises, setPaises] = useState<Pais[]>([])
+  // En línea o presencial. Un encuentro en línea no tiene ciudad: tiene un
+  // enlace. Sin esto no se podían convocar las meditaciones globales.
+  const [esOnline, setEsOnline] = useState(false)
+  const [enlace, setEnlace] = useState("")
   const [ciudades, setCiudades] = useState<Ciudad[]>([])
   const [pais, setPais] = useState("")
   const [cityId, setCityId] = useState<number | "">(encuentro?.ciudad?.id ?? "")
@@ -354,6 +442,17 @@ function Formulario({
       .catch(() => setCiudades([]))
   }, [pais])
 
+  // La gente escribe "meet.google.com/abc" o "zoom.us/j/123", sin https://.
+  // Exigir el esquema dejaba el botón apagado para siempre sin explicar nada.
+  const enlaceNormalizado = (() => {
+    const t = enlace.trim()
+    if (!t) return ""
+    if (/^https?:\/\//i.test(t)) return t
+    // Solo si parece un dominio: no convertimos cualquier texto en URL.
+    if (/^[\w-]+(\.[\w-]+)+([/?#].*)?$/i.test(t)) return `https://${t}`
+    return t
+  })()
+
   const enviar = async (publicar: boolean) => {
     setEnviando(true)
     try {
@@ -363,9 +462,14 @@ function Formulario({
         ends_at: fin ? new Date(fin).toISOString() : null,
         cupo: cupo === "" ? null : Number(cupo),
       }
-      // Al editar, la ciudad solo se manda si se cambió: el servidor la
-      // revalida contra el catálogo y de ella deriva el país.
-      if (cityId !== "") cuerpo.city_id = cityId
+      cuerpo.modalidad = esOnline ? "online" : "presencial"
+      if (esOnline) {
+        cuerpo.enlace = enlaceNormalizado
+      } else if (cityId !== "") {
+        // Al editar, la ciudad solo se manda si se cambió: el servidor la
+        // revalida contra el catálogo y de ella deriva el país.
+        cuerpo.city_id = cityId
+      }
       if (editar) cuerpo.estado = publicar ? "publicado" : "borrador"
       else cuerpo.publicar = publicar
 
@@ -390,16 +494,64 @@ function Formulario({
 
   const enElPasado = inicio !== "" && new Date(inicio).getTime() < Date.now()
   const finAntes = fin !== "" && inicio !== "" && new Date(fin) < new Date(inicio)
-  const listo = titulo.trim() !== "" && cityId !== "" && inicio !== "" && !enElPasado && !finAntes
+  // Un presencial necesita ciudad; un online, enlace. Antes se pedía ciudad
+  // siempre, y por eso no había forma de convocar una transmisión.
+  const listo = Boolean(titulo.trim()) && Boolean(inicio) &&
+    (esOnline ? /^https?:\/\//i.test(enlaceNormalizado) : cityId !== "")
   const yaPublicado = encuentro?.estado === "publicado"
+
+  // Un botón apagado que no dice por qué es un callejón sin salida. Esto
+  // enumera lo que falta, y desaparece en cuanto está todo.
+  const falta: string[] = []
+  if (!titulo.trim()) falta.push("un título")
+  if (!inicio) falta.push("la fecha y hora de inicio")
+  if (esOnline && !/^https?:\/\//i.test(enlaceNormalizado)) falta.push("el enlace de la transmisión")
+  if (!esOnline && cityId === "") falta.push("la ciudad")
 
   return (
     <form className={styles.form} onSubmit={(e) => { e.preventDefault(); if (listo) enviar(true) }}>
+      {/* La modalidad va primero porque decide qué campos hacen falta
+          después: una ciudad, o un enlace. */}
+      <div className={styles.modalidadElegir} role="group" aria-label="Modalidad">
+        <button
+          type="button"
+          onClick={() => setEsOnline(false)}
+          className={!esOnline ? styles.modalidadOn : styles.modalidadOff}
+          aria-pressed={!esOnline}
+        >
+          <MapPin size={13} aria-hidden /> Presencial
+        </button>
+        <button
+          type="button"
+          onClick={() => setEsOnline(true)}
+          className={esOnline ? styles.modalidadOn : styles.modalidadOff}
+          aria-pressed={esOnline}
+        >
+          <Video size={13} aria-hidden /> En línea
+        </button>
+      </div>
+
       <label className={styles.label}>
         Título
         <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={160} className={styles.input} />
       </label>
 
+      {esOnline ? (
+        <label className={styles.label}>
+          Enlace de la transmisión
+          <input
+            value={enlace}
+            onChange={(e) => setEnlace(e.target.value)}
+            maxLength={600}
+            placeholder="https://zoom.us/j/…"
+            className={styles.input}
+          />
+          <span className={styles.ayuda}>
+            Zoom, YouTube en vivo o donde vayas a transmitir. Quien confirme verá
+            este enlace en la tarjeta del encuentro.
+          </span>
+        </label>
+      ) : (
       <div className={styles.fila}>
         <label className={styles.label}>
           País
@@ -421,6 +573,7 @@ function Formulario({
           </select>
         </label>
       </div>
+      )}
 
       <label className={styles.label}>
         Lugar
@@ -428,7 +581,7 @@ function Formulario({
           value={lugar}
           onChange={(e) => setLugar(e.target.value)}
           maxLength={300}
-          placeholder="Un sitio público: una plaza, un parque, un local"
+          placeholder={esOnline ? "Zoom, YouTube en vivo…" : "Un sitio público: una plaza, un parque, un local"}
           className={styles.input}
         />
         <span className={styles.ayuda}>
@@ -480,6 +633,12 @@ function Formulario({
 
       {enElPasado && <p className={styles.aviso}>Esa fecha ya pasó.</p>}
       {finAntes && <p className={styles.aviso}>El final no puede ser anterior al comienzo.</p>}
+
+      {falta.length > 0 && (
+        <p className={styles.falta}>
+          Para publicar falta {falta.length === 1 ? falta[0] : `${falta.slice(0, -1).join(", ")} y ${falta[falta.length - 1]}`}.
+        </p>
+      )}
 
       <div className={styles.acciones}>
         <button type="submit" disabled={!listo || enviando} className={styles.btnPrimario}>

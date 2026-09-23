@@ -4,7 +4,6 @@
 // 1 ROTA SÓ (/miembros). Troca de tela via state, sem reload.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { InvitacionUbicacion } from "./InvitacionUbicacion"
 import dynamic from "next/dynamic"
 import { Navbar } from "./Navbar"
 import { Hero } from "./Hero"
@@ -12,12 +11,19 @@ import { ForumFeed } from "./ForumFeed"
 import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { isNumerologiaToolProduct, isLugaresToolProduct } from "../_lib/tool-products"
+import { isNumerologiaToolProduct, isLugaresToolProduct, isCodigoOrigenToolProduct, isCartografiaToolProduct } from "../_lib/tool-products"
 import { BibliotecaSeeder } from "./BibliotecaSeeder"
 // Herramientas de Biblioteca: SOLO cliente (ssr:false) para no cargar Stripe/
 // Leaflet/globe.gl en el render del Worker (evita Error 1102 en /miembros).
 const NumerologiaCosmica = dynamic(() => import("./NumerologiaCosmica").then((m) => m.NumerologiaCosmica), { ssr: false })
 const LugaresContacto = dynamic(() => import("./LugaresContacto").then((m) => m.LugaresContacto), { ssr: false })
+const CodigoOrigen = dynamic(() => import("./CodigoOrigen").then((m) => m.CodigoOrigen), { ssr: false })
+// Cartografía Estelar arrastra astronomy-engine y city-timezones: solo cliente
+// y bajo demanda, para no engordar el arranque de /miembros.
+const CartografiaEstelar = dynamic(() => import("./cartografia-estelar/CartografiaEstelar").then((m) => m.CartografiaEstelar), { ssr: false })
+// El Pulso lee de la red al montar: solo cliente, para no gastar CPU del Worker.
+const PulsoSemana = dynamic(() => import("./PulsoSemana").then((m) => m.PulsoSemana), { ssr: false })
+const ProximoEncuentro = dynamic(() => import("./ProximoEncuentro").then((m) => m.ProximoEncuentro), { ssr: false })
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
 import { OPEN_JOURNAL_EVENT } from "../_lib/journal-registry"
@@ -524,7 +530,7 @@ export function SpaHomeShellInner() {
                 owned={owned}
               />
             )}
-            {view === "comunidad" && <ViewComunidad />}
+            {view === "comunidad" && <RedirigirAComunidad />}
             {view === "feed" && <ViewFeed />}
             {view === "perfil" && <ViewPerfil />}
             {view === "admin" && <ViewAdmin />}
@@ -614,6 +620,7 @@ function ViewInicio({
   owned: OwnedProduct[]
 }) {
   const { isAdmin } = useAuth()
+  const { setView } = useView()
   const [seasonsManagerOpen, setSeasonsManagerOpen] = useState(false)
   const [productsManagerOpen, setProductsManagerOpen] = useState(false)
   // Qué sección gestiona el modal de productos ("biblioteca" | "tienda").
@@ -627,10 +634,20 @@ function ViewInicio({
           renderizamos aqui pra não duplicar. Ele ocupa 100vh natural acima. */}
 
       {/* LA RED — invitación a completar ubicación (solo si aún no la tiene) */}
-      <InvitacionUbicacion />
 
       {/* MIEMBROS ONLINE — widget realtime (Supabase Presence) */}
       <OnlineMembers />
+
+      {/* PULSO 144 y PRÓXIMO ENCUENTRO — lo que cambia cada semana y lo que
+          viene en vivo. Van juntos en UNA sección: dos <section> seguidas
+          sumaban dos rellenos completos y en el móvil dejaban las temporadas
+          a casi dos pantallas de distancia. */}
+      <section className={`${styles.section} ${styles.arriba}`}>
+        <div className={styles.avisosArriba}>
+          <PulsoSemana compacto onIrALaRed={() => setView("red")} />
+          <ProximoEncuentro onVerTodos={() => setView("red")} />
+        </div>
+      </section>
 
       {/* MI BIBLIOTECA — Temporadas + camino iniciático (portales intercalados) */}
       <section id="cursos" className={styles.section}>
@@ -702,7 +719,7 @@ function ViewInicio({
             <p className={styles.sectionKicker}>Desbloquea Más</p>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionDivider} />
-              Biblioteca de los 144000
+              Recursos de los 144000
             </h2>
           </div>
           {isAdmin && (
@@ -725,8 +742,8 @@ function ViewInicio({
         <BibliotecaSeeder />
         <TiendaCarousel
           category="biblioteca"
-          leadingCard={<><NumerologiaCosmica /><LugaresContacto /></>}
-          hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p)}
+          leadingCard={<><NumerologiaCosmica /><CodigoOrigen /><CartografiaEstelar /><LugaresContacto /></>}
+          hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p) || isCodigoOrigenToolProduct(p) || isCartografiaToolProduct(p)}
         />
       </section>
 
@@ -783,40 +800,17 @@ function ViewInicio({
 // VIEW: COMUNIDAD (Foro + Leaderboard sidebar)
 // ─────────────────────────────────────────────────────────────────────────
 
-function ViewComunidad() {
+/**
+ * La vista «Comunidad» dejó de existir: su contenido —el foro— es ahora una
+ * pestaña de La Red. Esto queda para que los enlaces guardados sigan
+ * funcionando: en vez de un 404 o una pantalla vacía, llevan a su sitio.
+ */
+function RedirigirAComunidad() {
   const { setView } = useView()
-  return (
-    <div className={styles.view}>
-      <section className={styles.section}>
-        <header className={styles.sectionHeader}>
-          <div>
-            <p className={styles.sectionKicker}>Foro · parte del recorrido</p>
-            <h2 className={styles.sectionTitle}>
-              <span className={styles.sectionDivider} />
-              Foro de la Red
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setView("inicio", "cursos")}
-            className="inline-flex items-center gap-2 border border-[#6D4A9B]/50 bg-[#6D4A9B]/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a78bca] transition-colors hover:border-[#6D4A9B] hover:bg-[#6D4A9B]/25 hover:text-[#F3F6FA] [font-family:var(--font-mono)]"
-            style={{ borderRadius: 8 }}
-          >
-            ← Volver al recorrido
-          </button>
-        </header>
-        <div className={styles.comunidadGrid}>
-          <Leaderboard />
-          <div style={{ minWidth: 0 }}>
-            <ForumFeed />
-          </div>
-        </div>
-      </section>
-    </div>
-  )
+  useEffect(() => { setView("red") }, [setView])
+  return null
 }
 
-// ─────────────────────────────────────────────────────────────────────────
 // VIEW: FEED → TRANSMISIONES (archivo vivo)
 // El Feed dejó de ser "Anuncios del creador" (AdminFeed) y ahora es el archivo
 // editorial TRANSMISIONES. Se carga client-only (ssr:false) para no engordar el

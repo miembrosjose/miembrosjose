@@ -22,6 +22,37 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { nombrePais, banderaPais } from "@/lib/red/paises"
 import { getNetworkRolesFor } from "@/lib/red/roles"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { ORDEN_AURAS } from "@/lib/achievements"
+
+/**
+ * Quién tiene cada insignia del Camino, entre los miembros dados.
+ *
+ * Se consulta con service_role a propósito: user_unlocked_achievements no
+ * expone por RLS las insignias ajenas, y aquí hacen falta para contar. No se
+ * filtra nada nuevo — se pregunta SOLO por miembros que ya son visibles en el
+ * mapa, y por insignias que ya se muestran en sus perfiles.
+ */
+async function insigniasDe(userIds: string[]): Promise<Map<string, Set<string>>> {
+  const porMiembro = new Map<string, Set<string>>()
+  if (userIds.length === 0) return porMiembro
+  try {
+    const admin = getSupabaseAdmin()
+    const { data } = await admin
+      .from("user_unlocked_achievements")
+      .select("user_id, achievement_id")
+      .in("user_id", userIds)
+      .in("achievement_id", [...ORDEN_AURAS])
+    for (const r of (data || []) as Array<{ user_id: string; achievement_id: string }>) {
+      const set = porMiembro.get(r.user_id) ?? new Set<string>()
+      set.add(r.achievement_id)
+      porMiembro.set(r.user_id, set)
+    }
+  } catch (e) {
+    console.error("[/api/red/mapa] insignias", e instanceof Error ? e.message : e)
+  }
+  return porMiembro
+}
 
 export const dynamic = "force-dynamic"
 
@@ -50,19 +81,24 @@ export async function GET(req: NextRequest) {
       .select("user_id, display_name, username, avatar_url, featured_badge_id, country_code, network_cities(id, name, admin1, lat, lon)")
       .eq("show_city", true)
       .eq("city_id", ciudadId)
-    if (emblema) q = q.eq("featured_badge_id", emblema)
-
     const { data, error } = await q.order("member_since", { ascending: false }).limit(MAX_MIEMBROS_CIUDAD)
     if (error) {
       console.error("[/api/red/mapa] miembros", error.message)
       return NextResponse.json({ error: "Database error" }, { status: 500 })
     }
 
-    const rows = (data || []) as unknown as Array<{
+    let rows = (data || []) as unknown as Array<{
       user_id: string; display_name: string | null; username: string | null
       avatar_url: string | null; featured_badge_id: string | null; country_code: string
       network_cities: CityRef | null
     }>
+
+    // Mismo criterio que arriba: se filtra por tener la insignia, no por
+    // llevarla destacada.
+    if (emblema) {
+      const tenencia = await insigniasDe(rows.map((r) => r.user_id))
+      rows = rows.filter((r) => tenencia.get(r.user_id)?.has(emblema))
+    }
 
     const roles = await getNetworkRolesFor(rows.map((r) => r.user_id))
     const city = rows[0]?.network_cities ?? null
@@ -90,12 +126,13 @@ export async function GET(req: NextRequest) {
   // ── Niveles 1 y 2 · Agregados ───────────────────────────────────────────
   // Se agrupa en el servidor: el número de CIUDADES es pequeño por naturaleza
   // (cientos), y así se evita mantener una vista materializada.
-  let q = supabase
+  // Se traen TODOS los visibles y se filtra después por tenencia: el emblema
+  // ya no vive en esta tabla como criterio, sino en las insignias concedidas.
+  const q = supabase
     .from("member_location")
-    .select("city_id, country_code, featured_badge_id, network_cities(id, name, admin1, lat, lon)")
+    .select("user_id, city_id, country_code, featured_badge_id, network_cities(id, name, admin1, lat, lon)")
     .eq("show_city", true)
     .not("city_id", "is", null)
-  if (emblema) q = q.eq("featured_badge_id", emblema)
 
   const { data, error } = await q
   if (error) {
@@ -103,10 +140,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
 
-  const rows = (data || []) as unknown as Array<{
-    city_id: number; country_code: string; featured_badge_id: string | null
+  const todas = (data || []) as unknown as Array<{
+    user_id: string; city_id: number; country_code: string; featured_badge_id: string | null
     network_cities: CityRef | null
   }>
+
+  const tenencia = await insigniasDe(todas.map((r) => r.user_id))
+  const rows = emblema
+    ? todas.filter((r) => tenencia.get(r.user_id)?.has(emblema))
+    : todas
 
   const ciudades = new Map<number, {
     id: number; name: string; admin1: string | null; lat: number; lon: number
@@ -133,8 +175,14 @@ export async function GET(req: NextRequest) {
       lat: c.lat, lon: c.lon, members: 1, cities: new Set([c.id]),
     })
 
-    if (r.featured_badge_id) {
-      emblemas.set(r.featured_badge_id, (emblemas.get(r.featured_badge_id) || 0) + 1)
+    // El recuento se hace aparte, sobre la tenencia: ver abajo.
+  }
+
+  // Cuántos miembros VISIBLES tienen cada insignia. Se cuenta sobre el total
+  // sin filtrar, para que las pastillas no cambien al elegir una.
+  for (const r of todas) {
+    for (const id of tenencia.get(r.user_id) ?? []) {
+      emblemas.set(id, (emblemas.get(id) || 0) + 1)
     }
   }
 

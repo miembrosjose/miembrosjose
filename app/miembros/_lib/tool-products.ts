@@ -28,3 +28,22 @@ export function isLugaresToolProduct(p: { name: string; num?: number }): boolean
   const n = norm(p.name)
   return n.includes("lugares") && n.includes("contacto")
 }
+
+// Código de Origen y Cartografía Estelar se gestionan igual que Numerología y
+// Lugares: un producto de la Biblioteca cuya portada, nombre y descripción se
+// editan desde "Gestionar". El `num` estable mantiene el vínculo aunque se
+// renombre la tarjeta.
+export const CODIGO_ORIGEN_PRODUCT_NUM = 94
+export const CARTOGRAFIA_PRODUCT_NUM = 95
+
+export function isCodigoOrigenToolProduct(p: { name: string; num?: number }): boolean {
+  if (p.num === CODIGO_ORIGEN_PRODUCT_NUM) return true
+  const n = norm(p.name)
+  return n.includes("codigo") && n.includes("origen")
+}
+
+export function isCartografiaToolProduct(p: { name: string; num?: number }): boolean {
+  if (p.num === CARTOGRAFIA_PRODUCT_NUM) return true
+  const n = norm(p.name)
+  return n.includes("cartografia") && n.includes("estelar")
+}

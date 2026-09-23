@@ -1,0 +1,463 @@
+/* PULSO 144 — el ritual semanal.
+   Mobile-first. La pregunta es siempre lo más grande de la sección: es lo que
+   funciona igual con una persona que con cincuenta. */
+
+.pulso,
+.pulsoCompacto {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem 1.15rem 1.4rem;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.28);
+  /* Nebulosa: tres focos de color en vez de un degradado plano. El campo de
+     estrellas va en .estrellas, encima, para poder moverlo sin tocar esto. */
+  background:
+    radial-gradient(70% 55% at 12% 8%, rgba(167, 139, 202, 0.3), transparent 60%),
+    radial-gradient(60% 50% at 88% 12%, rgba(224, 134, 74, 0.18), transparent 58%),
+    radial-gradient(80% 70% at 50% 108%, rgba(109, 74, 155, 0.32), transparent 62%),
+    linear-gradient(165deg, #07060f 0%, #120e26 55%, #0b0a1c 100%);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .pulso { padding: 2rem 2.2rem 2.2rem; }
+}
+@media (min-width: 1024px) {
+  .pulso { padding: 2.6rem 3rem 2.8rem; }
+}
+
+/* Reserva del hueco mientras carga: sin esto la página salta al aparecer. */
+.cargando {
+  min-height: 180px;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.12);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.dias {
+  flex-shrink: 0;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(230, 207, 149, 0.4);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e4d7ae;
+}
+
+/* La pregunta. Lo primero, lo más grande, lo que sostiene la sección sola. */
+.pregunta,
+.preguntaCompacta {
+  margin: 0;
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  line-height: 1.18;
+  color: #f3f6fa;
+}
+.pregunta { font-size: 1.4rem; }
+.preguntaCompacta { font-size: 1.1rem; }
+
+@media (min-width: 640px) {
+  .pregunta { font-size: 1.9rem; }
+}
+@media (min-width: 1024px) {
+  /* En escritorio la pregunta es el titular de la sección, no un subtítulo. */
+  .pregunta { font-size: 2.3rem; }
+}
+
+.invitacion {
+  margin: 0.8rem 0 0;
+  max-width: 62ch;
+  font-size: 0.9rem;
+  line-height: 1.72;
+  color: #b6bacd;
+}
+
+
+/* ── Composición ────────────────────────────────────────────────────────── */
+/* En móvil, una columna. A partir de 900px, dos: el texto a la izquierda y el
+   lateral a la derecha. Sin esto, en pantalla ancha había una pregunta corta
+   flotando en mitad de un rectángulo enorme. */
+.cuerpo { display: grid; gap: 1.4rem; }
+.cuerpoCompacto { display: block; }
+
+@media (min-width: 900px) {
+  .cuerpo {
+    grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+    gap: 2.4rem;
+    align-items: start;
+  }
+}
+
+.principal { min-width: 0; }
+
+.lateral { min-width: 0; }
+
+/* ── Pasos del ritual ───────────────────────────────────────────────────── */
+/* Ocupan el lateral cuando la semana no trae práctica. Dan al bloque una razón
+   para ser ancho y enseñan el ritual, que es lo que más falta hace cuando
+   todavía no hay nadie con quien compararse. */
+.pasos {
+  padding: 1.1rem 1.15rem;
+  border-radius: 13px;
+  border: 1px solid rgba(167, 139, 202, 0.2);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.pasosKicker {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.paso { display: flex; gap: 0.7rem; margin-bottom: 0.9rem; }
+.paso:last-child { margin-bottom: 0; }
+
+.pasoNum {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(230, 207, 149, 0.4);
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #e4d7ae;
+}
+
+.pasoTextos { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.pasoTitulo { font-size: 0.85rem; font-weight: 600; color: #e8e4f5; }
+.pasoTexto { font-size: 0.76rem; line-height: 1.6; color: #8b90b4; }
+
+/* ── Práctica de la semana ──────────────────────────────────────────────── */
+.practica {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(230, 207, 149, 0.32);
+  background: rgba(230, 207, 149, 0.07);
+  text-decoration: none;
+  min-height: 56px;
+}
+.practica:hover { border-color: rgba(230, 207, 149, 0.6); }
+
+.practicaKicker {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+.practicaTitulo { font-size: 0.95rem; font-weight: 600; color: #f3e7c6; }
+.practicaDuracion {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: #7f849e;
+}
+
+/* ── Responder ──────────────────────────────────────────────────────────── */
+.responder { margin-top: 1.4rem; }
+
+@media (min-width: 900px) {
+  /* Una línea de texto muy larga cansa de leer y de escribir. */
+  .responder, .miRespuesta { max-width: 70ch; }
+}
+
+.campo {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f3f6fa;
+  line-height: 1.6;
+  resize: vertical;
+  /* 16px mínimo: por debajo, iOS hace zoom al enfocar. */
+  font-size: max(0.92rem, 16px);
+  font-family: inherit;
+}
+.campo:focus {
+  outline: none;
+  border-color: rgba(167, 139, 202, 0.6);
+  box-shadow: 0 0 0 3px rgba(167, 139, 202, 0.14);
+}
+
+.publicar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 202, 0.55);
+  background: linear-gradient(120deg, rgba(109, 74, 155, 0.5), rgba(167, 139, 202, 0.35));
+  color: #f3f6fa;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 48px;
+}
+.publicar:hover:not(:disabled) { filter: brightness(1.18); }
+.publicar:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (min-width: 560px) {
+  .publicar { width: auto; }
+}
+
+.error { margin: 0.5rem 0 0; font-size: 0.78rem; color: #e08a8a; }
+
+/* ── Tu respuesta, ya publicada ─────────────────────────────────────────── */
+.miRespuesta {
+  margin-top: 1.2rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 12px;
+  border-left: 3px solid #8fc46a;
+  background: rgba(143, 196, 106, 0.07);
+}
+
+.miRespuestaKicker {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a8ce86;
+}
+
+.miRespuestaTexto {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #e3ebdd;
+  white-space: pre-wrap;
+}
+
+.miRespuestaAcciones { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+
+.accionMenor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b90b4;
+  font-size: 0.7rem;
+  cursor: pointer;
+  min-height: 36px;
+}
+.accionMenor:hover { border-color: rgba(143, 196, 106, 0.45); color: #a8ce86; }
+
+/* ── Cuando no hay nadie más ────────────────────────────────────────────── */
+/* Esto es lo que se ve hoy, y por eso está escrito con cuidado: una invitación,
+   nunca un contador a cero. Un "0 participando" dice que el sitio está muerto. */
+.invitacionVacia {
+  margin: 1.3rem 0 0;
+  max-width: 70ch;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(167, 139, 202, 0.3);
+  font-size: 0.85rem;
+  line-height: 1.68;
+  color: #9ea3bd;
+}
+
+/* ── Las respuestas de los demás ────────────────────────────────────────── */
+.otras {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(167, 139, 202, 0.16);
+}
+
+.otrasKicker {
+  margin: 0 0 0.8rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.otra {
+  padding: 0.95rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 202, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  margin-bottom: 0.6rem;
+}
+.otra:last-child { margin-bottom: 0; }
+
+@media (min-width: 760px) {
+  /* Rejilla que se adapta: con una respuesta ocupa una columna y no queda un
+     hueco raro al lado; con seis, se reparten solas. */
+  .otras > .otra { margin-bottom: 0; }
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.7rem;
+  }
+}
+
+.otraAutor { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem; }
+
+.otraAvatar,
+.otraAvatarVacio {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.otraAvatarVacio {
+  display: grid;
+  place-items: center;
+  background: rgba(167, 139, 202, 0.2);
+  color: #c3b2e0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.otraNombre { font-size: 0.85rem; font-weight: 600; color: #e8e4f5; }
+
+.otraTexto {
+  margin: 0;
+  font-size: 0.87rem;
+  line-height: 1.7;
+  color: #b6bacd;
+  white-space: pre-wrap;
+}
+
+/* ── Campo de estrellas ─────────────────────────────────────────────────── */
+/* Puntos de luz dispersos, hechos con gradientes. No hay imagen que cargar ni
+   que pueda fallar, y el tamaño en disco es cero. */
+.estrellas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1.4px 1.4px at 18% 22%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 72% 14%, rgba(230, 207, 149, 0.8), transparent),
+    radial-gradient(1.6px 1.6px at 44% 62%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 88% 48%, rgba(167, 139, 202, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 28% 82%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 62% 88%, rgba(230, 207, 149, 0.7), transparent),
+    radial-gradient(1.3px 1.3px at 8% 54%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 94% 78%, rgba(255, 255, 255, 0.6), transparent);
+}
+
+/* ── El aviso de la portada ─────────────────────────────────────────────── */
+/* No es el Pulso entero encogido: es un aviso. Antes el compacto ocupaba media
+   pantalla del móvil y dejaba las temporadas muy abajo. */
+.aviso {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.3);
+  background: linear-gradient(165deg, #07060f 0%, #130f28 100%);
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.aviso:hover { border-color: rgba(230, 207, 149, 0.5); }
+
+.avisoFondo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 90% at 88% 0%, rgba(224, 134, 74, 0.2), transparent 60%),
+    radial-gradient(70% 100% at 8% 100%, rgba(109, 74, 155, 0.34), transparent 62%),
+    radial-gradient(1.2px 1.2px at 30% 28%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 76% 62%, rgba(230, 207, 149, 0.8), transparent),
+    radial-gradient(1.4px 1.4px at 54% 84%, rgba(255, 255, 255, 0.55), transparent);
+}
+
+.avisoContenido {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+}
+
+@media (min-width: 640px) {
+  .avisoContenido { padding: 1.4rem 1.6rem; }
+}
+
+.avisoCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.avisoPregunta {
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1.26;
+  color: #f3f6fa;
+  /* Dos líneas como mucho: es un aviso, no el texto entero. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) { .avisoPregunta { font-size: 1.3rem; } }
+
+.avisoPie {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e4d7ae;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso { transition: none; }
+}

@@ -63,11 +63,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.7rem;
-  padding: 3.5rem 1.5rem;
   text-align: center;
-  color: #6a6a85;
-  border: 1px dashed rgba(243, 246, 250, 0.09);
+  gap: 0.6rem;
+  padding: 2.8rem 1.5rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(167, 139, 202, 0.28);
+  background: rgba(10, 11, 26, 0.4);
+  color: #9ea3bd;
+  max-width: 46ch;
+  margin: 0 auto;
 }
 
 .vacio p {
@@ -83,22 +87,38 @@
 
 /* ── Tarjetas ───────────────────────────────────────────────────────────── */
 .lista {
-  list-style: none;
+  display: grid;
+  gap: 0.8rem;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  list-style: none;
+}
+
+@media (min-width: 900px) {
+  /* Se adapta sola: con un encuentro ocupa su columna sin dejar hueco raro
+     al lado; con varios, se reparten. */
+  .lista { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.1rem;
-  border: 1px solid var(--border-subtle, rgba(243, 246, 250, 0.07));
-  background: rgba(12, 12, 20, 0.55);
-  transition: border-color 220ms ease;
+  position: relative;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.22);
+  background:
+    radial-gradient(90% 130% at 88% 8%, rgba(224, 134, 74, 0.13), transparent 58%),
+    linear-gradient(165deg, #0b0713 0%, #14102a 100%);
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: rgba(230, 207, 149, 0.45);
+  transform: translateY(-2px);
+}
+
+@media (min-width: 640px) {
+  .card { padding: 1.5rem 1.6rem 1.6rem; }
 }
 
 .card:hover { border-color: rgba(217, 184, 102, 0.3); }
@@ -114,10 +134,14 @@
 
 .titulo {
   margin: 0;
-  font-size: 1rem;
-  color: #f3f6fa;
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: #fff;
 }
+
+@media (min-width: 640px) { .titulo { font-size: 1.4rem; } }
 
 .sello,
 .selloBorrador {
@@ -380,3 +404,155 @@
   font-size: 0.64rem;
   color: #fca5a5;
 }
+
+/* ── Modalidad ──────────────────────────────────────────────────────────── */
+/* En línea o presencial. Hasta ahora no se distinguían porque no existían los
+   encuentros en línea: los añadió encuentros_online.sql. */
+.modalidad { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+
+.enLinea,
+.presencial {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.26rem 0.68rem;
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.enLinea {
+  border: 1px solid rgba(224, 134, 74, 0.5);
+  background: rgba(224, 134, 74, 0.12);
+  color: #f0b787;
+}
+.presencial {
+  border: 1px solid rgba(143, 196, 106, 0.45);
+  background: rgba(143, 196, 106, 0.1);
+  color: #a8ce86;
+}
+
+.cuantoFalta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.26rem 0.68rem;
+  border-radius: 999px;
+  border: 1px solid rgba(230, 207, 149, 0.4);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e4d7ae;
+}
+
+
+/* ── Cómo funciona ──────────────────────────────────────────────────────── */
+/* Los pasos del boceto, reducidos a tres: el cuarto era "conoce a otros
+   miembros", que hoy no se puede cumplir y prometerlo sería mentir. */
+.pasosRitual {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+}
+
+@media (min-width: 720px) {
+  .pasosRitual { grid-template-columns: repeat(3, 1fr); }
+}
+
+.pasoRitual {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 13px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background: rgba(10, 11, 26, 0.45);
+}
+
+.pasoRitualNum {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(230, 207, 149, 0.4);
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #e4d7ae;
+}
+
+.pasoRitualTextos { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+.pasoRitualTitulo { font-size: 0.82rem; font-weight: 600; color: #e8e4f5; }
+.pasoRitualTexto { font-size: 0.73rem; line-height: 1.55; color: #8b90b4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}
+
+/* ── Elegir modalidad ───────────────────────────────────────────────────── */
+/* Va lo primero del formulario porque decide qué campos hacen falta después:
+   una ciudad, o un enlace de transmisión. */
+.modalidadElegir { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+
+.modalidadOn,
+.modalidadOff {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 11px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 46px;
+}
+.modalidadOff {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b90b4;
+}
+.modalidadOff:hover { border-color: rgba(230, 207, 149, 0.4); color: #e6cf95; }
+.modalidadOn {
+  border: 1px solid rgba(230, 207, 149, 0.55);
+  background: rgba(230, 207, 149, 0.13);
+  color: #f3e7c6;
+}
+
+/* Por qué el botón de publicar sigue apagado. Un botón deshabilitado que no
+   se explica deja a la persona sin salida: esto enumera lo que falta. */
+.falta {
+  margin: 0 0 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(230, 207, 149, 0.28);
+  background: rgba(230, 207, 149, 0.07);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #e6cf95;
+}
+
+/* Eliminar definitivamente. Solo administración, y por eso se distingue
+   claramente de "Cancelar": una cancelación deja rastro, esto no. */
+.eliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 32px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(224, 138, 138, 0.35);
+  background: rgba(224, 138, 138, 0.08);
+  color: #e08a8a;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.eliminar:hover:not(:disabled) { background: rgba(224, 138, 138, 0.16); }
+.eliminar:disabled { opacity: 0.6; cursor: default; }

@@ -32,7 +32,7 @@ export function ProductsManagerModal({ open, onClose, category = "biblioteca" }:
   const { products, loading, refresh, createProduct, updateProduct, deleteProduct } = useProducts()
   // Solo los productos de la sección que estamos gestionando.
   const visibleProducts = products.filter((p) => (p.category ?? "biblioteca") === category)
-  const sectionLabel = category === "tienda" ? "Tienda" : "Biblioteca de los 144000"
+  const sectionLabel = category === "tienda" ? "Tienda" : "Recursos de los 144000"
   const [addingOpen, setAddingOpen] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -682,7 +682,7 @@ function ProductEditor({
           <select value={category} onChange={(e) => setCategory(e.target.value)}
                   className="w-full border border-[#251f30] bg-[#050510] px-3 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
                   style={{ borderRadius: 6 }}>
-            <option value="biblioteca">Biblioteca de los 144000</option>
+            <option value="biblioteca">Recursos de los 144000</option>
             <option value="tienda">Tienda</option>
           </select>
         </div>
@@ -1101,7 +1101,7 @@ function AddProductForm({
         <select value={category} onChange={(e) => setCategory(e.target.value)}
                 className="w-full border border-[#251f30] bg-[#050510] px-2 py-2 text-sm text-[#F3F6FA] outline-none focus:border-[#6D4A9B]"
                 style={{ borderRadius: 6 }}>
-          <option value="biblioteca">Biblioteca de los 144000</option>
+          <option value="biblioteca">Recursos de los 144000</option>
           <option value="tienda">Tienda</option>
         </select>
       </div>

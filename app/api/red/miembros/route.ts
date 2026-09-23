@@ -68,10 +68,23 @@ export async function GET(req: NextRequest) {
     )
     .eq("show_city", true)
 
-  // Filtro por emblema, el mismo que usa el mapa: así las pastillas sirven
-  // en las dos pestañas y no solo en una.
+  // Filtro por emblema, el mismo criterio que el mapa: por la insignia que
+  // se TIENE, no por la que se lleva destacada. Ser Embajador o haber
+  // completado una temporada es un hecho, no una eleccion de vitrina.
   const emblema = (sp.get("emblema") || "").trim()
-  if (emblema) query = query.eq("featured_badge_id", emblema)
+  if (emblema) {
+    // service_role a proposito: user_unlocked_achievements no expone las
+    // insignias ajenas por RLS, y aqui hacen falta para filtrar. Solo se
+    // pregunta por insignias que ya se muestran en los perfiles.
+    const { data: conLaInsignia } = await getSupabaseAdmin()
+      .from("user_unlocked_achievements")
+      .select("user_id")
+      .eq("achievement_id", emblema)
+    const ids = (conLaInsignia || []).map((r) => (r as { user_id: string }).user_id)
+    // Sin nadie con esa insignia, un uuid imposible deja la lista vacia sin
+    // tener que ramificar el resto de la consulta.
+    query = query.in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
+  }
 
   if (ciudad !== null) query = query.eq("city_id", ciudad)
   else if (pais) query = query.eq("country_code", pais)

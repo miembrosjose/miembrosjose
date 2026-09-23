@@ -172,11 +172,13 @@
   color: #e6cf95;
 }
 
-/* El botón, repetido antes del programa. */
+/* El botón, repetido antes del programa.
+   Necesita aire propio: queda entre el final de una sección y el comienzo de
+   otra, y sin separación se lee como parte del párrafo de arriba. */
 .unirseArriba {
   display: flex;
   justify-content: center;
-  padding: 0 1.5rem;
+  padding: 3rem 1.5rem 1rem;
 }
 
 .apunte {
@@ -315,6 +317,9 @@
     text-align: left;
   }
   .tandaPunto { top: 0.35rem; left: 0; transform: none; }
+
+  .unirseArriba { padding: 2.4rem 1.5rem 0.6rem; }
+  .apunte { margin-top: 1.4rem; }
 
   .encuentroBoton { gap: 0.7rem; padding: 0.95rem 0.6rem; }
   .encuentroTexto { padding: 0 0.6rem 1.15rem 2.5rem; }

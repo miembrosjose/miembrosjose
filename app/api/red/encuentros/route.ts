@@ -13,8 +13,16 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { isAdmin } from "@/lib/admin"
 import { nombrePais } from "@/lib/red/paises"
 import { hasNetworkRole } from "@/lib/red/roles"
+
+// Campos del encuentro. `modalidad` y `enlace` llegaron con la migración
+// encuentros_online.sql; si esa migración todavía no se ha ejecutado, la
+// consulta falla y se reintenta con los campos de siempre. Así la pestaña
+// sigue funcionando en vez de romperse entera esperando un SQL.
+const BASE = "id, created_by, city_id, country_code, lugar, titulo, descripcion, starts_at, ends_at, cupo, estado, network_cities(id, name, admin1, lat, lon)"
+const CAMPOS = BASE + ", modalidad, enlace"
 
 export const dynamic = "force-dynamic"
 
@@ -50,7 +58,7 @@ export async function GET(req: NextRequest) {
 
   let q = supabase
     .from("network_meetings")
-    .select("id, created_by, city_id, country_code, lugar, titulo, descripcion, starts_at, ends_at, cupo, estado, network_cities(id, name, admin1, lat, lon)")
+    .select(CAMPOS)
 
   if (mios) {
     // Los propios incluyen borradores; la RLS ya los deja ver solo a su autor.
@@ -66,7 +74,26 @@ export async function GET(req: NextRequest) {
     ? q.lt("starts_at", ahora).order("starts_at", { ascending: false })
     : q.gte("starts_at", ahora).order("starts_at", { ascending: true })
 
-  const { data, error } = await q.limit(MAX_POR_PAGINA)
+  const primera = await q.limit(MAX_POR_PAGINA)
+  let data = primera.data as unknown as FilaEncuentro[] | null
+  let error = primera.error as { message: string } | null
+
+  // Reintento sin las columnas nuevas. Solo hace falta mientras la migración
+  // encuentros_online.sql no se haya ejecutado; después, nunca se entra aquí.
+  if (error && /modalidad|enlace/i.test(error.message)) {
+    let q2 = supabase.from("network_meetings").select(BASE)
+    if (mios) q2 = q2.eq("created_by", user.id)
+    else q2 = q2.in("estado", ["publicado", "cancelado"])
+    if (pais && /^[A-Z]{2}$/.test(pais)) q2 = q2.eq("country_code", pais)
+    if (ciudad && Number.isInteger(ciudad)) q2 = q2.eq("city_id", ciudad)
+    q2 = pasados
+      ? q2.lt("starts_at", ahora).order("starts_at", { ascending: false })
+      : q2.gte("starts_at", ahora).order("starts_at", { ascending: true })
+    const reintento = await q2.limit(MAX_POR_PAGINA)
+    data = reintento.data as unknown as FilaEncuentro[] | null
+    error = reintento.error as { message: string } | null
+  }
+
   if (error) {
     console.error("[/api/red/encuentros] GET", error.message)
     return NextResponse.json({ error: "Database error" }, { status: 500 })
@@ -101,6 +128,8 @@ export async function GET(req: NextRequest) {
       cupo: f.cupo,
       estado: f.estado,
       soy_organizador: f.created_by === user.id,
+      // Un administrador puede cancelar o eliminar cualquiera.
+      puedo_moderar: isAdmin(user),
       ciudad: f.network_cities
         ? {
             id: f.network_cities.id,
@@ -143,8 +172,23 @@ export async function POST(req: NextRequest) {
   const cupo = body.cupo === null || body.cupo === undefined || body.cupo === "" ? null : Number(body.cupo)
   const publicar = body.publicar === true
 
+  // Un encuentro en línea no ocurre en ninguna ciudad: ocurre en un enlace.
+  // Hasta ahora el modelo solo admitía presenciales, y por eso no se podían
+  // convocar las meditaciones globales.
+  const esOnline = body.modalidad === "online"
+  const enlace = typeof body.enlace === "string" ? body.enlace.trim().slice(0, 600) : ""
+
   if (!titulo) return NextResponse.json({ error: "Falta el título" }, { status: 400 })
-  if (!Number.isInteger(cityId) || cityId <= 0) {
+  if (esOnline) {
+    if (!enlace) {
+      return NextResponse.json({ error: "Falta el enlace de la transmisión" }, { status: 400 })
+    }
+    // Solo http/https. Un enlace con otro esquema podría ejecutar código en el
+    // navegador de quien lo pulse.
+    if (!/^https?:\/\//i.test(enlace)) {
+      return NextResponse.json({ error: "El enlace debe empezar por http:// o https://" }, { status: 400 })
+    }
+  } else if (!Number.isInteger(cityId) || cityId <= 0) {
     return NextResponse.json({ error: "Falta la ciudad" }, { status: 400 })
   }
   const inicio = new Date(startsAt)
@@ -173,22 +217,29 @@ export async function POST(req: NextRequest) {
 
   // El país se toma del catálogo, no del cuerpo: si viniera del cliente, un
   // encuentro podría declararse en un país que no corresponde a su ciudad.
-  const { data: ciudad, error: cErr } = await supabase
-    .from("network_cities")
-    .select("id, country_code")
-    .eq("id", cityId)
-    .eq("is_active", true)
-    .maybeSingle()
-  if (cErr || !ciudad) {
-    return NextResponse.json({ error: "Esa ciudad no está en el catálogo" }, { status: 400 })
+  let ciudad: { id: number; country_code: string } | null = null
+  if (!esOnline) {
+    const r = await supabase
+      .from("network_cities")
+      .select("id, country_code")
+      .eq("id", cityId)
+      .eq("is_active", true)
+      .maybeSingle()
+    if (r.error || !r.data) {
+      return NextResponse.json({ error: "Esa ciudad no está en el catálogo" }, { status: 400 })
+    }
+    ciudad = r.data as { id: number; country_code: string }
   }
 
   const { data, error } = await supabase
     .from("network_meetings")
     .insert({
       created_by: user.id,
-      city_id: ciudad.id,
-      country_code: ciudad.country_code,
+      city_id: ciudad?.id ?? null,
+      country_code: ciudad?.country_code ?? null,
+      modalidad: esOnline ? "online" : "presencial",
+      enlace: esOnline ? enlace : null,
+      // Para un online, "lugar" es la plataforma: "Zoom", "YouTube en vivo".
       lugar,
       titulo,
       descripcion,

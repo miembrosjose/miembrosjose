@@ -814,3 +814,82 @@
   outline: none;
 }
 .reportField textarea:focus { border-color: var(--gold, #d9b866); }
+
+/* ── Editor plegado ─────────────────────────────────────────────────────── */
+/* El foro abría con el formulario entero desplegado: título, cuerpo,
+   etiquetas y adjuntos. Lo primero que veía cualquiera eran campos vacíos
+   esperando que escribiera, en vez de lo que ya había escrito la gente. */
+.composerCerrado {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 202, 0.22);
+  background: rgba(10, 11, 26, 0.5);
+  color: #8b90b4;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  min-height: 52px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.composerCerrado:hover {
+  border-color: rgba(230, 207, 149, 0.45);
+  color: #c3c7de;
+}
+.composerCerrado svg { color: #a78bca; flex-shrink: 0; }
+
+.composer { position: relative; }
+
+.composerPlegar {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b90b4;
+  cursor: pointer;
+}
+.composerPlegar:hover { color: #e6cf95; border-color: rgba(230, 207, 149, 0.4); }
+
+/* ── Filtro de temas ────────────────────────────────────────────────────── */
+/* Las siete categorías ocupaban toda la entrada con vocabulario de la casa.
+   Ahora viven tras un botón que muestra el tema activo cuando lo hay. */
+.filtroBoton,
+.filtroBotonOn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 44px;
+}
+.filtroBoton {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b90b4;
+}
+.filtroBoton:hover { border-color: rgba(230, 207, 149, 0.4); color: #e6cf95; }
+.filtroBotonOn {
+  border: 1px solid rgba(230, 207, 149, 0.55);
+  background: rgba(230, 207, 149, 0.13);
+  color: #f3e7c6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composerCerrado { transition: none; }
+}
