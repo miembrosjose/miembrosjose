@@ -147,7 +147,11 @@ export function MembersTracker() {
       </div>
 
       {openMemberId && (
-        <MemberDetailModal memberId={openMemberId} onClose={() => setOpenMemberId(null)} />
+        <MemberDetailModal
+          memberId={openMemberId}
+          onClose={() => setOpenMemberId(null)}
+          onEliminado={load}
+        />
       )}
     </div>
   )
@@ -193,19 +197,72 @@ type MemberDetail = {
   }
 }
 
-function MemberDetailModal({ memberId, onClose }: { memberId: string; onClose: () => void }) {
+function MemberDetailModal({ memberId, onClose, onEliminado }: {
+  memberId: string
+  onClose: () => void
+  /** Se llama tras eliminar, para que la lista de arriba se recargue. */
+  onEliminado?: () => void
+}) {
   const [data, setData] = useState<MemberDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [topoBusy, setTopoBusy] = useState(false)
   const [topoMsg, setTopoMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
   const [estudioBusy, setEstudioBusy] = useState(false)
   const [estudioMsg, setEstudioMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [borrarBusy, setBorrarBusy] = useState(false)
+  const [borrarMsg, setBorrarMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
 
   function reload() {
     fetch(`/api/admin/members/${memberId}`, { credentials: "include", cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setData(d as MemberDetail))
       .catch(() => {})
+  }
+
+  // Eliminar un miembro por completo: cancela su suscripción en Stripe,
+  // limpia las tablas que van por correo y borra el usuario. La ruta hace el
+  // trabajo en ese orden; aquí solo se confirma y se enseña el resultado.
+  async function eliminarMiembro() {
+    const correo = data?.member.email || ""
+    // Confirmación escrita, no un clic. Esto no se deshace.
+    const escrito = window.prompt(
+      `Esto NO se puede deshacer.\n\n· Se cancela su suscripción en Stripe.\n· Se borran sus datos de la plataforma.\n· Se conserva el historial de cobros.\n\nEscribe el correo para confirmar:\n${correo}`,
+    )
+    if (escrito === null) return
+    if (escrito.trim().toLowerCase() !== correo.toLowerCase()) {
+      setBorrarMsg({ kind: "err", text: "El correo no coincide. No se ha borrado nada." })
+      return
+    }
+
+    setBorrarBusy(true)
+    setBorrarMsg(null)
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}/eliminar`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Error desconocido")
+
+      const partes: string[] = []
+      if (json.stripe?.suscripcionCancelada) {
+        partes.push(json.stripe.yaEstabaCancelada ? "suscripción ya cancelada" : "suscripción cancelada")
+      }
+      const filas = (json.tablasLimpiadas || []).reduce(
+        (a: number, t: { filas: number }) => a + t.filas, 0,
+      )
+      if (filas > 0) partes.push(`${filas} filas limpiadas`)
+      partes.push("usuario eliminado")
+
+      setBorrarMsg({ kind: "ok", text: partes.join(" · ") })
+      onEliminado?.()
+      // Se deja ver el mensaje un momento antes de cerrar.
+      setTimeout(onClose, 1800)
+    } catch (e) {
+      setBorrarMsg({ kind: "err", text: e instanceof Error ? e.message : "Error" })
+    } finally {
+      setBorrarBusy(false)
+    }
   }
 
   async function grantTopo() {
