@@ -122,7 +122,22 @@ const ANIO_PERSONAL: Record<number, { tema: string; accion: string }> = {
 }
 
 function reduce9(n: number): number { let x = n; while (x > 9) x = String(x).split("").reduce((a, d) => a + Number(d), 0); return x }
-function bank<T>(m: Record<number, T>, n: number): T { return m[n] ?? m[reduce9(n)] }
+/**
+ * Busca la entrada de un número en una tabla de contenido.
+ *
+ * El 0 merece mención aparte: aparece cuando el nombre no tiene ninguna
+ * vocal —"Ng", "Mtz", o cualquier cosa que al normalizar se quede sin
+ * ellas—. Ningún número de la numerología es 0, así que ninguna tabla lo
+ * tiene, y el resultado era la palabra "undefined" en mitad de la lectura.
+ *
+ * Aquí no se inventa un número: quien pregunte por el 0 se lleva null y es
+ * cosa de quien llama decir la verdad —que no hay vocales que leer— en vez
+ * de rellenar el hueco con la ficha de otro.
+ */
+function bank<T>(m: Record<number, T>, n: number): T | null {
+  if (n === 0) return null
+  return m[n] ?? m[reduce9(n)] ?? null
+}
 function joinNums(ns: number[]): string {
   if (ns.length === 0) return ""
   if (ns.length === 1) return `${ns[0]}`
@@ -183,14 +198,22 @@ export function generarLecturaProfunda(
       : "")
 
   // ── 4-6. Alma / Presencia / Servicio ──────────────────────────────────
-  const alma =
-    `Tus vocales suman la vibración ${r.alma} · ${num(r.alma).titulo}. En lo secreto, tu alma desea ${bank(DESEO, r.alma)}. ` +
-    `Esta es la necesidad interna que rara vez nombras en voz alta, y también tu búsqueda espiritual más honda. ` +
-    `${num(r.alma).lectura} Cuando esa energía deja de mirarse a sí misma, se eleva y se convierte en servicio.`
+  // Sin vocales en el nombre no hay número de alma. Se dice, en vez de
+  // fabricar una lectura que no se sostiene.
+  const deseo = bank(DESEO, r.alma)
+  const alma = deseo === null
+    ? `El número del alma sale de las vocales de tu nombre, y el que escribiste no tiene ninguna. ` +
+      `No es un fallo ni te falta nada: simplemente aquí no hay nada que leer. ` +
+      `Si tu nombre completo lleva vocales y no las pusiste, escríbelo entero y vuelve a generar la lectura.`
+    : `Tus vocales suman la vibración ${r.alma} · ${num(r.alma).titulo}. En lo secreto, tu alma desea ${deseo}. ` +
+      `Esta es la necesidad interna que rara vez nombras en voz alta, y también tu búsqueda espiritual más honda. ` +
+      `${num(r.alma).lectura} Cuando esa energía deja de mirarse a sí misma, se eleva y se convierte en servicio.`
   const presencia =
     `Tus consonantes suman la vibración ${r.personalidad} · ${num(r.personalidad).titulo}. Ante el mundo apareces como ${bank(PRESENCIA, r.personalidad)}. ` +
     `Esa es la forma que otros perciben antes de conocer tu interior: una presencia que proyecta ${num(r.personalidad).esencia}. ` +
-    `Conviene que esta máscara no se endurezca; su tarea es armonizar con lo que tu alma (${r.alma}) siente por dentro, para que dentro y fuera hablen el mismo idioma.`
+    (r.alma === 0
+      ? `Conviene que esta máscara no se endurezca: su tarea es armonizar con lo que sientes por dentro, para que dentro y fuera hablen el mismo idioma.`
+      : `Conviene que esta máscara no se endurezca; su tarea es armonizar con lo que tu alma (${r.alma}) siente por dentro, para que dentro y fuera hablen el mismo idioma.`)
   const servicio =
     `Tu nombre completo vibra en ${r.expresion} · ${num(r.expresion).titulo}. Tu dirección de servicio apunta a ${bank(SERVICIO, r.expresion)}. ` +
     `No es un destino fijo ni una obligación: es la corriente natural por la que tu aporte a la Red fluye con menos esfuerzo y más verdad. ` +
@@ -267,7 +290,10 @@ export function generarLecturaProfunda(
   const anioPersonal = reduceKeepMasters(sumDigits(`${day}${month}${curY}`))
   const mesPersonal = reduceKeepMasters(reduce9(anioPersonal) + curM)
   const diaPersonal = reduceKeepMasters(reduce9(mesPersonal) + curD)
-  const ap = bank(ANIO_PERSONAL, anioPersonal)
+  // El año personal suma los dígitos de una fecha, así que nunca puede ser 0
+  // y `bank` siempre encuentra entrada. El respaldo está para no obligar al
+  // tipo a fiarse de ese razonamiento.
+  const ap = bank(ANIO_PERSONAL, anioPersonal) ?? ANIO_PERSONAL[1]
   const ciclo: CicloActual = {
     anioPersonal, mesPersonal, diaPersonal,
     texto: `Ahora mismo transitas un Año Personal ${anioPersonal}: ${ap.tema}. Dentro de él, el Mes Personal ${mesPersonal} matiza el momento, y el Día Personal ${diaPersonal} marca el tono de hoy.`,
@@ -324,10 +350,12 @@ function componerRevelacion(r: NumerologiaResultado, m: MatrizData, camino: numb
   const p1 =
     `${nombreCorto}, tu nombre y tu fecha no son etiquetas: son una partitura. ` +
     `Encarnaste con la frecuencia del ${camino}, ${c.titulo}, lo que significa que tu conciencia vino a aprender a ${c.esencia}. ` +
-    `Bajo esa nota principal, tu alma late en el ${r.alma} —desea ${DESEO[reduce9(r.alma)]}— mientras ante el mundo apareces con la energía del ${r.personalidad}, ${pe.titulo}. ` +
+    (bank(DESEO, r.alma) === null
+      ? `Tu nombre no trae vocales, así que esta lectura se apoya solo en lo que muestras: la energía del ${r.personalidad}, ${pe.titulo}. `
+      : `Bajo esa nota principal, tu alma late en el ${r.alma} —desea ${bank(DESEO, r.alma)}— mientras ante el mundo apareces con la energía del ${r.personalidad}, ${pe.titulo}. `) +
     `Esa diferencia entre lo que sientes y lo que muestras no es contradicción: es el espacio donde ocurre tu trabajo.`
   const p2 =
-    `Tu expresión completa apunta al ${r.expresion}, ${ex.titulo}: la corriente por la que tu vida quiere volverse útil, hacia ${SERVICIO[reduce9(r.expresion)]}. ` +
+    `Tu expresión completa apunta al ${r.expresion}, ${ex.titulo}: la corriente por la que tu vida quiere volverse útil${bank(SERVICIO, r.expresion) ? `, hacia ${bank(SERVICIO, r.expresion)}` : ""}. ` +
     (m.dominantes.length
       ? `En tu nombre insiste con fuerza la vibración ${joinNums(m.dominantes)} —el patrón que repites hasta convertirlo en maestría—. `
       : ``) +

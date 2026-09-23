@@ -22,6 +22,7 @@ import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { isLugaresToolProduct, LUGARES_PRODUCT_NUM } from "../_lib/tool-products"
 import prod from "./products.module.css"
+import { usePropsDelFondo } from "../_lib/panel-modal"
 
 // Mapa y selector: SOLO cliente (ssr:false). Así Leaflet/globe.gl/three NO entran
 // al bundle del Worker (evita "Error 1102 · Worker exceeded resource limits").
@@ -89,14 +90,37 @@ export function LugaresContacto() {
   useEffect(() => {
     if (!open) return
     reload()
-    // Bloqueo de scroll del fondo SOLO ligado a `open` (no a `selected`), y se
-    // restaura siempre a normal al cerrar → evita que la página quede sin scroll.
+    // Bloqueo del fondo SOLO ligado a `open` (no a `selected`), y se restaura
+    // siempre al cerrar → evita que la página quede sin desplazamiento.
+    //
+    // `overflow: hidden` por sí solo no basta en Safari de iOS: al arrastrar
+    // dentro del panel, la página de detrás se mueve igual. Hay que fijar el
+    // cuerpo y compensar la posición, y devolverla al cerrar.
+    const y = window.scrollY
+    const previo = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    }
     document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${y}px`
+    document.body.style.width = "100%"
+
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (selectedRef.current) setSelected(null); else setOpen(false) } }
     const onLocal = () => { setPlaces((p) => [...p]) }
     window.addEventListener("keydown", onKey)
     window.addEventListener(LUGARES_CHANGED_EVENT, onLocal)
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); window.removeEventListener(LUGARES_CHANGED_EVENT, onLocal) }
+    return () => {
+      document.body.style.overflow = previo.overflow
+      document.body.style.position = previo.position
+      document.body.style.top = previo.top
+      document.body.style.width = previo.width
+      window.scrollTo(0, y)
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener(LUGARES_CHANGED_EVENT, onLocal)
+    }
   }, [open, reload])
 
   useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [view])
@@ -251,8 +275,12 @@ function LugaresCard({ onClick, product }: { onClick: () => void; product: DbPro
 }
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  // Solo el gesto: el bloqueo del fondo y la tecla Escape los lleva el propio
+  // LugaresContacto, que además sabe cerrar primero la ficha y después el
+  // mapa. Duplicarlo aquí cerraría las dos cosas de una vez.
+  const propsDelFondo = usePropsDelFondo(onClose)
   return (
-    <div className="fixed inset-0 z-[600] flex items-start justify-center sm:items-center" style={{ background: "rgba(4,5,12,0.9)", backdropFilter: "blur(6px)", padding: "calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px)", overscrollBehavior: "contain" }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="fixed inset-0 z-[600] flex items-start justify-center sm:items-center" style={{ background: "rgba(4,5,12,0.9)", backdropFilter: "blur(6px)", padding: "calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px)", overscrollBehavior: "contain" }} {...propsDelFondo}>
       <div className="relative flex w-[min(900px,calc(100vw-24px))] flex-col overflow-hidden" style={{ maxHeight: "calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 32px)", borderRadius: 18, border: "1px solid rgba(167,139,202,0.3)", background: "linear-gradient(160deg, rgba(20,18,46,0.98), rgba(8,9,20,0.98))", boxShadow: "0 40px 90px -20px rgba(0,0,0,0.9)" }}>
         <button type="button" onClick={onClose} aria-label="Cerrar" className="absolute right-3 top-3 z-10 rounded-full p-2 text-[#a8a8c0] transition-colors hover:bg-[#251f30] hover:text-white"><X size={20} /></button>
         {children}
@@ -445,6 +473,10 @@ function SubmitForm({ onDone }: { onDone: () => void }) {
 
 // ── Ficha del lugar ─────────────────────────────────────────────────────────
 function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactPlace; isAdmin: boolean; onClose: () => void; onModerated: () => void }) {
+  // Igual que el mapa: el fondo solo cierra si el gesto empezó y terminó
+  // en él. Sin esto, pulsar «Aprobar» o «Rechazar» —que hacen desaparecer
+  // el botón— cerraba la ficha entera por el camino.
+  const propsDeLaFicha = usePropsDelFondo(onClose)
   const [, force] = useState(0)
   const refresh = () => force((n) => n + 1)
   const sv = savedStatus(place.id)
@@ -459,7 +491,7 @@ function DetailPanel({ place, isAdmin, onClose, onModerated }: { place: ContactP
   const testimonies = loadTestimonies(place.id).filter((t) => !t.isPrivate)
 
   return (
-    <div className="fixed inset-0 z-[650] flex items-end justify-center sm:items-center" style={{ background: "rgba(4,5,12,0.75)", backdropFilter: "blur(4px)", padding: "0 0 env(safe-area-inset-bottom,0px)" }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="fixed inset-0 z-[650] flex items-end justify-center sm:items-center" style={{ background: "rgba(4,5,12,0.75)", backdropFilter: "blur(4px)", padding: "0 0 env(safe-area-inset-bottom,0px)" }} {...propsDeLaFicha}>
       <div className="relative flex w-full flex-col overflow-hidden sm:w-[min(560px,calc(100vw-24px))]" style={{ maxHeight: "88dvh", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "1px solid rgba(167,139,202,0.3)", background: "linear-gradient(160deg, rgba(22,20,48,0.99), rgba(8,9,20,0.99))", boxShadow: "0 -20px 80px -10px rgba(0,0,0,0.9)" }}>
         <div style={{ padding: "1.2rem 1.3rem 0.8rem", borderBottom: "1px solid rgba(167,139,202,0.15)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.8rem" }}>

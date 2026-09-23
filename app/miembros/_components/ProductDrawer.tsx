@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { useProductModules, type DbModule } from "../_lib/use-product-modules"
 import { ModuleBlocksView } from "./ModuleBlocksView"
 import type { DbProduct } from "../_lib/use-products"
+import { usePropsDelFondo } from "../_lib/panel-modal"
 
 type Props = {
   product: DbProduct | null
@@ -15,6 +16,8 @@ type Props = {
 }
 
 export function ProductDrawer({ product, onClose }: Props) {
+  // El fondo solo cierra si el gesto empezó y terminó en él.
+  const propsDelFondo = usePropsDelFondo(onClose)
   const { modules, loading } = useProductModules(product?.id ?? null)
   const [playingModule, setPlayingModule] = useState<DbModule | null>(null)
 
@@ -48,7 +51,7 @@ export function ProductDrawer({ product, onClose }: Props) {
           className="fixed inset-0 z-[150] overflow-y-auto bg-[#050510]/95 backdrop-blur-sm"
           role="dialog"
           aria-label={product.name}
-          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+          {...propsDelFondo}
         >
           <div className="relative mx-auto mt-10 mb-10 max-w-4xl border border-[#251f30] bg-[#0a0a18]"
                style={{ borderRadius: 18 }}>

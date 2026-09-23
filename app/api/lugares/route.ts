@@ -24,6 +24,18 @@ function mapRow(r: any) {
   }
 }
 
+/**
+ * ¿El fallo es que la tabla todavía no existe?
+ *
+ * `contact_places` se crea a mano con docs/sql/contact_places.sql. Mientras no
+ * se ejecute, cada consulta responde con un error de Postgres que acababa
+ * llegando tal cual al navegador: el módulo enseñaba el mensaje interno de la
+ * base de datos en vez de decir que le falta la instalación.
+ */
+function faltaLaTabla(mensaje: string): boolean {
+  return /does not exist|schema cache/i.test(mensaje)
+}
+
 export async function GET() {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -41,7 +53,21 @@ export async function GET() {
     query = uid ? query.or(`status.eq.published,created_by_id.eq.${uid}`) : query.eq("status", "published")
   }
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    if (faltaLaTabla(error.message)) {
+      // Lista vacía y un aviso para quien administra. Sin esto, el mapa se
+      // quedaba en un error crudo que no decía qué hacer.
+      return NextResponse.json({
+        places: [],
+        isAdmin: adminUser,
+        sinInstalar: true,
+        aviso: "Falta ejecutar docs/sql/contact_places.sql en Supabase.",
+      })
+    }
+    // Nunca el mensaje de Postgres: puede describir la estructura interna.
+    console.error("[/api/lugares] GET", error.message)
+    return NextResponse.json({ error: "No se pudieron cargar los lugares" }, { status: 500 })
+  }
   const places = (data ?? []).map((r) => ({ ...mapRow(r), mine: !!uid && r.created_by_id === uid }))
   return NextResponse.json({ places, isAdmin: adminUser })
 }
@@ -78,6 +104,15 @@ export async function POST(req: Request) {
     tags: Array.isArray(b.tags) ? (b.tags as unknown[]).map(String).slice(0, 20) : [],
     created_by: user.email || "Comunidad", created_by_id: user.id,
   }).select("*").single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    if (faltaLaTabla(error.message)) {
+      return NextResponse.json(
+        { error: "El Mapa Cósmico todavía no está instalado en la base de datos." },
+        { status: 503 },
+      )
+    }
+    console.error("[/api/lugares] POST", error.message)
+    return NextResponse.json({ error: "No se pudo guardar el lugar" }, { status: 500 })
+  }
   return NextResponse.json({ place: mapRow(data) })
 }

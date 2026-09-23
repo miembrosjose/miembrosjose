@@ -130,6 +130,18 @@ function signoSolar(mes: number, dia: number): string {
 // ── Significados (lenguaje propio, sobrio y elevado) ────────────────────
 type Num = { titulo: string; esencia: string; lectura: string }
 export const NUMERO: Record<number, Num> = {
+  // El 0 no es un número de la numerología: sale cuando el nombre escrito no
+  // tiene ninguna vocal —"Ng", "Mtz", o cualquier cosa que al normalizar se
+  // quede sin ellas— y solo afecta al número del alma.
+  //
+  // Sin esta entrada, num(0) caía en el respaldo y devolvía la ficha del 9:
+  // en pantalla salía "0 · El Servidor", que atribuye a alguien una lectura
+  // que su nombre no sostiene. Antes que eso, se dice lo que pasa.
+  0: {
+    titulo: "Sin vocales",
+    esencia: "un nombre escrito sin vocales",
+    lectura: "El número del alma se calcula con las vocales de tu nombre, y el que escribiste no tiene ninguna. No es un fallo ni te falta nada: aquí simplemente no hay nada que leer. Si tu nombre completo lleva vocales y no las pusiste, escríbelo entero y vuelve a generar la lectura.",
+  },
   1: { titulo: "El Iniciador", esencia: "voluntad, inicio y dirección", lectura: "Hay una fuerza de comienzo que busca abrir camino desde la experiencia directa. Cuando esta energía madura, ordena el impulso, decide con claridad y activa movimiento en otros." },
   2: { titulo: "El Tejedor", esencia: "sensibilidad, unión y equilibrio", lectura: "Tu frecuencia percibe lo sutil y busca armonía entre las partes. Al madurar, se vuelve capacidad de unir, mediar y sostener vínculos sin perder el propio centro." },
   3: { titulo: "La Palabra", esencia: "expresión, creación y alegría", lectura: "Una energía creadora pide salir en palabra, arte y comunicación. Madura cuando la expresión deja de buscar atención y se convierte en un canal que despierta y alivia." },

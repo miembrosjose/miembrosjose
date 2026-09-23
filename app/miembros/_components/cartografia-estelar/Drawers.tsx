@@ -19,14 +19,18 @@ import { ASPECTOS_CONTENIDO, EXACTITUD_TEXTO } from "../../_lib/cartografia-este
 import { AVISO_METODOLOGIA_PROPIA } from "../../_lib/cartografia-estelar/content/avisos"
 import type { AspectoId } from "../../_lib/cartografia-estelar/domain/types"
 import s from "./cartografia.module.css"
+import { usePropsDelFondo } from "../../_lib/panel-modal"
 
 function Cajon({ titulo, onCerrar, children }: {
   titulo: string
   onCerrar: () => void
   children: React.ReactNode
 }) {
+  // El fondo solo cierra si el gesto empezó y terminó en él. Sin eso, pulsar
+  // un botón que desaparece con el propio clic cerraba el cajón de rebote.
+  const propsDelFondo = usePropsDelFondo(onCerrar)
   return (
-    <div className={s.cajonFondo} onClick={(e) => { if (e.target === e.currentTarget) onCerrar() }}>
+    <div className={s.cajonFondo} {...propsDelFondo}>
       <div className={s.cajon} role="dialog" aria-label={titulo}>
         <div className={s.cajonCabecera}>
           <h3 className={s.cajonTitulo}>{titulo}</h3>

@@ -21,6 +21,7 @@ import { useProductAccess } from "../_lib/use-product-access"
 import { isCodigoOrigenToolProduct, numeroLibre, CODIGO_ORIGEN_PRODUCT_NUM } from "../_lib/tool-products"
 import prod from "./products.module.css"
 import s from "./codigo-origen.module.css"
+import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
 
 // Exactamente los de NumerologiaCosmica.tsx. Si allí cambian, aquí también.
 const GOLD = "#e6cf95"
@@ -110,22 +111,13 @@ export function CodigoOrigen() {
 
 // ── Overlay ─────────────────────────────────────────────────────────────────
 function Panel({ onClose }: { onClose: () => void }) {
-  const [montado, setMontado] = useState(false)
+  const { montado, propsDelFondo } = usePanelAPantallaCompleta(onClose)
+
   const [nacimiento, setNacimiento] = useState<Nacimiento | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setMontado(true)
-    setNacimiento(recuperar())
-    const prev = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
-    window.addEventListener("keydown", esc)
-    return () => {
-      document.body.style.overflow = prev
-      window.removeEventListener("keydown", esc)
-    }
-  }, [onClose])
+  // Lo guardado en este dispositivo, una sola vez al abrir.
+  useEffect(() => { setNacimiento(recuperar()) }, [])
 
   const resultado = useMemo(() => {
     if (!nacimiento) return null
@@ -154,7 +146,7 @@ function Panel({ onClose }: { onClose: () => void }) {
         padding: "calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px)",
         overscrollBehavior: "contain",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      {...propsDelFondo}
       role="dialog"
       aria-label="Código de Origen"
     >

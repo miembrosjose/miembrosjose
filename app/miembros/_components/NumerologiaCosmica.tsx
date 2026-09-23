@@ -22,6 +22,7 @@ import { useProducts, type DbProduct } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
+import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
 
 const GOLD = "#e6cf95"
 const GOLD_DEEP = "#c9a86b"
@@ -288,7 +289,13 @@ function NumerologiaCard({ onClick, result, product }: {
 }
 
 // ── Overlay a pantalla completa ─────────────────────────────────────────
+//
+// Este panel NO bloqueaba el fondo. Como está fijo sobre la página, al
+// arrastrar dentro se movía la portada de detrás y todo parecía ir a
+// tirones: eso era la "pantalla entrecortada". El bloqueo —y el cierre al
+// tocar fuera, que tampoco era de fiar— viven ahora en _lib/panel-modal.
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  const { propsDelFondo } = usePanelAPantallaCompleta(onClose)
   return (
     <div
       className="fixed inset-0 z-[600] flex items-start justify-center sm:items-center"
@@ -298,7 +305,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
         padding: "calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px)",
         overscrollBehavior: "contain",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      {...propsDelFondo}
     >
       <div
         className="relative flex w-[min(760px,calc(100vw-24px))] flex-col overflow-hidden"
@@ -368,7 +375,10 @@ function FormView(p: {
       </p>
 
       <Field label="Nombre completo" required>
-        <input value={p.nombre} onChange={(e) => p.setNombre(e.target.value)} placeholder="Tu nombre y apellidos" style={inputStyle} autoFocus />
+        {/* Sin autoFocus: en el móvil abría el teclado al entrar, el panel se
+            encogía a la mitad de alto y la pantalla daba un salto antes de
+            que a nadie le diera tiempo a leer de qué iba el módulo. */}
+        <input value={p.nombre} onChange={(e) => p.setNombre(e.target.value)} placeholder="Tu nombre y apellidos" style={inputStyle} />
       </Field>
       <Field label="Fecha de nacimiento" required hint="día / mes / año">
         <input

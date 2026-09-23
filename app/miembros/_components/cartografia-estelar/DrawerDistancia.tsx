@@ -27,17 +27,19 @@ import { tablaAspectos } from "../../_lib/cartografia-estelar/domain/editorial/e
 import { AVISO_METODOLOGIA_PROPIA } from "../../_lib/cartografia-estelar/content/avisos"
 import type { Cartografia } from "../../_lib/cartografia-estelar/domain/types"
 import s from "./cartografia.module.css"
+import { usePropsDelFondo } from "../../_lib/panel-modal"
 
 export function DrawerDistancia({ carto, onCerrar }: {
   carto: Cartografia
   onCerrar: () => void
 }) {
+  const propsDelFondo = usePropsDelFondo(onCerrar)
   const e = explicarSigno(carto, "sol")
   const homonimo = e ? portalDelMismoNombre(carto, e.signo) : null
   const tabla = tablaAspectos()
 
   return (
-    <div className={s.cajonFondo} onClick={(ev) => { if (ev.target === ev.currentTarget) onCerrar() }}>
+    <div className={s.cajonFondo} {...propsDelFondo}>
       <div className={s.cajon} role="dialog" aria-label="Qué se mide exactamente">
         <div className={s.cajonCabecera}>
           <h3 className={s.cajonTitulo}>¿Qué se mide exactamente?</h3>

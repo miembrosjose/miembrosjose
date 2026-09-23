@@ -32,6 +32,7 @@ import { PrimeraExperiencia } from "./PrimeraExperiencia"
 import { VistaPortal } from "./VistaPortal"
 import { SintesisGlobal } from "./SintesisGlobal"
 import { VistaLista, FILTROS_VACIOS, type Filtros, type Orden } from "./VistaLista"
+import { usePanelAPantallaCompleta, usePropsDelFondo } from "../../_lib/panel-modal"
 import { useProducts } from "../../_lib/use-products"
 import { useProductAccess } from "../../_lib/use-product-access"
 import { isCartografiaToolProduct, numeroLibre, CARTOGRAFIA_PRODUCT_NUM } from "../../_lib/tool-products"
@@ -153,7 +154,11 @@ export function CartografiaEstelar() {
 }
 
 function Panel({ onClose }: { onClose: () => void }) {
-  const [montado, setMontado] = useState(false)
+  // El bloqueo del fondo, la tecla Escape y el cierre al tocar fuera. Vive en
+  // _lib/panel-modal porque los cuatro módulos de Recursos hacían lo mismo,
+  // cada uno con un fallo distinto.
+  const { montado, propsDelFondo } = usePanelAPantallaCompleta(onClose)
+
   const [nacimiento, setNacimiento] = useState<Nacimiento | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -168,6 +173,8 @@ function Panel({ onClose }: { onClose: () => void }) {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS)
 
   const [confirmarReinicio, setConfirmarReinicio] = useState(false)
+  const cerrarConfirmacion = useCallback(() => setConfirmarReinicio(false), [])
+  const propsDeLaConfirmacion = usePropsDelFondo(cerrarConfirmacion)
 
   // ── Volver arriba al cambiar de pantalla ──
   // Sin esto, al pasar de un paso al siguiente la pantalla nueva aparece
@@ -182,40 +189,18 @@ function Panel({ onClose }: { onClose: () => void }) {
     el.scrollTo({ top: 0, behavior: "auto" })
   }, [])
 
+  // Lo guardado en este dispositivo, UNA sola vez al abrir.
+  //
+  // Antes esto vivía en el mismo efecto que el bloqueo del fondo, que
+  // dependía de `onClose`. Como `onClose` llega escrito en el sitio, cambiaba
+  // en cada render de la tarjeta y volvía a leer el almacenamiento: la
+  // cartografía se recalculaba entera sin motivo y el paso de la introducción
+  // se reponía encima del que estuvieras viendo.
   useEffect(() => {
-    setMontado(true)
     const guardado = recuperar()
     setNacimiento(guardado)
     if (guardado && !introVista()) setEnIntro(true)
-
-    // ── Bloqueo del fondo ──
-    // `overflow: hidden` en el cuerpo NO basta en Safari de iOS: al arrastrar
-    // dentro del panel, la página de detrás se mueve igual. Lo que sí funciona
-    // es fijar el cuerpo y compensar con la posición de desplazamiento, que se
-    // restaura al cerrar para no perder el sitio donde estaba la persona.
-    const y = window.scrollY
-    const previo = {
-      overflow: document.body.style.overflow,
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-    }
-    document.body.style.overflow = "hidden"
-    document.body.style.position = "fixed"
-    document.body.style.top = `-${y}px`
-    document.body.style.width = "100%"
-
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
-    window.addEventListener("keydown", esc)
-    return () => {
-      document.body.style.overflow = previo.overflow
-      document.body.style.position = previo.position
-      document.body.style.top = previo.top
-      document.body.style.width = previo.width
-      window.scrollTo(0, y)
-      window.removeEventListener("keydown", esc)
-    }
-  }, [onClose])
+  }, [])
 
   const carto = useMemo<Cartografia | null>(() => {
     if (!nacimiento) return null
@@ -365,7 +350,7 @@ function Panel({ onClose }: { onClose: () => void }) {
         padding: "calc(env(safe-area-inset-top,0px) + 12px) 10px calc(env(safe-area-inset-bottom,0px) + 12px)",
         overscrollBehavior: "contain",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      {...propsDelFondo}
       role="dialog"
       aria-label="Cartografía Estelar 144"
     >
@@ -381,7 +366,7 @@ function Panel({ onClose }: { onClose: () => void }) {
         {confirmarReinicio && (
           <div
             className={s.cajonFondo}
-            onClick={(e) => { if (e.target === e.currentTarget) setConfirmarReinicio(false) }}
+            {...propsDeLaConfirmacion}
           >
             <div className={s.cajon} role="dialog" aria-label="Cambiar mis datos">
               <div className={s.cajonCabecera}>
