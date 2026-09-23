@@ -47,13 +47,27 @@ update auth.users
  where raw_user_meta_data->>'featured_badge_id' = 'welcome';
 
 -- De lo ya publicado.
-update public.forum_posts      set author_badge_id = null where author_badge_id = 'welcome';
-update public.forum_replies    set author_badge_id = null where author_badge_id = 'welcome';
-update public.episode_comments set author_badge_id = null where author_badge_id = 'welcome';
-
--- Estas dos pueden no existir en este proyecto; si dan error, se saltan.
-update public.funnel_feedbacks set author_badge_id = null where author_badge_id = 'welcome';
-update public.user_funnels     set author_badge_id = null where author_badge_id = 'welcome';
+--
+-- Recorre las tablas que PUEDEN llevar esa columna y solo toca las que la
+-- tienen de verdad. No es un adorno: `funnel_feedbacks` y `user_funnels`
+-- existen en este proyecto pero SIN la columna, y el editor de Supabase
+-- ejecuta todo el archivo dentro de una transacción — un solo error aborta
+-- el bloque entero y no se aplica nada, ni siquiera lo que ya había pasado.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'forum_posts', 'forum_replies', 'episode_comments',
+    'funnel_feedbacks', 'user_funnels'
+  ] loop
+    if exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = t and column_name = 'author_badge_id'
+    ) then
+      execute format('update public.%I set author_badge_id = null where author_badge_id = %L', t, 'welcome');
+    end if;
+  end loop;
+end $$;
 
 
 -- ── PASO 3 · Cómo quedó ─────────────────────────────────────────────────────
