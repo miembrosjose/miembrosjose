@@ -18,7 +18,7 @@
 //     una persona sola que para cincuenta, porque responderla ya vale por sí.
 
 import { useCallback, useEffect, useState } from "react"
-import { Activity, ArrowRight, Send, Pencil, Trash2 } from "lucide-react"
+import { Activity, ArrowRight, Send, Pencil, Trash2, Heart } from "lucide-react"
 import s from "./pulso.module.css"
 
 type Respuesta = {
@@ -27,6 +27,8 @@ type Respuesta = {
   creadoEn: string
   esMia: boolean
   autor: { nombre: string; avatar: string | null }
+  corazones: number
+  miCorazon: boolean
 }
 
 type Pulso = {
@@ -42,6 +44,7 @@ type Datos = {
   pulso: Pulso | null
   respuestas: Respuesta[]
   miRespuesta: string | null
+  miRespuestaCorazones: number
   total: number
 }
 
@@ -111,6 +114,60 @@ export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
       setError("Sin conexión")
     } finally {
       setEnviando(false)
+    }
+  }
+
+  /**
+   * Pone o quita el corazón de una respuesta.
+   *
+   * Cambia el número ANTES de hablar con el servidor y lo deshace si falla.
+   * Esperar a la respuesta de red para pintar un corazón hace que el botón
+   * parezca roto en un móvil con mala cobertura, que es donde más se usa.
+   */
+  const alternarCorazon = async (r: Respuesta) => {
+    const quitando = r.miCorazon
+
+    setDatos((d) =>
+      d
+        ? {
+            ...d,
+            respuestas: d.respuestas.map((x) =>
+              x.id === r.id
+                ? { ...x, miCorazon: !quitando, corazones: x.corazones + (quitando ? -1 : 1) }
+                : x,
+            ),
+          }
+        : d,
+    )
+
+    try {
+      const res = quitando
+        ? await fetch(`/api/pulso/corazon?respuestaId=${encodeURIComponent(r.id)}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        : await fetch("/api/pulso/corazon", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ respuestaId: r.id }),
+          })
+      if (!res.ok) throw new Error("falló")
+    } catch {
+      // Se vuelve al estado real. Sin este paso el contador se quedaría
+      // mintiendo hasta que alguien recargara la página.
+      setDatos((d) =>
+        d
+          ? {
+              ...d,
+              respuestas: d.respuestas.map((x) =>
+                x.id === r.id
+                  ? { ...x, miCorazon: quitando, corazones: x.corazones + (quitando ? 1 : -1) }
+                  : x,
+              ),
+            }
+          : d,
+      )
     }
   }
 
@@ -226,6 +283,17 @@ export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
         <div className={s.miRespuesta}>
           <p className={s.miRespuestaKicker}>Tu respuesta de esta semana</p>
           <p className={s.miRespuestaTexto}>{datos.miRespuesta}</p>
+          {/* Solo cuando hay alguno. Un "0 corazones" bajo lo que acabas de
+              escribir dice que a nadie le importó, y no es verdad: es que
+              todavía no ha entrado nadie. */}
+          {datos.miRespuestaCorazones > 0 && (
+            <p className={s.miRespuestaCorazones}>
+              <Heart size={12} aria-hidden />
+              {datos.miRespuestaCorazones === 1
+                ? "Una persona resonó con esto"
+                : `${datos.miRespuestaCorazones} personas resonaron con esto`}
+            </p>
+          )}
           <div className={s.miRespuestaAcciones}>
             <button type="button" className={s.accionMenor} onClick={() => setEditando(true)}>
               <Pencil size={12} /> Editar
@@ -285,6 +353,23 @@ export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
                 <span className={s.otraNombre}>{r.autor.nombre}</span>
               </div>
               <p className={s.otraTexto}>{r.cuerpo}</p>
+              {/* En la portada no: allí toda la tarjeta es un enlace a La Red
+                  y un botón dentro de otro botón no se puede pulsar. */}
+              {!compacto && (
+                <button
+                  type="button"
+                  className={r.miCorazon ? s.corazonPuesto : s.corazon}
+                  onClick={() => void alternarCorazon(r)}
+                  aria-pressed={r.miCorazon}
+                  aria-label={r.miCorazon ? "Quitar mi corazón" : "Resonar con esto"}
+                >
+                  <Heart size={14} aria-hidden fill={r.miCorazon ? "currentColor" : "none"} />
+                  {r.corazones > 0 && <span>{r.corazones}</span>}
+                  <span className={s.corazonTexto}>
+                    {r.miCorazon ? "Resonaste" : "Resonar"}
+                  </span>
+                </button>
+              )}
             </article>
           ))}
           </div>

@@ -361,6 +361,53 @@
   white-space: pre-wrap;
 }
 
+/* ── El corazón ─────────────────────────────────────────────────────────── */
+/* Un solo gesto, no cinco emojis: el Pulso es una observación, no una
+   publicación que compita por likes. Apagado mientras no se toca, para que no
+   robe atención al texto de la persona. */
+.corazon,
+.corazonPuesto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  font-size: 0.72rem;
+  cursor: pointer;
+  /* 36px es el mínimo para que un pulgar acierte sin ampliar la pantalla. */
+  min-height: 36px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.corazon { color: #8b90b4; }
+.corazon:hover { border-color: rgba(214, 106, 140, 0.5); color: #e08ba8; }
+
+.corazonPuesto {
+  color: #e08ba8;
+  border-color: rgba(214, 106, 140, 0.45);
+  background: rgba(214, 106, 140, 0.09);
+}
+
+/* En pantallas estrechas manda el número; la palabra se va. */
+.corazonTexto { white-space: nowrap; }
+
+@media (max-width: 420px) {
+  .corazonTexto { display: none; }
+}
+
+/* Cuántos han resonado con la tuya. Aparece solo si hay alguno. */
+.miRespuestaCorazones {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.75rem;
+  color: #e08ba8;
+}
+
 /* ── Campo de estrellas ─────────────────────────────────────────────────── */
 /* Puntos de luz dispersos, hechos con gradientes. No hay imagen que cargar ni
    que pueda fallar, y el tamaño en disco es cero. */

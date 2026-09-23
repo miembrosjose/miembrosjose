@@ -51,7 +51,12 @@ type Miembro = {
 
 type Pais = { code: string; name: string; flag: string; cities: number }
 type Ciudad = { id: number; name: string; admin1: string | null; label: string }
-type Resumen = { miembros_con_ubicacion: number; paises: number; ciudades: number }
+type Resumen = {
+  miembros_total: number
+  miembros_con_ubicacion: number
+  paises: number
+  ciudades: number
+}
 
 // La función «embajador» NO está aquí a propósito: el Embajador Galáctico ya
 // se muestra como insignia y son la misma figura. Tenerla dos veces ponía dos
@@ -297,15 +302,21 @@ export function ViewRed() {
           <p className={styles.kicker}>La Red</p>
           <h1 className={styles.title}>Explorar la Red</h1>
           <p className={styles.lead}>
-            Miembros de 144 mil repartidos por el planeta. Aparecen quienes eligieron
-            compartir su ciudad.
+            Miembros de 144 mil repartidos por el planeta. En el mapa aparecen quienes
+            eligieron compartir su ciudad.
           </p>
 
           {resumen && (
+            <>
             <div className={styles.stats}>
               <div className={styles.stat}>
-                <span className={styles.statNum}>{resumen.miembros_con_ubicacion.toLocaleString("es-419")}</span>
-                <span className={styles.statLabel}>en el mapa</span>
+                {/* El total, no los que están en el mapa. Enseñar aquí solo a
+                    quienes comparten su ciudad hacía parecer que la Red tenía
+                    un miembro cuando tenía dos. */}
+                <span className={styles.statNum}>{resumen.miembros_total.toLocaleString("es-419")}</span>
+                <span className={styles.statLabel}>
+                  {resumen.miembros_total === 1 ? "miembro" : "miembros"}
+                </span>
               </div>
               <div className={styles.stat}>
                 <span className={styles.statNum}>{resumen.paises}</span>
@@ -316,6 +327,17 @@ export function ViewRed() {
                 <span className={styles.statLabel}>{resumen.ciudades === 1 ? "ciudad" : "ciudades"}</span>
               </div>
             </div>
+
+            {resumen.miembros_total > resumen.miembros_con_ubicacion && (
+              <p className={styles.statsNota}>
+                {resumen.miembros_con_ubicacion === 0
+                  ? "Todavía nadie ha compartido su ciudad, así que el mapa está vacío."
+                  : `${resumen.miembros_con_ubicacion.toLocaleString("es-419")} de ${resumen.miembros_total.toLocaleString(
+                      "es-419",
+                    )} han compartido su ciudad. El resto no aparece en el mapa hasta que lo haga.`}
+              </p>
+            )}
+            </>
           )}
         </header>
 

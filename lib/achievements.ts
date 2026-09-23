@@ -602,3 +602,56 @@ export function gradoMasAlto(desbloqueadas: string[]): string | null {
 
 /** El catálogo que se muestra: todo menos lo retirado. */
 export const ACHIEVEMENTS_VISIBLES = ACHIEVEMENTS.filter((a) => !a.retirada)
+
+// ── La escalera del Camino ──────────────────────────────────────────────────
+//
+// Las cinco insignias de temporada no son cualidades sueltas: son GRADOS. Quien
+// tiene el cuarto pasó necesariamente por los tres anteriores y los conserva
+// todos en su perfil, que es lo correcto — el historial no se borra.
+//
+// Pero en cualquier RECUENTO hay que contar solo el más alto. Si no, una sola
+// persona que ha completado las cuatro temporadas aparece en las cuatro
+// pastillas y parece que hay cuatro miembros donde hay uno.
+//
+// De menor a mayor. `semilla_estelar` va primero porque marca a quien está
+// recorriendo la Temporada 1, antes de completarla.
+
+export const ESCALERA_CAMINO = [
+  "semilla_estelar",
+  "season_1_complete",
+  "season_2_complete",
+  "season_3_complete",
+  "season_4_complete",
+] as const
+
+export type GradoCamino = (typeof ESCALERA_CAMINO)[number]
+
+export function esGradoDelCamino(id: string): id is GradoCamino {
+  return (ESCALERA_CAMINO as readonly string[]).includes(id)
+}
+
+/**
+ * El grado más alto que alcanzó alguien, o null si no tiene ninguno.
+ *
+ * El resto de insignias se ignoran: no son grados y cada una cuenta por sí.
+ */
+export function rangoMasAlto(insignias: Iterable<string>): GradoCamino | null {
+  let mejor: GradoCamino | null = null
+  let mejorIndice = -1
+  for (const id of insignias) {
+    const i = (ESCALERA_CAMINO as readonly string[]).indexOf(id)
+    if (i > mejorIndice) { mejorIndice = i; mejor = ESCALERA_CAMINO[i] }
+  }
+  return mejor
+}
+
+/**
+ * Las insignias de alguien tal como deben CONTARSE: las que no son grados,
+ * más su grado más alto. Nunca dos grados de la misma escalera.
+ */
+export function insigniasParaContar(insignias: Iterable<string>): string[] {
+  const otras: string[] = []
+  for (const id of insignias) if (!esGradoDelCamino(id)) otras.push(id)
+  const grado = rangoMasAlto(insignias)
+  return grado ? [...otras, grado] : otras
+}

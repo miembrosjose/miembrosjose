@@ -21,6 +21,7 @@ import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { nombrePais, normalizar } from "@/lib/red/paises"
 import { getNetworkRolesFor } from "@/lib/red/roles"
+import { esGradoDelCamino, rangoMasAlto } from "@/lib/achievements"
 
 export const dynamic = "force-dynamic"
 
@@ -76,11 +77,32 @@ export async function GET(req: NextRequest) {
     // service_role a proposito: user_unlocked_achievements no expone las
     // insignias ajenas por RLS, y aqui hacen falta para filtrar. Solo se
     // pregunta por insignias que ya se muestran en los perfiles.
-    const { data: conLaInsignia } = await getSupabaseAdmin()
-      .from("user_unlocked_achievements")
-      .select("user_id")
-      .eq("achievement_id", emblema)
-    const ids = (conLaInsignia || []).map((r) => (r as { user_id: string }).user_id)
+    let ids: string[]
+    if (esGradoDelCamino(emblema)) {
+      // Un grado del Camino identifica a quien se QUEDÓ ahí, no a quien pasó.
+      // Hace falta traer todos sus grados para saber cuál es el más alto: con
+      // un .eq() saldría también quien ya lo superó, y el mismo miembro
+      // aparecería bajo varias temporadas.
+      const { data: todosLosGrados } = await getSupabaseAdmin()
+        .from("user_unlocked_achievements")
+        .select("user_id, achievement_id")
+      const porMiembro = new Map<string, string[]>()
+      for (const r of (todosLosGrados || []) as Array<{ user_id: string; achievement_id: string }>) {
+        if (!esGradoDelCamino(r.achievement_id)) continue
+        const lista = porMiembro.get(r.user_id) ?? []
+        lista.push(r.achievement_id)
+        porMiembro.set(r.user_id, lista)
+      }
+      ids = [...porMiembro.entries()]
+        .filter(([, grados]) => rangoMasAlto(grados) === emblema)
+        .map(([uid]) => uid)
+    } else {
+      const { data: conLaInsignia } = await getSupabaseAdmin()
+        .from("user_unlocked_achievements")
+        .select("user_id")
+        .eq("achievement_id", emblema)
+      ids = (conLaInsignia || []).map((r) => (r as { user_id: string }).user_id)
+    }
     // Sin nadie con esa insignia, un uuid imposible deja la lista vacia sin
     // tener que ramificar el resto de la consulta.
     query = query.in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
@@ -157,17 +179,36 @@ export async function POST(req: NextRequest) {
   // identidades, solo números — no revela a nadie.
   const admin = getSupabaseAdmin()
 
-  const [{ count: conUbicacion }, { data: paisesRows }, { data: ciudadesRows }] = await Promise.all([
-    admin.from("member_location").select("user_id", { count: "exact", head: true }),
-    admin.from("member_location").select("country_code"),
-    admin.from("member_location").select("city_id").eq("show_city", true).not("city_id", "is", null),
-  ])
+  const [{ count: conUbicacion }, { data: paisesRows }, { data: ciudadesRows }, listado] =
+    await Promise.all([
+      admin.from("member_location").select("user_id", { count: "exact", head: true }),
+      admin.from("member_location").select("country_code"),
+      admin.from("member_location").select("city_id").eq("show_city", true).not("city_id", "is", null),
+      // Cuántos miembros hay EN TOTAL, hayan puesto ubicación o no.
+      //
+      // Sin este dato la cabecera mentía por omisión: enseñaba solo a quienes
+      // tienen fila en member_location y parecía que la plataforma tenía un
+      // miembro cuando había dos. Quien acaba de registrarse todavía no ha
+      // elegido ciudad, así que no está en esa tabla — y eso es correcto.
+      //
+      // auth.users no tiene contador: listUsers es la única vía. Mil cabe de
+      // sobra hoy; cuando no quepa, el sitio para arreglarlo es este.
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    ])
 
   const paises = new Set((paisesRows || []).map((r) => (r as { country_code: string }).country_code))
   const ciudades = new Set((ciudadesRows || []).map((r) => (r as { city_id: number }).city_id))
 
+  // Mismo criterio que /api/members, para que los dos sitios den el mismo
+  // número: cuenta como miembro quien tiene correo y no está revocado.
+  const total = (listado?.data?.users || []).filter((u) => {
+    if (!u.email) return false
+    return (u.app_metadata as { access_revoked?: boolean } | undefined)?.access_revoked !== true
+  }).length
+
   return NextResponse.json({
     resumen: {
+      miembros_total: total,
       miembros_con_ubicacion: conUbicacion ?? 0,
       paises: paises.size,
       ciudades: ciudades.size,

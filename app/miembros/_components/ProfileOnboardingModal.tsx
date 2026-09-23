@@ -283,20 +283,58 @@ export function ProfileOnboardingModal({
                   </div>
                 )}
               </div>
+              {/* El input nativo se oculta y se dispara desde un botón.
+                  Dejarlo a la vista pintaba el texto del sistema —"Seleccionar
+                  archivo · Sin archivos seleccionados"— que no se puede
+                  traducir ni acortar, y en pantallas estrechas se desbordaba
+                  encima del texto de al lado. */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleFilePick}
                 disabled={isPending}
-                style={{
-                  fontFamily: "var(--font-geist-sans)",
-                  fontSize: "0.8rem",
-                  color: "#a0a0b0",
-                  flex: 1,
-                  minWidth: 0,
-                }}
+                style={{ display: "none" }}
               />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isPending}
+                  style={{
+                    fontFamily: "var(--font-geist-sans)",
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#c3b2e0",
+                    background: "rgba(109, 74, 155, 0.14)",
+                    border: "1px solid rgba(109, 74, 155, 0.5)",
+                    padding: "0.55rem 0.9rem",
+                    cursor: isPending ? "default" : "pointer",
+                    opacity: isPending ? 0.5 : 1,
+                    width: "100%",
+                  }}
+                >
+                  {previewUrl ? "Cambiar foto" : "Elegir una foto"}
+                </button>
+                {pendingFile && (
+                  <p
+                    style={{
+                      margin: "0.4rem 0 0",
+                      fontFamily: "var(--font-geist-sans)",
+                      fontSize: "0.68rem",
+                      color: "#6a6a7a",
+                      // Un nombre de archivo largo se recorta en vez de
+                      // ensanchar la columna y descuadrar el formulario.
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {pendingFile.name}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

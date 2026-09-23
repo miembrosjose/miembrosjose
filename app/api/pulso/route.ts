@@ -4,6 +4,8 @@
 //   POST /api/pulso   publica o edita tu respuesta
 //   DELETE /api/pulso borra la tuya
 //
+// Los corazones de cada respuesta se ponen y se quitan en /api/pulso/corazon.
+//
 // Usa la sesión del usuario, no service_role: las policies de RLS son las que
 // garantizan que nadie edite la respuesta de otro, no el acierto de este
 // archivo.
@@ -14,6 +16,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -82,20 +85,78 @@ export async function GET() {
   const lista = respuestas ?? []
 
   // Los nombres y avatares salen de `profiles`, en una sola consulta.
+  //
+  // Con service_role a propósito. La policy de `profiles` limita la lectura a
+  // la fila propia, así que el cliente de sesión solo veía el perfil de quien
+  // mira: todos los demás salían como "Miembro" con la inicial M. Aquí solo se
+  // piden nombre y avatar de quienes YA han respondido en público al Pulso, que
+  // es justo lo que la pantalla enseña.
   const ids = [...new Set(lista.map((r) => r.user_id))]
   const autores = new Map<string, { nombre: string; avatar: string | null }>()
   if (ids.length > 0) {
-    const { data: perfiles } = await supabase
+    const { data: perfiles } = await getSupabaseAdmin()
       .from("profiles")
       .select("id, full_name, avatar_url")
       .in("id", ids)
     for (const perfil of perfiles ?? []) {
+      if (!perfil.full_name) continue
       autores.set(perfil.id, {
-        nombre: perfil.full_name || "Miembro",
+        nombre: perfil.full_name,
         avatar: perfil.avatar_url ?? null,
       })
     }
+
+    // `profiles` no siempre tiene el nombre: quien entra con Google trae los
+    // suyos en los metadatos de la sesión, y la fila de profiles puede quedar
+    // con full_name en blanco. Sin este respaldo esa gente aparecía como
+    // "Miembro" con una M por avatar, que es justo lo que se veía en pantalla.
+    //
+    // Solo se consulta a quien falta, no a todos.
+    const faltan = ids.filter((id) => !autores.has(id))
+    if (faltan.length > 0) {
+      const admin = getSupabaseAdmin()
+      const encontrados = await Promise.all(
+        faltan.map((id) => admin.auth.admin.getUserById(id).catch(() => null)),
+      )
+      for (const r of encontrados) {
+        const u = r?.data?.user
+        if (!u) continue
+        const meta = (u.user_metadata || {}) as {
+          full_name?: string
+          name?: string
+          avatar_url?: string
+          picture?: string
+        }
+        autores.set(u.id, {
+          nombre: meta.full_name || meta.name || u.email?.split("@")[0] || "Miembro",
+          avatar: meta.avatar_url || meta.picture || null,
+        })
+      }
+    }
   }
+
+  // ── Los corazones ────────────────────────────────────────────────────────
+  // Con el cliente de sesión: la policy de lectura deja ver todos, y así el
+  // recuento nunca puede enseñar más de lo que la RLS permite.
+  //
+  // Si la tabla todavía no existe —la migración docs/sql/pulso_corazones.sql
+  // se ejecuta a mano— esto falla y se sigue adelante con cero. Un módulo a
+  // medias no debe tumbar la pantalla entera.
+  const corazones = new Map<string, number>()
+  const mios = new Set<string>()
+  const idsRespuestas = lista.map((r) => r.id)
+  if (idsRespuestas.length > 0) {
+    const { data: marcas } = await supabase
+      .from("pulso_corazones")
+      .select("respuesta_id, user_id")
+      .in("respuesta_id", idsRespuestas)
+    for (const m of marcas ?? []) {
+      corazones.set(m.respuesta_id, (corazones.get(m.respuesta_id) || 0) + 1)
+      if (m.user_id === user.id) mios.add(m.respuesta_id)
+    }
+  }
+
+  const mia = lista.find((r) => r.user_id === user.id)
 
   return NextResponse.json({
     pulso: {
@@ -114,8 +175,13 @@ export async function GET() {
       creadoEn: r.creado_en,
       esMia: r.user_id === user.id,
       autor: autores.get(r.user_id) ?? { nombre: "Miembro", avatar: null },
+      corazones: corazones.get(r.id) ?? 0,
+      miCorazon: mios.has(r.id),
     })),
-    miRespuesta: lista.find((r) => r.user_id === user.id)?.cuerpo ?? null,
+    miRespuesta: mia?.cuerpo ?? null,
+    // Cuánta gente ha marcado la tuya. Ver que a alguien le llegó lo que
+    // escribiste es la razón por la que se vuelve la semana siguiente.
+    miRespuestaCorazones: mia ? corazones.get(mia.id) ?? 0 : 0,
     total: lista.length,
   })
 }

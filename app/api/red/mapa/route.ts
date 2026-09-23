@@ -24,6 +24,7 @@ import { nombrePais, banderaPais } from "@/lib/red/paises"
 import { getNetworkRolesFor } from "@/lib/red/roles"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { ORDEN_AURAS } from "@/lib/achievements"
+import { esGradoDelCamino, insigniasParaContar, rangoMasAlto } from "@/lib/achievements"
 
 /**
  * Quién tiene cada insignia del Camino, entre los miembros dados.
@@ -146,8 +147,17 @@ export async function GET(req: NextRequest) {
   }>
 
   const tenencia = await insigniasDe(todas.map((r) => r.user_id))
+  // Filtrar por un grado del Camino significa "quien se quedó ahí", no
+  // "quien pasó por ahí". Si no, alguien que completó las cuatro temporadas
+  // saldría al filtrar por cualquiera de ellas y parecería cuatro personas.
   const rows = emblema
-    ? todas.filter((r) => tenencia.get(r.user_id)?.has(emblema))
+    ? todas.filter((r) => {
+        const suyas = tenencia.get(r.user_id)
+        if (!suyas) return false
+        return esGradoDelCamino(emblema)
+          ? rangoMasAlto(suyas) === emblema
+          : suyas.has(emblema)
+      })
     : todas
 
   const ciudades = new Map<number, {
@@ -180,8 +190,12 @@ export async function GET(req: NextRequest) {
 
   // Cuántos miembros VISIBLES tienen cada insignia. Se cuenta sobre el total
   // sin filtrar, para que las pastillas no cambien al elegir una.
+  //
+  // De los grados del Camino solo cuenta el más alto de cada persona: son una
+  // escalera, no cualidades sueltas. Contarlos todos hacía que un miembro con
+  // las cuatro temporadas apareciera cuatro veces.
   for (const r of todas) {
-    for (const id of tenencia.get(r.user_id) ?? []) {
+    for (const id of insigniasParaContar(tenencia.get(r.user_id) ?? [])) {
       emblemas.set(id, (emblemas.get(id) || 0) + 1)
     }
   }
