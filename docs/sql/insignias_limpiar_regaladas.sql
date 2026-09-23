@@ -94,3 +94,55 @@ select
 from public.user_unlocked_achievements a
 join auth.users u on u.id = a.user_id
 order by u.email, a.achievement_id;
+
+
+-- ── PASO 4 · Quitar de encima lo que ya no se puede elegir ──────────────────
+-- Los pasos anteriores limpian lo que alguien PUEDE elegir. Pero la insignia
+-- que ya lleva puesta vive en otro sitio —user_metadata— y ahí se quedaría,
+-- visible en su perfil y en cada mensaje suyo, aunque ya no pueda volver a
+-- seleccionarla.
+--
+-- Esto la descuelga y deja a cada persona eligiendo otra vez entre lo que sí
+-- tiene. Se pierde una preferencia de vitrina, nada más: ni avance, ni XP, ni
+-- accesos. El Sello del Admin no se toca, que va con el cargo.
+--
+-- Si prefieres revisarlo caso por caso, no ejecutes este bloque.
+update auth.users
+   set raw_user_meta_data =
+         raw_user_meta_data
+         - 'featured_badge_id'
+         - 'featured_star_id'
+         - 'featured_flame_id'
+ where coalesce((raw_app_meta_data->>'is_admin')::boolean, false) = false
+   and (
+     raw_user_meta_data ? 'featured_badge_id'
+     or raw_user_meta_data ? 'featured_star_id'
+     or raw_user_meta_data ? 'featured_flame_id'
+   );
+
+-- Y lo mismo en lo ya publicado: los mensajes del foro y los comentarios
+-- llevan copiada la insignia de quien los escribió. Vuelven al valor por
+-- defecto, que es el que tiene cualquiera.
+--
+-- Las cuentas de administración quedan fuera: su Sello va con el cargo y
+-- borrarlo dejaría tus propios mensajes sin firma.
+update public.forum_posts p
+   set author_badge_id = 'welcome'
+  from auth.users u
+ where u.id = p.user_id
+   and coalesce((u.raw_app_meta_data->>'is_admin')::boolean, false) = false
+   and p.author_badge_id is distinct from 'welcome';
+
+update public.forum_replies r
+   set author_badge_id = 'welcome'
+  from auth.users u
+ where u.id = r.user_id
+   and coalesce((u.raw_app_meta_data->>'is_admin')::boolean, false) = false
+   and r.author_badge_id is distinct from 'welcome';
+
+update public.episode_comments c
+   set author_badge_id = 'welcome'
+  from auth.users u
+ where u.id = c.user_id
+   and coalesce((u.raw_app_meta_data->>'is_admin')::boolean, false) = false
+   and c.author_badge_id is distinct from 'welcome';
