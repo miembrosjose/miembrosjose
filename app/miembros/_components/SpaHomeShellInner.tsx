@@ -34,6 +34,7 @@ import { useSeasonAccess } from "../_lib/use-season-access"
 import { OwnedProducts, LockedProducts, useOwnedProducts, hasLockedProducts } from "./Products"
 import { ALL_BONUSES, type OwnedProduct } from "../_lib/products"
 import { checkWelcome, syncUnlockedAchievementsFromServer } from "../_lib/achievements-unlock"
+import { limpiarSiCambioDePersona } from "../_lib/sesion-local"
 import { useView } from "../_lib/view-context"
 import { useAuth } from "../_lib/auth-context"
 import { isProfileComplete } from "@/lib/profile-completeness"
@@ -249,6 +250,17 @@ export function SpaHomeShellInner() {
   // no el JWT que puede estar viejo). Si hay una marca nueva sin aplicar en este
   // dispositivo, limpiamos el avance local, re-borramos el avance propio en el
   // servidor (por si una sync lo repobló) y recargamos una vez → todo en cero.
+  //
+  // ── ANTES DE NADA: ¿DE QUIÉN ES LO QUE HAY GUARDADO AQUÍ? ──────────────
+  // Lo que el navegador guarda —avance, insignias, fechas de nacimiento de
+  // los módulos, bitácora— iba con claves fijas, o sea del APARATO. Al entrar
+  // con otra cuenta en el mismo teléfono, esa persona veía el avance del
+  // anterior, y borrarlo desde el servidor no servía de nada porque la copia
+  // local volvía a pintarse. Esto lo comprueba y limpia si ha cambiado.
+  useEffect(() => {
+    if (limpiarSiCambioDePersona(user?.id)) window.location.reload()
+  }, [user?.id])
+
   useEffect(() => {
     if (typeof window === "undefined") return
     let cancelled = false
