@@ -33,8 +33,32 @@ export function isLugaresToolProduct(p: { name: string; num?: number }): boolean
 // Lugares: un producto de la Biblioteca cuya portada, nombre y descripción se
 // editan desde "Gestionar". El `num` estable mantiene el vínculo aunque se
 // renombre la tarjeta.
-export const CODIGO_ORIGEN_PRODUCT_NUM = 94
-export const CARTOGRAFIA_PRODUCT_NUM = 95
+//
+// ── POR QUÉ 901 Y 902, Y NO 94 Y 95 ────────────────────────────────────────
+// Al principio se eligieron 94 y 95 dando por hecho que seguían al 92 y 93 y
+// estaban libres. NO lo estaban: los ocupaban "Sanación Extraterrestre" y
+// "Protocolo de Contacto". Como la identificación mira el num antes que el
+// nombre, cada tarjeta se quedó con el producto de la otra y abrir Sanación
+// llevaba a Código de Origen.
+//
+// El catálogo se numera a mano y de forma correlativa, así que cualquier
+// número cercano puede acabar ocupado. Estas dos no son productos de venta:
+// viven en un rango aparte, muy por encima, donde no se cruzan con nada.
+export const CODIGO_ORIGEN_PRODUCT_NUM = 901
+export const CARTOGRAFIA_PRODUCT_NUM = 902
+
+/** Primer número del rango reservado a tarjetas-herramienta. */
+export const RANGO_HERRAMIENTAS = 900
+
+/**
+ * ¿Ese número puede sembrarse sin pisar nada?
+ *
+ * Antes de dar de alta una tarjeta-herramienta hay que comprobar que su
+ * número no lo tenga ya otro producto. Es la salvaguarda que faltaba.
+ */
+export function numeroLibre(num: number, productos: Array<{ num?: number }>): boolean {
+  return !productos.some((p) => p.num === num)
+}
 
 export function isCodigoOrigenToolProduct(p: { name: string; num?: number }): boolean {
   if (p.num === CODIGO_ORIGEN_PRODUCT_NUM) return true

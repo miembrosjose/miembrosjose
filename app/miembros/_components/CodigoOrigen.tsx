@@ -18,7 +18,7 @@ import { FRECUENCIAS } from "../_lib/codigo-origen/interpretations"
 import type { CodigoOrigenResultado, Nacimiento } from "../_lib/codigo-origen/types"
 import { useProducts } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
-import { isCodigoOrigenToolProduct, CODIGO_ORIGEN_PRODUCT_NUM } from "../_lib/tool-products"
+import { isCodigoOrigenToolProduct, numeroLibre, CODIGO_ORIGEN_PRODUCT_NUM } from "../_lib/tool-products"
 import prod from "./products.module.css"
 import s from "./codigo-origen.module.css"
 
@@ -57,6 +57,10 @@ export function CodigoOrigen() {
   const sembrado = useRef(false)
   useEffect(() => {
     if (sembrado.current || !isAdminOverride || cargandoProductos || producto) return
+    // Salvaguarda: si ese número ya lo tiene otro producto, no se siembra.
+    // Sembrar encima secuestraría la tarjeta ajena, que es justo lo que pasó
+    // cuando estos números eran 94 y 95.
+    if (!numeroLibre(CODIGO_ORIGEN_PRODUCT_NUM, products)) return
     sembrado.current = true
     createProduct({
       num: CODIGO_ORIGEN_PRODUCT_NUM, name: "Código de Origen",
@@ -64,7 +68,7 @@ export function CodigoOrigen() {
       category: "biblioteca", gradient: "linear-gradient(135deg, #0c0a1c 0%, #6D4A9B 100%)",
       emoji: "🧭", sort_order: 3, is_locked: false, price_cents: 0, currency: "usd",
     } as never).catch(() => { /* si falla, no reintentar en bucle */ })
-  }, [isAdminOverride, cargandoProductos, producto, createProduct])
+  }, [isAdminOverride, cargandoProductos, producto, products, createProduct])
 
   const portada = producto?.media_url || null
   const titulo = producto?.name?.trim() || "Código de Origen"

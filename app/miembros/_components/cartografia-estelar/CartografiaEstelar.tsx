@@ -34,7 +34,7 @@ import { SintesisGlobal } from "./SintesisGlobal"
 import { VistaLista, FILTROS_VACIOS, type Filtros, type Orden } from "./VistaLista"
 import { useProducts } from "../../_lib/use-products"
 import { useProductAccess } from "../../_lib/use-product-access"
-import { isCartografiaToolProduct, CARTOGRAFIA_PRODUCT_NUM } from "../../_lib/tool-products"
+import { isCartografiaToolProduct, numeroLibre, CARTOGRAFIA_PRODUCT_NUM } from "../../_lib/tool-products"
 import prod from "../products.module.css"
 import s from "./cartografia.module.css"
 
@@ -101,6 +101,10 @@ export function CartografiaEstelar() {
   const sembrado = useRef(false)
   useEffect(() => {
     if (sembrado.current || !isAdminOverride || cargandoProductos || producto) return
+    // Salvaguarda: si ese número ya lo tiene otro producto, no se siembra.
+    // Sembrar encima secuestraría la tarjeta ajena, que es justo lo que pasó
+    // cuando estos números eran 94 y 95.
+    if (!numeroLibre(CARTOGRAFIA_PRODUCT_NUM, products)) return
     sembrado.current = true
     createProduct({
       num: CARTOGRAFIA_PRODUCT_NUM, name: "Cartografía Estelar 144",
@@ -108,7 +112,7 @@ export function CartografiaEstelar() {
       category: "biblioteca", gradient: "linear-gradient(135deg, #04040c 0%, #6D4A9B 100%)",
       emoji: "✨", sort_order: 4, is_locked: false, price_cents: 0, currency: "usd",
     } as never).catch(() => { /* si falla, no reintentar en bucle */ })
-  }, [isAdminOverride, cargandoProductos, producto, createProduct])
+  }, [isAdminOverride, cargandoProductos, producto, products, createProduct])
 
   const portada = producto?.media_url || null
   const titulo = producto?.name?.trim() || "Cartografía Estelar 144"
