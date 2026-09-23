@@ -43,7 +43,7 @@ type Miembro = {
   city: string | null
   country_code: string
   country: string
-  location_label: string
+  location_label: string | null
   roles: string[]
   member_since: string | null
   is_self: boolean
@@ -81,7 +81,7 @@ function auraDe(m: { badge_id?: string | null }) {
 }
 
 export function ViewRed() {
-  const { setView } = useView()
+  const { setView, params } = useView()
 
   // El perfil y la mensajería viven en /miembros/u/<id> y /miembros/mensajes/<id>,
   // que son RUTAS distintas de Next: navegar a ellas remonta la shell entera,
@@ -123,7 +123,15 @@ export function ViewRed() {
   // ni el servidor— y se restaura al montar.
   // Siempre Pulso al entrar. Es lo primero que hay que ver, y recordar la
   // última pestaña hacía que cada persona entrara a un sitio distinto.
-  const [tab, setTab] = useState<"pulso" | "foro" | "lista" | "mapa" | "encuentros">("pulso")
+  const [tab, setTab] = useState<"pulso" | "foro" | "lista" | "mapa" | "encuentros">(
+    params.redTab ?? "pulso",
+  )
+
+  // Si se vuelve a entrar pidiendo otra pestaña sin que el componente llegue a
+  // desmontarse, el valor inicial de arriba ya no se vuelve a evaluar.
+  useEffect(() => {
+    if (params.redTab) setTab(params.redTab)
+  }, [params.redTab])
   const [emblema, setEmblema] = useState(() => leerMemoria().emblema)
 
   useEffect(() => { guardarMemoria({ emblema }) }, [emblema])
@@ -307,7 +315,6 @@ export function ViewRed() {
           </p>
 
           {resumen && (
-            <>
             <div className={styles.stats}>
               <div className={styles.stat}>
                 {/* El total, no los que están en el mapa. Enseñar aquí solo a
@@ -327,17 +334,6 @@ export function ViewRed() {
                 <span className={styles.statLabel}>{resumen.ciudades === 1 ? "ciudad" : "ciudades"}</span>
               </div>
             </div>
-
-            {resumen.miembros_total > resumen.miembros_con_ubicacion && (
-              <p className={styles.statsNota}>
-                {resumen.miembros_con_ubicacion === 0
-                  ? "Todavía nadie ha compartido su ciudad, así que el mapa está vacío."
-                  : `${resumen.miembros_con_ubicacion.toLocaleString("es-419")} de ${resumen.miembros_total.toLocaleString(
-                      "es-419",
-                    )} han compartido su ciudad. El resto no aparece en el mapa hasta que lo haga.`}
-              </p>
-            )}
-            </>
           )}
         </header>
 
@@ -610,10 +606,14 @@ export function ViewRed() {
                     <span className={styles.cardInfo}>
                       <span className={styles.cardName}>{m.full_name}</span>
                       {m.username && <span className={styles.cardUser}>@{m.username}</span>}
-                      <span className={styles.cardLoc}>
-                        <MapPin size={11} aria-hidden />
-                        {m.location_label}
-                      </span>
+                      {/* Sin ubicación compartida no se pinta la línea: un
+                          icono de lugar sin lugar parece un dato que falta. */}
+                      {m.location_label && (
+                        <span className={styles.cardLoc}>
+                          <MapPin size={11} aria-hidden />
+                          {m.location_label}
+                        </span>
+                      )}
                       {/* Dónde va cada quien en el Camino, o su distinción.
                           Es lo que cuenta de un miembro a primera vista. */}
                       {(() => {

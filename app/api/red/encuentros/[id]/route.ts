@@ -99,6 +99,35 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     cambios.estado = body.estado
   }
 
+  // ── Modalidad y enlace ───────────────────────────────────────────────────
+  // Sin esto, un encuentro en línea no se podía corregir: el enlace se ponía
+  // al crearlo y ya no había forma de cambiarlo ni de arreglar uno mal puesto.
+  if (typeof body.modalidad === "string") {
+    if (body.modalidad !== "online" && body.modalidad !== "presencial") {
+      return NextResponse.json({ error: "Modalidad desconocida" }, { status: 400 })
+    }
+    cambios.modalidad = body.modalidad
+    // Pasar a presencial deja de tener transmisión. Dejar el enlace colgando
+    // haría que la tarjeta ofreciera entrar a algo que ya no existe.
+    if (body.modalidad === "presencial") cambios.enlace = null
+  }
+
+  if (typeof body.enlace === "string" && body.modalidad !== "presencial") {
+    const url = body.enlace.trim().slice(0, 600)
+    if (!url) {
+      return NextResponse.json({ error: "Falta el enlace de la transmisión" }, { status: 400 })
+    }
+    // Solo http/https, igual que al crear: otro esquema podría ejecutar
+    // código en el navegador de quien lo pulse.
+    if (!/^https?:\/\//i.test(url)) {
+      return NextResponse.json(
+        { error: "El enlace debe empezar por http:// o https://" },
+        { status: 400 },
+      )
+    }
+    cambios.enlace = url
+  }
+
   // La ciudad se revalida contra el catálogo, igual que al crear: el país se
   // deriva de ella y nunca del cuerpo de la petición.
   if (body.city_id !== undefined) {

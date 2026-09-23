@@ -127,8 +127,20 @@
 
 .cabecera {
   display: flex;
-  align-items: baseline;
+  /* flex-start, no baseline: con baseline los botones se alineaban con la
+     primera línea del título y en móvil se montaban encima de la segunda. */
+  align-items: flex-start;
   gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Editar y Eliminar, juntos y empujados a la derecha. En pantalla estrecha
+   bajan los dos a la vez en vez de repartirse cada uno por su lado. */
+.accionesCabecera {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
@@ -231,18 +243,26 @@
   padding: 1.2rem;
   border: 1px solid rgba(217, 184, 102, 0.25);
   background: rgba(12, 12, 20, 0.6);
+  /* Último cinturón: si algún campo se resiste a encoger, se recorta aquí en
+     vez de ensanchar la tarjeta y desbordar la pantalla. */
+  overflow-x: hidden;
 }
 
 .fila {
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr) y no 1fr: un campo de fecha y hora tiene un ancho mínimo
+     propio mayor que media columna, y con 1fr la rejilla crecía para darle
+     sitio. Por eso "TERMINA" se salía de la tarjeta. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .label {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  /* Sin esto, el contenido del campo impone el ancho de la columna. */
+  min-width: 0;
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
   letter-spacing: 0.16em;
@@ -251,6 +271,12 @@
 }
 
 .input {
+  /* El relleno y el borde van DENTRO del ancho. Sin border-box, un campo al
+     100% mide 100% + 1.5rem y se sale de su columna. */
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.65rem 0.75rem;
   border: 1px solid rgba(243, 246, 250, 0.12);
   background: rgba(5, 5, 13, 0.7);
@@ -273,6 +299,14 @@
   color: #6a6a85;
 }
 
+/* Rótulo y su "(opcional)" en la misma línea, para que los campos de una
+   misma fila empiecen todos a la misma altura. */
+.rotulo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
 /* ── Móvil ──────────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .fila { grid-template-columns: 1fr; }
@@ -282,7 +316,6 @@
 
 /* ── Editar ─────────────────────────────────────────────────────────────── */
 .editar {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -501,6 +534,7 @@
 .modalidadOn,
 .modalidadOff {
   flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -556,3 +590,30 @@
 }
 .eliminar:hover:not(:disabled) { background: rgba(224, 138, 138, 0.16); }
 .eliminar:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Entrar a la transmisión ─────────────────────────────────────────────── */
+/* Solo aparece en los encuentros en línea y solo a quien tiene el enlace. Es
+   la acción principal de la tarjeta: se ve como un botón, no como un enlace
+   perdido entre el texto. */
+.entrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(143, 196, 106, 0.45);
+  background: rgba(143, 196, 106, 0.1);
+  color: #a8ce86;
+  font-size: 0.78rem;
+  text-decoration: none;
+  /* 36px es el mínimo para que un pulgar acierte sin ampliar la pantalla. */
+  min-height: 36px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.entrar:hover {
+  border-color: #a8ce86;
+  background: rgba(143, 196, 106, 0.18);
+}

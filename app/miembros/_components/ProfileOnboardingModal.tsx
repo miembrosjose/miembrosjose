@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useAuth } from "../_lib/auth-context"
+import { UbicacionRed } from "./UbicacionRed"
 
 type State = { type: "idle" } | { type: "saving" } | { type: "error"; msg: string }
 
@@ -387,6 +388,42 @@ export function ProfileOnboardingModal({
                 resize: "vertical",
                 minHeight: 70,
               }}
+            />
+          </div>
+
+          {/* ── Tu lugar en la Red ──────────────────────────────────────
+              Opcional, y se dice. Va aquí porque es el momento en que alguien
+              está rellenando su ficha: pedirlo después, desde la portada,
+              interrumpía a quien solo venía a leer.
+
+              Guarda por su cuenta, con su propio botón. No bloquea el
+              "Continuar": quien no quiera marcarse en el mapa entra igual. */}
+          <div
+            style={{
+              borderTop: "1px solid #1a1a24",
+              paddingTop: "1.4rem",
+              marginTop: "0.3rem",
+            }}
+          >
+            <Label>Tu lugar en la Red (opcional)</Label>
+            <p
+              style={{
+                margin: "0 0 1rem",
+                fontFamily: "var(--font-geist-sans)",
+                fontSize: "0.72rem",
+                lineHeight: 1.65,
+                color: "#a0a0b0",
+              }}
+            >
+              Si eliges tu país y tu ciudad podrás encontrar a miembros de 144 mil cerca de ti.
+              Tú decides si tu ciudad se muestra o no: puedes formar parte de la Red sin que
+              nadie sepa dónde estás, y puedes cambiarlo cuando quieras desde tu perfil.
+            </p>
+            <UbicacionRed
+              compact
+              inputCls="block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+              labelCls="block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
+              btnCls="inline-flex items-center justify-center gap-2 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
             />
           </div>
 

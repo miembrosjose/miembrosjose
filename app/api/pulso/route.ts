@@ -22,6 +22,17 @@ export const dynamic = "force-dynamic"
 
 const MAX_CUERPO = 2000
 
+/**
+ * Un correo no es un nombre.
+ *
+ * Algunas filas de `profiles` guardan el correo en `full_name` porque así se
+ * creó la cuenta. Enseñarlo en el Pulso publicaba la dirección de esa persona
+ * a toda la Red, que es peor que no saber cómo se llama.
+ */
+function pareceCorreo(v: string | null | undefined): boolean {
+  return typeof v === "string" && /S+@S+.S+/.test(v)
+}
+
 type FilaPulso = {
   id: string
   numero: number
@@ -84,54 +95,59 @@ export async function GET() {
 
   const lista = respuestas ?? []
 
-  // Los nombres y avatares salen de `profiles`, en una sola consulta.
+  // ── Quién escribió cada respuesta ────────────────────────────────────────
   //
-  // Con service_role a propósito. La policy de `profiles` limita la lectura a
-  // la fila propia, así que el cliente de sesión solo veía el perfil de quien
-  // mira: todos los demás salían como "Miembro" con la inicial M. Aquí solo se
-  // piden nombre y avatar de quienes YA han respondido en público al Pulso, que
-  // es justo lo que la pantalla enseña.
+  // La fuente del nombre y la foto es `auth.users.user_metadata`, que es lo
+  // que rellena el alta y lo que actualiza «Editar perfil». Es la misma que
+  // usan /api/members y el directorio de La Red, así que una persona se llama
+  // igual en toda la plataforma.
+  //
+  // `profiles` queda como respaldo, no como primera opción: ahí el nombre
+  // puede haberse quedado con el correo de cuando se creó la cuenta, y en
+  // pantalla salía "fulano@correo.com" en vez del nombre, con la inicial del
+  // correo por avatar.
+  //
+  // Todo con service_role a propósito: la policy de `profiles` limita la
+  // lectura a la fila propia, así que el cliente de sesión solo veía el perfil
+  // de quien mira y los demás salían como "Miembro".
   const ids = [...new Set(lista.map((r) => r.user_id))]
   const autores = new Map<string, { nombre: string; avatar: string | null }>()
   if (ids.length > 0) {
-    const { data: perfiles } = await getSupabaseAdmin()
-      .from("profiles")
-      .select("id, full_name, avatar_url")
-      .in("id", ids)
-    for (const perfil of perfiles ?? []) {
-      if (!perfil.full_name) continue
-      autores.set(perfil.id, {
-        nombre: perfil.full_name,
-        avatar: perfil.avatar_url ?? null,
-      })
+    const admin = getSupabaseAdmin()
+    const [listado, { data: perfiles }] = await Promise.all([
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      admin.from("profiles").select("id, full_name, avatar_url").in("id", ids),
+    ])
+
+    const porId = new Map(ids.map((id) => [id, true]))
+    for (const u of listado?.data?.users || []) {
+      if (!porId.has(u.id)) continue
+      const meta = (u.user_metadata || {}) as {
+        full_name?: string
+        name?: string
+        avatar_url?: string
+        /** Lo que trae Google cuando se entra con su botón. */
+        picture?: string
+      }
+      const nombre = meta.full_name || meta.name || ""
+      const avatar = meta.avatar_url || meta.picture || null
+      if (nombre || avatar) {
+        autores.set(u.id, { nombre: nombre || "Miembro", avatar })
+      }
     }
 
-    // `profiles` no siempre tiene el nombre: quien entra con Google trae los
-    // suyos en los metadatos de la sesión, y la fila de profiles puede quedar
-    // con full_name en blanco. Sin este respaldo esa gente aparecía como
-    // "Miembro" con una M por avatar, que es justo lo que se veía en pantalla.
-    //
-    // Solo se consulta a quien falta, no a todos.
-    const faltan = ids.filter((id) => !autores.has(id))
-    if (faltan.length > 0) {
-      const admin = getSupabaseAdmin()
-      const encontrados = await Promise.all(
-        faltan.map((id) => admin.auth.admin.getUserById(id).catch(() => null)),
-      )
-      for (const r of encontrados) {
-        const u = r?.data?.user
-        if (!u) continue
-        const meta = (u.user_metadata || {}) as {
-          full_name?: string
-          name?: string
-          avatar_url?: string
-          picture?: string
-        }
-        autores.set(u.id, {
-          nombre: meta.full_name || meta.name || u.email?.split("@")[0] || "Miembro",
-          avatar: meta.avatar_url || meta.picture || null,
-        })
+    // Respaldo, y solo para lo que falte. Un nombre que es en realidad un
+    // correo no se enseña: antes de eso, "Miembro".
+    for (const perfil of perfiles ?? []) {
+      const ya = autores.get(perfil.id)
+      const nombre = pareceCorreo(perfil.full_name) ? "" : (perfil.full_name || "")
+      if (!ya) {
+        if (!nombre && !perfil.avatar_url) continue
+        autores.set(perfil.id, { nombre: nombre || "Miembro", avatar: perfil.avatar_url ?? null })
+        continue
       }
+      if (ya.nombre === "Miembro" && nombre) ya.nombre = nombre
+      if (!ya.avatar && perfil.avatar_url) ya.avatar = perfil.avatar_url
     }
   }
 

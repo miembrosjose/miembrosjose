@@ -12,9 +12,18 @@
 // que ya tiene nombre y avatar copiados, con índices parciales sobre show_city.
 // El navegador recibe una página, nunca el directorio entero.
 //
-// PRIVACIDAD: solo aparecen quienes activaron «Mostrar mi ciudad». No se hace
-// con service_role a propósito — se usa el cliente de sesión para que la RLS
-// de member_location sea la última palabra aunque este código se equivoque.
+// PRIVACIDAD — QUIÉN SALE Y QUIÉN NO:
+//   · Con ciudad compartida  → sale con su ciudad. La consulta paginada.
+//   · Sin haber elegido nada → sale sin ciudad. Nunca tomó una decisión, y
+//     esconderlo hacía que la Red pareciera vacía: dos miembros, uno visible.
+//   · Habiendo desactivado «Mostrar mi ciudad» → NO sale. Ese interruptor
+//     promete literalmente que no aparecerá al explorar la Red ni en el mapa,
+//     y una promesa hecha no se reinterpreta a posteriori.
+//
+// La consulta principal no usa service_role a propósito: el cliente de sesión
+// hace que la RLS de member_location sea la última palabra aunque este código
+// se equivoque. Los de la tercera categoría sí necesitan service_role, porque
+// no están en ninguna tabla que la sesión pueda leer.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
@@ -38,6 +47,29 @@ type Row = {
   featured_badge_id: string | null
   member_since: string | null
   network_cities: { name: string; admin1: string | null } | null
+}
+
+/**
+ * Lo que sale en la tarjeta del directorio.
+ *
+ * Se declara en vez de dejarlo inferir porque la lista se rellena desde dos
+ * sitios —los que tienen ubicación y los que no— y sin un tipo común el
+ * segundo no encajaría en la forma deducida del primero.
+ */
+type Miembro = {
+  id: string
+  full_name: string
+  username: string | null
+  avatar_url: string | null
+  badge_id: string | null
+  city: string | null
+  country_code: string
+  country: string
+  /** Null cuando no hay ubicación que enseñar. */
+  location_label: string | null
+  roles: string[]
+  member_since: string | null
+  is_self: boolean
 }
 
 export async function GET(req: NextRequest) {
@@ -73,6 +105,8 @@ export async function GET(req: NextRequest) {
   // se TIENE, no por la que se lleva destacada. Ser Embajador o haber
   // completado una temporada es un hecho, no una eleccion de vitrina.
   const emblema = (sp.get("emblema") || "").trim()
+  // Se guarda aparte para poder aplicarlo también a los miembros sin ubicación.
+  let idsEmblema: string[] | null = null
   if (emblema) {
     // service_role a proposito: user_unlocked_achievements no expone las
     // insignias ajenas por RLS, y aqui hacen falta para filtrar. Solo se
@@ -103,6 +137,7 @@ export async function GET(req: NextRequest) {
         .eq("achievement_id", emblema)
       ids = (conLaInsignia || []).map((r) => (r as { user_id: string }).user_id)
     }
+    idsEmblema = ids
     // Sin nadie con esa insignia, un uuid imposible deja la lista vacia sin
     // tener que ramificar el resto de la consulta.
     query = query.in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
@@ -131,10 +166,56 @@ export async function GET(req: NextRequest) {
   const hayMas = rows.length > limit
   const pagina = hayMas ? rows.slice(0, limit) : rows
 
-  // Roles funcionales de los miembros de ESTA página — una sola consulta.
-  const rolesPorMiembro = await getNetworkRolesFor(pagina.map((r) => r.user_id))
+  // ── Los que todavía no han elegido ubicación ────────────────────────────
+  //
+  // No están en member_location, así que la consulta de arriba no los ve. Se
+  // añaden al final de la ÚLTIMA página: van sin ciudad, y ordenarlos junto a
+  // los demás por member_since obligaría a mezclar dos fuentes en el cursor.
+  //
+  // No se añaden si hay filtro de país o ciudad: quien no tiene ubicación no
+  // puede casar con uno.
+  type SinUbicacion = { user_id: string; nombre: string; avatar: string | null; username: string | null }
+  const sinUbicacion: SinUbicacion[] = []
 
-  const miembros = pagina.map((r) => {
+  if (!hayMas && !pais && ciudad === null) {
+    const admin = getSupabaseAdmin()
+    const [listado, { data: yaEstan }] = await Promise.all([
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      // TODAS las filas, no solo las visibles: quien apagó el interruptor ya
+      // tomó su decisión y no debe reaparecer por esta puerta.
+      admin.from("member_location").select("user_id"),
+    ])
+    const conFila = new Set((yaEstan || []).map((r) => (r as { user_id: string }).user_id))
+    const qNorm = q ? normalizar(q) : ""
+
+    for (const u of listado?.data?.users || []) {
+      if (!u.email) continue
+      if ((u.app_metadata as { access_revoked?: boolean } | undefined)?.access_revoked === true) continue
+      if (conFila.has(u.id)) continue
+      if (idsEmblema && !idsEmblema.includes(u.id)) continue
+
+      const meta = (u.user_metadata || {}) as {
+        full_name?: string; name?: string; username?: string; avatar_url?: string; picture?: string
+      }
+      const nombre = meta.full_name || meta.name || u.email.split("@")[0] || "Miembro"
+      if (qNorm && !normalizar(nombre).includes(qNorm)) continue
+
+      sinUbicacion.push({
+        user_id: u.id,
+        nombre,
+        avatar: meta.avatar_url || meta.picture || null,
+        username: meta.username || null,
+      })
+    }
+  }
+
+  // Roles funcionales de los miembros de ESTA página — una sola consulta.
+  const rolesPorMiembro = await getNetworkRolesFor([
+    ...pagina.map((r) => r.user_id),
+    ...sinUbicacion.map((r) => r.user_id),
+  ])
+
+  const miembros: Miembro[] = pagina.map((r) => {
     const city = r.network_cities
     return {
       id: r.user_id,
@@ -154,9 +235,27 @@ export async function GET(req: NextRequest) {
     }
   })
 
+  for (const r of sinUbicacion) {
+    miembros.push({
+      id: r.user_id,
+      full_name: r.nombre,
+      username: r.username,
+      avatar_url: r.avatar,
+      badge_id: null,
+      city: null,
+      country_code: "",
+      country: "",
+      // Sin etiqueta de lugar: la tarjeta no pinta esa línea.
+      location_label: null,
+      roles: rolesPorMiembro.get(r.user_id) || [],
+      member_since: null,
+      is_self: r.user_id === user.id,
+    })
+  }
+
   return NextResponse.json({
     miembros,
-    total: count ?? miembros.length,
+    total: (count ?? pagina.length) + sinUbicacion.length,
     next_cursor: hayMas ? pagina[pagina.length - 1]?.member_since ?? null : null,
     filtros: {
       pais: pais || null,

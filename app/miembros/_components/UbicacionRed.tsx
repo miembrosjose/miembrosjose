@@ -12,7 +12,7 @@
 // nace apagado. Quien no lo active no aparece en el directorio ni en el mapa.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { MapPin, Search, Check, Loader2, X } from "lucide-react"
+import { MapPin, Search, Check, Loader2, X, Compass } from "lucide-react"
 
 type Pais = { code: string; name: string; flag: string; cities: number }
 type Ciudad = { id: number; name: string; admin1: string | null; label: string }
@@ -44,6 +44,9 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
   const [ciudades, setCiudades] = useState<Ciudad[]>([])
   const [ciudad, setCiudad] = useState<Ciudad | null>(null)
   const [showCity, setShowCity] = useState(false)
+  // Si al cargar no había nada guardado, esta persona nunca eligió. No es lo
+  // mismo que haber elegido no aparecer: merece que se le explique una vez.
+  const [nuncaEligio, setNuncaEligio] = useState(false)
 
   const [cargandoPaises, setCargandoPaises] = useState(true)
   const [buscando, setBuscando] = useState(false)
@@ -72,6 +75,7 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
         if (ru.ok) {
           const du = await ru.json()
           const loc: UbicacionActual = du.location
+          setNuncaEligio(!loc)
           if (loc) {
             setPais(loc.country_code)
             setShowCity(loc.show_city)
@@ -149,6 +153,7 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
         return
       }
       setShowCity(d.show_city)
+      setNuncaEligio(false)
       setMsg({ ok: true, text: "Ubicación guardada." })
       onSaved?.({
         country_code: pais,
@@ -194,6 +199,26 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
 
   return (
     <div className={compact ? "space-y-4" : "space-y-5"}>
+      {/* El aviso de quien todavía no ha elegido.
+          Va aquí y no en el Inicio: la portada no es el sitio para pedirle
+          datos a nadie. Y desaparece en cuanto guarda, sea cual sea su
+          decisión: insistir después de que alguien ya eligió es acoso. */}
+      {nuncaEligio && (
+        <div className="flex items-start gap-3 border border-[#4A3170] bg-[#1a1226]/60 p-4">
+          <Compass size={16} className="mt-0.5 shrink-0 text-[#d9b866]" aria-hidden />
+          <span>
+            <span className="block text-sm text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
+              Todavía no has marcado tu lugar en la Red
+            </span>
+            <span className="mt-1 block text-[11px] leading-relaxed text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+              Elige tu país y tu ciudad para encontrar a miembros de 144 mil cerca de ti.
+              Tú decides después si tu ciudad se muestra o no: puedes formar parte de la Red
+              sin que nadie sepa dónde estás.
+            </span>
+          </span>
+        </div>
+      )}
+
       {/* País */}
       <div>
         <label htmlFor="red-pais" className={labelCls}>País</label>

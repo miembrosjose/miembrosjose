@@ -27,6 +27,9 @@ type Encuentro = {
   ends_at: string | null
   cupo: number | null
   estado: "borrador" | "publicado" | "cancelado"
+  modalidad: "online" | "presencial"
+  /** Solo llega a quien organiza, modera o confirmó asistencia. */
+  enlace: string | null
   soy_organizador: boolean
   /** Un administrador puede moderar cualquier encuentro, no solo los suyos. */
   puedo_moderar?: boolean
@@ -258,7 +261,7 @@ export function EncuentrosRed() {
             .map((e) => (
             <li key={e.id} className={`${styles.card} ${e.estado === "cancelado" ? styles.cancelado : ""}`}>
               <div className={styles.modalidad}>
-                {(e as { modalidad?: string }).modalidad === "online" ? (
+                {e.modalidad === "online" ? (
                   <span className={styles.enLinea}><Video size={11} aria-hidden /> En línea</span>
                 ) : (
                   <span className={styles.presencial}><MapPin size={11} aria-hidden /> Presencial</span>
@@ -270,34 +273,39 @@ export function EncuentrosRed() {
                 <h3 className={styles.titulo}>{e.titulo}</h3>
                 {e.estado === "cancelado" && <span className={styles.sello}>Cancelado</span>}
                 {e.estado === "borrador" && <span className={styles.selloBorrador}>Borrador</span>}
+                {/* Editar y Eliminar van en su propio grupo. Sueltos en la
+                    cabecera, cada uno se colocaba por su cuenta y en móvil
+                    acababan montados encima del título. */}
                 {(e.soy_organizador || e.puedo_moderar) && (
-                  <button
-                    type="button"
-                    onClick={() => setEditando(editando?.id === e.id ? null : e)}
-                    className={styles.editar}
-                    aria-label={`Editar ${e.titulo}`}
-                    title="Editar este encuentro"
-                  >
-                    <Pencil size={12} aria-hidden /> Editar
-                  </button>
-                )}
-                {/* Solo administración. Va aquí y no entre las acciones de
-                    asistencia porque también hace falta sobre borradores y
-                    cancelados, que no muestran ese bloque. */}
-                {e.puedo_moderar && (
-                  <button
-                    type="button"
-                    disabled={guardando === `d${e.id}`}
-                    onClick={() => eliminar(e.id, e.titulo)}
-                    className={styles.eliminar}
-                    aria-label={`Eliminar ${e.titulo}`}
-                    title="Eliminar definitivamente (solo administración)"
-                  >
-                    {guardando === `d${e.id}`
-                      ? <Loader2 size={12} className={styles.spin} aria-hidden />
-                      : <Trash2 size={12} aria-hidden />}
-                    Eliminar
-                  </button>
+                  <div className={styles.accionesCabecera}>
+                    <button
+                      type="button"
+                      onClick={() => setEditando(editando?.id === e.id ? null : e)}
+                      className={styles.editar}
+                      aria-label={`Editar ${e.titulo}`}
+                      title="Editar este encuentro"
+                    >
+                      <Pencil size={12} aria-hidden /> Editar
+                    </button>
+                    {/* Solo administración. Va aquí y no entre las acciones de
+                        asistencia porque también hace falta sobre borradores y
+                        cancelados, que no muestran ese bloque. */}
+                    {e.puedo_moderar && (
+                      <button
+                        type="button"
+                        disabled={guardando === `d${e.id}`}
+                        onClick={() => eliminar(e.id, e.titulo)}
+                        className={styles.eliminar}
+                        aria-label={`Eliminar ${e.titulo}`}
+                        title="Eliminar definitivamente (solo administración)"
+                      >
+                        {guardando === `d${e.id}`
+                          ? <Loader2 size={12} className={styles.spin} aria-hidden />
+                          : <Trash2 size={12} aria-hidden />}
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -313,11 +321,34 @@ export function EncuentrosRed() {
                 <Clock size={12} aria-hidden /> {cuando(e.starts_at)}
                 {e.ends_at ? ` — ${hasta(e.ends_at)}` : ""}
               </p>
-              <p className={styles.meta}>
-                <MapPin size={12} aria-hidden />
-                {e.ciudad ? `${e.ciudad.name}, ${e.country}` : e.country}
-                {e.lugar ? ` · ${e.lugar}` : ""}
-              </p>
+              {/* Un encuentro en línea no ocurre en ninguna ciudad: ocurre
+                  en una plataforma. Enseñar un alfiler de mapa vacío hacía
+                  que pareciera un presencial al que le faltaba el sitio. */}
+              {e.modalidad === "online" ? (
+                <p className={styles.meta}>
+                  <Video size={12} aria-hidden />
+                  {e.lugar || "En línea"}
+                </p>
+              ) : (
+                <p className={styles.meta}>
+                  <MapPin size={12} aria-hidden />
+                  {e.ciudad ? `${e.ciudad.name}, ${e.country}` : e.country}
+                  {e.lugar ? ` · ${e.lugar}` : ""}
+                </p>
+              )}
+
+              {/* El enlace solo llega desde el servidor a quien organiza,
+                  modera o ya confirmó. Aquí basta con pintarlo si vino. */}
+              {e.modalidad === "online" && e.enlace && e.estado !== "cancelado" && (
+                <a
+                  href={e.enlace}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.entrar}
+                >
+                  <Video size={13} aria-hidden /> Entrar a la transmisión
+                </a>
+              )}
 
               {e.descripcion && <p className={styles.desc}>{e.descripcion}</p>}
 
@@ -407,8 +438,14 @@ function Formulario({
   const [paises, setPaises] = useState<Pais[]>([])
   // En línea o presencial. Un encuentro en línea no tiene ciudad: tiene un
   // enlace. Sin esto no se podían convocar las meditaciones globales.
-  const [esOnline, setEsOnline] = useState(false)
-  const [enlace, setEnlace] = useState("")
+  //
+  // Al EDITAR arrancan con lo que ya tiene el encuentro. Antes arrancaban
+  // siempre en presencial y con el enlace en blanco: abrir una transmisión
+  // para corregirle la hora la mostraba como presencial, y guardar borraba su
+  // enlace. De ahí que "Publicar" no se activara nunca y que "Entrar a la
+  // transmisión" no llevara a ninguna parte.
+  const [esOnline, setEsOnline] = useState(encuentro?.modalidad === "online")
+  const [enlace, setEnlace] = useState(encuentro?.enlace ?? "")
   const [ciudades, setCiudades] = useState<Ciudad[]>([])
   const [pais, setPais] = useState("")
   const [cityId, setCityId] = useState<number | "">(encuentro?.ciudad?.id ?? "")
@@ -601,7 +638,10 @@ function Formulario({
           />
         </label>
         <label className={styles.label}>
-          Termina <span className={styles.ayuda}>opcional</span>
+          {/* El "opcional" va en la MISMA línea que el rótulo. Suelto dentro
+              de un label en columna se colocaba debajo, y entonces el campo
+              de la derecha quedaba un renglón más abajo que el de al lado. */}
+          <span className={styles.rotulo}>Termina <span className={styles.ayuda}>opcional</span></span>
           <input
             type="datetime-local"
             value={fin}
@@ -614,7 +654,7 @@ function Formulario({
 
       <div className={styles.fila}>
         <label className={styles.label}>
-          Cupo <span className={styles.ayuda}>opcional</span>
+          <span className={styles.rotulo}>Cupo <span className={styles.ayuda}>opcional</span></span>
           <input type="number" min={1} value={cupo} onChange={(e) => setCupo(e.target.value)} className={styles.input} />
         </label>
         <span />

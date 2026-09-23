@@ -645,7 +645,9 @@ function ViewInicio({
       <section className={`${styles.section} ${styles.arriba}`}>
         <div className={styles.avisosArriba}>
           <PulsoSemana compacto onIrALaRed={() => setView("red")} />
-          <ProximoEncuentro onVerTodos={() => setView("red")} />
+          {/* A la pestaña de encuentros, no al Pulso: quien pulsa "Ver
+              todos" bajo un anuncio de encuentros quiere los encuentros. */}
+          <ProximoEncuentro onVerTodos={() => setView("red", null, { redTab: "encuentros" })} />
         </div>
       </section>
 

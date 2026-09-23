@@ -75,14 +75,6 @@
   color: var(--text-muted, #6a6a85);
 }
 
-/* Aclara por qué el mapa tiene menos gente que la cifra de miembros. */
-.statsNota {
-  margin: 0.9rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--text-muted, #6a6a85);
-}
-
 /* ── Filtros ───────────────────────────────────────────────────────────── */
 .filtros {
   display: flex;

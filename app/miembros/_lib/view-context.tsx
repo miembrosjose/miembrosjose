@@ -34,11 +34,21 @@ const VALID_VIEWS: ViewKey[] = [
 
 export type Anchor = "cursos" | "biblioteca" | "tienda" | "servicios" | null
 
+export type RedTab = "pulso" | "foro" | "lista" | "mapa" | "encuentros"
+
 export type ViewParams = {
   userId?: string
   slug?: string
   /** Pra view "messages": se setado, abre direto a thread com esse user. */
   withUserId?: string
+  /**
+   * Para la view "red": con qué pestaña abrir.
+   *
+   * La Red entra siempre por Pulso, y así debe seguir. Pero "Ver todos" desde
+   * el anuncio de encuentros de la portada llevaba al Pulso, que no es lo que
+   * se pidió: quien pulsa ahí quiere ver los encuentros.
+   */
+  redTab?: RedTab
 }
 
 type ViewContextValue = {

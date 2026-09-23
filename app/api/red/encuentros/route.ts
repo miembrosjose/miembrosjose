@@ -43,6 +43,9 @@ type FilaEncuentro = {
   cupo: number | null
   estado: string
   network_cities: CityRef | null
+  /** Ausentes mientras la migración encuentros_online.sql no se haya corrido. */
+  modalidad?: string | null
+  enlace?: string | null
 }
 
 export async function GET(req: NextRequest) {
@@ -127,6 +130,18 @@ export async function GET(req: NextRequest) {
       ends_at: f.ends_at,
       cupo: f.cupo,
       estado: f.estado,
+      // Se devuelven SIEMPRE. Sin esto, el formulario de edición no sabía
+      // que un encuentro era en línea —abría en "Presencial" con el enlace en
+      // blanco— y la tarjeta no tenía enlace que ofrecer.
+      modalidad: f.modalidad === "online" ? "online" : "presencial",
+      // El enlace solo a quien va o lo organiza. Una transmisión con enlace
+      // público se puede compartir fuera de la Red, y entonces el cupo y la
+      // convocatoria dejan de significar nada.
+      enlace:
+        f.modalidad === "online" &&
+        (f.created_by === user.id || isAdmin(user) || mia.has(f.id))
+          ? f.enlace ?? null
+          : null,
       soy_organizador: f.created_by === user.id,
       // Un administrador puede cancelar o eliminar cualquiera.
       puedo_moderar: isAdmin(user),
