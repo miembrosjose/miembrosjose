@@ -24,6 +24,51 @@ function getCtx(): AudioContext | null {
   }
 }
 
+// ── DESPERTAR EL AUDIO CON EL PRIMER GESTO ────────────────────────────────
+//
+// Los navegadores crean el contexto de audio DORMIDO y solo lo dejan sonar
+// después de que la persona haya tocado la página. Mientras duerme, su reloj
+// no avanza: un sonido programado "para ahora" se agenda en un instante que
+// nunca llega, y cuando el contexto despierta ese momento ya pasó. No suena
+// nada y no hay ningún error.
+//
+// Antes esto no se notaba porque los sonidos salían dentro del propio clic,
+// que despierta el contexto por el camino. Desde que la insignia la concede
+// el servidor, el aviso llega en la respuesta —ya fuera del gesto— y el
+// sonido se perdía: llegaba la notificación, muda.
+//
+// La solución es despertar el contexto en cuanto haya un gesto, cualquiera, y
+// seguir escuchando: el navegador vuelve a dormirlo al cambiar de pestaña.
+if (typeof window !== "undefined") {
+  const despertar = () => {
+    const c = getCtx()
+    if (c && c.state === "suspended") void c.resume().catch(() => {})
+  }
+  for (const gesto of ["pointerdown", "keydown", "touchstart"]) {
+    window.addEventListener(gesto, despertar, { passive: true })
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") despertar()
+  })
+}
+
+/**
+ * Ejecuta algo cuando el contexto esté despierto de verdad.
+ *
+ * `resume()` devuelve una promesa y tarda: programar el sonido sin esperarla
+ * es lo que lo hacía desaparecer. Si ya está despierto, se ejecuta al momento
+ * y no se pierde ni un milisegundo.
+ */
+function conAudio(fn: (c: AudioContext) => void) {
+  const c = getCtx()
+  if (!c) return
+  if (c.state === "suspended") {
+    void c.resume().then(() => fn(c)).catch(() => {})
+    return
+  }
+  fn(c)
+}
+
 function isMuted(): boolean {
   if (typeof window === "undefined") return true
   // Pref global — Fase 4 vai alimentar esse objeto via NotifPrefsModal
@@ -38,21 +83,21 @@ function isMuted(): boolean {
  */
 function tone(freq: number, duration: number, type: OscillatorType = "sine", volume = 0.08) {
   if (isMuted()) return
-  const c = getCtx()
-  if (!c) return
-  if (c.state === "suspended") c.resume?.()
-  const osc = c.createOscillator()
-  const gain = c.createGain()
-  osc.type = type
-  osc.frequency.value = freq
-  const now = c.currentTime
-  gain.gain.setValueAtTime(0, now)
-  gain.gain.linearRampToValueAtTime(volume, now + 0.01)
-  gain.gain.exponentialRampToValueAtTime(0.001, now + duration)
-  osc.connect(gain)
-  gain.connect(c.destination)
-  osc.start(now)
-  osc.stop(now + duration + 0.05)
+  conAudio((c) => {
+    const osc = c.createOscillator()
+    const gain = c.createGain()
+    osc.type = type
+    osc.frequency.value = freq
+    // Se lee DESPUÉS de despertar: mientras dormía, este reloj estaba parado.
+    const now = c.currentTime
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(volume, now + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration)
+    osc.connect(gain)
+    gain.connect(c.destination)
+    osc.start(now)
+    osc.stop(now + duration + 0.05)
+  })
 }
 
 function delay(ms: number, fn: () => void) {
@@ -126,6 +171,9 @@ export const sounds = {
   levelUp: () => {
     const c = getCtx()
     if (!c || isMuted()) return
+    // El reloj del audio no avanza mientras el contexto duerme: si no se
+    // despierta antes, esto se programa para un instante que ya pasó.
+    if (c.state === "suspended") void c.resume().catch(() => {})
     const now = c.currentTime
     const notes = [523.25, 659.25, 783.99, 1046.5] // C5, E5, G5, C6
     notes.forEach((freq, i) => {
@@ -182,6 +230,7 @@ export const sounds = {
     delay(160, () => {
       const c2 = getCtx()
       if (!c2) return
+      if (c2.state === "suspended") void c2.resume().catch(() => {})
       const t2 = c2.currentTime
       ;[1320, 1660, 2000].forEach((freq) => {
         const osc = c2.createOscillator()
@@ -300,6 +349,7 @@ function goldChime(baseFreq: number) {
   delay(320, () => {
     const c = getCtx()
     if (!c) return
+    if (c.state === "suspended") void c.resume().catch(() => {})
     const t = c.currentTime
     ;[baseFreq * 2.5, baseFreq * 3, baseFreq * 4].forEach((freq) => {
       const osc = c.createOscillator()
@@ -323,6 +373,7 @@ function timeAmbient(baseFreq: number) {
   // Pad longo + harmonia (sensação de "tempo passando")
   const c = getCtx()
   if (!c) return
+  if (c.state === "suspended") void c.resume().catch(() => {})
   const t = c.currentTime
   ;[baseFreq, baseFreq * 1.5, baseFreq * 2].forEach((freq) => {
     const osc = c.createOscillator()
@@ -349,6 +400,7 @@ function royalFanfare() {
   delay(380, () => {
     const c = getCtx()
     if (!c) return
+    if (c.state === "suspended") void c.resume().catch(() => {})
     const t = c.currentTime
     ;[1568, 2093, 2637].forEach((freq) => {
       const osc = c.createOscillator()
