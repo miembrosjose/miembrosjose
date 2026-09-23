@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { otorgarLasGanadas } from "@/lib/insignias-conceder"
+import { insigniasGanadas } from "@/lib/insignias-ganadas"
 
 export const dynamic = "force-dynamic"
 
@@ -52,6 +53,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid episode_num" }, { status: 400 })
   }
 
+  // Lo que ya se podía demostrar ANTES de guardar este capítulo. Es lo que
+  // permite después distinguir lo que este capítulo ha desbloqueado de lo que
+  // simplemente faltaba en la tabla. Ver otorgarLasGanadas.
+  let antes = new Set<string>()
+  try {
+    antes = await insigniasGanadas(user)
+  } catch {
+    // Si esto falla, se sigue: como mucho, un aviso de más.
+  }
+
   // Upsert: re-marcar mesmo (S, E) não dá erro — PRIMARY KEY (user_id, season, episode).
   // onConflict: "user_id,season_num,episode_num" → ignora insert se já existe.
   const { error } = await supabase
@@ -78,7 +89,7 @@ export async function POST(req: NextRequest) {
   // insignias se recuperan solas la próxima vez que se marque algo.
   let nuevas: string[] = []
   try {
-    nuevas = await otorgarLasGanadas(user)
+    nuevas = await otorgarLasGanadas(user, antes)
   } catch (e) {
     console.error("[/api/profile/episode-progress] insignias", e)
   }

@@ -69,6 +69,9 @@ export function AchievementToast() {
       const ev = e as CustomEvent<{ id: string }>
       const id = ev.detail?.id
       if (!id) return
+      // Última barrera: una insignia retirada no se anuncia nunca, venga el
+      // aviso de donde venga. Si alguna vez vuelve a colarse, se para aquí.
+      if (getAchievementById(id)?.retirada) return
       // Top tier insignias (el_topo, el_estudio, time_eterno, rank_leyenda)
       // mostram fullscreen overlay próprio com música — pular o toast pequeno
       // pra não duplicar visualmente.

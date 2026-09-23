@@ -148,6 +148,15 @@ export function unlockAchievement(id: string): boolean {
   const ach = getAchievementById(id)
   if (!ach) return false
 
+  // Lo retirado no se concede a nadie más, y tampoco se anuncia.
+  //
+  // Esto se veía sobre todo en una ventana de incógnito: la copia del
+  // navegador nace vacía en cada sesión, así que la comprobación de la línea
+  // de arriba no frenaba nada y el aviso de la «Bienvenida» —retirada hace
+  // tiempo— salía en cada visita. El servidor ya la rechazaba, así que no
+  // quedaba registrada en ningún sitio: solo se veía el aviso.
+  if (ach.retirada) return false
+
   const map = readUnlocked()
   map[id] = { unlockedAt: new Date().toISOString() }
   writeUnlocked(map)
@@ -172,10 +181,16 @@ export function unlockAchievement(id: string): boolean {
 // Triggers automáticos — chamados no fluxo da área de membros
 // ─────────────────────────────────────────────────────────────────────────
 
-// Boas-vindas: dispara na primeira vez que user entra na área de membros.
-// Idempotente — só desbloqueia se ainda não foi.
+/**
+ * Ya no hace nada, y se conserva vacía a propósito.
+ *
+ * Daba la insignia «Bienvenida» al entrar por primera vez. Esa insignia está
+ * retirada del catálogo: nadie nace con ella. Se deja la función —en vez de
+ * borrarla y tocar el arranque del shell— para que quede escrito por qué el
+ * arranque ya no concede nada, y que nadie lo reponga por descuido.
+ */
 export function checkWelcome() {
-  unlockAchievement("welcome")
+  // Intencionadamente vacío. Ver la nota de arriba.
 }
 
 // «144» — la primera insignia de todos, al ver el capítulo 1 de la

@@ -230,10 +230,28 @@ async function destacarSiProcede(user: User, ach: Achievement): Promise<void> {
  * Mira qué se ha ganado esta persona AHORA MISMO y concede lo que falte.
  *
  * Se llama justo después de guardar un hecho que puede desbloquear algo —un
- * capítulo visto, por ejemplo—. Devuelve solo lo nuevo, para que la pantalla
- * pueda anunciarlo en el momento.
+ * capítulo visto, por ejemplo—. Devuelve solo lo que ese hecho ha
+ * desbloqueado, para que la pantalla lo anuncie en el momento.
+ *
+ * ── CÓMO DISTINGUE LO NUEVO DE LO QUE FALTABA ────────────────────────────
+ * `yaSeTenian` es lo que el servidor podía demostrar ANTES de guardar el
+ * hecho. Todo lo que ya estaba ahí y aun así falta en la tabla es una
+ * recuperación —una tabla recién limpiada, un reinicio, un dispositivo
+ * nuevo—: se guarda en silencio, porque nadie acaba de lograrlo.
+ *
+ * Lo que aparece solo DESPUÉS es lo que este gesto ha desbloqueado, y eso sí
+ * se anuncia.
+ *
+ * La primera versión de esto contaba cuántas caían de golpe y, si eran más de
+ * dos, las callaba todas. Silenciaba también la buena: al ver el primer
+ * capítulo con la tabla recién limpiada caían cuatro llamas de tiempo —que se
+ * tenían desde hacía meses— y con ellas la insignia del capítulo. No sonaba
+ * nada y el perfil no se enteraba.
  */
-export async function otorgarLasGanadas(user: User): Promise<string[]> {
+export async function otorgarLasGanadas(
+  user: User,
+  yaSeTenian: Set<string> = new Set(),
+): Promise<string[]> {
   const ganadas = await insigniasGanadas(user)
   if (ganadas.size === 0) return []
 
@@ -246,14 +264,12 @@ export async function otorgarLasGanadas(user: User): Promise<string[]> {
   const suyas = new Set((yaTiene || []).map((r) => (r as { achievement_id: string }).achievement_id))
   const faltan = [...ganadas].filter((id) => !suyas.has(id))
 
-  // Más de dos de golpe no es que alguien acabe de lograr tres cosas: es que
-  // faltaba lo que ya tenía —una tabla recién limpiada, un reinicio, un
-  // dispositivo nuevo—. Se guarda todo, pero en silencio.
-  const esRecuperacion = faltan.length > 2
-
   const nuevas: string[] = []
   for (const id of faltan) {
-    if (await concederInsignia(user, id, { silencioso: esRecuperacion })) nuevas.push(id)
+    // Ya era demostrable antes de este gesto: no se acaba de lograr.
+    const recuperando = yaSeTenian.has(id)
+    const concedida = await concederInsignia(user, id, { silencioso: recuperando })
+    if (concedida && !recuperando) nuevas.push(id)
   }
-  return esRecuperacion ? [] : nuevas
+  return nuevas
 }
