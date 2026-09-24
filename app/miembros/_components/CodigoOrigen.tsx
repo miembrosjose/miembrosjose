@@ -19,6 +19,7 @@ import type { CodigoOrigenResultado, Nacimiento } from "../_lib/codigo-origen/ty
 import { useProducts } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { isCodigoOrigenToolProduct, numeroLibre, CODIGO_ORIGEN_PRODUCT_NUM } from "../_lib/tool-products"
+import { CabeceraRecurso } from "./CabeceraRecurso"
 import prod from "./products.module.css"
 import s from "./codigo-origen.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
@@ -204,13 +205,14 @@ function Formulario({
 
   return (
     <>
-      <header className={s.cabecera}>
-        <p className={s.kicker}>Escáner de código de origen</p>
-        <h2 className={s.titulo}>Código de Origen</h2>
-        <p className={s.subtitulo}>
-          Una lectura simbólica de las frecuencias presentes en el momento de tu nacimiento.
-        </p>
-      </header>
+      {/* Este módulo se abría sin explicar de qué iba: una línea sobre
+          «frecuencias» y directo a pedir la fecha. */}
+      <CabeceraRecurso
+        kicker="Escáner de código de origen"
+        titulo="Código de Origen"
+        entrada="A partir del día y la hora en que naciste, siete bloques que describen cómo entras en contacto con el mundo: tu frecuencia raíz, la de apoyo, tu vector y tu arquetipo."
+        matiz="Es una lectura simbólica, no un diagnóstico ni una predicción. El cálculo ocurre en tu dispositivo y no se envía a ningún servicio."
+      />
 
       <form onSubmit={enviar} className={s.form}>
         {heredada && (

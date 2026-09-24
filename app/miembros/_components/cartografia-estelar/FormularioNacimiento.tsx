@@ -21,6 +21,7 @@ import { MapPin } from "lucide-react"
 import cityTimezones from "city-timezones"
 import { AVISO_DOS_CAPAS } from "../../_lib/cartografia-estelar/content/avisos"
 import type { Nacimiento } from "../../_lib/cartografia-estelar/domain/types"
+import { CabeceraRecurso } from "../CabeceraRecurso"
 import s from "./cartografia.module.css"
 
 type Sugerencia = { nombre: string; lat: number; lon: number; zona: string }
@@ -88,13 +89,14 @@ export function FormularioNacimiento({ onTrazar, error }: {
 
   return (
     <>
-      <header className={s.cabecera}>
-        <p className={s.kicker}>Cartografía Estelar 144</p>
-        <h2 className={s.titulo}>Traza tu cartografía</h2>
-        <p className={s.subtitulo}>
-          Compara tu nacimiento con 50 puntos del cielo.
-        </p>
-      </header>
+      {/* «Compara tu nacimiento con 50 puntos del cielo» decía lo que hace el
+          cálculo, no lo que vas a ver. Ahora lo dice. */}
+      <CabeceraRecurso
+        kicker="Cartografía Estelar 144"
+        titulo="Traza tu cartografía"
+        entrada="Calculamos el cielo del instante exacto en que naciste y lo comparamos con 50 puntos elegidos: estrellas, cúmulos, nebulosas, galaxias y centros del universo."
+        matiz="Los que quedaron más cerca forman tu mapa. Cada uno se abre en dos capas separadas: lo que la astronomía sabe de él, y su lectura dentro de los 144."
+      />
 
       <form onSubmit={enviar} className={s.form}>
         {previo && (

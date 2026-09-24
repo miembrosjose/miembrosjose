@@ -1,0 +1,73 @@
+/* LA CABECERA DE LOS MÓDULOS DE RECURSOS — una sola, para los tres.
+ *
+ * Cartografía Estelar 144, Código de Origen y Numerología Cósmica hacían lo
+ * mismo cada uno por su cuenta, y se notaba: el título de Numerología era casi
+ * medio punto más grande que el de Código de Origen, su texto iba alineado a
+ * la izquierda mientras los otros dos iban centrados, y los tres usaban
+ * tamaños y anchos de línea distintos. Abrir uno después de otro parecía
+ * cambiar de aplicación.
+ *
+ * Ahora las medidas viven aquí y los tres las usan. Lo que cambia entre ellos
+ * es el color de acento y lo que dicen; nada más. */
+
+.cabecera {
+  /* Centrado DE VERDAD.
+   *
+   * Antes esto llevaba `padding-right: 2rem` para dejar libre el botón de
+   * cerrar de la esquina. El efecto secundario era que un texto centrado se
+   * centraba sobre un ancho recortado solo por un lado: todo quedaba
+   * desplazado un centímetro a la izquierda, y eso es lo que se veía torcido.
+   *
+   * El hueco del botón se reserva por los DOS lados. Cuesta lo mismo y el eje
+   * vuelve a estar donde tiene que estar. */
+  padding-inline: 2.25rem;
+  margin: 0 0 1.35rem;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--acento-recurso, #a78bca);
+}
+
+.titulo {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-cinzel, serif);
+  font-weight: 800;
+  /* Crece con la pantalla sin llegar nunca al tamaño que tenía Numerología,
+   * que en un móvil se comía dos líneas antes de empezar a explicar nada. */
+  font-size: clamp(1.35rem, 5.2vw, 1.8rem);
+  line-height: 1.14;
+  letter-spacing: 0.02em;
+  color: #f3f6fa;
+}
+
+/* Qué es esto. Una sola idea, la que hace falta para decidir si entrar. */
+.entrada {
+  margin: 0.75rem auto 0;
+  max-width: 46ch;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #b3b8d4;
+}
+
+/* El matiz: qué vas a recibir, o qué NO es esto. Más pequeño a propósito;
+ * se lee después del anterior o no se lee, y las dos cosas están bien. */
+.matiz {
+  margin: 0.55rem auto 0;
+  max-width: 48ch;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: #8a8fae;
+}
+
+@media (max-width: 380px) {
+  /* En las pantallas más estrechas el hueco del botón se reduce: mantenerlo
+   * en 2.25rem por lado dejaba la línea en cuatro palabras. */
+  .cabecera { padding-inline: 1.5rem; }
+}

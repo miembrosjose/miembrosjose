@@ -36,7 +36,8 @@
 .panel {
   position: relative;
   width: 100%;
-  max-width: 720px;
+  /* Los tres módulos de Recursos miden lo mismo. */
+  max-width: 760px;
   max-height: 100%;
   display: flex;
   flex-direction: column;
@@ -51,11 +52,12 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 1.5rem 1.15rem 2rem;
+  /* Mismo relleno que Cartografía Estelar y Numerología Cósmica. */
+  padding: 1.4rem 1rem 2rem;
 }
 
 @media (min-width: 640px) {
-  .scroll { padding: 2rem 2rem 2.5rem; }
+  .scroll { padding: 2rem 2.2rem 2.5rem; }
 }
 
 .cerrar {
@@ -77,17 +79,25 @@
 .cerrar:hover { background: rgba(230, 207, 149, 0.16); color: #e6cf95; }
 
 /* ── Cabecera ───────────────────────────────────────────────────────────── */
+/* Mismas medidas que la cabecera compartida de Recursos
+ * (cabecera-recurso.module.css). Esta se usa en las pantallas de RESULTADO, y
+ * si no coincide con la de entrada el módulo cambia de tamaño a mitad de uso.
+ *
+ * El hueco del botón de cerrar se reserva por los DOS lados: cuando iba solo a
+ * la derecha, lo centrado se centraba sobre un ancho recortado y quedaba todo
+ * desplazado a la izquierda. */
 .cabecera {
   text-align: center;
-  margin-bottom: 1.6rem;
-  padding-right: 2rem; /* deja libre el botón de cerrar */
+  margin-bottom: 1.35rem;
+  padding-inline: 2.25rem;
 }
+@media (max-width: 380px) { .cabecera { padding-inline: 1.5rem; } }
 
 .kicker {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.5rem;
   font-family: var(--font-mono, monospace);
-  font-size: 0.62rem;
-  letter-spacing: 0.3em;
+  font-size: 0.6rem;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: #a78bca;
 }
@@ -96,22 +106,18 @@
   margin: 0;
   font-family: var(--font-cinzel, serif);
   font-weight: 800;
-  font-size: 1.5rem;
-  line-height: 1.15;
+  font-size: clamp(1.35rem, 5.2vw, 1.8rem);
+  line-height: 1.14;
   letter-spacing: 0.02em;
   color: #f3f6fa;
 }
 
-@media (min-width: 640px) {
-  .titulo { font-size: 1.85rem; }
-}
-
 .subtitulo {
-  margin: 0.55rem auto 0;
-  max-width: 44ch;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: #9ea3bd;
+  margin: 0.75rem auto 0;
+  max-width: 46ch;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #b3b8d4;
 }
 
 /* ── Formulario ─────────────────────────────────────────────────────────── */

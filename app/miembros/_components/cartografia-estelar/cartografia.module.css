@@ -36,7 +36,8 @@
 .panel {
   position: relative;
   width: 100%;
-  max-width: 820px;
+  /* Los tres módulos de Recursos miden lo mismo. */
+  max-width: 760px;
   max-height: 100%;
   display: flex;
   flex-direction: column;
@@ -81,12 +82,24 @@
 .cerrar:hover { background: rgba(230, 207, 149, 0.16); color: #e6cf95; }
 
 /* ── Cabeceras ──────────────────────────────────────────────────────────── */
-.cabecera { text-align: center; margin-bottom: 1.2rem; padding-right: 2rem; }
+/* Mismas medidas que la cabecera compartida de Recursos
+ * (cabecera-recurso.module.css). Esta se usa en las pantallas de RESULTADO, y
+ * si no coincide con la de entrada el módulo cambia de tamaño a mitad de uso.
+ *
+ * El hueco del botón de cerrar se reserva por los DOS lados: cuando iba solo a
+ * la derecha, lo centrado se centraba sobre un ancho recortado y quedaba todo
+ * desplazado a la izquierda. */
+.cabecera {
+  text-align: center;
+  margin-bottom: 1.35rem;
+  padding-inline: 2.25rem;
+}
+@media (max-width: 380px) { .cabecera { padding-inline: 1.5rem; } }
 
 .kicker {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.5rem;
   font-family: var(--font-mono, monospace);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: #a78bca;
@@ -105,11 +118,11 @@
   margin: 0;
   font-family: var(--font-cinzel, serif);
   font-weight: 800;
-  font-size: 1.4rem;
-  line-height: 1.16;
+  font-size: clamp(1.35rem, 5.2vw, 1.8rem);
+  line-height: 1.14;
+  letter-spacing: 0.02em;
   color: #f3f6fa;
 }
-@media (min-width: 640px) { .titulo { font-size: 1.85rem; } }
 
 .subtitulo {
   margin: 0.55rem auto 0;

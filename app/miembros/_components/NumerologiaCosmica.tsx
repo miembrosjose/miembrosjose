@@ -23,6 +23,7 @@ import { useProductAccess } from "../_lib/use-product-access"
 import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
+import { CabeceraRecurso } from "./CabeceraRecurso"
 import { PanelFallo } from "./PanelFallo"
 
 const GOLD = "#e6cf95"
@@ -203,7 +204,10 @@ export function NumerologiaCosmica() {
             className="min-h-0 flex-1 overflow-y-auto"
             style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
           >
-            <div style={{ maxWidth: 720, margin: "0 auto", padding: "clamp(1.4rem,4vw,2.6rem) clamp(1.1rem,4vw,2rem) 4rem" }}>
+            {/* Mismo relleno que Cartografía y Código de Origen: 1.4/1rem en
+                móvil y 2rem en pantalla ancha. El de antes llegaba a 2.6rem
+                arriba y hacía que el módulo empezara más abajo que los otros. */}
+            <div style={{ maxWidth: 760, margin: "0 auto", padding: "clamp(1.4rem,4vw,2rem) clamp(1rem,4vw,2.2rem) 2.5rem" }}>
               {/* Si algo falla al dibujar, el panel se queda y lo dice. */}
               <PanelFallo modulo="Numerología Cósmica" onReiniciar={() => setStage("form")}>
               {stage === "form" ? (
@@ -367,16 +371,17 @@ function FormView(p: {
 
   return (
     <form onSubmit={p.onSubmit}>
-      <p style={kickerStyle}>Escáner de código personal</p>
-      <h2 style={titleStyle}>Numerología Cósmica</h2>
-      <p style={{ margin: "0.9rem 0 0", fontSize: "0.95rem", lineHeight: 1.78, color: "#c6cbe6" }}>
-        Tu nombre y tu fecha de nacimiento guardan una arquitectura vibratoria. La Numerología Cósmica abre
-        una primera lectura de tu código personal: la forma en que tu conciencia entra en la materia, expresa
-        su energía y comienza a revelar su servicio dentro de la Red.
-      </p>
-      <p style={{ margin: "0.7rem 0 1.6rem", fontSize: "0.88rem", lineHeight: 1.65, color: "#9297bb" }}>
-        Escribe tu nombre tal como resuena en ti. La lectura se calcula al instante y puedes guardarla en tu bitácora.
-      </p>
+      {/* Esto era lo más grande de los tres módulos —título mayor, párrafos a
+          0.95rem y alineados a la izquierda— y por eso al pasar de Código de
+          Origen a aquí parecía otra aplicación. Misma cabecera que los otros
+          dos; el dorado se queda, que es de este módulo. */}
+      <CabeceraRecurso
+        acento={GOLD}
+        kicker="Escáner de código personal"
+        titulo="Numerología Cósmica"
+        entrada="Tu nombre y tu fecha de nacimiento guardan una arquitectura vibratoria. Aquí se abre la primera lectura de tu código personal: camino de vida, alma, expresión y misión."
+        matiz="Escribe tu nombre tal como resuena en ti. Se calcula al instante y puedes guardarla en tu bitácora."
+      />
 
       <Field label="Nombre completo" required>
         {/* Sin autoFocus: en el móvil abría el teclado al entrar, el panel se
@@ -460,11 +465,15 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, isAdmin, n
 
   return (
     <div>
-      <p style={kickerStyle}>Escáner de código personal</p>
-      <h2 style={titleStyle}>La lectura de {r.nombre.split(" ")[0]}</h2>
-      <p style={{ margin: "0.7rem 0 0", fontSize: "0.78rem", letterSpacing: "0.08em", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
-        {r.fecha.split("-").reverse().join("/")}{r.ciudad ? ` · ${r.ciudad}` : ""}{r.nombreCosmico ? ` · ${r.nombreCosmico}` : ""}
-      </p>
+      {/* Centrada, como Cartografía y Código de Origen. Iba alineada a la
+          izquierda y era lo primero que delataba que no eran el mismo sitio. */}
+      <div style={{ textAlign: "center", paddingInline: "2.25rem", marginBottom: "0.2rem" }}>
+        <p style={kickerStyle}>Escáner de código personal</p>
+        <h2 style={titleStyle}>La lectura de {r.nombre.split(" ")[0]}</h2>
+        <p style={{ margin: "0.7rem 0 0", fontSize: "0.78rem", letterSpacing: "0.08em", color: "#8b90b4", fontFamily: "var(--font-mono,monospace)" }}>
+          {r.fecha.split("-").reverse().join("/")}{r.ciudad ? ` · ${r.ciudad}` : ""}{r.nombreCosmico ? ` · ${r.nombreCosmico}` : ""}
+        </p>
+      </div>
 
       {/* Resumen de números */}
       <div style={{ marginTop: "1.4rem", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(74px,1fr))", gap: "0.6rem" }}>
@@ -661,11 +670,14 @@ const inputStyle: React.CSSProperties = {
 }
 const kickerStyle: React.CSSProperties = {
   margin: 0, fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem", fontWeight: 700,
-  letterSpacing: "0.32em", textTransform: "uppercase", color: GOLD,
+  letterSpacing: "0.28em", textTransform: "uppercase", color: GOLD,
 }
+// Mismo tamaño que la cabecera compartida de Recursos. Era el más grande de
+// los tres módulos —hasta 2.1rem— y por eso Numerología parecía otra cosa.
 const titleStyle: React.CSSProperties = {
-  margin: "0.6rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800,
-  fontSize: "clamp(1.5rem,4vw,2.1rem)", lineHeight: 1.1, color: "#fff",
+  margin: "0.5rem 0 0", fontFamily: "var(--font-cinzel,serif)", fontWeight: 800,
+  fontSize: "clamp(1.35rem,5.2vw,1.8rem)", lineHeight: 1.14,
+  letterSpacing: "0.02em", color: "#f3f6fa",
 }
 
 // ── Vista de la Lectura Profunda (16 secciones) ──────────────────────────
