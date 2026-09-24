@@ -75,24 +75,59 @@ console.log(`    NEXT_PUBLIC_SUPABASE_URL      = ${SUPABASE_URL}`)
 console.log(`    NEXT_PUBLIC_SUPABASE_ANON_KEY = ${SUPABASE_ANON_KEY.slice(0, 18)}… (${SUPABASE_ANON_KEY.length} car.)`)
 
 // ── 2 · Limpiar ────────────────────────────────────────────────────────────
-step(2, CLEAN ? "Limpiando .next y .open-next (--clean)" : "Limpiando .open-next")
+// ── POR QUÉ SE BORRA SIEMPRE .next/types ──────────────────────────────────
+// El proyecto vive dentro de OneDrive, que sincroniza también lo que genera
+// la compilación. Mientras sube esos archivos los tiene abiertos, y cuando
+// Next intenta rehacerlos salta:
+//
+//   Error: EPERM: operation not permitted, unlink '.next	ypesapp'
+//
+// Parece un fallo del código y no lo es: es una carpeta bloqueada. `types` es
+// la que se lleva casi todas, así que se borra de entrada. Cuesta segundos y
+// evita el susto.
+step(2, CLEAN ? "Limpiando .next y .open-next (--clean)" : "Limpiando .open-next y .next/types")
 rmSync(".open-next", { recursive: true, force: true })
 if (CLEAN) rmSync(".next", { recursive: true, force: true })
+else rmSync(".next/types", { recursive: true, force: true })
 
 // ── 3 · Build con las variables en memoria ─────────────────────────────────
 step(3, "Compilando (opennextjs-cloudflare build)…")
 
-const build = spawnSync("npx", ["opennextjs-cloudflare", "build"], {
-  stdio: "inherit",
-  shell: true,
-  env: {
-    ...process.env,
-    NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
-  },
-})
+function compilar() {
+  return spawnSync("npx", ["opennextjs-cloudflare", "build"], {
+    stdio: "inherit",
+    shell: true,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+    },
+  })
+}
 
-if (build.status !== 0) die("La compilación falló. No se sube nada.")
+let build = compilar()
+
+// Segundo intento con la carpeta entera en blanco. Si la primera falló por un
+// archivo bloqueado —lo normal dentro de OneDrive—, esto lo resuelve solo en
+// vez de dejar a quien despliega mirando un volcado de Node.
+if (build.status !== 0) {
+  console.log("\n" + "─".repeat(72))
+  console.log("  La compilación falló. Suele ser un archivo que OneDrive tenía")
+  console.log("  abierto mientras lo sincronizaba, no un problema del código.")
+  console.log("  Se borra .next entero y se intenta UNA vez más…")
+  console.log("─".repeat(72) + "\n")
+  rmSync(".next", { recursive: true, force: true })
+  rmSync(".open-next", { recursive: true, force: true })
+  build = compilar()
+}
+
+if (build.status !== 0) {
+  die(
+    "La compilación falló dos veces. No se sube nada.\n" +
+      "  Si el error menciona EPERM o un archivo en uso: pausa la sincronización\n" +
+      "  de OneDrive un momento y vuelve a intentarlo.",
+  )
+}
 
 // ── 4 · Verificar que las variables entraron en el bundle ──────────────────
 step(4, "Verificando que las variables quedaron incrustadas en los assets")
