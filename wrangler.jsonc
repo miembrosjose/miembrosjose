@@ -19,7 +19,17 @@
     { "binding": "AVATARS_BUCKET", "bucket_name": "miembros" },
     { "binding": "MEDIA", "bucket_name": "los144000-media" }
   ],
+  // ── POR QUÉ EMAIL_FROM TIENE QUE ESTAR AQUÍ ─────────────────────────────
+  // Este bloque REEMPLAZA las variables del panel de Cloudflare en cada
+  // despliegue: lo que esté en el panel y no esté aquí desaparece.
+  //
+  // Los SECRETOS no —esos sobreviven, por eso RESEND_API_KEY no aparece en
+  // este archivo y no debe aparecer nunca—. Pero una variable de texto como el
+  // remitente sí se borraría, y los correos empezarían a salir desde la
+  // dirección de relleno del código sin que nadie se enterara hasta que
+  // alguien no recibiera el suyo.
   "vars": {
+    "EMAIL_FROM": "Los 144000 <noreply@los144000.com>",
     "NEXT_PUBLIC_SUPABASE_URL": "https://kjozrcugsywykpuvuqzu.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqb3pyY3Vnc3l3eWtwdXZ1cXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTcwNTMsImV4cCI6MjA5NjE3MzA1M30.bp8_Une8jnLU8kMXjPBOGb04h1LgyFEZBLickodyajs",
     "R2_ACCOUNT_ID": "9eb16354b4057b7506df99d12e3463e7",
