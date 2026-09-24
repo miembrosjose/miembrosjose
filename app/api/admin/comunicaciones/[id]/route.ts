@@ -21,6 +21,7 @@ import {
 import { esEditable, esTipoValido } from "@/lib/comunicaciones/tipos"
 import { validarComunicacion } from "@/lib/comunicaciones/validacion"
 import { isNetworkRole } from "@/lib/red/roles"
+import { ACHIEVEMENTS } from "@/lib/achievements"
 
 export const dynamic = "force-dynamic"
 
@@ -33,7 +34,7 @@ export const dynamic = "force-dynamic"
  * comunicación imposible de enviar sin decir por qué.
  */
 function revisarAudiencia(v: unknown): string | null {
-  const a = v as { kind?: string; temporadaMin?: unknown; roles?: unknown } | null
+  const a = v as { kind?: string; temporadaMin?: unknown; roles?: unknown; insignias?: unknown } | null
   if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
 
   if (a.temporadaMin != null) {
@@ -45,6 +46,14 @@ function revisarAudiencia(v: unknown): string | null {
     if (!Array.isArray(a.roles)) return "Los roles tienen que ser una lista"
     const malos = a.roles.filter((r) => !isNetworkRole(r))
     if (malos.length > 0) return "Hay un rol que no existe"
+  }
+
+  if (a.insignias != null) {
+    if (!Array.isArray(a.insignias)) return "Las insignias tienen que ser una lista"
+    const conocidas = new Set(ACHIEVEMENTS.map((x) => x.id))
+    if (a.insignias.some((i) => typeof i !== "string" || !conocidas.has(i))) {
+      return "Hay una insignia que no existe"
+    }
   }
 
   return null

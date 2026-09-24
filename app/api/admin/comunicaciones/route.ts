@@ -12,13 +12,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { exigirAdmin, registrarEvento } from "@/lib/comunicaciones/servidor"
 import { TIPOS, esTipoValido } from "@/lib/comunicaciones/tipos"
+import { reconciliarPendientes } from "@/lib/comunicaciones/reconciliar"
 
 export const dynamic = "force-dynamic"
 
 /** Lo que se lista. El cuerpo entero no hace falta para una fila. */
 const CAMPOS_LISTA =
   "id, type, internal_title, subject, status, audience, scheduled_at, scheduled_timezone, " +
-  "recipients_estimated, recipients_excluded, sent_at, metrics, created_at, updated_at"
+  "recipients_estimated, recipients_excluded, sent_at, metrics, created_at, updated_at, " +
+  "provider_error"
 
 /**
  * Las tres pestañas del panel.
@@ -32,6 +34,7 @@ const POR_PESTANA: Record<string, string[]> = {
   borradores: ["draft", "failed"],
   programadas: ["scheduled", "queued", "sending"],
   enviadas: ["sent", "cancelled"],
+  archivadas: ["archived"],
 }
 
 export async function GET(req: NextRequest) {
@@ -41,6 +44,16 @@ export async function GET(req: NextRequest) {
   const estado = new URL(req.url).searchParams.get("estado") || "borradores"
   const estados = POR_PESTANA[estado]
   if (!estados) return NextResponse.json({ error: "Pestaña desconocida" }, { status: 400 })
+
+  // ── ANTES DE ENSEÑAR NADA, PREGUNTAR ──────────────────────────────────
+  // Una programada no cambia sola de estado: nadie la está mirando a las siete
+  // de la tarde. Aquí es donde alguien vuelve a mirar, así que aquí es donde
+  // hay que enterarse de que ya salió.
+  //
+  // Solo se consultan las que pueden haber cambiado —las que el proveedor
+  // tiene y cuya hora ya pasó— y como mucho diez. Abrir la lista no puede
+  // costar cincuenta viajes al proveedor.
+  await reconciliarPendientes()
 
   const { data, error } = await getSupabaseAdmin()
     .from("communications")

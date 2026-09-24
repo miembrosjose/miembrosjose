@@ -145,6 +145,18 @@ export type EstadoComunicacion =
   | "sent"
   | "cancelled"
   | "failed"
+  /**
+   * Fuera de la vista, pero no borrada.
+   *
+   * ── POR QUÉ ARCHIVAR Y NO BORRAR ────────────────────────────────────────
+   * Una comunicación enviada es la única prueba de qué se dijo, a cuánta
+   * gente y cuándo. Borrarla no borra el correo —ese está en mil bandejas de
+   * entrada— pero sí borra la única manera de responder a «¿qué mandamos el
+   * martes?». Y se lleva por delante las métricas.
+   *
+   * Archivar limpia la lista y no pierde nada. Es reversible.
+   */
+  | "archived"
 
 export const ESTADOS: Record<EstadoComunicacion, { etiqueta: string; tono: "neutro" | "espera" | "bien" | "mal" }> = {
   draft:     { etiqueta: "Borrador",   tono: "neutro" },
@@ -154,6 +166,7 @@ export const ESTADOS: Record<EstadoComunicacion, { etiqueta: string; tono: "neut
   sent:      { etiqueta: "Enviada",    tono: "bien" },
   cancelled: { etiqueta: "Cancelada",  tono: "neutro" },
   failed:    { etiqueta: "Falló",      tono: "mal" },
+  archived:  { etiqueta: "Archivada",  tono: "neutro" },
 }
 
 /**
@@ -204,6 +217,22 @@ export type Audiencia = {
    * algo es lo contrario de un filtro que no se ha puesto.
    */
   roles?: string[] | null
+  /**
+   * Solo quien haya desbloqueado alguna de estas insignias.
+   *
+   * Es lo que permite felicitar a quien acaba de llegar a algo: «has alcanzado
+   * Arquitecto Cósmico» va justamente a quien lo alcanzó.
+   *
+   * ── LAS TRES COSAS QUE NO SON LO MISMO ──────────────────────────────────
+   *   avance     por dónde va en el camino
+   *   rol        qué función desempeña en La Red
+   *   insignia   qué ha logrado
+   *
+   * Se parecen y no lo son: un Guardián puede no haber pasado de la primera
+   * temporada, y quien tiene diez insignias puede no tener ningún rol. Por eso
+   * son tres filtros y no uno con tres nombres.
+   */
+  insignias?: string[] | null
 }
 
 export type Comunicacion = {

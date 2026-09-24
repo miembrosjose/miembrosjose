@@ -23,8 +23,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  AlertTriangle, ArrowLeft, Calendar, Check, Clock, Copy, Loader2, Mail,
-  Monitor, Plus, Send, Smartphone, Trash2, Users, X,
+  AlertTriangle, Archive, ArrowLeft, Calendar, Check, Clock, Copy, ImagePlus,
+  Loader2, Mail, Monitor, Plus, Search, Send, Smartphone, Trash2, Undo2, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
 
@@ -71,6 +71,15 @@ type Audiencia = {
   kind: "todos"
   temporadaMin?: number | null
   roles?: string[] | null
+  insignias?: string[] | null
+}
+
+/** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
+type Filtros = {
+  temporadas: number[]
+  roles: Array<{ id: string; etiqueta: string }>
+  insignias: Array<{ grupo: string; items: Array<{ id: string; etiqueta: string }> }>
+  total_insignias: number
 }
 
 const ROLES = [
@@ -138,7 +147,8 @@ export function Comunicaciones() {
 // ── La lista ───────────────────────────────────────────────────────────────
 
 function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
-  const [pestana, setPestana] = useState<"borradores" | "programadas" | "enviadas">("borradores")
+  const [pestana, setPestana] = useState<"borradores" | "programadas" | "enviadas" | "archivadas">("borradores")
+  const [busca, setBusca] = useState("")
   const [filas, setFilas] = useState<Fila[]>([])
   const [conteos, setConteos] = useState<Record<string, number>>({})
   const [cargando, setCargando] = useState(true)
@@ -162,6 +172,13 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
   }, [pestana])
 
   useEffect(() => { void cargar() }, [cargar])
+
+  const q = busca.trim().toLowerCase()
+  const filtradas = q
+    ? filas.filter((f) =>
+        (f.subject || "").toLowerCase().includes(q) ||
+        (f.internal_title || "").toLowerCase().includes(q))
+    : filas
 
   const crear = async (tipo: string) => {
     try {
@@ -201,7 +218,7 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
       </header>
 
       <div className="flex flex-wrap gap-2">
-        {(["borradores", "programadas", "enviadas"] as const).map((p) => (
+        {(["borradores", "programadas", "enviadas", "archivadas"] as const).map((p) => (
           <button
             key={p}
             type="button"
@@ -217,6 +234,22 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         ))}
       </div>
 
+      {/* Buscar por lo que uno recuerda: el asunto, o el nombre interno. Se
+          filtra sobre lo ya cargado —son cien filas como mucho— en vez de
+          pedirle al servidor en cada tecla. */}
+      {filas.length > 6 && (
+        <div className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a6a]" />
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por asunto o título interno…"
+            className={`${inputCls} pl-9`}
+          />
+        </div>
+      )}
+
       {error && <Aviso tono="mal">{error}</Aviso>}
 
       {cargando ? (
@@ -227,7 +260,13 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         <Vacio pestana={pestana} onCrear={() => setEligiendoTipo(true)} />
       ) : (
         <div className="space-y-2">
-          {filas.map((f) => <FilaComunicacion key={f.id} f={f} onAbrir={onAbrir} />)}
+          {filtradas.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[#6a6a7a]">
+              Nada coincide con «{busca}».
+            </p>
+          ) : (
+            filtradas.map((f) => <FilaComunicacion key={f.id} f={f} onAbrir={onAbrir} />)
+          )}
         </div>
       )}
 
@@ -295,6 +334,7 @@ function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
     borradores: "No hay ningún borrador. Empieza uno cuando tengas algo que contar.",
     programadas: "No hay nada programado ahora mismo.",
     enviadas: "Todavía no se ha enviado ninguna comunicación.",
+    archivadas: "Nada archivado. Lo que archives desde «Enviadas» aparecerá aquí.",
   }
   return (
     <div className="border border-dashed border-[#1f1f2c] px-6 py-14 text-center">
@@ -476,6 +516,10 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
         <div className="flex flex-wrap items-center gap-3 border-t border-[#1a1a24] pt-6">
           <Secundarios id={id} onVolver={onVolver} puedeBorrar={false} />
           {c.status === "scheduled" && <CancelarProgramada id={id} onHecho={cargar} cuando={c.scheduled_at} zona={c.scheduled_timezone} />}
+          {["sent", "cancelled", "failed"].includes(c.status) && (
+            <Archivar id={id} archivada={false} onHecho={onVolver} />
+          )}
+          {c.status === "archived" && <Archivar id={id} archivada onHecho={cargar} />}
         </div>
       )}
 
@@ -545,14 +589,11 @@ function Campos({
             <code className="text-[#c3b2e0]">{"{semilla}"}</code>.
           </p>
         </div>
-        <div>
-          <label className={labelCls}>Imagen (opcional)</label>
-          <input type="url" placeholder="https://…" {...campo("image_url")} />
-          <p className="mt-1.5 text-[11px] text-[#6a6a7a]">
-            Va debajo del titular a propósito: muchos clientes no cargan imágenes
-            hasta que se lo piden, y si fuera lo primero el correo abriría vacío.
-          </p>
-        </div>
+        <ImagenDelCorreo
+          url={c.image_url}
+          onCambiar={(u) => editar("image_url", u)}
+          editable={editable}
+        />
       </Bloque>
 
       <Bloque titulo="El botón">
@@ -639,19 +680,51 @@ function Audiencias({
 }) {
   const a: Audiencia = c.audience || { kind: "todos" }
   const roles = a.roles || []
+  const insignias = a.insignias || []
+
+  // Las opciones vienen del servidor, no escritas aquí: las insignias son un
+  // catálogo que crece, y una copia a mano se queda vieja sin que se note.
+  const [filtros, setFiltros] = useState<Filtros | null>(null)
+  const [buscaInsignia, setBuscaInsignia] = useState("")
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch("/api/admin/comunicaciones/filtros", { credentials: "include" })
+        if (r.ok) setFiltros(await r.json())
+      } catch { /* se queda con las de respaldo */ }
+    })()
+  }, [])
 
   const cambiar = (parcial: Partial<Audiencia>) =>
-    editar("audience", { kind: "todos", temporadaMin: a.temporadaMin ?? null, roles: a.roles ?? null, ...parcial })
+    editar("audience", {
+      kind: "todos",
+      temporadaMin: a.temporadaMin ?? null,
+      roles: a.roles ?? null,
+      insignias: a.insignias ?? null,
+      ...parcial,
+    })
 
   const alternarRol = (id: string) => {
     const nuevos = roles.includes(id) ? roles.filter((r) => r !== id) : [...roles, id]
     cambiar({ roles: nuevos.length > 0 ? nuevos : null })
   }
 
+  const alternarInsignia = (id: string) => {
+    const nuevas = insignias.includes(id) ? insignias.filter((i) => i !== id) : [...insignias, id]
+    cambiar({ insignias: nuevas.length > 0 ? nuevas : null })
+  }
+
+  const qi = buscaInsignia.trim().toLowerCase()
+  const gruposVisibles = (filtros?.insignias ?? [])
+    .map((g) => ({ grupo: g.grupo, items: qi ? g.items.filter((i) => i.etiqueta.toLowerCase().includes(qi)) : g.items }))
+    .filter((g) => g.items.length > 0)
+
   return (
     <Bloque titulo="A quién va" nota="Sin tocar nada, va a todos. Cada filtro que añades, a menos gente.">
       <div>
         <label className={labelCls}>Por avance en el camino</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Por dónde va en el recorrido.</p>
         <div className="flex flex-wrap gap-2">
           <Pastilla activa={!a.temporadaMin} onClick={() => cambiar({ temporadaMin: null })} desactivada={!editable}>
             Da igual
@@ -675,8 +748,9 @@ function Audiencias({
 
       <div>
         <label className={labelCls}>Por rol en La Red</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Qué función desempeña.</p>
         <div className="flex flex-wrap gap-2">
-          {ROLES.map((r) => (
+          {(filtros?.roles ?? ROLES).map((r) => (
             <Pastilla
               key={r.id}
               activa={roles.includes(r.id)}
@@ -687,14 +761,96 @@ function Audiencias({
             </Pastilla>
           ))}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-          Sin ninguno marcado, el rol da igual. Con varios, basta con tener uno de ellos.
+      </div>
+
+      {/* ── INSIGNIAS ─────────────────────────────────────────────────────
+          Tercer concepto, y distinto de los otros dos: el avance dice por
+          dónde va, el rol qué hace, y la insignia qué ha logrado. Un Guardián
+          puede no haber pasado de la primera temporada, y quien tiene diez
+          insignias puede no tener ningún rol.
+
+          Son más de cincuenta, así que van agrupadas y con buscador: una tira
+          de cincuenta pastillas no se lee, se sufre. */}
+      <div>
+        <label className={labelCls}>Por insignia lograda</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Qué ha alcanzado. Sirve para felicitar a quien acaba de llegar a algo.
         </p>
+
+        {insignias.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {insignias.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => alternarInsignia(id)}
+                disabled={!editable}
+                className="inline-flex items-center gap-1.5 border border-[#6D4A9B] bg-[#6D4A9B]/20 px-3 py-1.5 text-[11px] text-[#c3b2e0] disabled:opacity-40"
+              >
+                {nombreDeInsignia(id, filtros)} <X size={11} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!filtros ? (
+          <p className="text-[11px] text-[#6a6a7a]">Cargando insignias…</p>
+        ) : (
+          <>
+            <div className="relative mb-2">
+              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a6a]" />
+              <input
+                type="search"
+                value={buscaInsignia}
+                onChange={(e) => setBuscaInsignia(e.target.value)}
+                placeholder={`Buscar entre ${filtros.total_insignias} insignias…`}
+                disabled={!editable}
+                className={`${inputCls} pl-9`}
+              />
+            </div>
+
+            <div className="max-h-64 space-y-4 overflow-y-auto border border-[#14141e] bg-[#07070f] p-3">
+              {gruposVisibles.length === 0 ? (
+                <p className="py-4 text-center text-[11px] text-[#6a6a7a]">
+                  Ninguna insignia coincide con «{buscaInsignia}».
+                </p>
+              ) : (
+                gruposVisibles.map((g) => (
+                  <div key={g.grupo}>
+                    <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-[#5a5a6a]">{g.grupo}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {g.items.map((i) => (
+                        <Pastilla
+                          key={i.id}
+                          activa={insignias.includes(i.id)}
+                          onClick={() => alternarInsignia(i.id)}
+                          desactivada={!editable}
+                        >
+                          {i.etiqueta}
+                        </Pastilla>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="border-t border-[#14141e] pt-4">
         <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Va a</p>
-        <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a)}</p>
+        <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a, filtros)}</p>
+        {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
+            entre mandar a doscientos y mandar a tres. */}
+        {(a.temporadaMin || roles.length > 0 || insignias.length > 0) && (
+          <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
+            Entre bloques distintos se cumple <strong className="text-[#c3b2e0]">todo</strong>:
+            hay que tener el avance <em>y</em> el rol <em>y</em> la insignia. Dentro de un
+            mismo bloque basta <strong className="text-[#c3b2e0]">uno</strong>: con dos roles
+            marcados, entra quien tenga cualquiera de los dos.
+          </p>
+        )}
       </div>
     </Bloque>
   )
@@ -722,14 +878,187 @@ function Pastilla({
 }
 
 /** La misma frase que compone el servidor, para que digan lo mismo. */
-function describir(a?: Audiencia | null): string {
+function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   if (!a) return "Todos los miembros activos"
   const partes: string[] = []
   if (a.temporadaMin) partes.push(`que llegaron a la Temporada ${a.temporadaMin} o más`)
   if (a.roles?.length) {
     partes.push(`con rol de ${a.roles.map((r) => ROLES.find((x) => x.id === r)?.etiqueta ?? r).join(" o ")}`)
   }
+  if (a.insignias?.length) {
+    partes.push(`con la insignia ${a.insignias.map((i) => nombreDeInsignia(i, filtros)).join(" o ")}`)
+  }
   return partes.length === 0 ? "Todos los miembros activos" : `Miembros ${partes.join(", ")}`
+}
+
+function nombreDeInsignia(id: string, filtros?: Filtros | null): string {
+  for (const g of filtros?.insignias ?? []) {
+    const encontrada = g.items.find((i) => i.id === id)
+    if (encontrada) return encontrada.etiqueta
+  }
+  return id
+}
+
+/**
+ * La imagen del correo: se elige del disco, no se pega una dirección.
+ *
+ * ── POR QUÉ ESTO IMPORTA MÁS DE LO QUE PARECE ─────────────────────────────
+ * Pedir una URL obliga a tener la imagen ya subida a algún sitio, y ese «algún
+ * sitio» acaba siendo cualquiera: un enlace de Drive que caduca, una imagen de
+ * otra web que un día se borra. Un correo no se puede corregir después, así
+ * que una imagen rota en mil bandejas es permanente.
+ *
+ * Subiéndola aquí va al mismo almacén que el resto de la plataforma —el que ya
+ * usa el panel para portadas y vídeos— y la dirección la pone el servidor.
+ *
+ * ── LO QUE SE COMPRUEBA ANTES DE SUBIR ────────────────────────────────────
+ * El formato y el peso, y se avisa de las dimensiones. No por capricho: una
+ * imagen de cuatro megas en un correo tarda en cargar en un móvil con mala
+ * cobertura, y varios clientes recortan los correos que pesan demasiado —Gmail
+ * corta a 102 KB de HTML y esconde el resto detrás de «ver mensaje completo»,
+ * que es donde está el botón.
+ */
+function ImagenDelCorreo({
+  url, onCambiar, editable,
+}: {
+  url: string | null
+  onCambiar: (u: string | null) => void
+  editable: boolean
+}) {
+  const entrada = useRef<HTMLInputElement | null>(null)
+  const [subiendo, setSubiendo] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<string | null>(null)
+
+  // Lo que los clientes de correo dibujan sin sorpresas. WEBP se queda fuera a
+  // propósito: Outlook de escritorio no lo pinta, y ahí la imagen no es que se
+  // vea peor, es que no se ve.
+  const FORMATOS = ["image/jpeg", "image/png", "image/gif"]
+  const MAX = 1.5 * 1024 * 1024
+  const ANCHO_IDEAL = 1200
+
+  const elegir = async (archivo: File) => {
+    setError(null)
+    setAviso(null)
+
+    if (!FORMATOS.includes(archivo.type)) {
+      setError("Solo JPG, PNG o GIF. WEBP no lo dibuja Outlook de escritorio.")
+      return
+    }
+    if (archivo.size > MAX) {
+      setError(`Pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB. El tope es 1,5 MB: por encima, el correo tarda en abrir en un móvil.`)
+      return
+    }
+
+    // Las dimensiones son un aviso, no un impedimento. Se mide antes de subir
+    // para no gastar la subida si va a quedar mal.
+    try {
+      const medidas = await medir(archivo)
+      if (medidas && medidas.ancho < 600) {
+        setAviso(`Mide ${medidas.ancho}px de ancho. El correo tiene 600, así que se verá borrosa; lo ideal son ${ANCHO_IDEAL}px.`)
+      }
+    } catch { /* si no se puede medir, se sube igual */ }
+
+    setSubiendo(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", archivo)
+      const r = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: fd })
+      const j = await r.json()
+      if (!r.ok || !j?.url) throw new Error(j?.error || "No se pudo subir")
+      onCambiar(j.url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo subir")
+    } finally {
+      setSubiendo(false)
+    }
+  }
+
+  return (
+    <div>
+      <label className={labelCls}>Imagen (opcional)</label>
+
+      {url ? (
+        <div className="space-y-3">
+          <div className="overflow-hidden border border-[#1f1f2c] bg-[#07070f]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" className="block max-h-56 w-full object-cover" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => entrada.current?.click()}
+              disabled={!editable || subiendo}
+              className="inline-flex items-center gap-2 border border-[#2f2f42] px-3 py-2 text-[11px] uppercase tracking-[0.15em] text-[#a0a0b0] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+            >
+              <ImagePlus size={13} /> Reemplazar
+            </button>
+            <button
+              type="button"
+              onClick={() => { onCambiar(null); setAviso(null); setError(null) }}
+              disabled={!editable || subiendo}
+              className="inline-flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-[0.15em] text-[#5a5a6a] transition-colors hover:text-red-400 disabled:opacity-40"
+            >
+              <Trash2 size={13} /> Quitar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => entrada.current?.click()}
+          disabled={!editable || subiendo}
+          className="flex w-full flex-col items-center gap-2 border border-dashed border-[#2f2f42] px-4 py-8 transition-colors hover:border-[#6D4A9B] disabled:opacity-40"
+        >
+          {subiendo ? (
+            <Loader2 size={20} className="animate-spin text-[#6a6a7a]" />
+          ) : (
+            <ImagePlus size={20} className="text-[#5a5a6a]" />
+          )}
+          <span className="text-xs text-[#8a8fa8]">
+            {subiendo ? "Subiendo…" : "Elegir una imagen de tu ordenador"}
+          </span>
+          <span className="text-[10px] text-[#5a5a6a]">JPG, PNG o GIF · hasta 1,5 MB · {ANCHO_IDEAL}px de ancho</span>
+        </button>
+      )}
+
+      <input
+        ref={entrada}
+        type="file"
+        accept="image/jpeg,image/png,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          // Se limpia para que elegir el mismo archivo otra vez vuelva a
+          // disparar el evento; si no, reintentar tras un fallo no hace nada.
+          e.target.value = ""
+          if (f) void elegir(f)
+        }}
+      />
+
+      {error && <p className="mt-2 text-[11px] text-red-400">{error}</p>}
+      {aviso && <p className="mt-2 text-[11px] text-[#c9a86b]">{aviso}</p>}
+
+      <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+        Va debajo del titular a propósito: muchos clientes no cargan imágenes hasta
+        que se lo piden, y si fuera lo primero el correo abriría en blanco.
+      </p>
+    </div>
+  )
+}
+
+/** Mide una imagen sin subirla. */
+function medir(archivo: File): Promise<{ ancho: number; alto: number } | null> {
+  return new Promise((resolver) => {
+    const url = URL.createObjectURL(archivo)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolver({ ancho: img.naturalWidth, alto: img.naturalHeight })
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolver(null) }
+    img.src = url
+  })
 }
 
 function Bloque({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
@@ -1044,7 +1373,7 @@ function ResumenFinal({
         <dl className="space-y-3 border border-[#1f1f2c] bg-[#0d0d16] p-4 text-sm">
           <Dato etiqueta="Asunto" valor={c.subject} />
           <Dato etiqueta="Tipo" valor={TIPOS.find((t) => t.id === c.type)?.nombre ?? c.type} />
-          <Dato etiqueta="Audiencia" valor={describir(c.audience)} />
+          <Dato etiqueta="Audiencia" valor={describir(c.audience, null)} />
           <Dato
             etiqueta="Envío"
             valor={modo === "ahora" ? "Ahora" : fecha && hora ? `${fecha} · ${hora} · ${zona.split("/").pop()?.replace(/_/g, " ")}` : "—"}
@@ -1196,7 +1525,9 @@ function Secundarios({ id, onVolver, puedeBorrar }: { id: string; onVolver: () =
   }
 
   const borrar = async () => {
-    if (!window.confirm("¿Borrar este borrador? No se puede deshacer.")) return
+    // Un borrador nunca salió, así que aquí sí se borra de verdad: no hay
+    // historial que preservar ni métricas que perder. Lo enviado se archiva.
+    if (!window.confirm("¿Borrar este borrador?\n\nNo se puede deshacer.")) return
     setOcupado(true)
     try {
       const r = await fetch(`/api/admin/comunicaciones/${id}`, { method: "DELETE", credentials: "include" })
@@ -1225,6 +1556,61 @@ function Secundarios({ id, onVolver, puedeBorrar }: { id: string; onVolver: () =
         </button>
       )}
     </>
+  )
+}
+
+/**
+ * Apartar una comunicación terminada, sin perderla.
+ *
+ * ── POR QUÉ NO HAY «BORRAR» AQUÍ ──────────────────────────────────────────
+ * Se pidió poder quitar comunicaciones enviadas de la lista, y borrar sería lo
+ * obvio y lo equivocado. Borrar la fila NO borra el correo —está en mil
+ * bandejas de entrada y ahí se queda— pero sí borra la única forma de
+ * responder a «¿qué mandamos el martes, y a cuánta gente?», y se lleva por
+ * delante las métricas, que cuelgan de ella.
+ *
+ * Lo que molesta es que la lista crezca. Para eso basta con apartarla, y eso
+ * se deshace.
+ */
+function Archivar({ id, archivada, onHecho }: { id: string; archivada: boolean; onHecho: () => void }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const hacer = async () => {
+    setOcupado(true); setError(null)
+    try {
+      const r = await fetch(`/api/admin/comunicaciones/${id}/archivar`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archivar: !archivada }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo")
+      onHecho()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo")
+    } finally { setOcupado(false) }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        onClick={hacer}
+        disabled={ocupado}
+        className="inline-flex items-center gap-2 border border-[#1f1f2c] px-4 py-3 text-[11px] uppercase tracking-[0.2em] text-[#7a7a8a] transition-colors hover:border-[#2f2f42] hover:text-[#a0a0b0] disabled:opacity-40"
+      >
+        {ocupado ? <Loader2 size={13} className="animate-spin" /> : archivada ? <Undo2 size={13} /> : <Archive size={13} />}
+        {archivada ? "Devolver a Enviadas" : "Archivar"}
+      </button>
+      {!archivada && (
+        <span className="text-[11px] text-[#6a6a7a]">
+          Sale de la lista. No se borra nada: el historial y las métricas siguen ahí.
+        </span>
+      )}
+      {error && <span className="text-xs text-red-400">{error}</span>}
+    </div>
   )
 }
 

@@ -19,6 +19,7 @@
 // traérselas todas. `profiles` es una tabla normal: se cuenta con un count.
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { ACHIEVEMENTS } from "@/lib/achievements"
 import type { Audiencia, PreferenciaCorreo, TipoComunicacion } from "./tipos"
 import { preferenciaDe } from "./tipos"
 
@@ -30,6 +31,7 @@ export type MotivoExclusion =
   | "duplicado"
   | "no_llego_a_temporada"
   | "sin_ese_rol"
+  | "sin_esa_insignia"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -53,6 +55,7 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   duplicado: "Correo repetido (se envía una sola vez)",
   no_llego_a_temporada: "Todavía no ha llegado a esa temporada",
   sin_ese_rol: "No tiene el rol pedido",
+  sin_esa_insignia: "No ha desbloqueado esa insignia",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -139,6 +142,41 @@ async function temporadaAlcanzada(): Promise<Map<string, number>> {
   return mayor
 }
 
+/**
+ * Quién ha desbloqueado qué insignia.
+ *
+ * Se lee de `user_unlocked_achievements`, que es donde quedan guardadas al
+ * concederse. No se derivan aquí: derivarlas es la lógica de
+ * lib/insignias-ganadas.ts, que mira episodios, foro, accesos y compras de una
+ * persona concreta. Hacer eso para todo el padrón serían miles de consultas
+ * para enseñar un número.
+ *
+ * Consecuencia que conviene saber: si alguien cumple los requisitos de una
+ * insignia pero todavía no ha entrado en la plataforma desde que los cumplió,
+ * no la tiene concedida y este filtro no lo incluye. Es lo correcto —la
+ * insignia aún no existe para esa persona— pero explica alguna cifra menor de
+ * la esperada.
+ */
+async function insigniasPorMiembro(): Promise<Map<string, Set<string>>> {
+  const admin = getSupabaseAdmin()
+  const mapa = new Map<string, Set<string>>()
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("user_unlocked_achievements")
+      .select("user_id, achievement_id")
+      .range(desde, desde + 999)
+    if (error) break
+    const lote = (data || []) as Array<{ user_id: string; achievement_id: string }>
+    for (const f of lote) {
+      const s = mapa.get(f.user_id) ?? new Set<string>()
+      s.add(f.achievement_id)
+      mapa.set(f.user_id, s)
+    }
+    if (lote.length < 1000) break
+  }
+  return mapa
+}
+
 /** Quién tiene qué rol vigente en La Red. */
 async function rolesPorMiembro(): Promise<Map<string, Set<string>>> {
   const admin = getSupabaseAdmin()
@@ -178,6 +216,9 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.roles?.length) {
     partes.push("con rol de " + a.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(" o "))
   }
+  if (a.insignias?.length) {
+    partes.push("con la insignia " + a.insignias.map((i) => nombreInsignia(i)).join(" o "))
+  }
   return partes.length === 0
     ? "Todos los miembros activos"
     : "Miembros " + partes.join(", ")
@@ -208,10 +249,13 @@ export async function resolverAudiencia(
   const pideTemporada = Number.isFinite(temporadaMin) && temporadaMin > 0
   const rolesPedidos = (audiencia.roles || []).filter(Boolean)
   const pideRol = rolesPedidos.length > 0
+  const insigniasPedidas = (audiencia.insignias || []).filter(Boolean)
+  const pideInsignia = insigniasPedidas.length > 0
 
-  const [avance, roles] = await Promise.all([
+  const [avance, roles, insignias] = await Promise.all([
     pideTemporada ? temporadaAlcanzada() : Promise.resolve(new Map<string, number>()),
     pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
+    pideInsignia ? insigniasPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
   ])
 
   // ── El padrón ───────────────────────────────────────────────────────────
@@ -251,7 +295,7 @@ export async function resolverAudiencia(
   const cuenta: Record<MotivoExclusion, number> = {
     sin_correo: 0, correo_invalido: 0, baja_total: 0,
     preferencia_apagada: 0, duplicado: 0,
-    no_llego_a_temporada: 0, sin_ese_rol: 0,
+    no_llego_a_temporada: 0, sin_ese_rol: 0, sin_esa_insignia: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -275,6 +319,13 @@ export async function resolverAudiencia(
       const suyos = roles.get(f.id)
       if (!suyos || !rolesPedidos.some((r) => suyos.has(r))) {
         cuenta.sin_ese_rol++
+        continue
+      }
+    }
+    if (pideInsignia) {
+      const suyas = insignias.get(f.id)
+      if (!suyas || !insigniasPedidas.some((i) => suyas.has(i))) {
+        cuenta.sin_esa_insignia++
         continue
       }
     }
@@ -328,4 +379,22 @@ export function etiquetaPreferencia(p: PreferenciaCorreo): string {
 export const FILTROS_DISPONIBLES = {
   temporadas: [1, 2, 3, 4],
   roles: Object.entries(ETIQUETA_ROL).map(([id, etiqueta]) => ({ id, etiqueta })),
+  /**
+   * Las insignias, del catálogo de verdad.
+   *
+   * No una lista escrita a mano aquí: `ACHIEVEMENTS` es la fuente, y así una
+   * insignia nueva aparece en los filtros sin que nadie tenga que acordarse de
+   * añadirla en dos sitios.
+   *
+   * Las retiradas se quedan fuera. Siguen existiendo para quien las ganó en su
+   * día —no se le quitan— pero ofrecerlas como filtro es ofrecer un envío a un
+   * grupo que ya no crece y que casi nadie recuerda.
+   */
+  insignias: ACHIEVEMENTS
+    .filter((a) => !a.retirada)
+    .map((a) => ({ id: a.id, etiqueta: a.name, categoria: a.category, tier: a.tier })),
+}
+
+function nombreInsignia(id: string): string {
+  return ACHIEVEMENTS.find((a) => a.id === id)?.name ?? id
 }
