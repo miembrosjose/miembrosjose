@@ -81,15 +81,50 @@ export function puedeEstructurar(papel: PapelComunidad): boolean {
   return papel === "administracion"
 }
 
-/** Todos los espacios, en orden, activos primero. */
+/**
+ * Todos los espacios, en orden.
+ *
+ * ── POR QUÉ HAY UN SEGUNDO INTENTO ────────────────────────────────────────
+ * `desbloquea_con` llegó con docs/sql/comunidad_03_recorrido.sql. Si esa
+ * migración no se ha aplicado —o se quedó a medias—, pedir esa columna hace
+ * fallar la consulta entera, y entonces esto devolvía una lista VACÍA: sin
+ * espacios no hay espacios legibles, y sin espacios legibles el foro aparece
+ * completamente vacío aunque las conversaciones estén ahí.
+ *
+ * Una columna que falta no puede esconder el foro. Se reintenta sin ella y la
+ * comunidad sigue funcionando con lo que había antes; los pasos del camino
+ * aparecerán cuando la migración entre.
+ */
 export async function todosLosEspacios(): Promise<EspacioComunidad[]> {
   const admin = getSupabaseAdmin()
-  const { data } = await admin
-    .from("community_spaces")
-    .select("id, slug, name, kicker, description, tipo, season_num, desbloquea_con, icono, sort_order, activo")
-    .eq("activo", true)
-    .order("sort_order", { ascending: true })
-  return (data || []) as EspacioComunidad[]
+  const BASE = "id, slug, name, kicker, description, tipo, season_num, icono, sort_order, activo"
+
+  const pedir = (campos: string) =>
+    admin
+      .from("community_spaces")
+      .select(campos)
+      .eq("activo", true)
+      .order("sort_order", { ascending: true })
+
+  let { data, error } = await pedir(BASE + ", desbloquea_con")
+  if (error) {
+    if (!/desbloquea_con|column|schema cache/i.test(error.message)) {
+      console.error("[comunidad/acceso] espacios", error.message)
+    }
+    ;({ data, error } = await pedir(BASE))
+  }
+  if (error) {
+    console.error("[comunidad/acceso] espacios (segundo intento)", error.message)
+    return []
+  }
+
+  // Sin la columna, un hito no sabría con qué se abre. Se le pone la temporada
+  // más alta: es lo más conservador —queda cerrado hasta el final del camino—
+  // y nunca enseña de más.
+  return ((data || []) as unknown as EspacioComunidad[]).map((e) => ({
+    ...e,
+    desbloquea_con: e.desbloquea_con ?? (e.tipo === "hito" ? 4 : null),
+  }))
 }
 
 export async function categoriasDe(spaceIds: string[]): Promise<CategoriaComunidad[]> {

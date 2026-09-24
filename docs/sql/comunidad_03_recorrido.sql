@@ -70,6 +70,12 @@ alter table public.community_spaces
   add constraint community_spaces_tipo_check
   check (tipo in ('global', 'season', 'hito'));
 
+-- Se quita antes de volver a ponerla. Sin este drop, ejecutar el archivo dos
+-- veces fallaba con «la restricción ya existe», y en el editor de Supabase un
+-- error aborta TODO el bloque: parecía aplicado y no había entrado nada.
+alter table public.community_spaces
+  drop constraint if exists space_coherente;
+
 -- Coherencia: una temporada lleva su número; un hito, la temporada con la que
 -- se abre; un espacio permanente, ninguna de las dos.
 alter table public.community_spaces
