@@ -10,7 +10,7 @@
 // navegador nunca recibe el directorio entero, solo la página que está viendo.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ForumFeed } from "./ForumFeed"
+import { CentroComunidad } from "./comunidad/CentroComunidad"
 import { Leaderboard } from "./Leaderboard"
 import { PulsoSemana } from "./PulsoSemana"
 import Link from "next/link"
@@ -431,10 +431,13 @@ export function ViewRed() {
         {tab === "pulso" ? (
           <PulsoSemana />
         ) : tab === "foro" ? (
+          /* El Centro de Comunidad sustituye al foro plano. La tabla de
+             clasificación se queda al lado: es de la Red, no del foro, y
+             quitarla de aquí la dejaría sin sitio. */
           <div className={styles.foroGrid}>
             <Leaderboard />
             <div style={{ minWidth: 0 }}>
-              <ForumFeed />
+              <CentroComunidad />
             </div>
           </div>
         ) : tab === "encuentros" ? (

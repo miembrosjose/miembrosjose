@@ -30,6 +30,21 @@ export type ForumPost = ForumAuthor & {
   pin_order?: number | null
   liked_by_me?: boolean
   disliked_by_me?: boolean
+
+  // ── Centro de Comunidad ──────────────────────────────────────────────
+  // Una conversación de la comunidad ES un post del foro: no hay tabla nueva
+  // ni migración de contenido. Lo único que se le añadió fue saber dónde
+  // vive y en qué estado está. Opcionales porque las pantallas antiguas
+  // siguen pidiendo los mismos posts sin estos campos.
+  space_id?: string | null
+  category_id?: string | null
+  /** Escrita por administración. Se distingue sin gritar. */
+  is_official?: boolean
+  /** Cerrada: se lee entera, no admite respuestas. */
+  is_locked?: boolean
+  /** Cuándo pasó algo aquí por última vez. Es lo que ordena las listas. */
+  last_activity_at?: string | null
+  followed_by_me?: boolean
 }
 
 export type ForumReply = ForumAuthor & {
