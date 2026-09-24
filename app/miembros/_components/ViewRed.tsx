@@ -11,7 +11,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { CentroComunidad } from "./comunidad/CentroComunidad"
-import { Leaderboard } from "./Leaderboard"
 import { PulsoSemana } from "./PulsoSemana"
 import Link from "next/link"
 import { Activity, MapPin, Search, MessageCircle, MessageSquare, Users, Globe2, Loader2, X, CalendarDays } from "lucide-react"
@@ -431,15 +430,12 @@ export function ViewRed() {
         {tab === "pulso" ? (
           <PulsoSemana />
         ) : tab === "foro" ? (
-          /* El Centro de Comunidad sustituye al foro plano. La tabla de
-             clasificación se queda al lado: es de la Red, no del foro, y
-             quitarla de aquí la dejaría sin sitio. */
-          <div className={styles.foroGrid}>
-            <Leaderboard />
-            <div style={{ minWidth: 0 }}>
-              <CentroComunidad />
-            </div>
-          </div>
+          /* Sin tabla de clasificación.
+             Esto no es una competencia: ordenar a la gente por puntos empuja a
+             participar para subir, no para aportar, y en una comunidad que
+             empieza convierte a doce personas en un marcador. Además ocupaba
+             media pantalla antes de llegar a la primera conversación. */
+          <CentroComunidad />
         ) : tab === "encuentros" ? (
           <EncuentrosRed />
         ) : tab === "mapa" ? (

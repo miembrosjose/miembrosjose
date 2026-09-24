@@ -17,7 +17,7 @@
 // servidor no manda nada de dentro y aquí se dibuja el candado. No es que se
 // oculten los títulos en pantalla: es que nunca llegan.
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ArrowLeft, Lock, MessageSquarePlus } from "lucide-react"
 import type { ForumPost as THilo } from "../../_lib/types"
 import { ForumPost } from "../ForumPost"
@@ -94,14 +94,26 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
   useEffect(() => { setAbierto(null); setCategoria(null) }, [slug])
 
   // Si se llegó pidiendo una conversación concreta, se abre en cuanto está.
-  // Se busca entre las fijadas y las de la lista, que es donde puede estar.
+  //
+  // ── POR QUÉ HAY QUE «GASTAR» LA PETICIÓN ────────────────────────────────
+  // Esto abría la conversación cada vez que se cumplía la condición. Al pulsar
+  // «volver», `abierto` pasaba a null... y este efecto la volvía a abrir en el
+  // mismo instante, porque `abrirHiloId` seguía ahí. Desde fuera parecía que el
+  // botón de volver no hacía nada: quien entraba desde un portal se quedaba
+  // atrapado en la conversación.
+  //
+  // La petición se consume una sola vez y se marca como gastada.
+  const yaAbierta = useRef<string | null>(null)
   useEffect(() => {
-    if (!abrirHiloId || !datos || abierto) return
+    if (!abrirHiloId || !datos) return
+    if (yaAbierta.current === abrirHiloId) return
     const encontrada =
       datos.fijadas.find((h) => h.id === abrirHiloId) ??
       datos.hilos.find((h) => h.id === abrirHiloId)
-    if (encontrada) setAbierto(encontrada)
-  }, [abrirHiloId, datos, abierto])
+    if (!encontrada) return
+    yaAbierta.current = abrirHiloId
+    setAbierto(encontrada)
+  }, [abrirHiloId, datos])
 
   if (cargando && !datos && !cerrado) return <div className={s.cargando} aria-hidden />
 

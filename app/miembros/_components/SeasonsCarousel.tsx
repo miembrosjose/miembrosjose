@@ -455,14 +455,25 @@ function SeasonVideo({ src }: { src: string }) {
     }
     video.addEventListener("loadeddata", onLoaded)
     video.addEventListener("canplay", onLoaded)
-    // Força o download começar (alguns iOS ignoram preload="auto" até interagir).
-    try {
-      video.load()
-    } catch {
-      /* ignora */
+
+    // ── POR QUÉ YA NO SE LLAMA A load() AQUÍ ─────────────────────────────
+    // Esto arrancaba la descarga de TODOS los vídeos de las temporadas nada
+    // más entrar, estuvieran en pantalla o no, y con preload="auto", o sea
+    // enteros. Cuatro o cinco vídeos compitiendo a la vez en un teléfono es
+    // exactamente lo que hacía que los banners tardaran en aparecer.
+    //
+    // Ahora la descarga empieza cuando el vídeo entra en pantalla, justo
+    // antes de tocarlo. El de arriba —el único que se ve al abrir— sigue
+    // cargando de inmediato, porque su observador dispara al montar.
+    let arrancado = false
+    const arrancar = () => {
+      if (arrancado) return
+      arrancado = true
+      try { video.load() } catch { /* ignora */ }
     }
 
     if (typeof IntersectionObserver === "undefined") {
+      arrancar()
       playMuted()
       return () => {
         video.removeEventListener("loadeddata", onLoaded)
@@ -474,12 +485,15 @@ function SeasonVideo({ src }: { src: string }) {
       ([entry]) => {
         visible = entry.isIntersecting
         if (entry.isIntersecting) {
+          arrancar()
           playMuted()
         } else {
           video.pause()
         }
       },
-      { threshold: [0, 0.25] }, // toca assim que aparece no viewport
+      // rootMargin: se empieza a traer un poco antes de que asome, para que
+      // al deslizar ya esté ahí en vez de aparecer en negro.
+      { threshold: [0, 0.25], rootMargin: "200px" },
     )
     observer.observe(video)
     return () => {
@@ -518,7 +532,11 @@ function SeasonVideo({ src }: { src: string }) {
       muted
       loop
       playsInline
-      preload="auto"
+      /* "metadata" y no "auto": basta para pintar el primer fotograma, que
+         es lo único que se ve hasta que el vídeo entra en pantalla. Con
+         "auto" el navegador se traía los vídeos completos de todas las
+         temporadas antes de que la página terminara de dibujarse. */
+      preload="metadata"
       // iOS antigo precisa do atributo com prefixo pra tocar inline (sem
       // entrar em fullscreen). React repassa atributos desconhecidos.
       {...{ "webkit-playsinline": "true" }}

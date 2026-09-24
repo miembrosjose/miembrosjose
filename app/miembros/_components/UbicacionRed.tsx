@@ -154,7 +154,19 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
       }
       setShowCity(d.show_city)
       setNuncaEligio(false)
-      setMsg({ ok: true, text: "Ubicación guardada." })
+      // ── DECIR SI SE VA A VER, NO SOLO QUE SE GUARDÓ ────────────────────
+      // Antes siempre ponía «Ubicación guardada», incluso cuando la persona
+      // no había elegido ciudad o había dejado el interruptor apagado: se
+      // guardaba de verdad, pero seguía sin aparecer en el mapa y nada se lo
+      // decía. Quien luego no se veía creía que había un fallo.
+      setMsg({
+        ok: true,
+        text: d.show_city
+          ? "Guardado. Ya apareces en el mapa y en el directorio."
+          : !ciudad
+            ? "Guardado, pero elige también tu ciudad: sin ella no apareces en el mapa."
+            : "Guardado. No aparecerás en el mapa hasta que actives «Mostrar mi ciudad».",
+      })
       onSaved?.({
         country_code: pais,
         country_name: paises.find((p) => p.code === pais)?.name || pais,
@@ -306,7 +318,17 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
         </div>
       )}
 
-      {/* Privacidad */}
+      {/* Privacidad.
+          Antes solo aparecía tras elegir ciudad, así que quien guardaba con el
+          país nada más no llegaba a ver que existía este interruptor —ni que
+          sin él no se ve a nadie—. Ahora se enseña siempre; sin ciudad queda
+          desactivado y dice por qué. */}
+      {!ciudad && (
+        <p className="text-[11px] leading-relaxed text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
+          Elige tu ciudad para poder aparecer en el mapa de la Red. Después decides
+          si se muestra o no.
+        </p>
+      )}
       {ciudad && (
         <label className="flex cursor-pointer items-start gap-3 border border-[#1a1a24] bg-[#12121a]/40 p-4">
           <input

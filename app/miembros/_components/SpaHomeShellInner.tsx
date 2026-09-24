@@ -8,7 +8,6 @@ import dynamic from "next/dynamic"
 import { Navbar } from "./Navbar"
 import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
-import { Leaderboard } from "./Leaderboard"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
 import { isNumerologiaToolProduct, isLugaresToolProduct, isCodigoOrigenToolProduct, isCartografiaToolProduct } from "../_lib/tool-products"
@@ -857,7 +856,7 @@ function ViewInicio({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// VIEW: COMUNIDAD (Foro + Leaderboard sidebar)
+// VIEW: COMUNIDAD (redirección)
 // ─────────────────────────────────────────────────────────────────────────
 
 /**

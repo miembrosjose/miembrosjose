@@ -397,7 +397,13 @@ export function ViewMessages() {
     <div className={styles.wrap}>
       {/* SIDEBAR */}
       <aside className={`${styles.sidebar} ${activeUserId ? styles.hidden : ""}`}>
+        {/* Esta pantalla no tenía salida. Se entra por el icono de la barra
+            y, una vez dentro, lo único que quedaba era el botón de atrás del
+            navegador. En un teléfono, eso es quedarse encerrado. */}
         <div className={styles.sidebarHeader}>
+          <button type="button" className={styles.salir} onClick={() => setView("red")}>
+            <ArrowLeft size={16} aria-hidden /> Volver
+          </button>
           <p className={styles.sidebarTitle}>Mensajes</p>
         </div>
         {threads.length === 0 ? (

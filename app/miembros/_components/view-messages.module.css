@@ -23,7 +23,10 @@
 }
 
 .sidebarHeader {
-  padding: 1.25rem 1.25rem 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.25rem 0.875rem;
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
@@ -300,13 +303,40 @@
 
 .composer {
   flex: 0 0 auto;
-  padding: 0.75rem 1rem;
+  /* Pegado abajo del panel pase lo que pase.
+     Con el teclado abierto, algunos navegadores de móvil no encogen la altura
+     de la ventana, así que el campo de escribir se quedaba flotando en mitad
+     de la pantalla con un vacío enorme encima. Así queda siempre al borde de
+     su panel, que es donde se espera encontrarlo. */
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border-subtle);
   display: flex;
   gap: 0.625rem;
   align-items: flex-end;
-  background: rgba(10, 10, 15, 0.6);
+  background: rgba(10, 10, 15, 0.92);
+  backdrop-filter: blur(10px);
 }
+
+/* Salir de Mensajes. */
+.salir {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0.35rem 0.75rem 0.35rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.salir:hover { border-color: rgba(167, 139, 202, 0.5); }
 
 .composerInput {
   flex: 1;
