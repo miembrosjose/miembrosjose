@@ -63,7 +63,7 @@ export async function uploadToR2(params: {
     await bucket.put(params.key, cuerpo, {
       httpMetadata: {
         contentType: params.contentType,
-        cacheControl: "public, max-age=31536000, immutable",
+        cacheControl: CACHE_LARGA,
       },
     })
   } else {
@@ -124,6 +124,21 @@ async function sha256Hex(dato: Uint8Array | string): Promise<string> {
   return hex(await crypto.subtle.digest("SHA-256", bytes as unknown as ArrayBuffer))
 }
 
+/**
+ * Cuánto puede guardarse el navegador un archivo subido.
+ *
+ * Un año, y marcado como inmutable. Es seguro porque cada subida genera una
+ * clave nueva —`generateKey` mete un identificador único—, así que un archivo
+ * con esta dirección nunca cambia de contenido: o está, o se sustituye por
+ * otro con otra dirección.
+ *
+ * Sin esta cabecera, el navegador vuelve a pedir el banner ENTERO en cada
+ * visita aunque ya lo tenga. El camino del binding de R2 sí la ponía; este,
+ * el de credenciales, no. Los archivos subidos por aquí se re-descargaban
+ * siempre.
+ */
+const CACHE_LARGA = "public, max-age=31536000, immutable"
+
 async function peticionFirmada(
   metodo: "PUT" | "DELETE",
   key: string,
@@ -148,6 +163,7 @@ async function peticionFirmada(
     "x-amz-date": ahora,
   }
   if (contentType) cabeceras["content-type"] = contentType
+  if (metodo === "PUT") cabeceras["cache-control"] = CACHE_LARGA
 
   const nombres = Object.keys(cabeceras).sort()
   const canonicas = nombres.map((n) => `${n}:${cabeceras[n]}\n`).join("")
