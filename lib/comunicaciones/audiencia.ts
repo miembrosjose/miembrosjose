@@ -32,6 +32,7 @@ export type MotivoExclusion =
   | "no_llego_a_temporada"
   | "sin_ese_rol"
   | "sin_esa_insignia"
+  | "no_termino_temporada"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -56,6 +57,7 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   no_llego_a_temporada: "Todavía no ha llegado a esa temporada",
   sin_ese_rol: "No tiene el rol pedido",
   sin_esa_insignia: "No ha desbloqueado esa insignia",
+  no_termino_temporada: "Todavía no ha terminado esa temporada",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -98,6 +100,25 @@ export type Destinatario = { userId: string; email: string; nombre: string | nul
  * consultas para enseñar un número.
  */
 async function temporadaAlcanzada(): Promise<Map<string, number>> {
+  return (await avanceDeTodos()).alcanzada
+}
+
+/**
+ * El avance de todo el padrón, en una sola lectura.
+ *
+ * Devuelve dos cosas que se parecen y no son iguales:
+ *
+ *   alcanzada   la temporada más alta que ha tocado — vale con un capítulo
+ *   completadas las que ha visto ENTERAS
+ *
+ * Entre una y otra está toda la diferencia entre «sigue, que viene la 4» y
+ * «felicidades, acabaste el camino». Se calculan juntas porque salen de la
+ * misma tabla y leerla dos veces sería leer lo mismo dos veces.
+ */
+async function avanceDeTodos(): Promise<{
+  alcanzada: Map<string, number>
+  completadas: Map<string, Set<number>>
+}> {
   const admin = getSupabaseAdmin()
   const mayor = new Map<string, number>()
   const anotar = (uid: string, n: number) => {
@@ -106,25 +127,79 @@ async function temporadaAlcanzada(): Promise<Map<string, number>> {
     if (ya === undefined || n > ya) mayor.set(uid, n)
   }
 
-  // Por capítulos vistos.
+  // ── Cuántos capítulos tiene cada temporada ────────────────────────────
+  // Se cuentan las filas reales de `episodes`; `seasons.episodes` queda de
+  // respaldo por si una temporada está declarada y aún sin cargar. Es el mismo
+  // criterio que usa el cálculo de insignias, y tiene que serlo: si aquí se
+  // contara distinto, «terminó la Temporada 3» y la insignia de terminarla
+  // dirían cosas diferentes de la misma persona.
+  const [{ data: temporadasFilas }, { data: capitulos }] = await Promise.all([
+    admin.from("seasons").select("id, num, episodes"),
+    admin.from("episodes").select("season_id"),
+  ])
+
+  const numPorSeasonId = new Map<string, number>()
+  const declarados = new Map<number, number>()
+  for (const s of (temporadasFilas || []) as Array<{ id: string; num: number; episodes: number | null }>) {
+    numPorSeasonId.set(s.id, Number(s.num))
+    if (s.episodes) declarados.set(Number(s.num), Number(s.episodes))
+  }
+
+  const reales = new Map<number, number>()
+  for (const c of (capitulos || []) as Array<{ season_id: string }>) {
+    const n = numPorSeasonId.get(c.season_id)
+    if (n) reales.set(n, (reales.get(n) || 0) + 1)
+  }
+
+  const totalDe = (n: number) => reales.get(n) || declarados.get(n) || 0
+
+  // ── Qué ha visto cada quien ───────────────────────────────────────────
+  // Por (temporada, capítulo) y no por número de filas: la misma persona puede
+  // tener dos filas del mismo capítulo, y contarlas daría por terminada una
+  // temporada vista a medias.
+  const vistos = new Map<string, Map<number, Set<number>>>()
+
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await admin
       .from("user_episode_progress")
-      .select("user_id, season_num")
+      .select("user_id, season_num, episode_num")
       .range(desde, desde + 999)
     if (error) break
-    const lote = (data || []) as Array<{ user_id: string; season_num: number }>
-    for (const f of lote) anotar(f.user_id, Number(f.season_num))
+    const lote = (data || []) as Array<{ user_id: string; season_num: number; episode_num: number }>
+    for (const f of lote) {
+      anotar(f.user_id, Number(f.season_num))
+      const suyas = vistos.get(f.user_id) ?? new Map<number, Set<number>>()
+      const cap = suyas.get(Number(f.season_num)) ?? new Set<number>()
+      cap.add(Number(f.episode_num))
+      suyas.set(Number(f.season_num), cap)
+      vistos.set(f.user_id, suyas)
+    }
     if (lote.length < 1000) break
   }
 
-  // Por acceso concedido. El número de temporada es lo estable entre entornos,
-  // no su identificador, así que se traduce con la tabla seasons.
-  const { data: temporadas } = await admin.from("seasons").select("id, num")
-  const numPorId = new Map<string, number>()
-  for (const s of (temporadas || []) as Array<{ id: string; num: number }>) {
-    numPorId.set(s.id, Number(s.num))
+  const completadas = new Map<string, Set<number>>()
+  for (const [uid, suyas] of vistos) {
+    const hechas = new Set<number>()
+    for (const [temporada, caps] of suyas) {
+      const total = totalDe(temporada)
+      // Una temporada sin capítulos cargados no se puede haber terminado. Sin
+      // esta guarda, 0 >= 0 la daría por completa para todo el mundo.
+      if (total > 0 && caps.size >= total) hechas.add(temporada)
+    }
+    if (hechas.size > 0) completadas.set(uid, hechas)
   }
+
+  await completarConAcceso(mayor, numPorSeasonId)
+  return { alcanzada: mayor, completadas }
+}
+
+/** El acceso concedido también cuenta como «alcanzada». */
+async function completarConAcceso(
+  mayor: Map<string, number>,
+  numPorSeasonId: Map<string, number>,
+): Promise<void> {
+  const admin = getSupabaseAdmin()
+
   for (let desde = 0; ; desde += 1000) {
     const { data, error } = await admin
       .from("user_season_access")
@@ -133,13 +208,13 @@ async function temporadaAlcanzada(): Promise<Map<string, number>> {
     if (error) break
     const lote = (data || []) as Array<{ user_id: string; season_id: string }>
     for (const f of lote) {
-      const n = numPorId.get(f.season_id)
-      if (n) anotar(f.user_id, n)
+      const n = numPorSeasonId.get(f.season_id)
+      if (!n) continue
+      const ya = mayor.get(f.user_id)
+      if (ya === undefined || n > ya) mayor.set(f.user_id, n)
     }
     if (lote.length < 1000) break
   }
-
-  return mayor
 }
 
 /**
@@ -213,6 +288,13 @@ export const ETIQUETA_ROL: Record<string, string> = {
 export function describirAudiencia(a: Audiencia): string {
   const partes: string[] = []
   if (a.temporadaMin) partes.push("que llegaron a la Temporada " + a.temporadaMin + " o más")
+  if (a.temporadaCompletada) {
+    partes.push(
+      a.temporadaCompletada >= 4
+        ? "que completaron el camino entero"
+        : "que terminaron la Temporada " + a.temporadaCompletada,
+    )
+  }
   if (a.roles?.length) {
     partes.push("con rol de " + a.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(" o "))
   }
@@ -252,11 +334,20 @@ export async function resolverAudiencia(
   const insigniasPedidas = (audiencia.insignias || []).filter(Boolean)
   const pideInsignia = insigniasPedidas.length > 0
 
-  const [avance, roles, insignias] = await Promise.all([
-    pideTemporada ? temporadaAlcanzada() : Promise.resolve(new Map<string, number>()),
+  const completadaMin = Number(audiencia.temporadaCompletada)
+  const pideCompletada = Number.isFinite(completadaMin) && completadaMin > 0
+
+  const avanceCompleto = (pideTemporada || pideCompletada)
+    ? await avanceDeTodos()
+    : { alcanzada: new Map<string, number>(), completadas: new Map<string, Set<number>>() }
+
+  const [, roles, insignias] = await Promise.all([
+    Promise.resolve(null),
     pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
     pideInsignia ? insigniasPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
   ])
+  const avance = avanceCompleto.alcanzada
+  const completadas = avanceCompleto.completadas
 
   // ── El padrón ───────────────────────────────────────────────────────────
   // Por páginas, porque una tabla puede crecer más que el límite por defecto
@@ -296,6 +387,7 @@ export async function resolverAudiencia(
     sin_correo: 0, correo_invalido: 0, baja_total: 0,
     preferencia_apagada: 0, duplicado: 0,
     no_llego_a_temporada: 0, sin_ese_rol: 0, sin_esa_insignia: 0,
+    no_termino_temporada: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -313,6 +405,10 @@ export async function resolverAudiencia(
     // de verdad explica por qué no le llega.
     if (pideTemporada && (avance.get(f.id) ?? 0) < temporadaMin) {
       cuenta.no_llego_a_temporada++
+      continue
+    }
+    if (pideCompletada && !(completadas.get(f.id)?.has(completadaMin))) {
+      cuenta.no_termino_temporada++
       continue
     }
     if (pideRol) {

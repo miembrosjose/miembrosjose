@@ -52,11 +52,22 @@ function tituloSugerido(tipo: string, asunto: string): string {
  * comunicación imposible de enviar sin decir por qué.
  */
 function revisarAudiencia(v: unknown): string | null {
-  const a = v as { kind?: string; temporadaMin?: unknown; roles?: unknown; insignias?: unknown } | null
+  const a = v as {
+    kind?: string
+    temporadaMin?: unknown
+    temporadaCompletada?: unknown
+    roles?: unknown
+    insignias?: unknown
+  } | null
   if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
 
   if (a.temporadaMin != null) {
     const n = Number(a.temporadaMin)
+    if (!Number.isInteger(n) || n < 1 || n > 4) return "Esa temporada no existe"
+  }
+
+  if (a.temporadaCompletada != null) {
+    const n = Number(a.temporadaCompletada)
     if (!Number.isInteger(n) || n < 1 || n > 4) return "Esa temporada no existe"
   }
 

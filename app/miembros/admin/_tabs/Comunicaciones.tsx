@@ -71,6 +71,7 @@ const ZONAS = [
 type Audiencia = {
   kind: "todos"
   temporadaMin?: number | null
+  temporadaCompletada?: number | null
   roles?: string[] | null
   insignias?: string[] | null
 }
@@ -547,6 +548,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [paso, setPaso] = useState<null | "audiencia" | "resumen">(null)
+  const [ultimaPrueba, setUltimaPrueba] = useState<string | null>(null)
 
   const cargar = useCallback(async () => {
     try {
@@ -646,13 +648,23 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
 
       {c.status === "sent" && <Resultados id={id} previstos={c.recipients_estimated} />}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+      {/* ── EL LAYOUT ───────────────────────────────────────────────────────
+          Dos columnas en escritorio: lo que se escribe a la izquierda, lo que
+          va a llegar a la derecha. La derecha se queda pegada al desplazar,
+          porque la pregunta que uno se hace mientras escribe es «¿cómo está
+          quedando?», y bajar a mirarla y volver rompe el hilo.
+
+          En móvil se apilan y el preview va primero de la lista de la derecha:
+          ahí no cabe tenerlo siempre a la vista, pero sí que esté cerca. */}
+      <NavSecciones editable={editable} />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <div className="space-y-5">
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
         </div>
-        <div className="space-y-5">
+        <div className="space-y-5 lg:sticky lg:top-4">
           <Previsualizacion c={c} />
-          {editable && <Prueba id={id} asunto={c.subject} />}
+          {editable && <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />}
         </div>
       </div>
 
@@ -696,13 +708,60 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
         />
       )}
       {paso === "resumen" && (
-        <ResumenFinal c={c} onCerrar={() => setPaso(null)} onEnviada={() => { setPaso(null); void cargar() }} />
+        <ResumenFinal
+          c={c}
+          ultimaPrueba={ultimaPrueba}
+          onCerrar={() => setPaso(null)}
+          onEnviada={() => { setPaso(null); void cargar() }}
+        />
       )}
     </div>
   )
 }
 
 // ── Los campos ─────────────────────────────────────────────────────────────
+
+/**
+ * El índice de la pantalla.
+ *
+ * ── POR QUÉ ESTO Y NO UN ASISTENTE POR PASOS ──────────────────────────────
+ * Un asistente obliga a pasar por todo en un orden, y escribir una comunicación
+ * no funciona así: se escribe el titular, se cambia el asunto, se vuelve al
+ * cuerpo, se mira la audiencia, se vuelve a tocar el titular. Un asistente
+ * convertiría eso en diez clics.
+ *
+ * Esto es lo contrario: la pantalla sigue siendo una, se puede escribir en
+ * cualquier orden, y esto solo lleva de un sitio a otro sin perder lo demás de
+ * vista. Se queda pegado arriba porque su utilidad es justamente estar cuando
+ * uno ya ha bajado mucho.
+ */
+const SECCIONES = [
+  { id: "bandeja", etiqueta: "Bandeja" },
+  { id: "correo", etiqueta: "El correo" },
+  { id: "boton", etiqueta: "Botón" },
+  { id: "audiencia", etiqueta: "A quién va" },
+]
+
+function NavSecciones({ editable }: { editable: boolean }) {
+  if (!editable) return null
+  return (
+    <nav className="sticky top-0 z-10 -mx-4 flex gap-1 overflow-x-auto border-b border-[#14141e] bg-[#000000]/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
+      {SECCIONES.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          onClick={() => {
+            const el = document.getElementById(`seccion-${s.id}`)
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+          }}
+          className="shrink-0 px-3 py-1.5 text-[11px] uppercase tracking-[0.15em] text-[#7a7a8a] transition-colors hover:text-[#c3b2e0]"
+        >
+          {s.etiqueta}
+        </button>
+      ))}
+    </nav>
+  )
+}
 
 function Campos({
   c, editar, editable, llevaFecha,
@@ -721,7 +780,7 @@ function Campos({
 
   return (
     <>
-      <Bloque titulo="En la bandeja de entrada" nota="Lo único que se ve antes de abrir el correo.">
+      <Bloque id="bandeja" titulo="En la bandeja de entrada" nota="Lo único que se ve antes de abrir el correo.">
         <div>
           <label className={labelCls}>Asunto</label>
           <input type="text" placeholder="Nueva transmisión disponible" {...campo("subject")} />
@@ -732,7 +791,7 @@ function Campos({
         </div>
       </Bloque>
 
-      <Bloque titulo="El correo">
+      <Bloque id="correo" titulo="El correo">
         <div>
           <label className={labelCls}>Eyebrow</label>
           <input type="text" placeholder="Nuevo en Los 144.000" {...campo("eyebrow")} />
@@ -761,7 +820,7 @@ function Campos({
         />
       </Bloque>
 
-      <Bloque titulo="El botón">
+      <Bloque id="boton" titulo="El botón">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelCls}>Texto</label>
@@ -865,6 +924,7 @@ function Audiencias({
     editar("audience", {
       kind: "todos",
       temporadaMin: a.temporadaMin ?? null,
+      temporadaCompletada: a.temporadaCompletada ?? null,
       roles: a.roles ?? null,
       insignias: a.insignias ?? null,
       ...parcial,
@@ -886,7 +946,7 @@ function Audiencias({
     .filter((g) => g.items.length > 0)
 
   return (
-    <Bloque titulo="A quién va" nota="Sin tocar nada, va a todos. Cada filtro que añades, a menos gente.">
+    <Bloque id="audiencia" titulo="A quién va" nota="Sin tocar nada, va a todos. Cada filtro que añades, a menos gente.">
       <div>
         <label className={labelCls}>Por avance en el camino</label>
         <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Por dónde va en el recorrido.</p>
@@ -906,8 +966,47 @@ function Audiencias({
           ))}
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-          «Temporada 3+» es quien ha llegado a la tercera o más allá: por haber visto
-          algún capítulo de ella, o por tener su acceso.
+          «Temporada 3+» es quien ha <strong className="text-[#8a8fa8]">llegado</strong> a la
+          tercera o más allá: basta un capítulo, o tener su acceso.
+        </p>
+      </div>
+
+      {/* ── TERMINAR NO ES LLEGAR ──────────────────────────────────────────
+          «Llegó a la 3» incluye a quien vio el primer capítulo y lo dejó.
+          «Terminó la 3» es quien la vio entera. Entre las dos cosas está toda
+          la diferencia entre «sigue, que viene la 4» y «felicidades». */}
+      <div>
+        <label className={labelCls}>Por temporada terminada</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Quién la vio <strong className="text-[#8a8fa8]">entera</strong>. Es lo que sirve para
+          felicitar, o para invitar a seguir con la siguiente.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla activa={!a.temporadaCompletada} onClick={() => cambiar({ temporadaCompletada: null })} desactivada={!editable}>
+            Da igual
+          </Pastilla>
+          {[1, 2, 3].map((n) => (
+            <Pastilla
+              key={n}
+              activa={a.temporadaCompletada === n}
+              onClick={() => cambiar({ temporadaCompletada: n })}
+              desactivada={!editable}
+            >
+              Terminó la {n}
+            </Pastilla>
+          ))}
+          <Pastilla
+            activa={a.temporadaCompletada === 4}
+            onClick={() => cambiar({ temporadaCompletada: 4 })}
+            desactivada={!editable}
+          >
+            Completó el camino
+          </Pastilla>
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+          Se cuenta contra los capítulos que tiene cargados cada temporada, con el mismo
+          criterio que las insignias: si aquí contara distinto, «terminó la 3» y la insignia
+          de terminarla dirían cosas distintas de la misma persona.
         </p>
       </div>
 
@@ -1008,7 +1107,7 @@ function Audiencias({
         <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a, filtros)}</p>
         {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
             entre mandar a doscientos y mandar a tres. */}
-        {(a.temporadaMin || roles.length > 0 || insignias.length > 0) && (
+        {(a.temporadaMin || a.temporadaCompletada || roles.length > 0 || insignias.length > 0) && (
           <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
             Entre bloques distintos se cumple <strong className="text-[#c3b2e0]">todo</strong>:
             hay que tener el avance <em>y</em> el rol <em>y</em> la insignia. Dentro de un
@@ -1047,6 +1146,13 @@ function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   if (!a) return "Todos los miembros activos"
   const partes: string[] = []
   if (a.temporadaMin) partes.push(`que llegaron a la Temporada ${a.temporadaMin} o más`)
+  if (a.temporadaCompletada) {
+    partes.push(
+      a.temporadaCompletada >= 4
+        ? "que completaron el camino entero"
+        : `que terminaron la Temporada ${a.temporadaCompletada}`,
+    )
+  }
   if (a.roles?.length) {
     partes.push(`con rol de ${a.roles.map((r) => ROLES.find((x) => x.id === r)?.etiqueta ?? r).join(" o ")}`)
   }
@@ -1226,9 +1332,16 @@ function medir(archivo: File): Promise<{ ancho: number; alto: number } | null> {
   })
 }
 
-function Bloque({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
+function Bloque({ id, titulo, nota, children }: {
+  id?: string
+  titulo: string
+  nota?: string
+  children: React.ReactNode
+}) {
   return (
-    <section className="border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
+    // `scroll-mt` deja hueco para la barra pegada de arriba: sin eso, saltar a
+    // una sección la deja justo debajo del índice y no se ve su título.
+    <section id={id ? `seccion-${id}` : undefined} className="scroll-mt-16 border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
       <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">{titulo}</h3>
       {nota && <p className="mt-1.5 text-xs leading-relaxed text-[#6a6a7a]">{nota}</p>}
       <div className="mt-4 space-y-4">{children}</div>
@@ -1323,7 +1436,11 @@ function Previsualizacion({ c }: { c: Comunicacion }) {
 
 const CLAVE_PRUEBA = "los144k_correos_prueba"
 
-function Prueba({ id, asunto }: { id: string; asunto: string }) {
+function Prueba({ id, asunto, onEnviada }: {
+  id: string
+  asunto: string
+  onEnviada?: (cuando: string) => void
+}) {
   const [direcciones, setDirecciones] = useState("")
   const [enviando, setEnviando] = useState(false)
   const [hecho, setHecho] = useState<string | null>(null)
@@ -1351,6 +1468,9 @@ function Prueba({ id, asunto }: { id: string; asunto: string }) {
       if (!r.ok) throw new Error(j?.error || "No se pudo enviar")
       try { localStorage.setItem(CLAVE_PRUEBA, direcciones) } catch { /* da igual */ }
       setHecho(new Date(j.cuando).toLocaleTimeString("es-419", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
+      // El resumen final lo enseña: «última prueba, hace tres minutos» es la
+      // diferencia entre enviar con confianza y enviar con esperanza.
+      onEnviada?.(j.cuando)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo enviar")
     } finally {
@@ -1485,9 +1605,10 @@ function EnsayoAudiencia({ id, onCerrar, onSeguir }: { id: string; onCerrar: () 
 // ── El resumen final ───────────────────────────────────────────────────────
 
 function ResumenFinal({
-  c, onCerrar, onEnviada,
+  c, ultimaPrueba, onCerrar, onEnviada,
 }: {
   c: Comunicacion
+  ultimaPrueba: string | null
   onCerrar: () => void
   onEnviada: () => void
 }) {
@@ -1543,7 +1664,19 @@ function ResumenFinal({
             etiqueta="Envío"
             valor={modo === "ahora" ? "Ahora" : fecha && hora ? `${fecha} · ${hora} · ${zona.split("/").pop()?.replace(/_/g, " ")}` : "—"}
           />
+          <Dato
+            etiqueta="Prueba"
+            valor={ultimaPrueba ? `Enviada a las ${new Date(ultimaPrueba).toLocaleTimeString("es-419", { hour: "2-digit", minute: "2-digit" })}` : "Ninguna en esta sesión"}
+          />
         </dl>
+
+        {/* No lo impide —a veces se duplica algo ya probado— pero lo dice. */}
+        {!ultimaPrueba && (
+          <p className="text-xs leading-relaxed text-[#c9a86b]">
+            No has enviado ninguna prueba desde que abriste esta comunicación. Mandarte una
+            antes cuesta un minuto y es la única forma de ver cómo llega de verdad.
+          </p>
+        )}
 
         <div className="flex gap-2">
           {([["ahora", "Enviar ahora", Send], ["programar", "Programar", Calendar]] as const).map(([m, txt, Icono]) => (

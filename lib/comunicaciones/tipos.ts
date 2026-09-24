@@ -211,6 +211,18 @@ export type Audiencia = {
    */
   temporadaMin?: number | null
   /**
+   * Quien haya TERMINADO esta temporada.
+   *
+   * ── NO ES LO MISMO QUE temporadaMin ─────────────────────────────────────
+   * «Llegó a la 3» incluye a quien vio el primer capítulo y lo dejó.
+   * «Terminó la 3» es quien la vio entera. Entre las dos cosas está toda la
+   * diferencia entre «sigue, que viene la 4» y «felicidades, acabaste».
+   *
+   * Con 4 aquí se obtiene lo que hacía falta: quién ha completado el camino
+   * entero y puede pasar a los Objetivos.
+   */
+  temporadaCompletada?: number | null
+  /**
    * Solo quien tenga alguno de estos roles de La Red.
    *
    * Vacío o ausente es «da igual el rol», no «sin rol». Un filtro que exige
