@@ -24,7 +24,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   AlertTriangle, Archive, ArrowLeft, Calendar, Check, Clock, Copy, ImagePlus,
-  Loader2, Mail, Monitor, Plus, Search, Send, Smartphone, Trash2, Undo2, Users, X,
+  Loader2, Mail, Monitor, MoreVertical, Plus, Search, Send, Smartphone, Trash2,
+  Undo2, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
 
@@ -265,7 +266,9 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
               Nada coincide con «{busca}».
             </p>
           ) : (
-            filtradas.map((f) => <FilaComunicacion key={f.id} f={f} onAbrir={onAbrir} />)
+            filtradas.map((f) => (
+              <FilaComunicacion key={f.id} f={f} onAbrir={onAbrir} onCambio={cargar} />
+            ))
           )}
         </div>
       )}
@@ -275,17 +278,23 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
   )
 }
 
-function FilaComunicacion({ f, onAbrir }: { f: Fila; onAbrir: (id: string) => void }) {
+function FilaComunicacion({ f, onAbrir, onCambio }: {
+  f: Fila
+  onAbrir: (id: string) => void
+  onCambio: () => void
+}) {
   const est = ESTADOS[f.status] ?? ESTADOS.draft
   const tipo = TIPOS.find((t) => t.id === f.type)
 
   return (
-    <button
-      type="button"
-      onClick={() => onAbrir(f.id)}
-      className="flex w-full flex-col gap-3 border border-[#1a1a24] bg-[#0d0d16]/60 p-4 text-left transition-colors hover:border-[#2f2f42] sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div className="min-w-0 flex-1">
+    // Una fila, no un botón gigante: dentro hay otro botón —el menú— y anidar
+    // botones no es válido ni se comporta bien con el teclado.
+    <div className="flex flex-col gap-3 border border-[#1a1a24] bg-[#0d0d16]/60 p-4 transition-colors hover:border-[#2f2f42] sm:flex-row sm:items-center sm:justify-between">
+      <button
+        type="button"
+        onClick={() => onAbrir(f.id)}
+        className="min-w-0 flex-1 text-left"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <span className={`border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] ${est.cls}`}>
             {est.etiqueta}
@@ -304,16 +313,172 @@ function FilaComunicacion({ f, onAbrir }: { f: Fila; onAbrir: (id: string) => vo
               ? `Programada para el ${fechaCorta(f.scheduled_at, f.scheduled_timezone)}`
               : `Creada el ${fechaCorta(f.created_at)}`}
         </p>
-      </div>
+      </button>
 
-      <div className="flex shrink-0 items-center gap-5 text-right">
+      <div className="flex shrink-0 items-center gap-5">
         {f.recipients_estimated != null && (
           <Cifra valor={f.recipients_estimated} etiqueta="destinatarios" />
         )}
         {f.status === "sent" && f.metrics?.aperturas != null && (
           <Cifra valor={f.metrics.aperturas} etiqueta="aperturas" />
         )}
+        <MenuFila f={f} onCambio={onCambio} />
       </div>
+    </div>
+  )
+}
+
+/**
+ * Las acciones de una fila, detrás de tres puntos.
+ *
+ * ── POR QUÉ UN MENÚ Y NO BOTONES ──────────────────────────────────────────
+ * Son hasta cuatro acciones por fila y siete filas en pantalla. Veintiocho
+ * botones visibles convierten una lista en un panel de mandos, y lo que uno
+ * quiere hacer casi siempre es ABRIR la comunicación — que es lo que hace el
+ * clic en la fila. El menú es para lo demás.
+ *
+ * Y lo demás importa: sin esto, para borrar un borrador había que entrar en
+ * él, bajar hasta el final y volver. Nueve borradores de prueba se apilan en
+ * una tarde.
+ */
+function MenuFila({ f, onCambio }: { f: Fila; onCambio: () => void }) {
+  const [abierto, setAbierto] = useState(false)
+  const [ocupado, setOcupado] = useState(false)
+  const caja = useRef<HTMLDivElement | null>(null)
+
+  // Se cierra al tocar fuera o al pulsar Escape. Un menú que solo se cierra
+  // con su propio botón es un menú que se queda abierto.
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: MouseEvent) => {
+      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false)
+    }
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setAbierto(false) }
+    document.addEventListener("mousedown", fuera)
+    window.addEventListener("keydown", tecla)
+    return () => {
+      document.removeEventListener("mousedown", fuera)
+      window.removeEventListener("keydown", tecla)
+    }
+  }, [abierto])
+
+  const llamar = async (url: string, opciones?: RequestInit, confirmar?: string) => {
+    if (confirmar && !window.confirm(confirmar)) return
+    setOcupado(true)
+    try {
+      const r = await fetch(url, { credentials: "include", ...opciones })
+      if (!r.ok) {
+        const j = await r.json().catch(() => null)
+        window.alert(j?.error || "No se pudo completar la acción")
+        return
+      }
+      setAbierto(false)
+      onCambio()
+    } finally { setOcupado(false) }
+  }
+
+  const base = `/api/admin/comunicaciones/${f.id}`
+  const esBorrador = f.status === "draft" || f.status === "failed"
+  const acabada = ["sent", "cancelled", "failed"].includes(f.status)
+
+  return (
+    <div ref={caja} className="relative">
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-label="Más acciones"
+        aria-expanded={abierto}
+        disabled={ocupado}
+        className="border border-transparent p-2 text-[#5a5a6a] transition-colors hover:border-[#2f2f42] hover:text-[#a0a0b0] disabled:opacity-40"
+      >
+        {ocupado ? <Loader2 size={16} className="animate-spin" /> : <MoreVertical size={16} />}
+      </button>
+
+      {abierto && (
+        <div className="absolute right-0 top-full z-20 mt-1 w-56 border border-[#1f1f2c] bg-[#0a0a14] py-1 shadow-xl">
+          <Opcion icono={Copy} onClick={() => llamar(`${base}/duplicar`, { method: "POST" })}>
+            Duplicar
+          </Opcion>
+
+          {f.status === "scheduled" && (
+            <Opcion
+              icono={X}
+              onClick={() => llamar(`${base}/cancelar`, { method: "POST" }, "¿Cancelar el envío programado?")}
+            >
+              Cancelar programación
+            </Opcion>
+          )}
+
+          {acabada && (
+            <Opcion
+              icono={Archive}
+              onClick={() => llamar(`${base}/archivar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ archivar: true }),
+              })}
+            >
+              Archivar
+            </Opcion>
+          )}
+
+          {f.status === "archived" && (
+            <Opcion
+              icono={Undo2}
+              onClick={() => llamar(`${base}/archivar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ archivar: false }),
+              })}
+            >
+              Devolver a Enviadas
+            </Opcion>
+          )}
+
+          {/* Borrar solo lo que nunca salió. Lo enviado se archiva: borrarlo no
+              borraría el correo, solo la memoria de haberlo mandado. */}
+          {esBorrador && (
+            <>
+              <div className="my-1 border-t border-[#14141e]" />
+              <Opcion
+                icono={Trash2}
+                peligro
+                onClick={() => llamar(
+                  base,
+                  { method: "DELETE" },
+                  `¿Borrar «${f.subject?.trim() || f.internal_title || "este borrador"}»?\n\nNo se puede deshacer.`,
+                )}
+              >
+                Borrar borrador
+              </Opcion>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Opcion({
+  icono: Icono, children, onClick, peligro,
+}: {
+  icono: typeof Copy
+  children: React.ReactNode
+  onClick: () => void
+  peligro?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors ${
+        peligro
+          ? "text-[#c07a7a] hover:bg-red-950/40 hover:text-red-400"
+          : "text-[#a0a0b0] hover:bg-[#14141e] hover:text-[#F3F6FA]"
+      }`}
+    >
+      <Icono size={13} className="shrink-0" />
+      {children}
     </button>
   )
 }

@@ -18,12 +18,30 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import {
   exigirAdmin, leerComunicacion, registrarEvento, soloEditable,
 } from "@/lib/comunicaciones/servidor"
-import { esEditable, esTipoValido } from "@/lib/comunicaciones/tipos"
+import { esEditable, esTipoValido, TIPOS, type TipoComunicacion } from "@/lib/comunicaciones/tipos"
 import { validarComunicacion } from "@/lib/comunicaciones/validacion"
 import { isNetworkRole } from "@/lib/red/roles"
 import { ACHIEVEMENTS } from "@/lib/achievements"
 
 export const dynamic = "force-dynamic"
+
+/** ¿El título sigue siendo el que puso la máquina al crearla? */
+function esTituloAutomatico(titulo: string, tipo: string): boolean {
+  const t = (titulo || "").trim()
+  if (!t) return true
+  if (t === `${TIPOS[tipo as TipoComunicacion]?.nombre} · sin título`) return true
+  // También lo son los que esta misma función generó antes, para que corregir
+  // el asunto vuelva a actualizarlo en vez de quedarse con el asunto viejo.
+  return t.startsWith(`${TIPOS[tipo as TipoComunicacion]?.nombre} · `) && / · \d{1,2} \w{3}$/.test(t)
+}
+
+/** «Sesión en vivo · Cierre de Libra · 24 sep» */
+function tituloSugerido(tipo: string, asunto: string): string {
+  const nombre = TIPOS[tipo as TipoComunicacion]?.nombre ?? "Comunicación"
+  const corto = asunto.length > 48 ? asunto.slice(0, 45).trimEnd() + "…" : asunto
+  const fecha = new Intl.DateTimeFormat("es-419", { day: "numeric", month: "short" }).format(new Date())
+  return `${nombre} · ${corto} · ${fecha}`
+}
 
 /**
  * La audiencia, comprobada aquí y no solo en la pantalla.
@@ -94,6 +112,20 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const cambios = soloEditable(body)
+
+  // ── EL TÍTULO INTERNO SE ESCRIBE SOLO MIENTRAS NADIE LO TOQUE ───────────
+  // Nace como «Sesión en vivo · sin título» y, si nadie lo cambia, así se
+  // queda. Con seis borradores abiertos la lista pasa a ser seis líneas
+  // idénticas y no hay forma de saber cuál es cuál sin abrirlas.
+  //
+  // En cuanto hay asunto, el título se compone con él. Solo mientras siga
+  // siendo el automático: en el momento en que se escribe uno a mano, deja de
+  // tocarse para siempre. Sobrescribir lo que alguien eligió es peor que
+  // dejarlo feo.
+  const asuntoNuevo = typeof cambios.subject === "string" ? cambios.subject.trim() : null
+  if (asuntoNuevo && esTituloAutomatico(actual.internal_title, actual.type) && !("internal_title" in cambios)) {
+    cambios.internal_title = tituloSugerido(actual.type, asuntoNuevo)
+  }
 
   if ("type" in cambios && !esTipoValido(cambios.type)) {
     return NextResponse.json({ error: "Tipo de comunicación desconocido" }, { status: 400 })
