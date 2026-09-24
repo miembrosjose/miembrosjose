@@ -62,7 +62,11 @@ const ICONOS: Record<string, React.ComponentType<{ size?: number; className?: st
   "preguntas-144000": HelpCircle,
 }
 
-export function ViewComunidad({ onAbrirEspacio }: { onAbrirEspacio: (slug: string) => void }) {
+export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
+  onAbrirEspacio: (slug: string) => void
+  /** Abre el espacio de esa conversación y la deja desplegada. */
+  onAbrirHilo: (slug: string, hiloId: string) => void
+}) {
   const [datos, setDatos] = useState<Datos | null>(null)
   const [cargando, setCargando] = useState(true)
 
@@ -155,7 +159,13 @@ export function ViewComunidad({ onAbrirEspacio }: { onAbrirEspacio: (slug: strin
           <p className={s.seccionKicker}>Destacadas</p>
           <div className={s.lista}>
             {datos.destacadas.map((h) => (
-              <HiloResumen key={h.id} hilo={h} espacios={datos.espacios} onAbrirEspacio={onAbrirEspacio} />
+              <HiloResumen
+                key={h.id}
+                hilo={h}
+                espacios={datos.espacios}
+                onAbrirEspacio={onAbrirEspacio}
+                onAbrir={(x) => abrirDonde(x, datos.espacios, onAbrirHilo)}
+              />
             ))}
           </div>
         </section>
@@ -207,13 +217,36 @@ export function ViewComunidad({ onAbrirEspacio }: { onAbrirEspacio: (slug: strin
         ) : (
           <div className={s.lista}>
             {datos.recientes.map((h) => (
-              <HiloResumen key={h.id} hilo={h} espacios={datos.espacios} onAbrirEspacio={onAbrirEspacio} />
+              <HiloResumen
+                key={h.id}
+                hilo={h}
+                espacios={datos.espacios}
+                onAbrirEspacio={onAbrirEspacio}
+                onAbrir={(x) => abrirDonde(x, datos.espacios, onAbrirHilo)}
+              />
             ))}
           </div>
         )}
       </section>
     </div>
   )
+}
+
+/**
+ * Lleva a una conversación desde una lista que cruza espacios.
+ *
+ * La portada enseña conversaciones de sitios distintos, así que abrirla es
+ * primero ir a su espacio. Si por lo que sea no se sabe de cuál es, no se
+ * hace nada: mejor un clic sin efecto que mandar a alguien a un sitio que no
+ * es el suyo.
+ */
+function abrirDonde(
+  hilo: { id: string; space_id?: string | null },
+  espacios: EspacioResumen[],
+  ir: (slug: string, hiloId: string) => void,
+) {
+  const espacio = espacios.find((e) => e.id === hilo.space_id)
+  if (espacio?.abierto) ir(espacio.slug, hilo.id)
 }
 
 /** «hace 12 min». Corto, porque va dentro de una línea ya cargada. */

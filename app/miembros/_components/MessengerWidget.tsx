@@ -192,9 +192,29 @@ export function MessengerWidget() {
     }
   }, [activeUserId, composerText, refetchThreads])
 
+  // Escape cierra el chat. Con el foco dentro del campo de escribir, la
+  // primera pulsación solo sale del campo: en el móvil, esconder el teclado
+  // emite un Escape que no ha escrito nadie.
+  useEffect(() => {
+    if (!open) return
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      const d = (e.target as HTMLElement | null) ?? document.activeElement
+      if (d instanceof HTMLElement && ["INPUT", "TEXTAREA"].includes(d.tagName)) {
+        d.blur()
+        return
+      }
+      setOpen(false)
+      setActiveUserId(null)
+    }
+    window.addEventListener("keydown", esc)
+    return () => window.removeEventListener("keydown", esc)
+  }, [open])
+
   if (!shouldRender) return null
 
   const goBack = () => setActiveUserId(null)
+  // Nota: el efecto de Escape está más arriba, junto al resto de efectos.
   const closePopover = () => {
     setOpen(false)
     setActiveUserId(null)
@@ -206,18 +226,32 @@ export function MessengerWidget() {
 
   return (
     <>
-      {/* BOTÃO FAB */}
+      {/* EL BOTÓN. Abre y CIERRA.
+          Ya alternaba, pero con el icono de siempre: abierto o cerrado se veía
+          la misma burbuja, así que no había nada que dijera «esto lo cierra».
+          Con el aspa puesta, la salida está donde se entró. */}
       <button
         type="button"
-        className={styles.fab}
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Mensajes"
+        className={`${styles.fab} ${open ? styles.fabAbierto : ""}`}
+        onClick={() => (open ? closePopover() : setOpen(true))}
+        aria-label={open ? "Cerrar mensajes" : "Mensajes"}
+        aria-expanded={open}
       >
-        <MessageCircle size={26} />
-        {unread > 0 && (
+        {open ? <X size={24} /> : <MessageCircle size={26} />}
+        {unread > 0 && !open && (
           <span className={styles.fabBadge}>{unread > 9 ? "9+" : unread}</span>
         )}
       </button>
+
+      {/* Tocar fuera también cierra. En un teléfono es el gesto que sale
+          solo, antes de buscar ningún botón. */}
+      {open && (
+        <div
+          className={styles.telon}
+          onClick={closePopover}
+          aria-hidden
+        />
+      )}
 
       {/* POPOVER */}
       <div className={`${styles.popover} ${open ? styles.open : ""}`}>

@@ -477,14 +477,28 @@
    ampliar con los dedos, y eso es una barrera real para quien no ve bien. No
    se toca.
 
-   Se arregla por donde viene: en pantalla estrecha, ningún campo baja de
-   16px. `max(16px, 1em)` respeta un tamaño mayor si el componente lo pide.
-   Solo afecta a campos de formulario en móvil; el resto del diseño queda
-   exactamente igual. */
+   Se arregla por donde viene: en pantalla estrecha, ningún campo de escritura
+   baja de 16px. `max(16px, 1em)` respeta un tamaño mayor si el componente lo
+   pide.
+
+   ── POR QUÉ LLEVA !important, QUE NO SE PONE POR GUSTO ─────────────────────
+   Media plataforma da el tamaño del campo con `style={{ fontSize: ... }}` en
+   el propio elemento, y un estilo en línea gana a cualquier regla de hoja de
+   estilos. Sin `!important`, esta regla no tocaba precisamente los campos que
+   provocan el salto. La alternativa era editar una docena de archivos y
+   confiar en que nadie escriba el siguiente con 14px; esto lo cierra de una
+   vez y en un solo sitio.
+
+   ── QUÉ QUEDA FUERA, Y POR QUÉ ─────────────────────────────────────────────
+   · `select`: iOS no amplía con un desplegable, abre su propio selector. Se
+     deja fuera para no engordar los filtros con forma de pastilla.
+   · casillas, botones de radio, deslizadores, color y archivo: no se escribe
+     en ellos, así que no hay salto que evitar.
+
+   Solo afecta a móvil. En escritorio no hay salto y el diseño queda igual. */
 @media (max-width: 860px) {
-  input,
-  select,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="submit"]):not([type="button"]),
   textarea {
-    font-size: max(16px, 1em);
+    font-size: max(16px, 1em) !important;
   }
 }

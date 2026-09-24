@@ -64,6 +64,14 @@ export function CentroComunidad() {
     window.scrollTo({ top: 0, behavior: "auto" })
   }, [])
 
+  // Desde la portada: ir a un espacio y dejar abierta esa conversación.
+  const abrirHilo = useCallback((slug: string, hiloId: string) => {
+    setEspacio(slug)
+    setHiloPedido(hiloId)
+    try { sessionStorage.setItem(CLAVE, slug) } catch { /* da igual */ }
+    window.scrollTo({ top: 0, behavior: "auto" })
+  }, [])
+
   const volver = useCallback(() => {
     setEspacio(null)
     setHiloPedido(null)
@@ -73,5 +81,5 @@ export function CentroComunidad() {
 
   return espacio
     ? <EspacioComunidad slug={espacio} abrirHiloId={hiloPedido} onVolver={volver} />
-    : <ViewComunidad onAbrirEspacio={abrir} />
+    : <ViewComunidad onAbrirEspacio={abrir} onAbrirHilo={abrirHilo} />
 }

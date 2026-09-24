@@ -442,14 +442,36 @@
 }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Cuando está abierto, el botón deja de invitar a entrar: invita a salir. */
+.fabAbierto {
+  background: rgba(20, 20, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* Telón invisible: tocar fuera cierra. No se ve nada —no oscurece la página,
+   que sería un cambio de aspecto que nadie pidió— pero recoge el toque. */
+.telon {
+  position: fixed;
+  inset: 0;
+  z-index: 94;
+}
+
 @media (max-width: 600px) {
-  .fab { left: 12px; bottom: 12px; width: 50px; height: 50px; }
+  /* El añadido de la zona segura es lo que evita que el botón acabe debajo de
+     la barra del navegador en un iPhone, que es donde se quedaba fuera de
+     alcance: se veía el chat abierto y no había manera de cerrarlo. */
+  .fab {
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    width: 50px;
+    height: 50px;
+  }
   .popover {
     left: 8px;
     right: 8px;
-    bottom: 72px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     width: auto;
     height: 70vh;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 140px);
   }
 }

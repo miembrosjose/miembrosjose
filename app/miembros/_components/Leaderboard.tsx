@@ -37,6 +37,7 @@ export function Leaderboard() {
   const [error, setError] = useState<string | null>(null)
   // Em mobile (<968px), começa colapsado pra não empurrar o foro pra baixo
   const [mobileCollapsed, setMobileCollapsed] = useState(true)
+  const [verTodos, setVerTodos] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -60,14 +61,22 @@ export function Leaderboard() {
     }
   }, [])
 
+  // ── CUÁNTOS SE VEN DE ENTRADA ──────────────────────────────────────────
+  // Cien filas seguidas son una columna interminable: en el móvil, el ranking
+  // quedaba entre la cabecera y la comunidad, y para llegar a las
+  // conversaciones había que deslizar por delante de noventa y siete personas.
+  // Se enseñan el podio y siete más, y quien quiera la lista entera la pide.
+  const VISIBLES = 7
   const top3 = users.slice(0, 3)
-  const restList = users.slice(3, 100)
+  const resto = users.slice(3, 100)
+  const restList = verTodos ? resto : resto.slice(0, VISIBLES)
+  const ocultos = resto.length - restList.length
 
   return (
     <aside className={`${styles.sidebar} ${mobileCollapsed ? styles.sidebarCollapsed : ""}`}>
       <header className={styles.header}>
         <div className={styles.headerText}>
-          <h2 className={styles.title}>RANKING TOP 100</h2>
+          <h2 className={styles.title}>RANKING</h2>
           <p className={styles.sub}>Comunidad · Tiempo real</p>
         </div>
         <button
@@ -107,6 +116,17 @@ export function Leaderboard() {
               />
             ))}
           </div>
+        )}
+
+        {ocultos > 0 && (
+          <button type="button" className={styles.verTodos} onClick={() => setVerTodos(true)}>
+            Ver los {resto.length + 3} del ranking
+          </button>
+        )}
+        {verTodos && resto.length > VISIBLES && (
+          <button type="button" className={styles.verTodos} onClick={() => setVerTodos(false)}>
+            Mostrar menos
+          </button>
         )}
       </div>
     </aside>

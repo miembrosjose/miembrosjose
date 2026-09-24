@@ -406,3 +406,33 @@
 .restRank {
   color: var(--text-secondary);
 }
+
+/* Abrir la lista entera. Discreto: el ranking acompaña, no es lo que se viene
+   a hacer aquí. */
+.verTodos {
+  display: block;
+  width: 100%;
+  margin-top: 0.7rem;
+  min-height: 40px;
+  padding: 0.5rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: #a8a8c0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.verTodos:hover {
+  border-color: rgba(167, 139, 202, 0.5);
+  color: #f3f6fa;
+}
+
+/* Con la lista abierta, el ranking no puede estirar la página sin fin:
+   se desplaza por dentro. */
+.rest {
+  max-height: 60svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
