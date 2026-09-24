@@ -167,10 +167,9 @@ export function Navbar() {
 
       <div className={styles.actions}>
         {/* Mi Gran Bitácora — archivo personal (abre modal vía evento global).
-            Se retira en pantallas estrechas: es el único de la fila que no
-            avisa de nada —ni mensajes sin leer, ni notificaciones— y se llega a
-            él igual desde el menú. Ver más abajo, en el CSS, por qué hay que
-            retirar algo. */}
+            Se queda en todos los tamaños: se usa a diario y es la única puerta
+            a ese archivo desde aquí. Cuando no cabe todo, quien cede el sitio
+            es el nivel. */}
         <button
           type="button"
           onClick={() => openGrandJournal()}

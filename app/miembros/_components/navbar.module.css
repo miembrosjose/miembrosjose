@@ -133,6 +133,12 @@
   flex-shrink: 0;
 }
 
+/* La bitácora. No se retira en ningún tamaño; la clase existe para poder
+ * apuntarla desde aquí si alguna vez hace falta. */
+.bitacora {
+  display: inline-flex;
+}
+
 /* Una envoltura para poder retirar el nivel en las pantallas más estrechas
  * sin tocar el componente que lo dibuja, que se usa en más sitios. */
 .xpSlot {
@@ -356,8 +362,16 @@
  * avatar 36, más los huecos: unos 260. Para el nombre sobraban 60 píxeles, y
  * «LOS 144000» no cabe en 60 de ninguna manera.
  *
- * No es un problema de tamaños: es que hay más cosas que sitio. Se retiran por
+ * No es un problema de tamaños: es que hay más cosas que sitio. Se retira por
  * orden de lo que menos se echa en falta, y solo cuando hace falta.
+ *
+ * QUÉ SE VA Y QUÉ NO. La bitácora se queda: se usa a diario y es la puerta de
+ * un sitio que no está en ningún otro lado de esta barra. El que se va es el
+ * NIVEL, y por dos razones: es la pieza más ancha de la fila —unos 72, el
+ * doble que un icono— y es la única que no reclama nada. Un icono de mensajes
+ * dice que alguien te escribió; una campana, que ha pasado algo; la bitácora
+ * lleva a tu archivo. El nivel informa, y se ve entero, con su detalle, al
+ * entrar en el perfil.
  *
  * El orden de estos bloques importa: de la pantalla más ancha a la más
  * estrecha. Dos consultas que se cumplen a la vez las resuelve la última, así
@@ -368,10 +382,10 @@
   .actions {
     gap: 0.7rem;
   }
-  /* Primero la bitácora: es la única de la fila que no avisa de nada —ni
-     mensajes sin leer, ni notificaciones— y se llega a ella desde el menú.
-     Con ella fuera, el nombre dispone de unos 110 y necesita unos 92. */
-  .bitacora {
+  /* Fuera el nivel. Quedan bitácora, mensajes, campana y avatar: 144 más los
+     huecos, unos 177. Con el botón de menú y el relleno, al nombre le quedan
+     unos 137 y necesita unos 92. Cabe con holgura. */
+  .xpSlot {
     display: none !important;
   }
 }
@@ -385,10 +399,18 @@
     letter-spacing: 0.1em;
     gap: 0.4rem;
   }
-  /* Y en las más estrechas, también el nivel. Lo esencial de esta barra es
-     saber si alguien te ha escrito, si hay algo nuevo, y cómo salir a tu
-     perfil; el nivel se ve entero al entrar en él. */
-  .xpSlot {
-    display: none !important;
+}
+
+/* Los teléfonos más pequeños que se siguen usando —un SE de primera
+ * generación mide 320— se quedan sin margen aunque no haya nivel. Ahí el
+ * nombre se aprieta hasta el mínimo legible en vez de recortarse. */
+@media (max-width: 340px) {
+  .logo {
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    gap: 0.3rem;
+  }
+  .actions {
+    gap: 0.35rem;
   }
 }
