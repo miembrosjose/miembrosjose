@@ -29,7 +29,10 @@
   // dirección de relleno del código sin que nadie se enterara hasta que
   // alguien no recibiera el suyo.
   "vars": {
-    "EMAIL_FROM": "Los 144000 <noreply@los144000.com>",
+    // El dominio verificado en Resend es auth.los144000.com, NO los144000.com.
+    // Enviar desde un dominio sin verificar lo rechaza el proveedor entero: no
+    // es que llegue a spam, es que no sale.
+    "EMAIL_FROM": "Los 144000 <noreply@auth.los144000.com>",
     "NEXT_PUBLIC_SUPABASE_URL": "https://kjozrcugsywykpuvuqzu.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqb3pyY3Vnc3l3eWtwdXZ1cXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTcwNTMsImV4cCI6MjA5NjE3MzA1M30.bp8_Une8jnLU8kMXjPBOGb04h1LgyFEZBLickodyajs",
     "R2_ACCOUNT_ID": "9eb16354b4057b7506df99d12e3463e7",

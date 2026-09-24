@@ -31,7 +31,10 @@ const CAMPOS = ["novedades", "contenidos", "sesiones", "red", "unsubscribed_all"
  * calcular la audiencia. Si aquí dijera una cosa y allí otra, nadie sabría qué
  * apaga qué.
  */
-export const FAMILIAS = [
+// No se exporta: Next se queja de cualquier export de una ruta que no sea un
+// manejador, y ya hay dos sitios del proyecto arrastrando ese aviso. La
+// pantalla tiene su propia copia de estas etiquetas.
+const FAMILIAS = [
   {
     id: "novedades" as const,
     titulo: "Novedades importantes",
