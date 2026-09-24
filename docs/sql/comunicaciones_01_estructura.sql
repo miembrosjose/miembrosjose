@@ -3,7 +3,7 @@
 -- ============================================================================
 --
 -- **NO EJECUTAR SIN LEERLO.** No borra nada, no cambia ninguna tabla existente
--- y no toca ninguna policy que ya esté puesta. Solo crea cuatro tablas nuevas.
+-- y no toca ninguna policy que ya esté puesta. Solo crea cinco tablas nuevas.
 --
 -- ── QUÉ RESUELVE ───────────────────────────────────────────────────────────
 -- Hoy los correos de Los 144.000 son tres: la invitación de cuenta, el aviso
@@ -17,13 +17,14 @@
 -- Esas sí dependen de que cada miembro quiera recibirlas, y esas sí necesitan
 -- borrador, prueba, audiencia, programación y resultados.
 --
--- ── LAS CUATRO TABLAS ──────────────────────────────────────────────────────
---   communications          una comunicación, de borrador a enviada
---   communication_events    quién hizo qué y cuándo (auditoría)
---   email_preferences       qué quiere recibir cada miembro
---   communication_contacts  el puente entre un miembro y su contacto en Resend
+-- ── LAS CINCO TABLAS ───────────────────────────────────────────────────────
+--   communications              una comunicación, de borrador a enviada
+--   communication_events        quién hizo qué y cuándo (auditoría)
+--   email_preferences           qué quiere recibir cada miembro
+--   communication_contacts      el puente entre un miembro y su contacto
+--   communication_metric_events lo que hizo la gente con el correo
 --
--- ── POR QUÉ ESA CUARTA TABLA ───────────────────────────────────────────────
+-- ── POR QUÉ HACE FALTA communication_contacts ─────────────────────────────
 -- Resend envía las comunicaciones masivas a una «audiencia» suya, que es su
 -- propia lista de contactos. No se puede evitar: es como funciona su API de
 -- Broadcasts, y usar Broadcasts es justamente lo que impide que un Worker
@@ -266,7 +267,45 @@ create index if not exists communication_contacts_pendientes_idx
 
 
 -- ╔══════════════════════════════════════════════════════════════════════╗
--- ║  5 · updated_at AL DÍA                                               ║
+-- ║  5 · LO QUE HIZO LA GENTE CON EL CORREO                              ║
+-- ╚══════════════════════════════════════════════════════════════════════╝
+-- Resend no ofrece un «dame el resumen de esta campaña» por API: ofrece
+-- avisos, uno por cada cosa que pasa —se entregó, se abrió, se hizo clic—.
+-- Nuestro extremo los recibe y los anota aquí; el resumen es un recuento.
+--
+-- ── POR QUÉ UNA FILA POR SUCESO Y NO UN CONTADOR ──────────────────────────
+-- Un contador parece más barato y está mal. Resend REINTENTA los avisos que
+-- no recibe confirmados, así que el mismo «se abrió» puede llegar tres
+-- veces; con un contador, esas tres veces son tres aperturas inventadas.
+--
+-- Con una fila por (comunicación, correo, suceso) y una clave única encima,
+-- el segundo aviso idéntico no entra y la cifra sigue siendo cierta. Además
+-- cuenta lo que hay que contar: personas que abrieron, no veces que se
+-- abrió. Alguien que mira el correo cinco veces es una apertura.
+--
+-- ── ESTO SE PUEDE PODAR ───────────────────────────────────────────────────
+-- Son unas tres filas por destinatario y campaña. Cuando el detalle deje de
+-- importar, se borran las de una campaña y se deja el resumen ya calculado
+-- en `communications.metrics`, que no depende de esta tabla para leerse.
+create table if not exists public.communication_metric_events (
+  communication_id uuid not null
+    references public.communications(id) on delete cascade,
+  -- El identificador que Resend da a cada correo concreto.
+  email_id text not null,
+  event_type text not null check (event_type in (
+    'sent', 'delivered', 'opened', 'clicked', 'bounced', 'complained'
+  )),
+  created_at timestamptz not null default now(),
+  -- La clave: el mismo aviso repetido no cuenta dos veces.
+  primary key (communication_id, email_id, event_type)
+);
+
+create index if not exists communication_metric_events_resumen_idx
+  on public.communication_metric_events (communication_id, event_type);
+
+
+-- ╔══════════════════════════════════════════════════════════════════════╗
+-- ║  6 · updated_at AL DÍA                                               ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 create or replace function public.tocar_updated_at()
 returns trigger
@@ -297,7 +336,7 @@ create trigger communication_contacts_tocar
 
 
 -- ╔══════════════════════════════════════════════════════════════════════╗
--- ║  6 · QUIÉN PUEDE TOCAR QUÉ                                           ║
+-- ║  7 · QUIÉN PUEDE TOCAR QUÉ                                           ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 -- ── LA REGLA ───────────────────────────────────────────────────────────────
 -- Tres de estas cuatro tablas no las toca NADIE con sesión normal. Ni leer.
@@ -311,10 +350,11 @@ create trigger communication_contacts_tocar
 --
 -- La excepción es `email_preferences`: cada quien tiene que poder ver y
 -- cambiar la suya desde su perfil.
-alter table public.communications          enable row level security;
-alter table public.communication_events    enable row level security;
-alter table public.communication_contacts  enable row level security;
-alter table public.email_preferences       enable row level security;
+alter table public.communications                enable row level security;
+alter table public.communication_events          enable row level security;
+alter table public.communication_contacts        enable row level security;
+alter table public.communication_metric_events   enable row level security;
+alter table public.email_preferences             enable row level security;
 
 -- Sin policies: nadie con rol `authenticated` o `anon` entra. Solo la clave de
 -- servicio, desde el servidor.
@@ -342,16 +382,17 @@ create policy "preferencias propias cambio" on public.email_preferences
 -- Y los permisos de tabla, que son una capa aparte de las policies: una policy
 -- no sirve de nada si el rol no tiene el GRANT, y un GRANT de más deja pasar
 -- lo que la policy no llega a filtrar.
-revoke all on public.communications         from anon, authenticated;
-revoke all on public.communication_events   from anon, authenticated;
-revoke all on public.communication_contacts from anon, authenticated;
+revoke all on public.communications              from anon, authenticated;
+revoke all on public.communication_events        from anon, authenticated;
+revoke all on public.communication_contacts      from anon, authenticated;
+revoke all on public.communication_metric_events from anon, authenticated;
 
 revoke all on public.email_preferences from anon;
 grant select, insert, update on public.email_preferences to authenticated;
 
 
 -- ╔══════════════════════════════════════════════════════════════════════╗
--- ║  7 · CÓMO QUEDÓ                                                      ║
+-- ║  8 · CÓMO QUEDÓ                                                      ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 select
   t.tabla,
@@ -364,6 +405,7 @@ select
     where c.relname = t.tabla and n.nspname = 'public') as rls_activo
 from (values
   ('communications'), ('communication_events'),
-  ('email_preferences'), ('communication_contacts')
+  ('email_preferences'), ('communication_contacts'),
+  ('communication_metric_events')
 ) as t(tabla)
 order by t.tabla;

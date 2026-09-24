@@ -213,6 +213,15 @@ export type Comunicacion = {
   metrics_synced_at: string | null
   created_by: string | null
   sent_by: string | null
+  /**
+   * La llave que reserva el envío.
+   *
+   * Nula mientras es un borrador. Se pone en el mismo UPDATE condicional que
+   * pasa la comunicación a «enviando», y eso es lo que impide que dos clics
+   * creen dos Broadcasts: la base decide quién gana. Se suelta solo al volver
+   * a editar una comunicación que falló.
+   */
+  send_idempotency_key: string | null
   created_at: string
   updated_at: string
 }
