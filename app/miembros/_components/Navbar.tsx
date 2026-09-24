@@ -166,12 +166,17 @@ export function Navbar() {
       </ul>
 
       <div className={styles.actions}>
-        {/* Mi Gran Bitácora — archivo personal (abre modal vía evento global) */}
+        {/* Mi Gran Bitácora — archivo personal (abre modal vía evento global).
+            Se retira en pantallas estrechas: es el único de la fila que no
+            avisa de nada —ni mensajes sin leer, ni notificaciones— y se llega a
+            él igual desde el menú. Ver más abajo, en el CSS, por qué hay que
+            retirar algo. */}
         <button
           type="button"
           onClick={() => openGrandJournal()}
           aria-label="Abrir mi bitácora"
           title="Abrir mi bitácora"
+          className={styles.bitacora}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -231,7 +236,9 @@ export function Navbar() {
           )}
         </a>
         <NotificationsBell />
-        <XpBadge onClick={() => setXpModalOpen(true)} />
+        <span className={styles.xpSlot}>
+          <XpBadge onClick={() => setXpModalOpen(true)} />
+        </span>
         {isAdmin && (
           <a
             href="/miembros/admin"

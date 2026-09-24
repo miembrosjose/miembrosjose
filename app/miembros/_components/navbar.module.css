@@ -34,13 +34,26 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* EL NOMBRE NO SE PARTE EN DOS.
+  /* ── EL NOMBRE NI SE PARTE NI SE MONTA ENCIMA DE NADA ────────────────
      Con el espaciado de 0.3em, «LOS 144000» mide bastante más de lo que
-     parece, y en un teléfono estrecho no cabía junto al menú y los cinco
-     iconos de la derecha: se partía en «LOS / 144000», la barra crecía al
-     doble de alto y el avatar se salía por el borde. */
+     parece, y en un teléfono estrecho no cabe junto al menú y los iconos de
+     la derecha. Eso ha dado dos fallos distintos, y conviene recordar los dos
+     porque el arreglo del primero causó el segundo:
+
+       1. Sin `nowrap` se partía en «LOS / 144000»: la barra crecía al doble
+          de alto y el avatar se salía por el borde.
+       2. Con `nowrap` y `min-width: 0`, la CAJA sí se encogía pero el texto
+          no: se salía por fuera sin ocupar sitio, y quedaba impreso por
+          debajo de los iconos. Era peor que lo anterior.
+
+     La regla que cierra las dos puertas es `overflow: hidden`: lo que no
+     quepa se recorta dentro de su propia caja y nunca invade la de al lado.
+     Es la red de seguridad, no el plan: el plan es que quepa siempre, y para
+     eso están las reglas de más abajo que retiran piezas de la derecha
+     conforme se estrecha la pantalla. */
   white-space: nowrap;
   min-width: 0;
+  overflow: hidden;
 }
 
 .logo::before {
@@ -111,6 +124,20 @@
   /* Lo de la derecha nunca se encoge ni se recorta: antes que cortar el
      avatar por la mitad, que se apriete el nombre. */
   flex-shrink: 0;
+}
+
+/* Ninguna pieza de la derecha se deja apretar. Son iconos y un avatar
+ * redondo: encogerlos no ahorra sitio, solo los deforma. Si falta espacio, lo
+ * cede el nombre —que sí puede— o se retira una pieza entera más abajo. */
+.actions > * {
+  flex-shrink: 0;
+}
+
+/* Una envoltura para poder retirar el nivel en las pantallas más estrechas
+ * sin tocar el componente que lo dibuja, que se usa en más sitios. */
+.xpSlot {
+  display: inline-flex;
+  align-items: center;
 }
 
 .adminLink {
@@ -305,10 +332,10 @@
     padding: 0.6rem 1rem;
   }
   .logo {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     /* El espaciado ancho es lo que hacía que no cupiera. Se reduce en vez de
        encoger la letra hasta que no se lea. */
-    letter-spacing: 0.16em;
+    letter-spacing: 0.12em;
     gap: 0.5rem;
   }
   .beta {
@@ -322,25 +349,46 @@
   }
 }
 
-/* Mobile super pequeno — esconde tambem o XpBadge pra deixar so o essencial:
- * mensagens + sino + avatar. Em telas <380px qualquer item extra empurra o avatar fora. */
-@media (max-width: 380px) {
+/* ── LA CUENTA DE LO QUE CABE ────────────────────────────────────────────
+ * En un teléfono de 390px, descontando el relleno de la barra (32) y el botón
+ * de menú (36), quedan unos 322 para el nombre y la fila de la derecha. Esa
+ * fila son cinco piezas: bitácora 36, mensajes 36, campana 36, nivel ~72 y
+ * avatar 36, más los huecos: unos 260. Para el nombre sobraban 60 píxeles, y
+ * «LOS 144000» no cabe en 60 de ninguna manera.
+ *
+ * No es un problema de tamaños: es que hay más cosas que sitio. Se retiran por
+ * orden de lo que menos se echa en falta, y solo cuando hace falta.
+ *
+ * El orden de estos bloques importa: de la pantalla más ancha a la más
+ * estrecha. Dos consultas que se cumplen a la vez las resuelve la última, así
+ * que una regla para 430px escrita DESPUÉS de la de 380px le pisaría el valor
+ * justo en los teléfonos más pequeños. */
+
+@media (max-width: 430px) {
   .actions {
-    gap: 0.35rem;
+    gap: 0.7rem;
   }
-  .logo {
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    gap: 0.4rem;
+  /* Primero la bitácora: es la única de la fila que no avisa de nada —ni
+     mensajes sin leer, ni notificaciones— y se llega a ella desde el menú.
+     Con ella fuera, el nombre dispone de unos 110 y necesita unos 92. */
+  .bitacora {
+    display: none !important;
   }
 }
 
-/* Entre 381 y 430px —la mayoría de los teléfonos de hoy— el nombre sí cabe,
- * pero justo. Un pelín menos de aire entre iconos evita que la barra vaya al
- * límite y acabe partiéndose en el primero que tenga la letra del sistema algo
- * más grande de lo normal. */
-@media (min-width: 381px) and (max-width: 430px) {
+@media (max-width: 380px) {
   .actions {
-    gap: 0.7rem;
+    gap: 0.45rem;
+  }
+  .logo {
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+    gap: 0.4rem;
+  }
+  /* Y en las más estrechas, también el nivel. Lo esencial de esta barra es
+     saber si alguien te ha escrito, si hay algo nuevo, y cómo salir a tu
+     perfil; el nivel se ve entero al entrar en él. */
+  .xpSlot {
+    display: none !important;
   }
 }
