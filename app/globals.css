@@ -465,3 +465,26 @@
     min-height: 350px !important;
   }
 }
+
+/* ── EL ZOOM QUE SALTABA SOLO EN EL MÓVIL ──────────────────────────────────
+   Safari de iOS AMPLÍA la página cuando se enfoca un campo cuya letra mide
+   menos de 16px. No pide permiso y no se deshace al salir del campo: la
+   página se queda ampliada y todo parece descuadrado. Eso era lo de «hace
+   saltos de zoom de la nada», y por eso pasaba en unos teléfonos y en otros
+   no: depende del navegador, no del diseño.
+
+   La solución habitual —poner maximum-scale=1 en el viewport— también impide
+   ampliar con los dedos, y eso es una barrera real para quien no ve bien. No
+   se toca.
+
+   Se arregla por donde viene: en pantalla estrecha, ningún campo baja de
+   16px. `max(16px, 1em)` respeta un tamaño mayor si el componente lo pide.
+   Solo afecta a campos de formulario en móvil; el resto del diseño queda
+   exactamente igual. */
+@media (max-width: 860px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}

@@ -11,11 +11,17 @@ export type ProfileMeta = {
   dev_admin?: boolean
 }
 
+// Instagram ya NO es obligatorio.
+//
+// Era una puerta cerrada para quien no tiene cuenta o no quiere darla, y esta
+// plataforma no necesita el Instagram de nadie para funcionar. Quien quiera
+// ponerlo lo pone; quien no, entra igual.
+//
+// El campo sigue existiendo y sigue guardándose: nadie pierde el suyo.
 const REQUIRED_FIELDS: Array<keyof ProfileMeta> = [
   "avatar_url",
   "full_name",
   "username",
-  "instagram",
 ]
 
 /**

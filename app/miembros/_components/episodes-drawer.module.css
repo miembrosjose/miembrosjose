@@ -845,3 +845,19 @@
   }
 }
 
+
+/* ── En el teléfono, el texto tiene que asomar ──────────────────────────────
+   Un 16:9 al ancho completo deja el texto justo bajo el borde de la pantalla:
+   quien no desliza no llega a saber que hay algo más, y ahí está lo que
+   explica el episodio.
+
+   Se limita el ancho —no el alto: con aspect-ratio puesto, capar el alto
+   ensancharía la caja y el vídeo quedaría con franjas negras—, así que la
+   altura baja sola y quedan unos dedos de pantalla para las primeras líneas.
+   Va aquí, al final y dentro de la media query, para ganar a la regla de
+   arriba sin tocarla. */
+@media (max-width: 860px) {
+  .playerVideoWrap {
+    max-width: min(var(--player-width), calc(48svh * 16 / 9));
+  }
+}

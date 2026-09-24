@@ -1,28 +1,36 @@
 // Sistema de XP e Level — gamificação geral (engloba posts, insignias, etc).
 //
-// Curva de dificuldade:
-//   XP necessário pra subir do level N → N+1 = round(100 * N^1.35)
+// ── LA CURVA, Y POR QUÉ ES ASÍ ────────────────────────────────────────────
+// Subir del nivel N al N+1 cuesta round(120 * N^1.45).
 //
-// Exemplo:
-//   1 → 2:  100 XP    (super fácil pra começar)
-//   2 → 3:  256 XP
-//   3 → 4:  431 XP
-//   5 → 6:  825 XP
-//   10 → 11: 2.232 XP
-//   20 → 21: 5.612 XP
-//   50 → 51: 19.038 XP
-//   100 → 101: 49.770 XP
+//   1 → 2:    120      acumulado    120
+//   2 → 3:    328      acumulado    448
+//   3 → 4:    590      acumulado  1.038
+//   4 → 5:    896      acumulado  1.934
+//   5 → 6:  1.238      acumulado  3.172
+//   9 → 10: 2.447      acumulado  9.248
 //
-// XP cumulativa total aproximada:
-//   level 5  ≈ 1.760 XP
-//   level 10 ≈ 6.860 XP
-//   level 20 ≈ 28.700 XP
-//   level 50 ≈ 230.200 XP
+// EL PRIMER NIVEL SE SIENTE ENSEGUIDA y el resto se estira. Un capítulo y una
+// conversación ya suben al 2: hace falta que se note que esto avanza.
 //
-// Compra de produto → +1 level direto (independente do XP).
+// LO QUE SE CORRIGIÓ. Con la curva anterior —base 100, exponente 1.35— el
+// nivel 5 caía a los 1.446 puntos, y marcar diez capítulos como vistos sin
+// verlos daba 1.000. Se llegaba al 5 pulsando, en dos minutos, y un nivel que
+// se compra pulsando no significa nada.
+//
+// Ahora, con el capítulo a 60 puntos:
+//   · Pulsar «visto» en diez capítulos sin más: 600 → nivel 3.
+//   · Recorrer una temporada de verdad —verla, volver varios días, abrir una
+//     conversación y que te respondan—: unos 1.300 → nivel 4, rozando el 5.
+//   · Dos temporadas vividas: nivel 5-6.
+//
+// Lo que se puede hacer a clics llega hasta el 3. Lo que cuesta tiempo y
+// presencia es lo que sube de ahí.
+//
+// Comprar un módulo → +1 nivel directo, al margen de los puntos.
 
-const XP_BASE = 100
-const XP_EXPONENT = 1.35
+const XP_BASE = 120
+const XP_EXPONENT = 1.45
 const MAX_LEVEL = 200
 
 // XP total cumulativa pra alcançar o início do level N (level 1 = 0 XP).
@@ -129,8 +137,14 @@ export function applyAdminLevelOverride(info: LevelInfo, isAdmin: boolean): Leve
 // evento cuenta una sola vez por su origen.
 export const XP_REWARDS = {
   // ── El Camino ──
-  /** Un capítulo visto entero. Es el corazón de la plataforma. */
-  episode_complete: 100,
+  /**
+   * Un capítulo visto entero.
+   *
+   * 60 y no 100: marcar un capítulo es un clic, y diez clics no pueden valer
+   * un nivel 5. Lo que de verdad cuesta —terminar la temporada, escribir,
+   * volver otro día— es lo que empuja de ahí para arriba.
+   */
+  episode_complete: 60,
   /** Terminar una temporada. Se suma a lo de cada capítulo. */
   season_complete: 400,
   /** Una meditación o práctica completada. */

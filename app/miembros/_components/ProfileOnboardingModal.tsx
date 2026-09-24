@@ -4,8 +4,8 @@
 // antes de acessar a área de membros. Renderizado em SpaHomeShell quando
 // isProfileComplete(user_metadata) === false.
 //
-// Campos obrigatórios: foto, nome, username, nicho, instagram.
-// Bio é opcional (mas user pode preencher se quiser).
+// Campos obligatorios: foto, nombre y @usuario.
+// La bio, el Instagram y la ubicación son opcionales.
 
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useAuth } from "../_lib/auth-context"
@@ -124,8 +124,10 @@ export function ProfileOnboardingModal({
       setState({ type: "error", msg: "@username inválido (3-30, letras minúsculas, números, _ y .)" })
       return
     }
-    if (!cleanInstagram || cleanInstagram.length > 30 || !/^[a-zA-Z0-9_.]+$/.test(cleanInstagram)) {
-      setState({ type: "error", msg: "Instagram inválido (sin @, letras/números/_/.)" })
+    // Opcional: solo se comprueba si escribió algo. Antes bloqueaba el alta
+    // de quien no tiene Instagram o no quiere darlo.
+    if (cleanInstagram && (cleanInstagram.length > 30 || !/^[a-zA-Z0-9_.]+$/.test(cleanInstagram))) {
+      setState({ type: "error", msg: "Instagram inválido (sin @, letras, números, _ y .)" })
       return
     }
     if (cleanBio.length > 500) {
@@ -359,7 +361,7 @@ export function ProfileOnboardingModal({
           />
 
           <Field
-            label="Instagram *"
+            label="Instagram (opcional)"
             value={instagram}
             onChange={(v) => setInstagram(v.replace(/^@/, ""))}
             placeholder="tu_instagram"

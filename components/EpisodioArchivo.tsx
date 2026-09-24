@@ -62,11 +62,18 @@ function Reveal({ children, className = '' }: { children: ReactNode; className?:
     const node = ref.current;
     if (!node) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setVisible(true); return; }
+    // Basta con que asome un píxel, y cuenta como visible lo que está hasta
+    // media pantalla por debajo del borde: así el archivo que va justo debajo
+    // del vídeo se revela solo al entrar en el episodio. Con el 12% de antes
+    // —y estos bloques son altos— nunca llegaba, y bajo el vídeo no se veía
+    // nada hasta deslizar. El temporizador es la red: pase lo que pase, el
+    // contenido aparece. Ver components/archivo/ArchivoShell.tsx.
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { setVisible(true); io.unobserve(node); } });
-    }, { threshold: 0.12 });
+    }, { threshold: 0, rootMargin: '0px 0px 50% 0px' });
     io.observe(node);
-    return () => io.disconnect();
+    const red = window.setTimeout(() => setVisible(true), 1000);
+    return () => { io.disconnect(); window.clearTimeout(red); };
   }, []);
   return <div ref={ref} className={`${className} ea-reveal ${visible ? 'is-visible' : ''}`}>{children}</div>;
 }

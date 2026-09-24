@@ -44,6 +44,21 @@ export function Reveal({
       setVisible(true);
       return;
     }
+    // ── POR QUÉ ESTOS DOS VALORES, Y NO LOS DE ANTES ────────────────────
+    // Antes: threshold 0.12 y sin margen. Eso exige que el 12% del bloque
+    // esté DENTRO de la pantalla para que aparezca, y estos bloques son
+    // altos. En un teléfono, con el vídeo ocupando lo que ocupa, el archivo
+    // que va justo debajo nunca llegaba a ese 12%: se quedaba en opacidad
+    // cero y bajo el vídeo no se veía nada. Solo al deslizar aparecía.
+    //
+    // Ahora basta con que asome UN píxel (threshold 0) y además se cuenta
+    // como visible lo que está hasta media pantalla por debajo del borde
+    // (rootMargin). Así lo que va justo debajo del vídeo se revela solo, al
+    // entrar en el episodio, sin tocar nada.
+    //
+    // La aparición suave se conserva: lo que estaba bien era el efecto, no
+    // que hubiera que deslizar para desencadenarlo. Y lo que queda mucho más
+    // abajo sigue apareciendo al acercarse, que es lo que le da vida.
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -53,10 +68,16 @@ export function Reveal({
           }
         });
       },
-      { threshold: 0.12 },
+      { threshold: 0, rootMargin: '0px 0px 50% 0px' },
     );
     io.observe(node);
-    return () => io.disconnect();
+
+    // Red de seguridad: si por lo que sea el observador no dispara —un
+    // contenedor con scroll propio, un navegador que calcula mal al rotar—,
+    // el contenido aparece igual al segundo. Nunca se queda invisible.
+    const red = window.setTimeout(() => setVisible(true), 1000);
+
+    return () => { io.disconnect(); window.clearTimeout(red); };
   }, []);
 
   return (
