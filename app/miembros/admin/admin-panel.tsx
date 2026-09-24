@@ -30,6 +30,15 @@ type Tab =
   | "subs"
   | "resetprogress"
   | "redroles"
+  | "comms"
+
+// El Centro de Comunicaciones trae su propio editor, su vista previa y sus
+// diálogos. Es el tab más pesado del panel, y es el que menos se abre: cargarlo
+// solo cuando se entra evita que todos los demás carguen más lento.
+const Comunicaciones = dynamic(
+  () => import("./_tabs/Comunicaciones").then((m) => m.Comunicaciones),
+  { ssr: false, loading: () => <div className="py-10 text-center text-xs text-[#6a6a7a]">Cargando…</div> },
+)
 
 const RedRoles = dynamic(
   () => import("./_tabs/RedRoles").then((m) => m.RedRoles),
@@ -130,6 +139,17 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Reiniciar Avance",
         description: "Reiniciar el avance de un usuario (pruebas)",
         icon: RotateCcw,
+      },
+    ],
+  },
+  {
+    title: "Comunicaciones",
+    tabs: [
+      {
+        id: "comms",
+        label: "Comunicaciones",
+        description: "Escribir, probar, programar y enviar correos a La Red",
+        icon: Mail,
       },
     ],
   },
@@ -313,6 +333,7 @@ export function AdminPanel() {
           {tab === "messages" && <MessagesModeration />}
           {tab === "resetprogress" && <ResetProgress />}
           {tab === "redroles" && <RedRoles />}
+          {tab === "comms" && <Comunicaciones />}
         </div>
       </main>
     </div>

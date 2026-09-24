@@ -87,8 +87,38 @@ type Props = {
   onClose: () => void
 }
 
+// ── LAS DEL CORREO SON OTRA COSA ──────────────────────────────────────────
+// Las de arriba gobiernan la CAMPANA de dentro de la plataforma. Estas deciden
+// si a alguien se le ESCRIBE, y viven en su propia tabla porque hay que poder
+// contarlas del lado del servidor —«¿a cuántos les llegaría esto?»— antes de
+// mandar nada. Se enseñan juntas porque para quien mira son lo mismo: «qué me
+// avisáis y por dónde».
+//
+// Lo que NO apaga ninguno de estos interruptores: el enlace de acceso, la
+// recuperación de cuenta y el aviso de un pago fallido. Eso no es publicidad,
+// es el funcionamiento de su cuenta.
+type PrefsCorreo = {
+  novedades: boolean
+  contenidos: boolean
+  sesiones: boolean
+  red: boolean
+  unsubscribed_all: boolean
+}
+
+const CORREO_POR_DEFECTO: PrefsCorreo = {
+  novedades: true, contenidos: true, sesiones: true, red: true, unsubscribed_all: false,
+}
+
+const FILAS_CORREO: Array<{ key: keyof Omit<PrefsCorreo, "unsubscribed_all">; title: string; desc: string }> = [
+  { key: "novedades", title: "Novedades importantes", desc: "Anuncios y comunicaciones especiales" },
+  { key: "contenidos", title: "Nuevos contenidos", desc: "Episodios, módulos y transmisiones" },
+  { key: "sesiones", title: "Sesiones en vivo", desc: "Directos, activaciones y sus recordatorios" },
+  { key: "red", title: "Encuentros y La Red", desc: "Encuentros y actividad de la comunidad" },
+]
+
 export function NotifPrefsModal({ open, onClose }: Props) {
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS)
+  const [correo, setCorreo] = useState<PrefsCorreo>(CORREO_POR_DEFECTO)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -127,6 +157,14 @@ export function NotifPrefsModal({ open, onClose }: Props) {
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
+
+    // Las del correo van por su ruta. Si falla, se quedan los valores por
+    // defecto —todo encendido— que es lo que de verdad ocurre en el servidor
+    // cuando alguien no tiene fila.
+    api<{ prefs?: Partial<PrefsCorreo> }>("/api/profile/email-prefs")
+      .then((d) => { if (!cancelled) setCorreo({ ...CORREO_POR_DEFECTO, ...(d?.prefs || {}) }) })
+      .catch(() => { /* se quedan los de por defecto */ })
+
     return () => {
       cancelled = true
     }
@@ -152,6 +190,12 @@ export function NotifPrefsModal({ open, onClose }: Props) {
       // Hidrata window.NOTIF_PREFS pra surtir efeito imediato em sounds.ts
       // e nas filas de level-up / broadcasts (sem precisar reload)
       ;(window as unknown as { NOTIF_PREFS?: NotificationPrefs }).NOTIF_PREFS = prefs
+
+      // Las del correo se guardan aparte porque son otra tabla y otra ruta.
+      // Si esta falla, las de la campana ya quedaron guardadas: es mejor que
+      // se guarde la mitad a que no se guarde nada.
+      await api("/api/profile/email-prefs", { method: "POST", body: correo })
+
       onClose()
     } catch {
       // Silencioso — botão volta ao normal
@@ -250,6 +294,55 @@ export function NotifPrefsModal({ open, onClose }: Props) {
                 </label>
               </div>
             ))}
+          </section>
+
+          {/* ── Por correo ───────────────────────────────────────────────
+              Lo de arriba es la campana de dentro. Esto decide si te
+              escribimos. Se enseñan juntas porque para quien mira son la
+              misma pregunta: qué me avisáis, y por dónde. */}
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Por correo</h3>
+            <p className={styles.sectionDesc}>Qué te enviamos a tu bandeja de entrada</p>
+
+            {FILAS_CORREO.map((r) => (
+              <div key={r.key} className={styles.row}>
+                <div className={styles.rowText}>
+                  <div className={styles.rowTitle}>{r.title}</div>
+                  <div className={styles.rowDesc}>{r.desc}</div>
+                </div>
+                <label className={styles.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={!correo.unsubscribed_all && correo[r.key]}
+                    onChange={() => setCorreo((c) => ({ ...c, [r.key]: !c[r.key] }))}
+                    disabled={loading || correo.unsubscribed_all}
+                  />
+                  <span className={styles.slider} />
+                </label>
+              </div>
+            ))}
+
+            {/* La baja global. Gana sobre las cuatro de arriba, y por eso las
+                deja apagadas en pantalla: enseñar «novedades: sí» a quien se
+                dio de baja de todo sería mentirle. */}
+            <div className={`${styles.row} ${styles.rowMaster}`}>
+              <div className={styles.rowText}>
+                <div className={styles.rowTitle}>No enviarme ningún correo</div>
+                <div className={styles.rowDesc}>
+                  Seguirás recibiendo lo imprescindible de tu cuenta: el acceso y
+                  la recuperación de contraseña.
+                </div>
+              </div>
+              <label className={styles.toggle}>
+                <input
+                  type="checkbox"
+                  checked={correo.unsubscribed_all}
+                  onChange={() => setCorreo((c) => ({ ...c, unsubscribed_all: !c.unsubscribed_all }))}
+                  disabled={loading}
+                />
+                <span className={styles.slider} />
+              </label>
+            </div>
           </section>
         </div>
 
