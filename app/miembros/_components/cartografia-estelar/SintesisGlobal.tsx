@@ -10,6 +10,17 @@
 // Cada capacidad lleva debajo los portales y los puntos natales que la
 // sostienen. La pregunta central lleva su origen. Un "tienes este don" sin el
 // porqué es adulación, y la adulación no enseña nada a nadie.
+//
+// ── QUIÉN HABLA AQUÍ ───────────────────────────────────────────────────────
+// El rigor no obliga a sonar como un informe. Esta pantalla llegó a estar
+// escrita como una ficha técnica: frases que empiezan negando, sustantivos sin
+// verbo, «no es una jerarquía de importancia». Quien abre su cartografía no
+// está estudiando astronomía: está intentando reconocerse, y a menudo por
+// primera vez.
+//
+// El tono es el de alguien que acompaña: dice lo que ve, dice de dónde lo saca,
+// y devuelve la última palabra a quien lee. Nunca afirma quién eres. Lo que
+// pueda sonar a veredicto se convierte en pregunta.
 
 import { useState } from "react"
 import { ChevronDown, ArrowRight } from "lucide-react"
@@ -71,7 +82,9 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
               </button>
             ))}
           </div>
-          <p className={s.parrafo}>{triada.texto}</p>
+          {triada.parrafos.map((p, i) => (
+            <p key={i} className={s.parrafo}>{p}</p>
+          ))}
         </Capa>
       )}
 
@@ -108,8 +121,9 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
       {capacidades.length > 0 && (
         <Capa titulo="Mapa de capacidades">
           <p className={s.avisoLente}>
-            No aparecen porque sí. Debajo de cada una están los portales y los puntos
-            natales que la sostienen en tu cartografía.
+            Ninguna de estas aparece porque suene bien. Cada una viene de contactos
+            concretos de tu carta, y puedes ver cuáles abriendo «Qué la sostiene en tu
+            mapa». Léelas como algo que ya haces, no como algo que deberías hacer.
           </p>
           {capacidades.map((c) => (
             <article key={c.id} className={s.capacidad}>
@@ -135,10 +149,11 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
 
       {/* ── Zonas de integración ───────────────────────────────────────── */}
       {zonas.length > 0 && (
-        <Capa titulo="Zonas de integración">
+        <Capa titulo="Dónde pide equilibrio">
           <p className={s.avisoLente}>
-            Salen de los aspectos tensos y de las contradicciones entre tus portales. Como
-            mucho tres: más de tres dejan de orientar.
+            Son las tensiones que aparecen en tu carta: dos fuerzas que tiran en
+            direcciones distintas. No hay nada que arreglar aquí. Se nombran porque
+            reconocerlas suele bastar para que dejen de tirar a oscuras.
           </p>
           {zonas.map((z) => (
             <article key={z.nombre} className={s.zona}>
@@ -160,7 +175,7 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
 
       {/* ── Práctica ───────────────────────────────────────────────────── */}
       {practica && (
-        <Capa titulo="Tu práctica de 7 días" abiertoPorDefecto>
+        <Capa titulo="Una práctica para estos días" abiertoPorDefecto>
           <p className={s.practicaTitulo}>{practica.practica.titulo}</p>
           <ol className={s.pasos}>
             {practica.practica.pasos.map((p, i) => <li key={i}>{p}</li>)}
@@ -174,10 +189,10 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
       )}
 
       {/* ── Diario ─────────────────────────────────────────────────────── */}
-      <Capa titulo="Diario de cartografía">
+      <Capa titulo="Siete preguntas para llevarte">
         <p className={s.avisoLente}>
-          Siete días, una pregunta por día. No hace falta responderlas aquí: basta con
-          tenerlas delante.
+          Una por día. No hay que responderlas aquí ni en ningún sitio: a veces basta con
+          llevarlas encima y ver qué contesta el día por su cuenta.
         </p>
         <ol className={s.diario}>
           {DIARIO_CARTOGRAFIA.map((d) => (
@@ -190,7 +205,9 @@ export function SintesisGlobal({ carto, onAbrirPortal }: {
       </Capa>
 
       {/* ── Resumen calculado ──────────────────────────────────────────── */}
-      <Capa titulo="Resumen del cálculo">
+      {/* La trastienda. Cerrada, y última: quien quiera comprobar los números
+          los tiene, y quien no, no se tropieza con ellos. */}
+      <Capa titulo="Los números del cálculo">
         <dl className={s.resumen}>
           <div>
             <dt>Portales con contacto</dt>

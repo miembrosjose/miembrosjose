@@ -357,7 +357,8 @@ test("la síntesis global nunca produce undefined y es determinista", () => {
 
     const t = construirTriada(c1)
     if (t) {
-      assert.ok(!/undefined/.test(t.texto + t.secuencia))
+      assert.ok(!/undefined/.test(t.parrafos.join(" ") + t.secuencia))
+      assert.ok(t.parrafos.length > 0 && t.parrafos.every((p) => p.trim().length > 0))
       assert.equal(t.portales.length, 3)
     }
     const q = preguntaCentral(c1)

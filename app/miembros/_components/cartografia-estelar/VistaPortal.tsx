@@ -127,7 +127,18 @@ export function VistaPortal({
         </ul>
       </section>
 
-      {/* ── 2 y 3 · CAPA A ─────────────────────────────────────────────── */}
+      {/* ── 2 y 3 · CAPA A ─────────────────────────────────────────────────
+          LA CUENTA, PLEGADA.
+
+          Esto se abría entero: por cada contacto, una ficha con cuatro filas de
+          grados, minutos de arco, orbes permitidos y separaciones reales. Es
+          información honesta y hay que poder verla —es lo que sostiene todo lo
+          demás—, pero puesta delante convierte la lectura en un examen. Quien
+          abre su cartografía por primera vez se encontraba una tabla de
+          astronomía antes de llegar a una sola frase que le hablara a él.
+
+          Se queda visible la frase que responde a la pregunta del título; la
+          cuenta espera detrás, para quien quiera comprobarla. */}
       <section className={s.bloqueAstronomia}>
         <p className={s.marcaCapa}><Telescope size={12} /> Astronomía</p>
         <h3 className={s.seccionTitulo}>Por qué está en tu mapa</h3>
@@ -135,6 +146,10 @@ export function VistaPortal({
           <strong>{L.densidadEtiqueta}.</strong> {L.densidadTexto}
         </p>
 
+        <Capa
+          titulo="Ver la cuenta, contacto por contacto"
+          invitacion="Los grados exactos y cuánto se acercó cada uno. Está aquí para que puedas comprobarlo, no para que tengas que leerlo."
+        >
         {L.contactos.map((c, i) => (
           <article key={i} className={s.contactoFicha}>
             <div className={s.contactoLinea}>
@@ -186,6 +201,7 @@ export function VistaPortal({
             </p>
           </article>
         ))}
+        </Capa>
       </section>
 
       {/* ── Frontera explícita ─────────────────────────────────────────── */}

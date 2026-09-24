@@ -55,7 +55,21 @@ export type Triada = {
   portales: Array<{ id: string; nombre: string; verbo: string; resonancia: number }>
   /** "PERCIBIR → ORDENAR → SERVIR" */
   secuencia: string
-  texto: string
+  /**
+   * La explicación, en párrafos.
+   *
+   * Era un solo bloque de seis líneas seguidas que empezaba negando algo que
+   * nadie había dicho —«no aparecen aquí como tres temas independientes»— y
+   * continuaba con tres frases de la forma «una parte enfatiza polaridad, otra
+   * enfatiza marco amplio». Eran fragmentos de la esencia de cada portal,
+   * cortados por la mitad y sin verbo: nombres sueltos que no significaban
+   * nada para quien los leía por primera vez.
+   *
+   * Ahora se nombra cada portal por su nombre, se dice en una palabra de qué
+   * habla, y se deja respirar. Quien lee esto no está estudiando: está
+   * intentando reconocerse.
+   */
+  parrafos: string[]
 }
 
 /**
@@ -77,19 +91,27 @@ export function construirTriada(carto: Cartografia): Triada | null {
 
   const secuencia = portales.map((p) => p.verbo.toUpperCase()).join(" → ")
 
-  const descripciones = portales.map((p) => {
-    const c = contenidoPortal(p.id)
-    return c ? `${c.esencia.split(" · ")[0]}` : p.nombre
-  })
+  const [a, b, c] = portales
+  const camino = `${a.verbo}, ${b.verbo} y ${c.verbo}`
 
-  const texto =
-    `No aparecen aquí como tres temas independientes. Una parte de tu mapa enfatiza ${descripciones[0]}. ` +
-    `Otra enfatiza ${descripciones[1]}. La tercera enfatiza ${descripciones[2]}. ` +
-    `Leídos en orden describen un recorrido —${secuencia.toLowerCase()}— que probablemente reconozcas en cómo abordas las cosas: ` +
-    `por dónde empiezas, qué haces después y dónde suele quedarse lo que emprendes. ` +
-    `El orden no es una jerarquía de importancia: es el orden en que estos tres temas están marcados en tu configuración.`
+  const parrafos = [
+    "De los cincuenta puntos que miramos, estos tres quedaron más marcados que " +
+    "los demás en tu carta. No hablan de tres asuntos separados: hablan de uno " +
+    "solo, en tres tiempos.",
 
-  return { portales, secuencia, texto }
+    `${a.nombre} tiene que ver con ${a.verbo}. ${b.nombre}, con ${b.verbo}. ` +
+    `Y ${c.nombre}, con ${c.verbo}.`,
+
+    `Léelos seguidos —${camino}— y quizá reconozcas algo de tu propia manera de ` +
+    "moverte por la vida: por dónde sueles empezar, qué haces después con lo que " +
+    "encuentras, y dónde acaba yendo a parar aquello que emprendes.",
+
+    "Esto no es una clasificación ni un orden de importancia. Ninguno de los tres " +
+    "vale más que los otros; es sencillamente el orden en que aparecen marcados. " +
+    "Tómalo como una pregunta, no como un retrato: ¿te suena ese recorrido?",
+  ]
+
+  return { portales, secuencia, parrafos }
 }
 
 // ── Eje de integración ──────────────────────────────────────────────────────
@@ -312,8 +334,11 @@ export function preguntaCentral(carto: Cartografia): PreguntaCentral | null {
     return {
       pregunta: eje.pregunta,
       origen:
-        `Sale de la polaridad entre ${nombres}, que en tu cartografía empujan desde extremos opuestos del mismo eje` +
-        (puntoTop ? `, y del hecho de que ${PUNTOS[puntoTop].nombre} es el punto que aparece en más contactos.` : "."),
+        `Esta pregunta nace de la tensión entre ${nombres}: en tu carta tiran desde lados ` +
+        `opuestos de lo mismo` +
+        (puntoTop
+          ? `, y ${PUNTOS[puntoTop].nombre} es el punto que aparece en más contactos, así que es por ahí por donde se nota.`
+          : "."),
     }
   }
 
@@ -322,8 +347,10 @@ export function preguntaCentral(carto: Cartografia): PreguntaCentral | null {
     return {
       pregunta: contenido.preguntaUmbral,
       origen:
-        `Sale de ${portal?.nombre ?? principal.portalId}, el portal más marcado de tu cartografía` +
-        (puntoTop ? `, y de ${PUNTOS[puntoTop].nombre}, que es el punto que aparece en más contactos.` : "."),
+        `Esta pregunta viene de ${portal?.nombre ?? principal.portalId}, el punto más marcado de tu carta` +
+        (puntoTop
+          ? `, y de ${PUNTOS[puntoTop].nombre}, que es donde más veces aparece tocado.`
+          : "."),
     }
   }
 
@@ -351,7 +378,7 @@ export function practicaPrincipal(carto: Cartografia): PracticaAsignada | null {
     practica: contenido.practicaBase,
     portalId: principal.portalId,
     portalNombre: portal.nombre,
-    origen: `Corresponde a ${portal.nombre}, el portal más marcado de tu cartografía. Es observable: no pide creer nada, solo registrar.`,
+    origen: `Corresponde a ${portal.nombre}, el punto más marcado de tu carta. No te pide creer nada: solo mirar y anotar lo que veas.`,
   }
 }
 
