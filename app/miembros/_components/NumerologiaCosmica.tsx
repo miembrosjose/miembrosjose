@@ -24,6 +24,7 @@ import { ProductUnlockInline } from "./ProductUnlockInline"
 import prod from "./products.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
 import { CabeceraRecurso } from "./CabeceraRecurso"
+import { ComoSaleElNumero } from "./ComoSaleElNumero"
 import { PanelFallo } from "./PanelFallo"
 
 const GOLD = "#e6cf95"
@@ -487,6 +488,11 @@ function ResultView({ r, hasSaved, onGuardar, onActualizar, unlocked, isAdmin, n
           </div>
         ))}
       </div>
+
+      {/* La cuenta, delante. Cuatro números grandes sin decir de dónde salen
+          se leen como un oráculo; con la suma a la vista se leen como lo que
+          son. Va plegado: quien quiere su lectura no tropieza con aritmética. */}
+      <ComoSaleElNumero nombre={r.nombre} fecha={r.fecha} />
 
       {/* Bloques */}
       <div style={{ marginTop: "1.8rem", display: "flex", flexDirection: "column", gap: "1rem" }}>

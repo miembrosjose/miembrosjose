@@ -20,6 +20,7 @@ import { useProducts } from "../_lib/use-products"
 import { useProductAccess } from "../_lib/use-product-access"
 import { isCodigoOrigenToolProduct, numeroLibre, CODIGO_ORIGEN_PRODUCT_NUM } from "../_lib/tool-products"
 import { CabeceraRecurso } from "./CabeceraRecurso"
+import { ComoSaleElPorcentaje } from "./ComoSaleElPorcentaje"
 import prod from "./products.module.css"
 import s from "./codigo-origen.module.css"
 import { usePanelAPantallaCompleta } from "../_lib/panel-modal"
@@ -346,6 +347,11 @@ function Lectura({ r, onRehacer }: { r: CodigoOrigenResultado; onRehacer: () => 
       <Mandala r={r} />
       <TiraDeFrecuencias r={r} />
 
+      {/* Cinco cifras sin decir de dónde vienen se leen como un veredicto. Con
+          el método delante se leen como una medida, que es lo que son. Plegado,
+          para que no se interponga en la lectura de quien no lo necesita. */}
+      <ComoSaleElPorcentaje r={r} />
+
       <div style={{ marginTop: "1.8rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
         {bloques.map((b) => <BloqueLectura key={b.kicker} b={b} />)}
       </div>
@@ -454,14 +460,22 @@ function Mandala({ r }: { r: CodigoOrigenResultado }) {
       esRaiz: frec.id === r.raiz.id,
       d: `M ${C} ${C} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radio.toFixed(2)} ${radio.toFixed(2)} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`,
       // Punto de la etiqueta, algo más afuera del radio máximo.
-      lx: C + (RMAX + 18) * Math.cos(medio),
-      ly: C + (RMAX + 18) * Math.sin(medio),
+      lx: C + (RMAX + 15) * Math.cos(medio),
+      ly: C + (RMAX + 15) * Math.sin(medio),
     }
   })
 
   return (
     <div className={s.mandalaCaja}>
-      <svg viewBox="0 0 220 220" className={s.mandala} role="img" aria-label={`Reparto de tus frecuencias. Raíz: ${r.raiz.nombre}.`}>
+      {/* ── EL LIENZO ES MÁS ANCHO QUE EL DIBUJO, A PROPÓSITO ──────────────
+          El círculo mide 220 y las etiquetas van FUERA de él, centradas sobre
+          un punto que en los lados cae casi en el borde. Con un lienzo de 220
+          justos, «PROFUNDIDAD» y «ACTIVACIÓN» sobresalían y el borde del SVG
+          les cortaba las puntas: se leía «laridad» y «activaci».
+
+          El lienzo se abre 25 unidades a cada lado. El círculo no cambia de
+          tamaño ni de sitio; solo deja de recortarse lo que hay alrededor. */}
+      <svg viewBox="-25 0 270 220" className={s.mandala} role="img" aria-label={`Reparto de tus frecuencias. Raíz: ${r.raiz.nombre}.`}>
         <circle cx={C} cy={C} r={RMAX + 8} fill="none" stroke="rgba(230,207,149,0.18)" strokeWidth="0.7" />
         <circle cx={C} cy={C} r={RMAX + 15} fill="none" stroke="rgba(230,207,149,0.1)" strokeWidth="0.6" strokeDasharray="3 5" />
         {sectores.map((sec) => (
@@ -484,7 +498,7 @@ function Mandala({ r }: { r: CodigoOrigenResultado }) {
             dominantBaseline="middle"
             fill={sec.color}
             fillOpacity={sec.esRaiz ? 1 : 0.7}
-            style={{ fontSize: 8, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-mono,monospace)" }}
+            style={{ fontSize: 7.5, letterSpacing: "0.04em", textTransform: "uppercase", fontFamily: "var(--font-mono,monospace)" }}
           >
             {sec.nombre}
           </text>

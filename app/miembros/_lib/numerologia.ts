@@ -240,3 +240,89 @@ export function resultadoATexto(r: NumerologiaResultado): string {
     mensajeMision(r),
   ].filter(Boolean).join("\n")
 }
+
+// ── DE DÓNDE SALE CADA NÚMERO ───────────────────────────────────────────────
+//
+// La lectura enseñaba cuatro números grandes y ni una palabra de cómo se
+// habían obtenido. Quien no conoce la numerología ve cuatro cifras caídas del
+// cielo, y eso no invita a confiar: invita a creer o a descreer, que son las
+// dos maneras de no entender.
+//
+// Esto devuelve la cuenta ENTERA con los datos de quien mira: qué letras
+// entran, cuánto vale cada una, cuánto suman y cómo se reduce. No es una
+// explicación teórica de la numerología; es la operación que se acaba de hacer
+// con su nombre y su fecha, paso a paso.
+
+export type PasoNumero = {
+  /** El nombre del número: «Camino de vida», «Alma»… */
+  titulo: string
+  /** Qué se usa para calcularlo, en una frase. */
+  deDonde: string
+  /** Las piezas que entran en la suma: letras con su valor, o dígitos. */
+  piezas: Array<{ simbolo: string; valor: number }>
+  /** La suma sin reducir. */
+  suma: number
+  /** El camino de reducción: 38 → 11. Vacío si la suma ya era el resultado. */
+  reduccion: number[]
+  /** El número final. */
+  resultado: number
+  /** Cuando el resultado es 11, 22, 33 o 44 y por eso no se redujo más. */
+  esMaestro: boolean
+}
+
+/** La cadena de reducción, paso a paso, parándose en los maestros. */
+function cadenaDeReduccion(n: number): number[] {
+  const pasos: number[] = []
+  let x = n
+  while (x > 9 && !MASTERS.has(x)) {
+    x = String(x).split("").reduce((a, d) => a + Number(d), 0)
+    pasos.push(x)
+  }
+  return pasos
+}
+
+function pasoDeLetras(titulo: string, deDonde: string, letras: string[]): PasoNumero {
+  const piezas = letras.map((c) => ({ simbolo: c, valor: LETTER_VALUE[c] || 0 }))
+  const suma = piezas.reduce((a, p) => a + p.valor, 0)
+  const reduccion = cadenaDeReduccion(suma)
+  const resultado = reduccion.length ? reduccion[reduccion.length - 1] : suma
+  return { titulo, deDonde, piezas, suma, reduccion, resultado, esMaestro: MASTERS.has(resultado) }
+}
+
+/** Los cuatro números, con la cuenta hecha delante. */
+export function explicarNumeros(nombre: string, fecha: string): PasoNumero[] {
+  const limpio = normalizeName(nombre)
+  const letras = limpio.split("")
+  const vocales = letras.filter((c) => VOWELS.has(c))
+  const consonantes = letras.filter((c) => !VOWELS.has(c))
+
+  // El camino de vida suma los dígitos de la fecha ENTERA, no día, mes y año
+  // por separado: al reducir cada parte antes de sumarlas se pierden los
+  // números maestros que aparecen solo en la suma total.
+  const digitos = (fecha || "").replace(/\D/g, "").split("")
+  const piezasFecha = digitos.map((d) => ({ simbolo: d, valor: Number(d) }))
+  const sumaFecha = piezasFecha.reduce((a, p) => a + p.valor, 0)
+  const redFecha = cadenaDeReduccion(sumaFecha)
+
+  return [
+    {
+      titulo: "Camino de vida",
+      deDonde: "Todos los dígitos de tu fecha de nacimiento, sumados de una vez.",
+      piezas: piezasFecha,
+      suma: sumaFecha,
+      reduccion: redFecha,
+      resultado: redFecha.length ? redFecha[redFecha.length - 1] : sumaFecha,
+      esMaestro: MASTERS.has(redFecha.length ? redFecha[redFecha.length - 1] : sumaFecha),
+    },
+    pasoDeLetras("Alma", "Solo las vocales de tu nombre.", vocales),
+    pasoDeLetras("Personalidad", "Solo las consonantes de tu nombre.", consonantes),
+    pasoDeLetras("Expresión", "Todas las letras de tu nombre.", letras),
+  ]
+}
+
+/** La tabla pitagórica, para enseñarla. Nueve columnas, de 1 a 9. */
+export const TABLA_PITAGORICA: Array<{ numero: number; letras: string[] }> =
+  Array.from({ length: 9 }, (_, i) => ({
+    numero: i + 1,
+    letras: Object.keys(LETTER_VALUE).filter((l) => LETTER_VALUE[l] === i + 1).sort(),
+  }))

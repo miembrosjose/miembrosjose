@@ -459,24 +459,18 @@ function SeasonVideo({ src, prioritario }: { src: string; prioritario?: boolean 
     video.addEventListener("loadeddata", onLoaded)
     video.addEventListener("canplay", onLoaded)
 
-    // ── POR QUÉ YA NO SE LLAMA A load() AQUÍ ─────────────────────────────
-    // Esto arrancaba la descarga de TODOS los vídeos de las temporadas nada
-    // más entrar, estuvieran en pantalla o no, y con preload="auto", o sea
-    // enteros. Cuatro o cinco vídeos compitiendo a la vez en un teléfono es
-    // exactamente lo que hacía que los banners tardaran en aparecer.
+    // ── POR QUÉ AQUÍ YA NO SE LLAMA A load() ─────────────────────────────
+    // Se llamaba al entrar en pantalla, para no descargar los cinco vídeos de
+    // golpe al abrir. La intención era buena y el efecto, malo: load() REINICIA
+    // el elemento. El fotograma que `preload="metadata"` ya había pintado se
+    // borraba justo en el momento de asomar, y el banner desaparecía y volvía
+    // a aparecer un segundo después. Era eso lo que se veía al deslizar.
     //
-    // Ahora la descarga empieza cuando el vídeo entra en pantalla, justo
-    // antes de tocarlo. El de arriba —el único que se ve al abrir— sigue
-    // cargando de inmediato, porque su observador dispara al montar.
-    let arrancado = false
-    const arrancar = () => {
-      if (arrancado) return
-      arrancado = true
-      try { video.load() } catch { /* ignora */ }
-    }
-
+    // No hace falta: `preload="metadata"` ya trae lo justo —la cabecera y el
+    // primer fotograma, no el vídeo entero— y la descarga de verdad la arranca
+    // el play(). Se conserva lo que se quería (no bajar cinco vídeos enteros)
+    // sin borrar lo que ya estaba dibujado.
     if (typeof IntersectionObserver === "undefined") {
-      arrancar()
       playMuted()
       return () => {
         video.removeEventListener("loadeddata", onLoaded)
@@ -487,16 +481,16 @@ function SeasonVideo({ src, prioritario }: { src: string; prioritario?: boolean 
     const observer = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting
-        if (entry.isIntersecting) {
-          arrancar()
-          playMuted()
-        } else {
-          video.pause()
-        }
+        if (entry.isIntersecting) playMuted()
+        else video.pause()
       },
-      // rootMargin: se empieza a traer un poco antes de que asome, para que
-      // al deslizar ya esté ahí en vez de aparecer en negro.
-      { threshold: [0, 0.25], rootMargin: "200px" },
+      // ── EL MARGEN ES DISTINTO A LO ANCHO QUE A LO ALTO ──────────────────
+      // Las temporadas se recorren deslizando HACIA UN LADO, y un margen de
+      // 200px por los cuatro costados apenas cubre media tarjeta por delante:
+      // por eso el banner de la siguiente no empezaba hasta tenerla casi
+      // centrada. A lo ancho se mira mucho más lejos —tres tarjetas— porque es
+      // por donde va el movimiento.
+      { threshold: [0, 0.25], rootMargin: "200px 900px" },
     )
     observer.observe(video)
     return () => {
@@ -520,18 +514,24 @@ function SeasonVideo({ src, prioritario }: { src: string; prioritario?: boolean 
   }
 
   if (isImage) {
-    // El primero se ve nada más abrir, así que pedirlo «con retraso» era
-    // retrasar justo el que hay que enseñar: el navegador lo dejaba para el
-    // final de la cola. Ese va con prioridad; los demás siguen esperando a
-    // que se deslice hasta ellos.
+    // ── NI CARRERA NI ESPERA ───────────────────────────────────────────────
+    // Con loading="lazy" el navegador decide cuándo traer cada banner mirando
+    // lo lejos que está del borde de la pantalla, y en un carrusel horizontal
+    // ese cálculo es muy corto: la imagen no empezaba a bajar hasta tener la
+    // tarjeta casi centrada, y hasta entonces se veía el hueco.
+    //
+    // Son cinco imágenes, no cincuenta. Se piden todas desde el principio,
+    // pero solo la primera con prioridad alta: las demás van en segundo plano,
+    // sin quitarle ancho de banda a lo que se ve al abrir, y para cuando se
+    // desliza hasta ellas ya están ahí.
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
         src={src}
         alt=""
         className={styles.video}
-        loading={prioritario ? "eager" : "lazy"}
-        fetchPriority={prioritario ? "high" : "auto"}
+        loading="eager"
+        fetchPriority={prioritario ? "high" : "low"}
         decoding="async"
       />
     )

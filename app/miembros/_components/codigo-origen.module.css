@@ -213,21 +213,34 @@
 
 .mandala {
   width: 100%;
-  max-width: 300px;
+  max-width: 330px;
   height: auto;
-  aspect-ratio: 1 / 1;
+  /* La proporción sigue al lienzo (270 × 220), que es más ancho que el círculo
+     para que quepan las etiquetas de los lados. Forzar 1/1 aquí volvería a
+     estrujarlas. */
+  aspect-ratio: 27 / 22;
 }
 
 /* ── Tira de las cinco frecuencias ──────────────────────────────────────── */
 /* Mismo formato que la rejilla de números de Numerología Cósmica. */
+/* ── LAS CINCO FRECUENCIAS ──────────────────────────────────────────────
+ * Esto eran cinco columnas iguales SIEMPRE. En un teléfono cada una se
+ * quedaba en unos cincuenta píxeles, y «PROFUNDIDAD» o «ACTIVACIÓN» no caben
+ * ahí: el texto se salía por los dos lados —va centrado— y el borde del panel
+ * le cortaba las puntas. Por eso se leía «laridad» y «activaci».
+ *
+ * Ahora caben las que quepan y las demás bajan: tres y dos en un móvil
+ * estrecho, las cinco en cuanto hay sitio. Y si aun así una palabra no entra,
+ * se parte en dos líneas en vez de salirse. */
 .tira {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(5.4rem, 1fr));
   gap: 0.4rem;
   margin-bottom: 0.4rem;
 }
 
 .tiraItem {
+  min-width: 0;
   text-align: center;
   padding: 0.7rem 0.25rem;
   border-radius: 12px;
@@ -245,15 +258,20 @@
 .tiraEtiqueta {
   margin-top: 3px;
   font-family: var(--font-mono, monospace);
-  font-size: 0.48rem;
-  letter-spacing: 0.1em;
+  font-size: 0.5rem;
+  /* El espaciado entre letras era lo que empujaba las palabras largas fuera
+     de su caja. Se reduce, y lo que aun así no quepa se parte. */
+  letter-spacing: 0.05em;
+  line-height: 1.3;
   text-transform: uppercase;
   color: #8b90b4;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 @media (min-width: 480px) {
   .tiraValor { font-size: 1.3rem; }
-  .tiraEtiqueta { font-size: 0.54rem; }
+  .tiraEtiqueta { font-size: 0.54rem; letter-spacing: 0.08em; }
 }
 
 /* ── Prácticas del cierre ───────────────────────────────────────────────── */

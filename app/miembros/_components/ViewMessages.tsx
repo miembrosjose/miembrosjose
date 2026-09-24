@@ -59,7 +59,7 @@ const formatTime = (iso: string) => {
 
 export function ViewMessages() {
   const { user } = useAuth()
-  const { params, setView } = useView()
+  const { params, setView, volver } = useView()
   const [threads, setThreads] = useState<Thread[]>([])
   const [activeUserId, setActiveUserId] = useState<string | null>(params.withUserId || null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -399,9 +399,16 @@ export function ViewMessages() {
       <aside className={`${styles.sidebar} ${activeUserId ? styles.hidden : ""}`}>
         {/* Esta pantalla no tenía salida. Se entra por el icono de la barra
             y, una vez dentro, lo único que quedaba era el botón de atrás del
-            navegador. En un teléfono, eso es quedarse encerrado. */}
+            navegador. En un teléfono, eso es quedarse encerrado.
+
+            VOLVER ES VOLVER, no «ir a La Red».
+            Este botón llevaba siempre a La Red, viniera uno de donde viniera:
+            si entrabas al chat desde un episodio, desde tu perfil o desde la
+            portada, salías a un sitio en el que no habías estado. `volver()`
+            usa la pila del navegador y devuelve a la pantalla inmediatamente
+            anterior, que es lo que se espera de una flecha hacia atrás. */}
         <div className={styles.sidebarHeader}>
-          <button type="button" className={styles.salir} onClick={() => setView("red")}>
+          <button type="button" className={styles.salir} onClick={volver}>
             <ArrowLeft size={16} aria-hidden /> Volver
           </button>
           <p className={styles.sidebarTitle}>Mensajes</p>
