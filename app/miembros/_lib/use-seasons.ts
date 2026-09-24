@@ -60,9 +60,36 @@ export type ManagedSeason = Season & {
   sort_order?: number
 }
 
+// ── LO ÚLTIMO QUE SE VIO, GUARDADO EN LA PESTAÑA ──────────────────────────
+// Las temporadas —y con ellas la dirección de cada banner— llegaban siempre de
+// una petición. Hasta que respondía, el carrusel enseñaba las estáticas y
+// ningún banner podía siquiera empezar a bajarse: primero el JavaScript,
+// después la petición, después la imagen. Tres esperas encadenadas en cada
+// entrada.
+//
+// Guardándolas en la pestaña, la segunda visita pinta los banners de
+// inmediato y la petición sigue haciéndose por detrás para traer cambios. Se
+// olvida al cerrar la pestaña, así que nunca queda nada viejo pegado.
+const CACHE = "los144k_temporadas"
+
+function leerCache(): ManagedSeason[] | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = sessionStorage.getItem(CACHE)
+    if (!raw) return null
+    const v = JSON.parse(raw) as ManagedSeason[]
+    return Array.isArray(v) && v.length > 0 ? v : null
+  } catch { return null }
+}
+
+function guardarCache(v: ManagedSeason[]) {
+  if (typeof window === "undefined") return
+  try { sessionStorage.setItem(CACHE, JSON.stringify(v)) } catch { /* cuota */ }
+}
+
 export function useSeasons() {
   const [seasons, setSeasons] = useState<ManagedSeason[]>(
-    STATIC_SEASONS.map((s, i) => ({ ...s, id: `static-${i}` })),
+    () => leerCache() ?? STATIC_SEASONS.map((s, i) => ({ ...s, id: `static-${i}` })),
   )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -82,7 +109,9 @@ export function useSeasons() {
       // (admin pode ter deletado tudo). Senão fica fallback fantasma com
       // IDs "static-X" e ações tipo "criar episodio" falham.
       const data = (await res.json()) as { seasons: DbSeason[] }
-      setSeasons((data.seasons ?? []).map(dbToSeason))
+      const listas = (data.seasons ?? []).map(dbToSeason)
+      setSeasons(listas)
+      guardarCache(listas)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro desconhecido")
     } finally {

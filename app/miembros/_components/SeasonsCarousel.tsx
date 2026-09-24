@@ -139,6 +139,9 @@ export function SeasonsCarousel({
 
   // Card de una temporada real (T1-T4): mantiene el diseño de video/episodios.
   function renderSeasonCard(season: SeasonLike) {
+    // La primera del carrusel es la única que se ve al abrir: su banner se
+    // pide con prioridad, el resto espera a que se deslice hasta ellos.
+    const esPrimera = seasons[0]?.num === season.num
     // Admin ve todo desbloqueado (puede abrir cualquier temporada).
     const unlocked = isAdmin || isSeasonUnlocked(season, progress, seasons)
     const watched = getWatchedCount(season, progress)
@@ -176,7 +179,7 @@ export function SeasonsCarousel({
           className={styles.thumb}
           style={season.gradient ? { background: season.gradient } : undefined}
         >
-          {season.videoBg && <SeasonVideo src={season.videoBg} />}
+          {season.videoBg && <SeasonVideo src={season.videoBg} prioritario={esPrimera} />}
           {!season.videoBg && <span className={styles.thumbEmoji}>{season.emoji}</span>}
           {season.starter && (
             <span className={`${styles.badge} ${styles.starter}`}>EMPIEZA AQUÍ</span>
@@ -384,7 +387,7 @@ export function SeasonsCarousel({
 //
 // Antes: todos os 5 cards rodavam autoplay quando entravam no viewport
 // (threshold 0.25), causando spike de CPU/GPU + jank em mobile.
-function SeasonVideo({ src }: { src: string }) {
+function SeasonVideo({ src, prioritario }: { src: string; prioritario?: boolean }) {
   // Detecta se é IMAGEM (upload via Mídia → convertido pra WebP) ou VÍDEO.
   // Admin pode subir foto OU vídeo; só vídeo precisa do player com autoplay.
   const isImage = /\.(webp|png|jpe?g|gif|avif)(\?|$)/i.test(src)
@@ -517,8 +520,21 @@ function SeasonVideo({ src }: { src: string }) {
   }
 
   if (isImage) {
+    // El primero se ve nada más abrir, así que pedirlo «con retraso» era
+    // retrasar justo el que hay que enseñar: el navegador lo dejaba para el
+    // final de la cola. Ese va con prioridad; los demás siguen esperando a
+    // que se deslice hasta ellos.
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="" className={styles.video} loading="lazy" />
+    return (
+      <img
+        src={src}
+        alt=""
+        className={styles.video}
+        loading={prioritario ? "eager" : "lazy"}
+        fetchPriority={prioritario ? "high" : "auto"}
+        decoding="async"
+      />
+    )
   }
 
   // Media fragment #t=0.1 → iOS Safari usa esse frame como poster quando o
