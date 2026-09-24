@@ -13,15 +13,17 @@
 --   Ahora el recorrido es el camino entero, en orden:
 --
 --     1  Temporada 1 · El Llamado
---     2  Portal del Compromiso        (T1 → T2)
---     3  Temporada 2 · La Estructura del Cosmos
---     4  Portal del Mapa Cósmico      (T2 → T3)
---     5  Temporada 3 · Orígenes ocultos de la Tierra
---     6  Portal de la Memoria Terrestre (T3 → T4)
---     7  Temporada 4 · Archivos del Sol hasta Jesús
---     8  Umbral del Contacto
---     9  Objetivos de los 144.000
---    10  Misión de la Tierra
+--     2  Temporada 2 · La Estructura del Cosmos
+--     3  Temporada 3 · Orígenes ocultos de la Tierra
+--     4  Temporada 4 · Archivos del Sol hasta Jesús
+--     5  Umbral del Contacto
+--     6  Objetivos de los 144.000
+--     7  Misión de la Tierra
+--
+--   Los portales de paso —Compromiso, Mapa Cósmico, Memoria Terrestre— NO son
+--   pasos aparte: son el cierre de la temporada que los abre, y viven dentro
+--   de ella. Este archivo llegó a crearlos como espacios propios; el 04 los
+--   metió donde iban y aquí ya no se crean.
 --
 --   Y quedan TRES espacios permanentes, los que no dependen de por dónde vaya
 --   cada quien:
@@ -94,21 +96,9 @@ alter table public.community_spaces
 insert into public.community_spaces
   (slug, name, kicker, description, tipo, season_num, desbloquea_con, icono, sort_order)
 values
-  ('portal-compromiso', 'Portal del Compromiso', 'De la Temporada 1 a la 2',
-   'El paso entre el llamado y la estructura. Aquí se conversa la declaración de intención con la que se entra en la Temporada 2.',
-   'hito', null, 1, 'portal', 12),
-
-  ('portal-mapa-cosmico', 'Portal del Mapa Cósmico', 'De la Temporada 2 a la 3',
-   'El paso entre la estructura del cosmos y los orígenes de la Tierra. Las siete leyes universales y lo que abren.',
-   'hito', null, 2, 'portal', 14),
-
-  ('portal-memoria-terrestre', 'Portal de la Memoria Terrestre', 'De la Temporada 3 a la 4',
-   'El paso entre la memoria de la Tierra y los archivos solares. Sueños, señales y lo que aparece en esos días.',
-   'hito', null, 3, 'portal', 16),
-
   ('umbral-contacto', 'Umbral del Contacto', 'La preparación',
    'Prácticas, herramientas y preguntas sobre la preparación consciente para el contacto: meditación, respiración, concentración, intención, práctica en grupo.',
-   'hito', null, 4, 'umbral', 18)
+   'hito', null, 4, 'umbral', 15)
 on conflict (slug) do update
   set name           = excluded.name,
       kicker         = excluded.kicker,
@@ -129,11 +119,11 @@ on conflict (slug) do update
 -- hacemos, y después el contexto en el que eso ocurre. Al revés, la carga de
 -- información llega antes que el motivo para sostenerla.
 update public.community_spaces
-   set tipo = 'hito', season_num = null, desbloquea_con = 4, sort_order = 20
+   set tipo = 'hito', season_num = null, desbloquea_con = 4, sort_order = 16
  where slug = 'objetivos-144000';
 
 update public.community_spaces
-   set tipo = 'hito', season_num = null, desbloquea_con = 4, sort_order = 22
+   set tipo = 'hito', season_num = null, desbloquea_con = 4, sort_order = 17
  where slug = 'mision-tierra';
 
 -- «Preparación para el Contacto» pasa a ser el Umbral del Contacto, que es su
@@ -154,7 +144,7 @@ begin
     update public.community_spaces
        set slug = 'umbral-contacto', name = 'Umbral del Contacto',
            kicker = 'La preparación', tipo = 'hito', season_num = null,
-           desbloquea_con = 4, sort_order = 18
+           desbloquea_con = 4, sort_order = 15
      where id = v_prep;
   end if;
 end $$;
@@ -164,9 +154,9 @@ end $$;
 -- ║  4 · LAS TEMPORADAS, EN SU SITIO DEL CAMINO                          ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 update public.community_spaces set sort_order = 11 where slug = 'temporada-1';
-update public.community_spaces set sort_order = 13 where slug = 'temporada-2';
-update public.community_spaces set sort_order = 15 where slug = 'temporada-3';
-update public.community_spaces set sort_order = 17 where slug = 'temporada-4';
+update public.community_spaces set sort_order = 12 where slug = 'temporada-2';
+update public.community_spaces set sort_order = 13 where slug = 'temporada-3';
+update public.community_spaces set sort_order = 14 where slug = 'temporada-4';
 
 -- Y los tres permanentes, en el orden pedido.
 update public.community_spaces set sort_order = 1 where slug = 'presentaciones';
@@ -182,9 +172,6 @@ declare r record; v_space uuid;
 begin
   for r in
     select * from (values
-      ('Portal del Compromiso%',          'portal-compromiso'),
-      ('Portal del Mapa Cósmico%',        'portal-mapa-cosmico'),
-      ('Portal de la Memoria Terrestre%', 'portal-memoria-terrestre'),
       ('Rumbo al Umbral del Contacto%',   'umbral-contacto'),
       ('Objetivos de Los 144.000%',       'objetivos-144000'),
       ('Nodos 144.000%',                  'objetivos-144000'),

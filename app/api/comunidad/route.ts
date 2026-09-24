@@ -28,10 +28,12 @@ export async function GET() {
 
   const ctx = await contextoDe(user)
 
-  const [resumen, destacadas, recientes] = await Promise.all([
+  // Lo fijado por administración ya no se pide aquí: cada espacio lo enseña
+  // arriba del todo, que es donde se busca, y traerlo también a la portada
+  // hacía aparecer la misma conversación dos veces en dos pantallas. Una
+  // consulta menos en la pantalla que más tarda en abrir.
+  const [resumen, recientes] = await Promise.all([
     resumenPorEspacio(ctx.legibles),
-    // Lo fijado por administración: pocas, y solo de donde se puede entrar.
-    listarHilos({ legibles: ctx.legibles, fijadas: true, limite: 4 }),
     // Lo que acaba de moverse, atravesando todos los espacios abiertos.
     //
     // «Moverse» es que alguien haya dicho algo. Los temas sembrados por
@@ -62,10 +64,11 @@ export async function GET() {
     }
   })
 
-  const [conDestacadas, conRecientes] = await Promise.all([
-    marcarLoMio(supabase, user.id, destacadas.hilos as unknown as Array<Record<string, unknown>>),
-    marcarLoMio(supabase, user.id, recientes.hilos as unknown as Array<Record<string, unknown>>),
-  ])
+  const conRecientes = await marcarLoMio(
+    supabase,
+    user.id,
+    recientes.hilos as unknown as Array<Record<string, unknown>>,
+  )
 
   return NextResponse.json({
     espacios,
@@ -73,7 +76,6 @@ export async function GET() {
       temporada_actual: ctx.temporadaActual,
       abiertas: [...ctx.abiertas].sort((a, b) => a - b),
     },
-    destacadas: conDestacadas,
     recientes: conRecientes,
     puedo: {
       moderar: puedeModerar(ctx.papel),

@@ -21,6 +21,16 @@
 // pulso juntos—. El recorrido es una fila de peldaños y la actividad es una
 // lista: eso se lee de un vistazo y no compite con nada.
 //
+// ── SIN DESTACADAS EN LA PORTADA ───────────────────────────────────────────
+// Había aquí una sección con lo fijado por la casa. Toda conversación fijada
+// sale ya ARRIBA DEL TODO dentro de su propio espacio, que es donde se busca:
+// duplicarla en la portada hacía que la misma conversación apareciera dos
+// veces en dos pantallas distintas y que la portada creciera sin decir nada
+// nuevo.
+//
+// La portada dice dónde vas y qué se está moviendo. Lo fijado lo dice cada
+// espacio, en su sitio.
+//
 // ── CADA COSA SE DICE UNA VEZ ──────────────────────────────────────────────
 // Esta pantalla llegó a decir tres veces lo mismo: una tarjeta grande con la
 // temporada actual, esa misma temporada otra vez dentro del camino, y abajo
@@ -62,7 +72,6 @@ const CLAVE = "portada"
 type Datos = {
   espacios: EspacioResumen[]
   recorrido: { temporada_actual: number | null; abiertas: number[] }
-  destacadas: THilo[]
   recientes: THilo[]
   puedo: { moderar: boolean; estructurar: boolean }
 }
@@ -183,24 +192,6 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
               )
             })}
           </ol>
-        </section>
-      )}
-
-      {/* ── Destacadas ──────────────────────────────────────────────────── */}
-      {datos.destacadas.length > 0 && (
-        <section className={s.seccion}>
-          <p className={s.seccionKicker}>Destacadas</p>
-          <div className={s.lista}>
-            {datos.destacadas.map((h) => (
-              <HiloResumen
-                key={h.id}
-                hilo={h}
-                espacios={datos.espacios}
-                onAbrirEspacio={onAbrirEspacio}
-                onAbrir={(x) => abrirDonde(x, datos.espacios, onAbrirHilo)}
-              />
-            ))}
-          </div>
         </section>
       )}
 
