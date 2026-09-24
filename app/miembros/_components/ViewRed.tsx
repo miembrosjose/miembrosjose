@@ -19,6 +19,7 @@ import { getAchievementById, getAura, ORDEN_AURAS } from "@/lib/achievements"
 import { getAchievementSvg } from "@/lib/achievement-svg"
 import { Avatar } from "./Avatar"
 import { useView } from "../_lib/view-context"
+import { irAlTope } from "../_lib/ir-al-tope"
 import type { PaisPunto, CiudadPunto, MiembroPunto } from "./MapaRed"
 
 // ssr:false — Leaflet no debe entrar al bundle del Worker (evita el 1102).
@@ -122,9 +123,19 @@ export function ViewRed() {
   // ni el servidor— y se restaura al montar.
   // Siempre Pulso al entrar. Es lo primero que hay que ver, y recordar la
   // última pestaña hacía que cada persona entrara a un sitio distinto.
-  const [tab, setTab] = useState<"pulso" | "foro" | "lista" | "mapa" | "encuentros">(
+  const [tab, setTabEstado] = useState<"pulso" | "foro" | "lista" | "mapa" | "encuentros">(
     params.redTab ?? "pulso",
   )
+
+  // Cambiar de pestaña es cambiar de pantalla: lo de antes ya no está debajo.
+  // Sin esto, quien venía del final del mapa aterrizaba en mitad del foro y
+  // parecía que la pestaña se hubiera abierto por la mitad.
+  const tabRef = useRef(tab)
+  const setTab = useCallback((t: "pulso" | "foro" | "lista" | "mapa" | "encuentros") => {
+    if (tabRef.current !== t) irAlTope()
+    tabRef.current = t
+    setTabEstado(t)
+  }, [])
 
   // Si se vuelve a entrar pidiendo otra pestaña sin que el componente llegue a
   // desmontarse, el valor inicial de arriba ya no se vuelve a evaluar.

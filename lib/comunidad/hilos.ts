@@ -34,6 +34,20 @@ export type FiltroHilos = {
   antesDe?: string | null
   /** Solo las fijadas, o solo las no fijadas. Sin valor, todas. */
   fijadas?: boolean | null
+  /**
+   * Deja fuera los temas de la casa que nadie ha tocado todavía.
+   *
+   * Los pasos del camino se siembran con su tema ya escrito por administración.
+   * Eso está bien dentro de cada paso —es de lo que se habla ahí—, pero en una
+   * lista de «lo que acaba de moverse» son una docena de entradas idénticas que
+   * repiten, una por una, los pasos que ya están listados justo encima, y sin
+   * una sola respuesta debajo.
+   *
+   * Un tema que nadie ha contestado no es actividad. Uno oficial en el que SÍ
+   * se está hablando lo es, y por eso la condición mira las respuestas y no
+   * solo la etiqueta.
+   */
+  conVidaPropia?: boolean
 }
 
 /**
@@ -66,6 +80,7 @@ export async function listarHilos(filtro: FiltroHilos) {
   }
   if (filtro.categoryId) q = q.eq("category_id", filtro.categoryId)
   if (typeof filtro.fijadas === "boolean") q = q.eq("pinned", filtro.fijadas)
+  if (filtro.conVidaPropia) q = q.or("is_official.eq.false,replies_count.gt.0")
 
   if (filtro.q) {
     // Se limpia lo que rompería la sintaxis del filtro `.or` de PostgREST.

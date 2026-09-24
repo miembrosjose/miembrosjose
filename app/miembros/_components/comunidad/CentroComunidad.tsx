@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useView } from "../../_lib/view-context"
+import { irAlTope } from "../../_lib/ir-al-tope"
 import { ViewComunidad } from "./ViewComunidad"
 import { EspacioComunidad } from "./EspacioComunidad"
 
@@ -61,7 +62,7 @@ export function CentroComunidad() {
     try { sessionStorage.setItem(CLAVE, slug) } catch { /* da igual */ }
     // Al cambiar de pantalla se empieza por arriba, no por donde estaba la
     // anterior: si no, se entra a un espacio por la mitad de su lista.
-    window.scrollTo({ top: 0, behavior: "auto" })
+    irAlTope()
   }, [])
 
   // Desde la portada: ir a un espacio y dejar abierta esa conversación.
@@ -69,17 +70,21 @@ export function CentroComunidad() {
     setEspacio(slug)
     setHiloPedido(hiloId)
     try { sessionStorage.setItem(CLAVE, slug) } catch { /* da igual */ }
-    window.scrollTo({ top: 0, behavior: "auto" })
+    irAlTope()
   }, [])
 
   const volver = useCallback(() => {
     setEspacio(null)
     setHiloPedido(null)
     try { sessionStorage.removeItem(CLAVE) } catch { /* da igual */ }
-    window.scrollTo({ top: 0, behavior: "auto" })
+    irAlTope()
   }, [])
 
+  // La `key` es deliberada: al pasar de un espacio a otro no se reaprovecha la
+  // pantalla anterior. Sin ella, React conservaba el estado —y por un
+  // fotograma se veía la lista del espacio del que se venía— antes de que
+  // llegara la del nuevo.
   return espacio
-    ? <EspacioComunidad slug={espacio} abrirHiloId={hiloPedido} onVolver={volver} />
+    ? <EspacioComunidad key={espacio} slug={espacio} abrirHiloId={hiloPedido} onVolver={volver} />
     : <ViewComunidad onAbrirEspacio={abrir} onAbrirHilo={abrirHilo} />
 }

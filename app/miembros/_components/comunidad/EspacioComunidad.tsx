@@ -23,6 +23,8 @@ import type { ForumPost as THilo } from "../../_lib/types"
 import { ForumPost } from "../ForumPost"
 import { HiloResumen } from "./HiloResumen"
 import { ComposerComunidad } from "./ComposerComunidad"
+import { guardarComunidad, leerComunidad, olvidarComunidad } from "../../_lib/comunidad-cache"
+import { irAlTope } from "../../_lib/ir-al-tope"
 import s from "./comunidad.module.css"
 
 type Categoria = { id: string; slug: string; name: string; description: string }
@@ -54,16 +56,20 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
   abrirHiloId?: string | null
   onVolver: () => void
 }) {
-  const [datos, setDatos] = useState<Respuesta | null>(null)
   const [cerrado, setCerrado] = useState<Cerrado | null>(null)
-  const [cargando, setCargando] = useState(true)
   const [categoria, setCategoria] = useState<string | null>(null)
   const [orden, setOrden] = useState("recientes")
   const [abierto, setAbierto] = useState<THilo | null>(null)
   const [componiendo, setComponiendo] = useState(false)
 
+  // Cada combinación de espacio, sección y orden se recuerda por separado: son
+  // listas distintas y mezclarlas enseñaría la de otra pestaña un instante.
+  const clave = `espacio:${slug}:${categoria ?? ""}:${orden}`
+
+  const [datos, setDatos] = useState<Respuesta | null>(() => leerComunidad<Respuesta>(clave))
+  const [primeraVez, setPrimeraVez] = useState(() => leerComunidad<Respuesta>(clave) === null)
+
   const cargar = useCallback(async () => {
-    setCargando(true)
     try {
       const p = new URLSearchParams()
       if (categoria) p.set("categoria", categoria)
@@ -78,20 +84,26 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
         setDatos(null)
         return
       }
-      if (!r.ok) { setDatos(null); return }
+      if (!r.ok) return
       setCerrado(null)
+      guardarComunidad(clave, j as Respuesta)
       setDatos(j as Respuesta)
     } catch {
-      setDatos(null)
+      // Se conserva lo que ya estuviera en pantalla.
     } finally {
-      setCargando(false)
+      setPrimeraVez(false)
     }
-  }, [slug, categoria, orden])
+  }, [slug, categoria, orden, clave])
 
+  // Pedir de nuevo, siempre. Lo de memoria es para no dejar la pantalla en
+  // blanco mientras tanto, no para ahorrarse la pregunta.
   useEffect(() => { void cargar() }, [cargar])
 
-  // Al cambiar de espacio se vuelve arriba y se cierra lo que hubiera abierto.
-  useEffect(() => { setAbierto(null); setCategoria(null) }, [slug])
+  // Cambiar de espacio REMONTA este componente —el contenedor le pone una
+  // `key` con el slug—, así que no hace falta limpiar nada a mano: el estado
+  // nace nuevo y lee de memoria lo que corresponda a ESTE espacio. Limpiarlo
+  // con un efecto dejaba pintado un fotograma del espacio anterior.
+  useEffect(() => { irAlTope() }, [])
 
   // Si se llegó pidiendo una conversación concreta, se abre en cuanto está.
   //
@@ -115,7 +127,7 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
     setAbierto(encontrada)
   }, [abrirHiloId, datos])
 
-  if (cargando && !datos && !cerrado) return <div className={s.cargando} aria-hidden />
+  if (!datos && !cerrado && primeraVez) return <div className={s.cargando} aria-hidden />
 
   // ── Cerrado: se sabe que existe, no lo que dice ─────────────────────────
   if (cerrado) {
@@ -164,8 +176,8 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
           post={abierto}
           onEdit={() => {}}
           onReport={() => {}}
-          onDelete={() => { setAbierto(null); void cargar() }}
-          onDeleteAdmin={() => { setAbierto(null); void cargar() }}
+          onDelete={() => { olvidarComunidad(); setAbierto(null); void cargar() }}
+          onDeleteAdmin={() => { olvidarComunidad(); setAbierto(null); void cargar() }}
           onEditReply={() => {}}
           onReportReply={() => {}}
         />
@@ -197,7 +209,7 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
           categorias={datos.categorias}
           categoriaPorDefecto={categoria}
           onCerrar={() => setComponiendo(false)}
-          onCreada={() => { setComponiendo(false); void cargar() }}
+          onCreada={() => { olvidarComunidad(); setComponiendo(false); void cargar() }}
         />
       )}
 

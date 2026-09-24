@@ -8,6 +8,7 @@
 //   /miembros/producto/<slug>  → view=producto, params.slug
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
+import { irAlTope } from "./ir-al-tope"
 
 export type ViewKey =
   | "inicio"
@@ -162,16 +163,15 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
       setViewState(parsed.view)
       setAnchor(parsed.anchor)
       setParams(parsed.params)
-      requestAnimationFrame(() => {
-        if (parsed.anchor) {
-          const el = document.getElementById(parsed.anchor)
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" })
-            return
-          }
-        }
-        window.scrollTo({ top: 0, behavior: "smooth" })
-      })
+      if (parsed.anchor) {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(parsed.anchor!)
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+          else irAlTope()
+        })
+      } else {
+        irAlTope()
+      }
     }
     syncFromUrl()
     function alRetroceder() {
@@ -199,16 +199,17 @@ export function ViewProvider({ children }: { children: React.ReactNode }) {
       setViewState(v)
       setAnchor(a)
       setParams(p)
-      requestAnimationFrame(() => {
-        if (a) {
+      // Un ancla es ir a un sitio DENTRO de la pantalla: ahí lo suave ayuda a
+      // entender que no se ha cambiado de sitio. Cambiar de pantalla, no.
+      if (a) {
+        requestAnimationFrame(() => {
           const el = document.getElementById(a)
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" })
-            return
-          }
-        }
-        window.scrollTo({ top: 0, behavior: "smooth" })
-      })
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+          else irAlTope()
+        })
+      } else {
+        irAlTope()
+      }
     },
     []
   )

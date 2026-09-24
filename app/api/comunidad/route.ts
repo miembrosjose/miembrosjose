@@ -33,7 +33,12 @@ export async function GET() {
     // Lo fijado por administración: pocas, y solo de donde se puede entrar.
     listarHilos({ legibles: ctx.legibles, fijadas: true, limite: 4 }),
     // Lo que acaba de moverse, atravesando todos los espacios abiertos.
-    listarHilos({ legibles: ctx.legibles, fijadas: false, limite: 8 }),
+    //
+    // «Moverse» es que alguien haya dicho algo. Los temas sembrados por
+    // administración que aún no tienen respuesta se quedan fuera: ya aparecen
+    // arriba como los pasos del camino que son, y repetirlos aquí llenaba la
+    // portada de entradas iguales que no llevaban a ninguna conversación.
+    listarHilos({ legibles: ctx.legibles, fijadas: false, conVidaPropia: true, limite: 8 }),
   ])
 
   const espacios = ctx.espacios.map((e) => {

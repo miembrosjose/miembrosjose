@@ -20,10 +20,21 @@
 // tarjetas los espacios, que es donde la tarjeta aporta —nombre, distinción y
 // pulso juntos—. El recorrido es una fila de peldaños y la actividad es una
 // lista: eso se lee de un vistazo y no compite con nada.
+//
+// ── CADA COSA SE DICE UNA VEZ ──────────────────────────────────────────────
+// Esta pantalla llegó a decir tres veces lo mismo: una tarjeta grande con la
+// temporada actual, esa misma temporada otra vez dentro del camino, y abajo
+// «actividad reciente» llena de los temas del camino —recién sembrados, sin
+// una sola respuesta— que ya estaban listados arriba.
+//
+// Ahora: el camino se dibuja una vez, con el paso actual marcado, y la
+// actividad reciente es lo que se ha MOVIDO de verdad. Un tema que nadie ha
+// tocado no es actividad; es el contenido de su paso, y ahí se encuentra.
 
 import { useCallback, useEffect, useState } from "react"
+import { guardarComunidad, leerComunidad } from "../../_lib/comunidad-cache"
 import {
-  ArrowRight, Compass, Globe2, HelpCircle, Lock, MessageCircle,
+  Compass, Globe2, HelpCircle, Lock, MessageCircle,
   Sparkles, Target, Users,
 } from "lucide-react"
 import type { ForumPost as THilo } from "../../_lib/types"
@@ -44,6 +55,9 @@ export type EspacioResumen = {
   conversaciones: number | null
   ultima_actividad: string | null
 }
+
+/** Una sola portada, un solo sitio donde se guarda. */
+const CLAVE = "portada"
 
 type Datos = {
   espacios: EspacioResumen[]
@@ -68,24 +82,33 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
   /** Abre el espacio de esa conversación y la deja desplegada. */
   onAbrirHilo: (slug: string, hiloId: string) => void
 }) {
-  const [datos, setDatos] = useState<Datos | null>(null)
-  const [cargando, setCargando] = useState(true)
+  // Se arranca con lo último que se vio. Volver de un espacio a la portada es
+  // instantáneo; por detrás se pregunta de nuevo y se sustituye sin parpadeo.
+  const [datos, setDatos] = useState<Datos | null>(() => leerComunidad<Datos>(CLAVE))
+
+  // El esqueleto de carga solo tiene sentido cuando no hay NADA que enseñar.
+  // Con algo en memoria, enseñarlo y refrescarlo por detrás es más rápido y se
+  // ve mejor que un rectángulo gris delante de datos que ya tenemos.
+  const [primeraVez, setPrimeraVez] = useState(() => leerComunidad<Datos>(CLAVE) === null)
 
   const cargar = useCallback(async () => {
     try {
       const r = await fetch("/api/comunidad", { credentials: "include" })
-      if (!r.ok) { setDatos(null); return }
-      setDatos((await r.json()) as Datos)
+      if (!r.ok) return
+      const j = (await r.json()) as Datos
+      guardarComunidad(CLAVE, j)
+      setDatos(j)
     } catch {
-      setDatos(null)
+      // Se conserva lo que hubiera en pantalla: una portada de hace un minuto
+      // es mejor que un error por un parpadeo de red.
     } finally {
-      setCargando(false)
+      setPrimeraVez(false)
     }
   }, [])
 
   useEffect(() => { void cargar() }, [cargar])
 
-  if (cargando) return <div className={s.cargando} aria-hidden />
+  if (!datos && primeraVez) return <div className={s.cargando} aria-hidden />
 
   if (!datos) {
     return (
@@ -102,9 +125,6 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
   // permanentes, como si el final del camino fuera un tema más.
   const camino = datos.espacios.filter((e) => e.tipo === "season" || e.tipo === "hito")
   const globales = datos.espacios.filter((e) => e.tipo === "global")
-  const actual =
-    camino.find((t) => t.tipo === "season" && t.season_num === datos.recorrido.temporada_actual) ?? null
-
   return (
     <div className={s.comunidad}>
       {/* ── Bienvenida ──────────────────────────────────────────────────── */}
@@ -118,25 +138,17 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
       </header>
 
       {/* ── Tu recorrido ────────────────────────────────────────────────── */}
-      {actual && (
+      {camino.length > 0 && (
         <section className={s.seccion}>
           <p className={s.seccionKicker}>Tu recorrido</p>
-          <button
-            type="button"
-            className={s.recorridoCard}
-            onClick={() => onAbrirEspacio(actual.slug)}
-          >
-            <span className={s.recorridoNum}>{actual.season_num}</span>
-            <span className={s.recorridoTextos}>
-              <span className={s.recorridoTitulo}>{actual.name} · {actual.kicker}</span>
-              <span className={s.recorridoSub}>
-                Explora las conversaciones de quienes están atravesando esta misma etapa.
-              </span>
-            </span>
-            <ArrowRight size={16} aria-hidden className={s.recorridoFlecha} />
-          </button>
 
-          {/* EL CAMINO, ENTERO Y EN ORDEN.
+          {/* EL CAMINO, ENTERO Y EN ORDEN, Y UNA SOLA VEZ.
+              Aquí había además una tarjeta grande repitiendo la temporada
+              actual, que vuelve a aparecer tres líneas más abajo dentro de esta
+              misma lista. Se lee dos veces lo mismo y ninguna de las dos queda
+              clara. El paso actual se distingue por cómo se pinta; no hace
+              falta anunciarlo aparte.
+
               Una lista y no una fila de pastillas: son diez pasos, no cuatro,
               y una fila que se desplaza a lo ancho esconde justo el final —los
               Objetivos y la Misión—, que es a donde lleva todo esto.
@@ -145,7 +157,8 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
               son etapas sino puertas entre ellas. */}
           <ol className={s.camino}>
             {camino.map((paso) => {
-              const esActual = paso.tipo === "season" && paso.season_num === actual.season_num
+              const esActual =
+                paso.tipo === "season" && paso.season_num === datos.recorrido.temporada_actual
               return (
                 <li key={paso.slug}>
                   <button
