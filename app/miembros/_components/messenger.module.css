@@ -173,18 +173,36 @@
 
 .headerOpen:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
 
+/* ── LA SALIDA ─────────────────────────────────────────────────────────
+   Era un aspa gris tenue de 16px con 4px de margen: 24px de zona tocable y
+   apenas contraste sobre un encabezado oscuro. En un teléfono, sencillamente
+   no se veía, y quien abría el chat se quedaba dentro.
+
+   Ahora es un círculo de 40px —el mínimo para que un pulgar acierte sin
+   ampliar la pantalla— con borde y fondo propios. Sigue siendo discreto, pero
+   se encuentra a la primera. */
 .headerClose {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: -4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
-.headerClose:hover { color: var(--text-primary); }
+.headerClose:hover,
+.headerClose:active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
 
 /* ─── LISTA DE THREADS (mode list) ──────────────────────────────────── */
 

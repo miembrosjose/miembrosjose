@@ -275,8 +275,8 @@ export function MessengerWidget() {
               >
                 <Maximize2 size={12} />
               </button>
-              <button className={styles.headerClose} onClick={closePopover} aria-label="Cerrar">
-                <X size={16} />
+              <button className={styles.headerClose} onClick={closePopover} aria-label="Cerrar el chat">
+                <X size={20} />
               </button>
             </>
           ) : (
@@ -291,8 +291,8 @@ export function MessengerWidget() {
               >
                 <Maximize2 size={12} />
               </button>
-              <button className={styles.headerClose} onClick={closePopover} aria-label="Cerrar">
-                <X size={16} />
+              <button className={styles.headerClose} onClick={closePopover} aria-label="Cerrar el chat">
+                <X size={20} />
               </button>
             </>
           )}
