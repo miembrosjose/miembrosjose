@@ -107,16 +107,65 @@ export function applyAdminLevelOverride(info: LevelInfo, isAdmin: boolean): Leve
   }
 }
 
-// XP por evento — pra ser usado em triggers/APIs ao registrar ação
+// ── LO QUE DA EXPERIENCIA, Y POR QUÉ ESTAS CIFRAS ──────────────────────────
+//
+// El sistema venía de otro proyecto —uno de embudos de venta— y premiaba cosas
+// que aquí no existen: publicar un embudo, recibir tres «me gusta» en él, dar
+// feedback sobre el embudo de otro. Nada de eso tiene que ver con Los 144.000,
+// y quien abría el detalle de su nivel leía un idioma ajeno.
+//
+// Esto premia lo que SÍ es esta plataforma: recorrer el Camino, escribir en la
+// comunidad, practicar y volver.
+//
+// EL CRITERIO DE LAS CIFRAS. Subir de nivel tiene que notarse pronto y sin
+// trucos. Del nivel 1 al 2 hacen falta 100 puntos: ver dos capítulos, o abrir
+// una conversación y responder a un par. Un rato de uso honesto, no una tarde
+// de clics.
+//
+// Y lo que más vale es lo que más cuesta hacer. Ver un capítulo entero vale
+// diez veces más que dar un «me gusta», porque lleva diez veces más. Recibir
+// respuesta vale más que darla, porque significa que lo que escribiste le
+// importó a alguien. Nada de esto se puede farmear repitiendo un gesto: cada
+// evento cuenta una sola vez por su origen.
 export const XP_REWARDS = {
-  forum_post: 50,           // criar post no fórum
-  forum_reply: 20,          // responder post no fórum
-  forum_like_received: 5,   // post seu recebeu like
-  episode_comment: 10,      // comentar em episódio
-  episode_complete: 100,    // completar aula
-  login_day: 10,            // 1º login do dia
-  insignia_unlocked: 200,   // desbloquear insignia (qualquer categoria)
-  // Compra de produto: NÃO ganha XP — ganha +1 level direto. Ver lib/xp-grant.ts.
+  // ── El Camino ──
+  /** Un capítulo visto entero. Es el corazón de la plataforma. */
+  episode_complete: 100,
+  /** Terminar una temporada. Se suma a lo de cada capítulo. */
+  season_complete: 400,
+  /** Una meditación o práctica completada. */
+  meditation_complete: 60,
+
+  // ── La comunidad ──
+  /** Abrir una conversación: cuesta más que responder, y vale más. */
+  forum_post: 50,
+  /** Responder a alguien. */
+  forum_reply: 20,
+  /** Comentar en un capítulo. */
+  episode_comment: 10,
+  /** Que respondan a lo tuyo: alguien se tomó el tiempo. */
+  forum_reply_received: 15,
+  /** Un «me gusta» en algo tuyo. */
+  forum_like_received: 5,
+  /** Dar un «me gusta». Vale poco, y debe: es el gesto más barato que hay. */
+  forum_like_given: 1,
+
+  // ── La Red ──
+  /** Marcar tu lugar en el mapa. Una vez. */
+  ubicacion_puesta: 40,
+  /** Confirmar asistencia a un encuentro. */
+  encuentro_confirmado: 30,
+  /** Responder al Pulso de la semana. */
+  pulso_respondido: 25,
+
+  // ── Volver ──
+  /** Primera entrada del día. Premia la constancia, no el tiempo pegado. */
+  login_day: 10,
+  /** Desbloquear una insignia. El resto lo pone su propia categoría. */
+  insignia_unlocked: 200,
+
+  // Comprar un producto NO da experiencia: da un nivel directo.
+  // Ver lib/xp-grant.ts.
 } as const
 
 export type XpEventType = keyof typeof XP_REWARDS

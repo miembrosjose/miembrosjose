@@ -147,15 +147,33 @@ export async function concederInsignia(
   // SIEMPRE se avisa a quien la gana, se anuncie o no a la Red. Antes esto
   // colgaba de la lista de anuncios, así que la mayoría de las insignias no
   // dejaban ni rastro en la campana: se ganaban en silencio.
-  await admin.from("notifications").insert({
+  //
+  // Sin foto de perfil y CON el identificador de la insignia: en un aviso de
+  // «Fulano te respondió» la cara es el dato, pero en «Desbloqueaste 144» lo
+  // que hay que ver es el emblema. Poniendo la foto salía la tuya propia.
+  //
+  // Si la columna todavía no existe —falta correr
+  // docs/sql/notificaciones_insignia.sql— se reintenta sin ella: antes un
+  // emblema bonito que ningún aviso.
+  const avisoBase = {
     user_id: user.id,
     type: "public_insignia_self",
     source_user_id: user.id,
     source_user_name: nombre,
-    source_user_avatar_url: avatar,
+    source_user_avatar_url: null,
     title: `Desbloqueaste "${ach.name}" ${emoji}`,
     preview: ach.desc,
-  }).then(undefined, (e) => console.warn("[insignias] aviso propio:", e))
+  }
+  const { error: errAviso } = await admin
+    .from("notifications")
+    .insert({ ...avisoBase, source_insignia_id: id })
+  if (errAviso) {
+    if (/source_insignia_id|column|schema cache/i.test(errAviso.message)) {
+      await admin.from("notifications").insert(avisoBase)
+    } else {
+      console.warn("[insignias] aviso propio:", errAviso.message)
+    }
+  }
 
   if (SE_ANUNCIAN.has(id)) {
     await emitCommunityEvent({

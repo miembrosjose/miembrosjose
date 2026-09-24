@@ -23,7 +23,8 @@ const STAT_LABELS: Array<[keyof NonNullable<LeaderboardUser["stats"]>, string]> 
   ["forum_reply", "Respuestas"],
   ["episode_comment", "Comentarios"],
   ["forum_like_received", "Likes"],
-  ["funnel_created", "Funnels"],
+  // El tipo sigue siendo el de antes en la base; el rótulo es de aquí.
+  ["funnel_created", "Aportes"],
   ["insignia_total", "Insignias"],
   ["login_day", "Días"],
 ]

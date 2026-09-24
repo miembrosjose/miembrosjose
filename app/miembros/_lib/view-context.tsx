@@ -55,6 +55,16 @@ export type ViewParams = {
    * se pidió: quien pulsa ahí quiere ver los encuentros.
    */
   redTab?: RedTab
+  /**
+   * Para la view "red" con la pestaña de comunidad: el TÍTULO del tema al que
+   * hay que ir.
+   *
+   * Los portales del Camino llevan a un tema concreto. Cuando el foro era una
+   * lista, la pantalla buscaba esa fila por el título. Ahora hay diez
+   * espacios, así que el título se resuelve contra el servidor
+   * (/api/comunidad/buscar-hilo) y se abre el sitio exacto.
+   */
+  comunidadTema?: string
 }
 
 type ViewContextValue = {

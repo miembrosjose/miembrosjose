@@ -20,6 +20,7 @@ import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { categoriasDe, contextoDe, puedeEntrar } from "@/lib/comunidad/acceso"
 import { instantaneaDe } from "@/lib/comunidad/autor"
+import { otorgarXp } from "@/lib/xp-otorgar"
 
 export const dynamic = "force-dynamic"
 
@@ -123,5 +124,9 @@ export async function POST(req: NextRequest) {
       )
   }
 
-  return NextResponse.json({ ok: true, id: data.id, espacio: espacio.slug })
+  // El origen es la conversación: borrarla y volver a abrirla da puntos por
+  // la nueva, no otra vez por la misma.
+  const xp = await otorgarXp(user, "forum_post", String(data.id))
+
+  return NextResponse.json({ ok: true, id: data.id, espacio: espacio.slug, xp })
 }

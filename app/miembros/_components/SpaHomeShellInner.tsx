@@ -228,15 +228,21 @@ export function SpaHomeShellInner() {
   function openObjetivos() {
     setPortalOpen(true)
   }
-  // Lleva al foro (opcionalmente a un tema concreto por título).
+  // Lleva a la comunidad, y a un tema concreto si se nombra.
+  //
+  // Antes esto iba a la vista "comunidad", que hoy es La Red y abre por Pulso:
+  // quien pulsaba «Compartir en el foro» desde un portal de temporada acababa
+  // mirando la pregunta de la semana. Ahora va a La Red, a su pestaña de
+  // comunidad, y con el tema pedido para que el Centro lo resuelva y abra el
+  // espacio exacto.
   function goToForo(title?: string) {
-    // Cierra cualquier overlay de portal abierto ANTES de ir al foro, si no
-    // el portal (fixed, z alto) queda tapando la vista de comunidad.
+    // Cierra cualquier overlay de portal abierto ANTES de ir, si no el portal
+    // (fixed, z alto) queda tapando la vista.
     setIngresoOpen(false)
     setIntegrationId(null)
     setPortalOpen(false)
     setForumTarget(title ?? null)
-    setView("comunidad")
+    setView("red", null, { redTab: "foro", comunidadTema: title || undefined })
   }
   const { owned } = useOwnedProducts()
 

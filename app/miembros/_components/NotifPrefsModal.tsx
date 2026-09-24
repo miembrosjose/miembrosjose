@@ -69,7 +69,7 @@ const OWN_ROWS: OwnRow[] = [
   { key: "forum_likes",   title: "Likes recibidos",          desc: "Alguien le dio like a tu contenido" },
   { key: "follows",       title: "Nuevos seguidores",        desc: "Alguien empezó a seguirte" },
   { key: "feed_posts",    title: "Posts del feed",           desc: "Avisos en el feed" },
-  { key: "funnel_xp",     title: "Tu funnel ganó XP",        desc: "Cuando tu funnel atinge el quórum de likes" },
+  { key: "funnel_xp",     title: "Ganaste experiencia",      desc: "Cuando una acción tuya suma puntos" },
 ]
 
 const OTHERS_ROWS: OtherRow[] = [
@@ -77,8 +77,8 @@ const OTHERS_ROWS: OtherRow[] = [
   { key: "level_up",    title: "Subidas de nivel ajenas",    desc: "Cuando otros llegan a LV 10+" },
   { key: "insignia",    title: "Insignias raras",            desc: "Cuando otros desbloquean insignia silver/gold/platinum" },
   { key: "streak",      title: "Streaks (30/90/365 días)",   desc: "Cuando otros completan marcas de constancia" },
-  { key: "funnel_hot",  title: "Funnels HOT",                desc: "Cuando un funnel ajeno la rompe" },
-  { key: "funnel_new",  title: "Nuevos funnels publicados",  desc: "Cuando un funnel ajeno fue aprobado y subió" },
+  { key: "funnel_hot",  title: "Conversaciones que arden",   desc: "Cuando algo de la comunidad se llena de respuestas" },
+  { key: "funnel_new",  title: "Conversaciones nuevas",      desc: "Cuando alguien abre una conversación en la Red" },
   { key: "top3",        title: "Cambios en el TOP 3",        desc: "Cuando alguien entra al top 3 del ranking de XP" },
 ]
 

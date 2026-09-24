@@ -23,6 +23,9 @@ import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { NotifPrefsModal } from "./NotifPrefsModal"
 import type { NotificationItem } from "../_lib/types"
+import { getAchievementSvg } from "@/lib/achievement-svg"
+import { getSoundForAchievement } from "../_lib/sounds"
+import { sounds } from "../_lib/sounds"
 import styles from "./notifications.module.css"
 
 const POLL_INTERVAL_MS = 30_000
@@ -144,6 +147,18 @@ export function NotificationsBell() {
           bootIdsRef.current.add(n.id)
           // Update local list (badge atualiza imediato)
           setItems((prev) => [n, ...prev.filter((x) => x.id !== n.id)])
+
+          // Que se oiga. El sonido de una insignia salía solo por el aviso de
+          // pantalla, que a su vez solo aparece cuando la desbloquea el propio
+          // navegador. Desde que la concede el servidor —que es donde están
+          // los hechos— el aviso llegaba aquí, mudo. Este es su sitio: suena
+          // lo que llega, venga de donde venga.
+          if (n.source_insignia_id) {
+            getSoundForAchievement(n.source_insignia_id)()
+          } else {
+            sounds.notification()
+          }
+
           // Dispatch broadcast — tudo dispara em RT
           enqueueBroadcast(n)
         },
@@ -305,8 +320,16 @@ export function NotificationsBell() {
                   className={`${styles.item} ${n.read_at ? "" : styles.unread}`}
                   onClick={() => handleItemClick(n)}
                 >
-                  <div className={styles.itemAvatar}>
-                    {n.source_user_avatar_url ? (
+                  {/* Un aviso de insignia enseña la INSIGNIA. En «Fulano te
+                      respondió» la cara es el dato; en «Desbloqueaste 144» el
+                      dato es el emblema, y lo que salía era tu propia foto. */}
+                  <div className={n.source_insignia_id ? styles.itemInsignia : styles.itemAvatar}>
+                    {n.source_insignia_id && getAchievementSvg(n.source_insignia_id) ? (
+                      <span
+                        aria-hidden
+                        dangerouslySetInnerHTML={{ __html: getAchievementSvg(n.source_insignia_id) }}
+                      />
+                    ) : n.source_user_avatar_url ? (
                       <img src={n.source_user_avatar_url} alt="" loading="lazy" />
                     ) : (
                       (n.source_user_name || "M").charAt(0).toUpperCase()

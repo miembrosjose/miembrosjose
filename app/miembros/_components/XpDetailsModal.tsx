@@ -39,25 +39,38 @@ type CatalogEntry = {
 }
 
 const XP_CATALOG: CatalogEntry[] = [
-  { event_type: "forum_like_given",                icon: "👍", label: "Dar like (discusión)",         xp: 1 },
-  { event_type: "forum_reply_like_given",          icon: "👍", label: "Dar like (respuesta)",         xp: 1 },
-  { event_type: "episode_comment_like_given",      icon: "👍", label: "Dar like (comentario aula)",   xp: 1 },
-  { event_type: "funnel_like_given",               icon: "👍", label: "Dar like (funnel)",            xp: 1 },
-  { event_type: "forum_like_received",             icon: "❤️", label: "Like recibido (discusión)",    xp: 5 },
-  { event_type: "forum_reply_like_received",       icon: "❤️", label: "Like recibido (respuesta)",    xp: 5 },
-  { event_type: "episode_comment_like_received",   icon: "❤️", label: "Like recibido (comentario)",   xp: 5 },
-  { event_type: "funnel_like_received",            icon: "❤️", label: "Like recibido (funnel)",       xp: 5 },
-  { event_type: "funnel_feedback_received",        icon: "💭", label: "Feedback recibido (funnel)",   xp: 5 },
-  { event_type: "episode_comment",                 icon: "🎬", label: "Comentar episodio",            xp: 10 },
-  { event_type: "forum_reply",                     icon: "💬", label: "Responder discusión",          xp: 10 },
-  { event_type: "funnel_feedback_given",           icon: "💭", label: "Dar feedback en funnel",       xp: 10 },
-  { event_type: "user_followed",                   icon: "👥", label: "Te siguieron",                 xp: 10 },
-  { event_type: "login_day",                       icon: "☀️", label: "Login del día (1× por día)",   xp: 50 },
-  { event_type: "forum_post",                      icon: "✍️", label: "Crear discusión",              xp: 50 },
-  { event_type: "insignia_aula",                   icon: "🎓", label: "Insignia de aula desbloqueada", xp: 50 },
-  { event_type: "funnel_created",                  icon: "🚀", label: "Funnel con 3+ likes",          xp: 150 },
-  { event_type: "insignia_unlocked",               icon: "🏆", label: "Insignia rara desbloqueada",   xp: 200 },
-  { event_type: "product_purchase",                icon: "💎", label: "Compra de producto",           xp: 0, level: 1 },
+  // ── LO QUE DA EXPERIENCIA ──────────────────────────────────────────────
+  // Esta lista es lo que se lee al abrir el nivel, así que dice lo que ESTA
+  // plataforma premia. Venía del proyecto de embudos de venta del que salió
+  // el sistema —«Funnel con 3+ likes», «Feedback recibido (funnel)»— y no
+  // tenía nada que ver con Los 144.000.
+  //
+  // Ordenada de menos a más: lo que cuesta poco vale poco, y lo que cuesta
+  // vale. Los tipos antiguos se conservan al final para que quien los tenga
+  // siga viendo de dónde salieron sus puntos.
+  { event_type: "forum_like_given",                icon: "👍", label: "Dar un «me gusta»",             xp: 1 },
+  { event_type: "forum_reply_like_given",          icon: "👍", label: "«Me gusta» a una respuesta",    xp: 1 },
+  { event_type: "episode_comment_like_given",      icon: "👍", label: "«Me gusta» a un comentario",    xp: 1 },
+  { event_type: "forum_like_received",             icon: "❤️", label: "Te dieron «me gusta»",          xp: 5 },
+  { event_type: "forum_reply_like_received",       icon: "❤️", label: "«Me gusta» en tu respuesta",    xp: 5 },
+  { event_type: "episode_comment_like_received",   icon: "❤️", label: "«Me gusta» en tu comentario",   xp: 5 },
+  { event_type: "login_day",                       icon: "☀️", label: "Volver un día nuevo",           xp: 10 },
+  { event_type: "episode_comment",                 icon: "🎬", label: "Comentar un capítulo",          xp: 10 },
+  { event_type: "forum_reply_received",            icon: "💬", label: "Te respondieron",               xp: 15 },
+  { event_type: "forum_reply",                     icon: "💬", label: "Responder a alguien",           xp: 20 },
+  { event_type: "pulso_respondido",                icon: "🫀", label: "Responder al Pulso semanal",    xp: 25 },
+  { event_type: "encuentro_confirmado",            icon: "📍", label: "Confirmar un encuentro",        xp: 30 },
+  { event_type: "ubicacion_puesta",                icon: "🗺️", label: "Marcar tu lugar en la Red",     xp: 40 },
+  { event_type: "forum_post",                      icon: "✍️", label: "Abrir una conversación",        xp: 50 },
+  { event_type: "meditation_complete",             icon: "🧘", label: "Completar una práctica",        xp: 60 },
+  { event_type: "episode_complete",                icon: "📺", label: "Ver un capítulo entero",        xp: 100 },
+  { event_type: "insignia_unlocked",               icon: "🏆", label: "Desbloquear una insignia",      xp: 200 },
+  { event_type: "season_complete",                 icon: "🌌", label: "Completar una temporada",       xp: 400 },
+  { event_type: "product_purchase",                icon: "💎", label: "Adquirir un módulo",            xp: 0, level: 1 },
+  // Heredados del sistema anterior. Ya no se conceden; quien los tenga los
+  // conserva y aquí ve de dónde salieron.
+  { event_type: "insignia_aula",                   icon: "🎓", label: "Insignia de aula (histórico)",  xp: 50 },
+  { event_type: "user_followed",                   icon: "👥", label: "Te siguieron (histórico)",      xp: 10 },
 ]
 
 type Props = {

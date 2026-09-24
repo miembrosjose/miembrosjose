@@ -48,7 +48,12 @@ const ORDENES: Array<{ id: string; etiqueta: string }> = [
   { id: "sin_respuesta", etiqueta: "Sin respuesta" },
 ]
 
-export function EspacioComunidad({ slug, onVolver }: { slug: string; onVolver: () => void }) {
+export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
+  slug: string
+  /** Conversación que hay que dejar abierta al entrar, si se pidió una. */
+  abrirHiloId?: string | null
+  onVolver: () => void
+}) {
   const [datos, setDatos] = useState<Respuesta | null>(null)
   const [cerrado, setCerrado] = useState<Cerrado | null>(null)
   const [cargando, setCargando] = useState(true)
@@ -87,6 +92,16 @@ export function EspacioComunidad({ slug, onVolver }: { slug: string; onVolver: (
 
   // Al cambiar de espacio se vuelve arriba y se cierra lo que hubiera abierto.
   useEffect(() => { setAbierto(null); setCategoria(null) }, [slug])
+
+  // Si se llegó pidiendo una conversación concreta, se abre en cuanto está.
+  // Se busca entre las fijadas y las de la lista, que es donde puede estar.
+  useEffect(() => {
+    if (!abrirHiloId || !datos || abierto) return
+    const encontrada =
+      datos.fijadas.find((h) => h.id === abrirHiloId) ??
+      datos.hilos.find((h) => h.id === abrirHiloId)
+    if (encontrada) setAbierto(encontrada)
+  }, [abrirHiloId, datos, abierto])
 
   if (cargando && !datos && !cerrado) return <div className={s.cargando} aria-hidden />
 

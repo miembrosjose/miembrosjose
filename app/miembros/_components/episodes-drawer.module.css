@@ -559,6 +559,18 @@
   position: relative;
   margin-top: 1rem;
   background: transparent;
+
+  /* El vídeo no se come la pantalla entera.
+     En un teléfono, un 16:9 al ancho completo dejaba el texto justo debajo del
+     borde: quien no deslizaba no llegaba a saber que había algo más, y ahí
+     está lo que explica el episodio.
+
+     Se limita el ANCHO, no el alto: con aspect-ratio puesto, capar el alto
+     ensancharía la caja y el vídeo quedaría con franjas negras. Capando el
+     ancho, la altura baja sola y la proporción se respeta. Así las primeras
+     líneas del texto asoman y se entiende que la página sigue. */
+  max-width: min(var(--player-width), calc(56svh * 16 / 9));
+  margin-inline: auto;
   /* Reserva el box 16:9 aunque el iframe aún no esté montado (carga al scroll),
      para que el layout no salte. */
   aspect-ratio: 16 / 9;

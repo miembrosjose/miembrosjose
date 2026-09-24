@@ -88,7 +88,7 @@ export function ViewMiembrosLista() {
           Todos los <span className={styles.titleAccent}>miembros</span>
         </h1>
         <p className={styles.subtitle}>
-          Conoce a quienes están construyendo embudos contigo. Click en el avatar para ver su perfil completo.
+          Conoce a quienes recorren este camino contigo. Toca un avatar para ver su perfil.
         </p>
 
         <div className={styles.searchBar}>

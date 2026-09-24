@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { otorgarLasGanadas } from "@/lib/insignias-conceder"
 import { insigniasGanadas } from "@/lib/insignias-ganadas"
+import { otorgarXp } from "@/lib/xp-otorgar"
 
 export const dynamic = "force-dynamic"
 
@@ -94,5 +95,9 @@ export async function POST(req: NextRequest) {
     console.error("[/api/profile/episode-progress] insignias", e)
   }
 
-  return NextResponse.json({ ok: true, insignias_nuevas: nuevas })
+  // Ver un capítulo es lo que más cuesta y lo que más vale. Una vez por
+  // capítulo: el origen es «s1e3», así que volver a marcarlo no repite.
+  const xp = await otorgarXp(user, "episode_complete", `s${seasonNum}e${episodeNum}`)
+
+  return NextResponse.json({ ok: true, insignias_nuevas: nuevas, xp })
 }

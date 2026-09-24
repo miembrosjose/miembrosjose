@@ -292,3 +292,20 @@
     font-size: 0.72rem;
   }
 }
+
+/* El emblema de una insignia dentro de un aviso.
+   Sin fondo redondo ni recorte: no es una cara, es un escudo, y encerrarlo en
+   un círculo de avatar lo dejaba irreconocible. */
+.itemInsignia {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+}
+
+.itemInsignia svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

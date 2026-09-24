@@ -594,7 +594,7 @@ function MemberDetailModal({ memberId, onClose, onEliminado }: {
                 <div className="grid grid-cols-3 gap-3">
                   <DetailStat label="Posts" value={data.activity.posts} />
                   <DetailStat label="Respostas" value={data.activity.replies} />
-                  <DetailStat label="Funnels" value={data.activity.funnels} />
+                  <DetailStat label="Aportes" value={data.activity.funnels} />
                 </div>
               </section>
 

@@ -27,16 +27,28 @@ export async function GET(req: NextRequest) {
   // SQL: ((type NOT IN (...)) OR (created_at >= 5min ago))
   const liveOrFresh = `type.not.in.${liveOnlyTypes},created_at.gte.${fiveMinAgo}`
 
-  let query = supabase
-    .from("notifications")
-    .select("id, type, source_user_id, source_user_name, source_user_avatar_url, source_forum_post_id, source_forum_reply_id, source_feed_post_id, title, preview, read_at, created_at")
-    .eq("user_id", user.id)
-    .or(liveOrFresh)
-    .order("created_at", { ascending: false })
-    .limit(limit)
-  if (unreadOnly) query = query.is("read_at", null)
+  // `source_insignia_id` llegó con docs/sql/notificaciones_insignia.sql. Si esa
+  // migración todavía no se ha corrido, la consulta falla y se repite sin esa
+  // columna: la campana sigue funcionando, solo que sin el emblema.
+  const BASE = "id, type, source_user_id, source_user_name, source_user_avatar_url, source_forum_post_id, source_forum_reply_id, source_feed_post_id, title, preview, read_at, created_at"
+  const CON_INSIGNIA = BASE + ", source_insignia_id"
 
-  const { data, error } = await query
+  const pedir = (campos: string) => {
+    let q = supabase
+      .from("notifications")
+      .select(campos)
+      .eq("user_id", user.id)
+      .or(liveOrFresh)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+    if (unreadOnly) q = q.is("read_at", null)
+    return q
+  }
+
+  let { data, error } = await pedir(CON_INSIGNIA)
+  if (error && /source_insignia_id|column|schema cache/i.test(error.message)) {
+    ;({ data, error } = await pedir(BASE))
+  }
   if (error) {
     console.error("[/api/notifications GET]", error)
     return NextResponse.json({ error: "Database error" }, { status: 500 })

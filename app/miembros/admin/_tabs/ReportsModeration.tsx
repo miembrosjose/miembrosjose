@@ -31,8 +31,10 @@ const TYPE_LABELS: Record<string, string> = {
   forum_post: "Post do fórum",
   forum_reply: "Resposta do fórum",
   episode_comment: "Comentário de episódio",
-  funnel: "Funnel",
-  funnel_feedback: "Feedback de funnel",
+  // Restos del proyecto anterior: no se generan reportes nuevos de estos
+  // tipos, pero los antiguos siguen en la tabla y deben poder leerse.
+  funnel: "Aporte (histórico)",
+  funnel_feedback: "Comentario de aporte (histórico)",
   user: "Usuário",
 }
 

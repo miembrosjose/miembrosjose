@@ -181,6 +181,19 @@ export function EpisodesDrawer({ season, initialEpisodeNum, onClose, onOpenInteg
     setProgress(getEpisodeProgress())
     checkEpisodeAchievements(season!.num, episodes)
     setPlayingEp(target)
+
+    // Al episodio siguiente se entra por su principio, no por donde se acabó
+    // el anterior. Sin esto, pulsar «Siguiente» dejaba la vista abajo del
+    // todo: aparecía el botón para pasar al de después y el vídeo del nuevo
+    // quedaba fuera de la pantalla, como si ya se hubiera visto.
+    //
+    // En el fotograma siguiente, cuando el episodio nuevo ya está montado.
+    // "auto" y no "smooth": desplazarse solo por media pantalla al cambiar de
+    // episodio se percibe como que la página se mueve sin permiso.
+    requestAnimationFrame(() => {
+      playerScrollRef.current?.scrollTo({ top: 0, behavior: "auto" })
+      try { window.scrollTo({ top: 0, behavior: "auto" }) } catch {}
+    })
   }
 
   const prevEp = playingEp ? episodes.find((e) => e.num === playingEp.num - 1) : null

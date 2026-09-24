@@ -164,6 +164,8 @@ export type NotificationItem = {
   source_user_id?: string | null
   source_user_name?: string | null
   source_user_avatar_url?: string | null
+  /** Qué insignia provocó el aviso. La campana dibuja su emblema. */
+  source_insignia_id?: string | null
   created_at: string
   read_at?: string | null
 }
