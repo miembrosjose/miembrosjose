@@ -256,19 +256,40 @@
 }
 
 /* ─── Tagline char-by-char ──────────────────────────────────────── */
+/* ── EL COLOR DE ESTA FRASE ───────────────────────────────────────────
+ * Era el violeta de la marca al 85% sobre un fondo casi negro. Ese violeta
+ * funciona como acento —un borde, un icono, un subrayado— pero como TEXTO
+ * sobre negro apenas se despega del fondo: en un teléfono al sol, o con el
+ * brillo bajo, sencillamente no se lee.
+ *
+ * Se sube a un lavanda claro. Sigue siendo la misma familia de color y sigue
+ * siendo secundario frente al título dorado; lo que cambia es que ahora se
+ * puede leer. El resplandor violeta se queda: es lo que le da el aire, y eso
+ * no dependía del color de la letra. */
 .tagline {
   margin-top: 1.6em;
   font-family: var(--font-mono, "JetBrains Mono", monospace);
   font-size: clamp(0.65rem, 1.2vw, 0.85rem);
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(109, 74, 155, 0.85);
-  text-shadow: 0 0 8px rgba(109, 74, 155, 0.3);
-  white-space: nowrap;
+  color: rgba(208, 194, 238, 0.95);
+  text-shadow:
+    0 0 10px rgba(109, 74, 155, 0.55),
+    0 0 24px rgba(109, 74, 155, 0.28);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.05em;
   opacity: 0;
   transition: opacity 0.4s ease;
+}
+
+/* Una palabra es una caja: dentro puede haber veinte letras animadas, pero la
+ * línea no se parte por en medio. Sin esto se leía «DE N / ACER». */
+.taglinePalabra {
+  display: inline-flex;
+  white-space: nowrap;
+  margin-right: 0.4em;
 }
 
 .intro.complete .tagline {
@@ -282,14 +303,12 @@
   animation: starlightChar 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.taglineChar.space {
-  width: 0.4em;
-}
-
 @keyframes starlightChar {
   0%   { opacity: 0; transform: translateY(6px); color: rgba(186, 230, 253, 1); }
   60%  { opacity: 1; transform: translateY(0); color: rgba(186, 230, 253, 1); }
-  100% { opacity: 1; transform: translateY(0); color: rgba(109, 74, 155, 0.85); }
+  /* El mismo lavanda en el que reposa la frase: si aquí se dejara el violeta
+     oscuro, cada letra se apagaría justo al terminar de encenderse. */
+  100% { opacity: 1; transform: translateY(0); color: rgba(208, 194, 238, 0.95); }
 }
 
 /* ─── Coordenadas estelares ─ canto superior ────────────────────── */
@@ -338,7 +357,9 @@
   z-index: 60;
   background: transparent;
   border: 1px solid rgba(109, 74, 155, 0.35);
-  color: rgba(109, 74, 155, 0.7);
+  /* Mismo problema que el tagline: el violeta de marca como color de texto
+     sobre negro no se lee. Lavanda. */
+  color: rgba(196, 180, 230, 0.85);
   padding: 0.65rem 1.4rem;
   font-family: var(--font-mono, "JetBrains Mono", monospace);
   font-size: 0.65rem;
@@ -359,6 +380,17 @@
               box-shadow 0.25s ease;
 }
 
+/* El atajo de teclado, solo donde hay teclado. */
+.skipAtajo {
+  display: inline-flex;
+  gap: 0.35em;
+  margin-right: 0.6em;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .skipAtajo { display: none; }
+}
+
 .skipBracket {
   color: rgba(186, 230, 253, 0.8);
   font-weight: 700;
@@ -375,8 +407,8 @@
 }
 
 .intro.complete .skip {
-  border-color: rgba(109, 74, 155, 0.65);
-  color: #6D4A9B;
+  border-color: rgba(167, 139, 202, 0.75);
+  color: #dcd0f2;
   animation: skipPulse 2.4s ease-in-out infinite;
 }
 
@@ -412,12 +444,10 @@
   .tagline {
     font-size: 0.55rem;
     letter-spacing: 0.22em;
-    max-width: calc(100vw - 2rem);
-    white-space: normal;
-    flex-wrap: wrap;
-    justify-content: center;
+    max-width: calc(100vw - 2.5rem);
     text-align: center;
   }
+  .taglinePalabra { margin-right: 0.3em; }
   .skip {
     bottom: 2.5vh;
     font-size: 0.55rem;

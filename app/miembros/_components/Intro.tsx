@@ -141,25 +141,59 @@ export function Intro({ onComplete, onSkip, skip = false }: IntroProps) {
       <div className={styles.logoStage}>
         <div className={styles.logo}>{LOGO_TEXT}</div>
         <div className={styles.logoUnderline} aria-hidden />
+        {/* ── POR QUÉ SE AGRUPA POR PALABRAS ─────────────────────────────
+            Cada letra es un elemento propio para poder encenderla a su tiempo,
+            una detrás de otra. El efecto está bien; el problema era que en un
+            teléfono la línea se parte, y una línea se puede partir entre dos
+            elementos cualesquiera: se leía «MUCHO ANTES DE N / ACER».
+
+            Ahora cada palabra es una caja que no se parte por dentro. Las
+            letras siguen encendiéndose de una en una —el retraso se lleva
+            contando sobre el texto entero, no sobre cada palabra— y el salto de
+            línea solo puede caer entre palabra y palabra, que es donde debe. */}
         <div className={styles.tagline}>
-          {TAGLINE.split("").map((char, i) => (
-            <span
-              key={i}
-              className={`${styles.taglineChar} ${char === " " ? styles.space : ""}`}
-              style={{ animationDelay: `${i * 35 + 200}ms` }}
-            >
-              {char === " " ? " " : char}
-            </span>
-          ))}
+          {(() => {
+            let n = 0
+            return TAGLINE.split(" ").map((palabra, iPalabra) => {
+              const letras = palabra.split("").map((char) => {
+                const retraso = n * 35 + 200
+                n += 1
+                return { char, retraso }
+              })
+              n += 1 // el espacio también cuenta para el ritmo
+              return (
+                <span key={iPalabra} className={styles.taglinePalabra}>
+                  {letras.map((l, i) => (
+                    <span
+                      key={i}
+                      className={styles.taglineChar}
+                      style={{ animationDelay: `${l.retraso}ms` }}
+                    >
+                      {l.char}
+                    </span>
+                  ))}
+                </span>
+              )
+            })
+          })()}
         </div>
       </div>
 
-      {/* Skip button */}
+      {/* ── EL BOTÓN DICE LO QUE HACE ──────────────────────────────────────
+          Decía «[ ESC ] PROCEED». En un teléfono no hay tecla Esc, así que la
+          mitad del botón nombraba algo que no existe, y la otra mitad estaba en
+          inglés en una página en español.
+
+          Dice CONTINUAR. El atajo de teclado sigue funcionando y se enseña solo
+          donde hay teclado: en un ratón y un teclado es una ayuda; en un dedo,
+          ruido. */}
       <button type="button" className={styles.skip} onClick={handleSkip}>
-        <span className={styles.skipBracket}>[</span>
-        <span>ESC</span>
-        <span className={styles.skipBracket}>]</span>
-        <span>{phase === "complete" ? "PROCEED" : "SKIP"}</span>
+        <span className={styles.skipAtajo} aria-hidden>
+          <span className={styles.skipBracket}>[</span>
+          <span>ESC</span>
+          <span className={styles.skipBracket}>]</span>
+        </span>
+        <span>Continuar</span>
       </button>
     </div>
   )
