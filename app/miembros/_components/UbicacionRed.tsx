@@ -50,9 +50,19 @@ type Props = {
    */
   integrado?: boolean
   onCambio?: (v: { country_code: string; city_id: number | null; show_city: boolean }) => void
+  /**
+   * Guardar solo, sin botón.
+   *
+   * Un botón de guardar dentro de una pantalla de edición es una trampa:
+   * quien cambia algo y se va da por hecho que quedó puesto. Aquí se guarda
+   * al elegir, y el mensaje de debajo dice en qué estado quedó.
+   */
+  autoGuardar?: boolean
 }
 
-export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, integrado, onCambio }: Props) {
+export function UbicacionRed({
+  inputCls, labelCls, btnCls, onSaved, compact, integrado, onCambio, autoGuardar,
+}: Props) {
   const [paises, setPaises] = useState<Pais[]>([])
   const [pais, setPais] = useState("")
   const [busqueda, setBusqueda] = useState("")
@@ -79,6 +89,26 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, int
     if (!integrado) return
     avisar.current?.({ country_code: pais, city_id: ciudad?.id ?? null, show_city: showCity })
   }, [integrado, pais, ciudad, showCity])
+
+  // ── Guardado automático ─────────────────────────────────────────────────
+  // Se arranca solo después de la carga inicial: sin esta bandera, rellenar el
+  // formulario con lo que ya había guardado dispararía un guardado al abrir la
+  // pantalla, y el mensaje de confirmación aparecería sin que nadie tocara
+  // nada.
+  const listoParaGuardarSolo = useRef(false)
+  const guardarRef = useRef<() => void>(() => {})
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!autoGuardar || integrado) return
+    if (!listoParaGuardarSolo.current) return
+    if (!pais) return
+    // Medio segundo de margen: quien elige país y enseguida ciudad genera una
+    // sola petición, no dos.
+    if (temporizador.current) clearTimeout(temporizador.current)
+    temporizador.current = setTimeout(() => guardarRef.current(), 500)
+    return () => { if (temporizador.current) clearTimeout(temporizador.current) }
+  }, [autoGuardar, integrado, pais, ciudad, showCity])
 
   // ── Carga inicial: países disponibles + ubicación actual ─────────────────
   useEffect(() => {
@@ -118,7 +148,11 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, int
       } catch {
         if (vivo) setErrorCarga(true)
       } finally {
-        if (vivo) setCargandoPaises(false)
+        if (vivo) {
+          setCargandoPaises(false)
+          // A partir de aquí, cualquier cambio ya es de la persona.
+          listoParaGuardarSolo.current = true
+        }
       }
     })()
     return () => { vivo = false }
@@ -205,6 +239,8 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, int
       setGuardando(false)
     }
   }
+
+  useEffect(() => { guardarRef.current = guardar })
 
   // ── Estados de carga y error ─────────────────────────────────────────────
   if (cargandoPaises) {
@@ -376,10 +412,15 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, int
       )}
 
       <div className="flex items-center gap-4">
-        {!integrado && (
+        {!integrado && !autoGuardar && (
           <button type="button" onClick={guardar} disabled={guardando || !pais} className={btnCls}>
             {guardando ? "Guardando…" : "Guardar ubicación"}
           </button>
+        )}
+        {autoGuardar && guardando && (
+          <span className="flex items-center gap-1.5 text-xs text-[#8b8b9e] [font-family:var(--font-geist-sans)]">
+            <Loader2 size={13} className="animate-spin" /> Guardando…
+          </span>
         )}
         {msg && (
           <span

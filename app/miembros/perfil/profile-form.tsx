@@ -563,7 +563,11 @@ export function ProfileForm({
           Completa tu ubicación para descubrir miembros de 144 mil cerca de ti. Trabajamos solo a
           nivel de ciudad: nunca guardamos tu domicilio ni tu ubicación en tiempo real.
         </p>
-        <UbicacionRed inputCls={inputCls} labelCls={labelCls} btnCls={btnCls} />
+        {/* Sin botón: se guarda al elegir. Un botón de guardar dentro de una
+            pantalla de edición es una trampa —quien cambia algo y se va da por
+            hecho que quedó puesto—, y aquí ya nos costó que alguien no
+            apareciera en el mapa creyendo que sí. */}
+        <UbicacionRed autoGuardar inputCls={inputCls} labelCls={labelCls} btnCls={btnCls} />
       </section>
 
       {/* NOME */}
