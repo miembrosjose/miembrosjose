@@ -208,12 +208,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     // cual en mil bandejas. Se prefiere un correo sin saludo personal antes que
     // un «Hola {{FIRST_NAME}}».
     const datos = datosDesdeComunicacion(c as Comunicacion, {
-      nombre: null,
-      // El proveedor sustituye la etiqueta por el nombre de cada persona al
-      // repartir. Lo lee del contacto, que la sincronización de arriba acaba de
-      // poner al día desde profiles.full_name. Quien no tenga nombre guardado
-      // lee «Hola viajero» — nunca «Hola ,» ni la etiqueta en crudo.
-      nombreModo: "variable" as const,
       unsubscribeUrl: null, // lo pone el proveedor, con su propia etiqueta
       siteUrl: sitio(),
     })

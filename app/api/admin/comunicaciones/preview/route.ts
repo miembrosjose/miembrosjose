@@ -13,10 +13,9 @@
 // mismos datos se parecería al correo hasta el día en que dejara de parecerse,
 // y ese día nadie se enteraría.
 //
-// ── LOS DATOS DE EJEMPLO ───────────────────────────────────────────────────
-// Donde el correo real pone el nombre de quien lo recibe, aquí va uno de
-// muestra. La vista previa no depende de que exista ningún miembro concreto ni
-// toca la base para buscar uno.
+// ── EL TRATAMIENTO ────────────────────────────────────────────────────────
+// El correo no usa nombres: se dirige a «semilla estelar», siempre. La vista
+// previa enseña exactamente eso, porque es exactamente lo que va a salir.
 
 import { NextRequest, NextResponse } from "next/server"
 import { exigirAdmin } from "@/lib/comunicaciones/servidor"
@@ -26,8 +25,6 @@ import { remitente, sitio } from "@/lib/comunicaciones/proveedor"
 
 export const dynamic = "force-dynamic"
 
-/** Quien mira la vista previa se ve a sí mismo, no a «[NOMBRE]». */
-const NOMBRE_DE_MUESTRA = "José"
 
 export async function POST(req: NextRequest) {
   const g = await exigirAdmin()
@@ -59,7 +56,6 @@ export async function POST(req: NextRequest) {
     eventAt: o("event_at"),
     eventTimezone: o("event_timezone"),
     eventLocation: o("event_location"),
-    nombre: NOMBRE_DE_MUESTRA,
     // Un enlace de mentira, para que se vea el pie entero. En el envío real lo
     // pone Resend con su propia etiqueta; una vista previa a la que le falta el
     // pie no sirve para comprobar el pie.

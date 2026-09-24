@@ -90,28 +90,7 @@ export type DatosCorreo = {
   eventAt?: string | null
   eventTimezone?: string | null
   eventLocation?: string | null
-  /**
-   * El nombre de quien lo recibe.
-   *
-   * En la vista previa y en la prueba va un nombre de verdad, para poder ver
-   * cómo queda. En un envío masivo no hay UN nombre: hay ochocientos.
-   */
-  nombre?: string | null
-  /**
-   * Cómo se pone el nombre en un envío masivo.
-   *
-   * "literal"  · se escribe el de `nombre`. Vista previa y prueba.
-   * "variable" · se escribe la etiqueta de combinación del proveedor, que él
-   *              sustituye por el nombre de cada persona al repartir.
-   *
-   * ── POR QUÉ ESTO ES DELICADO ────────────────────────────────────────────
-   * Una etiqueta mal escrita no falla: se imprime tal cual. Mil personas
-   * leyendo «Hola {{{FIRST_NAME}}}» es peor que mil personas leyendo un correo
-   * sin saludo. Por eso la etiqueta se escribe en UN solo sitio —aquí— y lleva
-   * un valor de respaldo: quien no tenga nombre guardado lee «Hola viajero»,
-   * que es como ya le habla el correo de bienvenida.
-   */
-  nombreModo?: "literal" | "variable"
+  // El correo no lleva nombres. Ver TRATAMIENTO, más abajo.
   /**
    * El enlace para darse de baja.
    *
@@ -158,40 +137,36 @@ export function esUrlValida(u: string | null | undefined): boolean {
 }
 
 /**
- * La etiqueta de combinación de Resend, con respaldo.
+ * CÓMO SE LE HABLA A QUIEN LO RECIBE.
  *
- * Tres llaves, no dos: dos llaves escapan el contenido y el nombre saldría con
- * las tildes rotas. El respaldo va detrás de la barra.
+ * No por su nombre: «semilla estelar». Es como se nombra a sí misma La Red, y
+ * en un correo que llega a mil personas a la vez dice algo que un nombre de
+ * pila no puede decir — que esto va dirigido a quien es, no a quien se llama.
+ *
+ * ── Y ADEMÁS QUITA UN RIESGO ENTERO ───────────────────────────────────────
+ * La alternativa era una etiqueta de combinación del proveedor, que él
+ * sustituye por el nombre de cada persona al repartir. Eso tiene un fallo sin
+ * red: una etiqueta mal escrita NO falla, se imprime tal cual. Mil personas
+ * leyendo «Hola {{{FIRST_NAME}}}» en su bandeja de entrada, sin forma de
+ * corregirlo.
+ *
+ * Un tratamiento fijo no puede fallar de ninguna manera. No depende de que el
+ * contacto esté sincronizado, ni de que el nombre esté bien guardado, ni de
+ * que el proveedor entienda la etiqueta. Es el mismo texto en la vista previa,
+ * en la prueba y en el envío real.
  */
-const ETIQUETA_NOMBRE = "{{{FIRST_NAME|viajero}}}"
+const TRATAMIENTO = "semilla estelar"
 
 /**
- * Cómo se escribe el nombre en este correo.
+ * Sustituye el marcador allí donde administración lo haya escrito.
  *
- * Es la única función que decide entre el nombre de verdad y la etiqueta. Todo
- * lo demás —el saludo, el titular, el cuerpo— la usa a ella.
+ * Sirve para meterlo a mitad de frase —«Esto es para ti, {semilla}»— cuando el
+ * saludo de arriba no basta. Se acepta `{nombre}` como el mismo marcador: es
+ * el que se ofrecía antes y no tiene sentido que deje de funcionar en un
+ * borrador ya escrito.
  */
-function nombreDe(d: DatosCorreo): string {
-  if (d.nombreModo === "variable") return ETIQUETA_NOMBRE
-  const n = (d.nombre || "").trim().split(/\s+/)[0]
-  return n || ""
-}
-
-/**
- * Sustituye {nombre} allí donde administración lo haya escrito.
- *
- * Es la personalización dentro del texto, y es deliberadamente una sola cosa:
- * un sistema de variables con condiciones y bucles se convierte en algo que
- * hay que aprender, y aquí lo que hace falta es poder decir «Hola {nombre}, la
- * Temporada 4 ya está abierta» sin pensar en nada más.
- *
- * Cuando no hay nombre —una vista previa sin datos— el token desaparece junto
- * con la coma o el espacio que lo seguía, para que no quede «Hola , la...».
- */
-function ponerNombre(texto: string, nombre: string): string {
-  if (!texto.includes("{nombre}")) return texto
-  if (nombre) return texto.replace(/\{nombre\}/g, nombre)
-  return texto.replace(/\s*\{nombre\}\s*,?\s*/g, " ").replace(/\s{2,}/g, " ").trim()
+function ponerTratamiento(texto: string): string {
+  return texto.replace(/\{(?:semilla|nombre)\}/g, TRATAMIENTO)
 }
 
 /**
@@ -306,7 +281,6 @@ function Cabecera(siteUrl: string, acento: (typeof ACENTO)[FamiliaPlantilla]): s
 
 function Hero(d: DatosCorreo, acento: (typeof ACENTO)[FamiliaPlantilla]): string {
   const partes: string[] = []
-  const nombre = nombreDe(d)
 
   if (d.eyebrow.trim()) {
     // El eyebrow va en una pastilla del color de la familia: a este tamaño, un
@@ -325,7 +299,7 @@ function Hero(d: DatosCorreo, acento: (typeof ACENTO)[FamiliaPlantilla]): string
     partes.push(
       `<tr><td align="center" style="padding:16px 28px 0 28px;">` +
       `<h1 style="margin:0;font-family:${FUENTE};font-size:27px;line-height:34px;font-weight:700;color:${C.texto};">` +
-      `${escapar(ponerNombre(d.heading, nombre))}</h1></td></tr>`,
+      `${escapar(ponerTratamiento(d.heading))}</h1></td></tr>`,
     )
   }
 
@@ -344,21 +318,16 @@ function Hero(d: DatosCorreo, acento: (typeof ACENTO)[FamiliaPlantilla]): string
   return partes.join("")
 }
 
-function Saludo(nombre: string): string {
-  if (!nombre) return ""
-  // La etiqueta de combinación NO se escapa: si se escapara, las llaves
-  // saldrían convertidas y el proveedor no las reconocería. Un nombre literal
-  // sí, porque lo escribe una persona.
-  const texto = nombre === ETIQUETA_NOMBRE ? nombre : escapar(nombre)
+function Saludo(): string {
   return (
     `<tr><td style="padding:30px 28px 0 28px;">` +
     `<p style="margin:0;font-family:${FUENTE};font-size:16px;line-height:26px;color:${C.texto};">` +
-    `Hola ${texto},</p></td></tr>`
+    `Hola, ${TRATAMIENTO}.</p></td></tr>`
   )
 }
 
-function Cuerpo(texto: string, conSaludo: boolean, nombre: string): string {
-  const html = cuerpoAHtml(ponerNombre(texto, nombre))
+function Cuerpo(texto: string, conSaludo: boolean): string {
+  const html = cuerpoAHtml(ponerTratamiento(texto))
   if (!html) return ""
   return `<tr><td style="padding:${conSaludo ? 14 : 30}px 28px 0 28px;">${html}</td></tr>`
 }
@@ -482,8 +451,9 @@ function Pie(d: DatosCorreo): string {
 export function renderCorreo(d: DatosCorreo): string {
   const familia: FamiliaPlantilla = TIPOS[d.tipo].familia
   const acento = ACENTO[familia]
-  const nombre = nombreDe(d)
-  const conSaludo = Boolean(nombre)
+  // El saludo va SIEMPRE. No depende de que sepamos nada de nadie, que era
+  // justo el motivo por el que antes a veces no estaba.
+  const conSaludo = true
   const hayBoton = Boolean(d.ctaText?.trim()) && esUrlValida(d.ctaUrl)
 
   const piezas: string[] = [Cabecera(d.siteUrl, acento), Hero(d, acento)]
@@ -492,11 +462,11 @@ export function renderCorreo(d: DatosCorreo): string {
     // En una sesión, la fecha es la noticia. Va antes que el texto: quien abre
     // esto quiere saber cuándo, y solo después por qué.
     piezas.push(BloqueFecha(d, acento))
-    if (conSaludo) piezas.push(Saludo(nombre))
-    piezas.push(Cuerpo(d.body, conSaludo, nombre))
+    piezas.push(Saludo())
+    piezas.push(Cuerpo(d.body, conSaludo))
   } else {
-    if (conSaludo) piezas.push(Saludo(nombre))
-    piezas.push(Cuerpo(d.body, conSaludo, nombre))
+    piezas.push(Saludo())
+    piezas.push(Cuerpo(d.body, conSaludo))
     piezas.push(BloqueFecha(d, acento))
   }
 
@@ -558,13 +528,12 @@ export function renderTexto(d: DatosCorreo): string {
   const lineas: string[] = ["LOS 144000", ""]
 
   if (d.eyebrow.trim()) lineas.push(d.eyebrow.toUpperCase(), "")
-  if (d.heading.trim()) lineas.push(ponerNombre(d.heading, nombreDe(d)), "")
+  if (d.heading.trim()) lineas.push(ponerTratamiento(d.heading), "")
 
-  const nombre = nombreDe(d)
-  if (nombre) lineas.push(`Hola ${nombre},`, "")
+  lineas.push(`Hola, ${TRATAMIENTO}.`, "")
 
   if (d.body.trim()) {
-    lineas.push(ponerNombre(d.body, nombre).replace(/\*\*(.+?)\*\*/g, "$1").trim(), "")
+    lineas.push(ponerTratamiento(d.body).replace(/\*\*(.+?)\*\*/g, "$1").trim(), "")
   }
 
   if (d.eventAt && d.eventTimezone) {
@@ -597,12 +566,7 @@ export function datosDesdeComunicacion(
     | "cta_text" | "cta_url" | "event_title" | "event_at" | "event_timezone"
     | "event_location"
   >,
-  extra: {
-    nombre?: string | null
-    nombreModo?: "literal" | "variable"
-    unsubscribeUrl?: string | null
-    siteUrl: string
-  },
+  extra: { unsubscribeUrl?: string | null; siteUrl: string },
 ): DatosCorreo {
   return {
     tipo: c.type,
@@ -617,8 +581,6 @@ export function datosDesdeComunicacion(
     eventAt: c.event_at,
     eventTimezone: c.event_timezone,
     eventLocation: c.event_location,
-    nombre: extra.nombre ?? null,
-    nombreModo: extra.nombreModo ?? "literal",
     unsubscribeUrl: extra.unsubscribeUrl ?? null,
     siteUrl: extra.siteUrl,
   }

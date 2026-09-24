@@ -90,12 +90,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     )
   }
 
-  // El nombre de quien pide la prueba, para que el saludo se vea como se verá.
-  const meta = (g.user.user_metadata || {}) as { full_name?: string; name?: string }
-  const nombre = (meta.full_name || meta.name || "").trim() || null
-
   const datos = datosDesdeComunicacion(c, {
-    nombre,
     unsubscribeUrl: `${sitio()}/miembros/perfil#correo`,
     siteUrl: sitio(),
   })

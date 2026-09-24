@@ -538,11 +538,11 @@ function Campos({
           <p className="mt-1.5 text-[11px] leading-relaxed text-[#6a6a7a]">
             Línea en blanco = párrafo nuevo · «- » al principio = punto de lista · **negrita**
           </p>
-          {/* La personalización, dicha donde se usa y no en un manual aparte. */}
+          {/* El tratamiento, dicho donde se usa y no en un manual aparte. */}
           <p className="mt-2 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
-            Escribe <code className="text-[#c3b2e0]">{"{nombre}"}</code> donde quieras el nombre
-            de quien lo recibe, también en el titular. Cada persona verá el suyo. Quien no lo
-            tenga guardado leerá «viajero», nunca un hueco.
+            El correo abre con <span className="text-[#c3b2e0]">«Hola, semilla estelar.»</span> —
+            siempre, sin nombres. Si lo necesitas a mitad de frase, escribe{" "}
+            <code className="text-[#c3b2e0]">{"{semilla}"}</code>.
           </p>
         </div>
         <div>
