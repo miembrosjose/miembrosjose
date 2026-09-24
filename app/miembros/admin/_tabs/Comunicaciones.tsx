@@ -24,7 +24,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   AlertTriangle, Archive, ArrowLeft, Calendar, Check, Clock, Copy, ImagePlus,
-  Loader2, Mail, Monitor, MoreVertical, Plus, Search, Send, Smartphone, Trash2,
+  Bold, Heading2, Italic, Link2, List, Loader2, Mail, Minus, Monitor,
+  MoreVertical, Plus, Quote, Search, Send, Smartphone, Sparkles, Trash2,
   Undo2, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
@@ -802,10 +803,11 @@ function Campos({
         </div>
         <div>
           <label className={labelCls}>Cuerpo</label>
-          <textarea rows={9} placeholder={"Escribe con normalidad.\n\nDeja una línea en blanco entre párrafos.\n\n- Una línea que empieza por guion es un punto de lista\n- Y **así** se pone algo en negrita"} {...campo("body")} />
-          <p className="mt-1.5 text-[11px] leading-relaxed text-[#6a6a7a]">
-            Línea en blanco = párrafo nuevo · «- » al principio = punto de lista · **negrita**
-          </p>
+          <EditorCuerpo
+            valor={c.body ?? ""}
+            onCambiar={(v) => editar("body", v)}
+            editable={editable}
+          />
           {/* El tratamiento, dicho donde se usa y no en un manual aparte. */}
           <p className="mt-2 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
             El correo abre con <span className="text-[#c3b2e0]">«Hola, semilla estelar.»</span> —
@@ -1189,6 +1191,136 @@ function nombreDeInsignia(id: string, filtros?: Filtros | null): string {
  * corta a 102 KB de HTML y esconde el resto detrás de «ver mensaje completo»,
  * que es donde está el botón.
  */
+/**
+ * El cuerpo, con botones en vez de asteriscos.
+ *
+ * ── POR QUÉ NO UN EDITOR DE VERDAD ────────────────────────────────────────
+ * Un editor visual —de los que ponen la negrita en negrita mientras escribes—
+ * es una librería grande, y en un correo tiene un problema de fondo: lo que se
+ * ve ahí no es lo que va a salir. El correo lo dibuja el servidor con tablas y
+ * estilos en línea, así que un editor visual enseñaría una tercera versión
+ * distinta del preview y del correo real.
+ *
+ * Esto es lo contrario: se escribe texto plano, los botones ponen las marcas
+ * por ti, y lo que se ve como resultado es el preview de al lado — que es el
+ * correo. Una versión menos que mantener.
+ *
+ * ── LO QUE HACEN LOS BOTONES ──────────────────────────────────────────────
+ * Envuelven lo seleccionado, o insertan un ejemplo donde está el cursor si no
+ * hay nada seleccionado. Y devuelven el foco al texto con la selección puesta
+ * donde toca: un botón de formato que te deja fuera del campo obliga a volver
+ * con el ratón cada vez.
+ */
+function EditorCuerpo({
+  valor, onCambiar, editable,
+}: {
+  valor: string
+  onCambiar: (v: string) => void
+  editable: boolean
+}) {
+  const area = useRef<HTMLTextAreaElement | null>(null)
+
+  /** Envuelve la selección. Sin selección, escribe el ejemplo. */
+  const envolver = (antes: string, despues: string, ejemplo: string) => {
+    const el = area.current
+    if (!el) return
+    const { selectionStart: a, selectionEnd: b } = el
+    const dentro = valor.slice(a, b) || ejemplo
+    const nuevo = valor.slice(0, a) + antes + dentro + despues + valor.slice(b)
+    onCambiar(nuevo)
+    // Después de que React repinte, el cursor va sobre el texto envuelto para
+    // poder seguir escribiendo encima.
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(a + antes.length, a + antes.length + dentro.length)
+    })
+  }
+
+  /** Marca el principio de la línea: subtítulos, listas, citas, destacados. */
+  const prefijar = (marca: string, ejemplo: string) => {
+    const el = area.current
+    if (!el) return
+    const a = el.selectionStart
+    const b = el.selectionEnd
+
+    const inicioLinea = valor.lastIndexOf("\n", a - 1) + 1
+    const finLinea = valor.indexOf("\n", b) === -1 ? valor.length : valor.indexOf("\n", b)
+    const trozo = valor.slice(inicioLinea, finLinea)
+
+    // Si ya tiene la marca, se quita: el mismo botón pone y saca.
+    const yaTiene = trozo.split("\n").every((l) => l.startsWith(marca))
+    const lineas = (trozo || ejemplo).split("\n")
+    const cambiado = lineas
+      .map((l) => (yaTiene ? l.slice(marca.length) : marca + l))
+      .join("\n")
+
+    const nuevo = valor.slice(0, inicioLinea) + cambiado + valor.slice(finLinea)
+    onCambiar(nuevo)
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(inicioLinea, inicioLinea + cambiado.length)
+    })
+  }
+
+  const insertar = (texto: string) => {
+    const el = area.current
+    if (!el) return
+    const a = el.selectionStart
+    const nuevo = valor.slice(0, a) + texto + valor.slice(el.selectionEnd)
+    onCambiar(nuevo)
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(a + texto.length, a + texto.length)
+    })
+  }
+
+  const HERRAMIENTAS: Array<{ icono: typeof Bold; titulo: string; hacer: () => void }> = [
+    { icono: Bold, titulo: "Negrita", hacer: () => envolver("**", "**", "texto") },
+    { icono: Italic, titulo: "Cursiva", hacer: () => envolver("*", "*", "texto") },
+    { icono: Link2, titulo: "Enlace", hacer: () => envolver("[", "](https://los144000.com)", "texto del enlace") },
+    { icono: Heading2, titulo: "Subtítulo", hacer: () => prefijar("## ", "Un subtítulo") },
+    { icono: List, titulo: "Lista", hacer: () => prefijar("- ", "Un punto") },
+    { icono: Quote, titulo: "Cita", hacer: () => prefijar("> ", "Una frase que respira") },
+    { icono: Sparkles, titulo: "Destacado", hacer: () => prefijar("!! ", "Lo que no puede perderse") },
+    { icono: Minus, titulo: "Separación", hacer: () => insertar("\n\n---\n\n") },
+  ]
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-0.5 border border-b-0 border-[#1a1a24] bg-[#0d0d16] p-1">
+        {HERRAMIENTAS.map((h) => (
+          <button
+            key={h.titulo}
+            type="button"
+            onClick={h.hacer}
+            disabled={!editable}
+            title={h.titulo}
+            aria-label={h.titulo}
+            className="p-2 text-[#7a7a8a] transition-colors hover:bg-[#1a1a24] hover:text-[#c3b2e0] disabled:opacity-30"
+          >
+            <h.icono size={14} />
+          </button>
+        ))}
+      </div>
+
+      <textarea
+        ref={area}
+        rows={12}
+        value={valor}
+        onChange={(e) => onCambiar(e.target.value)}
+        disabled={!editable}
+        placeholder={"Escribe con normalidad.\n\nDeja una línea en blanco entre párrafos.\n\nLos botones de arriba ponen las marcas por ti; también puedes escribirlas a mano."}
+        className={`${inputCls} rounded-none`}
+      />
+
+      <p className="mt-1.5 text-[11px] leading-relaxed text-[#6a6a7a]">
+        Línea en blanco = párrafo nuevo. Lo que ves en la vista previa de al lado es
+        exactamente lo que va a salir.
+      </p>
+    </div>
+  )
+}
+
 function ImagenDelCorreo({
   url, onCambiar, editable,
 }: {

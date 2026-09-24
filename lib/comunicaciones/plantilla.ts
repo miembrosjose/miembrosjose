@@ -170,49 +170,133 @@ function ponerTratamiento(texto: string): string {
 }
 
 /**
- * El cuerpo, de texto a párrafos.
+ * El cuerpo, de texto a bloques.
  *
- * Administración escribe en un campo de texto normal, con líneas en blanco
- * entre párrafos. No hay HTML que editar, que era la condición.
+ * ── LA REGLA DE ESTE LENGUAJE ──────────────────────────────────────────────
+ * Administración escribe en un campo de texto normal. No hay HTML que editar,
+ * que era la condición, y cada marca que existe cumple dos requisitos: se echa
+ * de menos enseguida, y se entiende sin haberla leído en ningún manual.
  *
- * Se reconocen dos cosas más, porque son las dos que se echan de menos
- * enseguida y no obligan a aprender nada:
- *   · una línea que empieza por «- » es un punto de una lista
- *   · **así** pone algo en negrita
+ *   línea en blanco    párrafo nuevo
+ *   ## así             un subtítulo, para separar partes de un correo largo
+ *   - así              un punto de una lista
+ *   > así              una cita: lo dicho por otra voz, o una frase que respira
+ *   !! así             un destacado: lo que no puede perderse quien solo ojea
+ *   ---                una separación entre dos asuntos distintos
+ *   **así**            negrita
+ *   *así*              cursiva
+ *   [texto](dirección) un enlace
+ *
+ * ── POR QUÉ NO MÁS ─────────────────────────────────────────────────────────
+ * Cada marca añadida es algo que hay que recordar para escribir, y algo que
+ * puede salir mal en mil bandejas de entrada. Estas ocho cubren todo lo que un
+ * correo de Los 144.000 necesita decir; la novena sería para lucirse.
  */
-export function cuerpoAHtml(texto: string): string {
+export function cuerpoAHtml(texto: string, acentoColor?: string): string {
+  const acento = acentoColor || C.dorado
+
   const bloques = String(texto ?? "")
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
     .map((b) => b.trim())
     .filter(Boolean)
 
-  const enfatizar = (s: string) =>
-    escapar(s).replace(/\*\*(.+?)\*\*/g, `<strong style="color:${C.texto};font-weight:600;">$1</strong>`)
+  return bloques.map((bloque) => dibujarBloque(bloque, acento)).join("")
+}
 
-  return bloques
-    .map((bloque) => {
-      const lineas = bloque.split("\n").map((l) => l.trim())
-      const esLista = lineas.every((l) => l.startsWith("- ") || l.startsWith("• "))
+/**
+ * Lo que va dentro de una línea: negrita, cursiva y enlaces.
+ *
+ * Se escapa PRIMERO y se marca después. Al revés, un apellido con un signo de
+ * menor que rompería la etiqueta que acabamos de poner.
+ */
+function enLinea(s: string): string {
+  return escapar(s)
+    // Los enlaces, antes que la cursiva: un asterisco dentro de una dirección
+    // no debe convertirse en nada.
+    .replace(
+      /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+      `<a href="$2" target="_blank" style="color:${C.violeta};text-decoration:underline;">$1</a>`,
+    )
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${C.texto};font-weight:600;">$1</strong>`)
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+}
 
-      if (esLista) {
-        const items = lineas
-          .map((l) => l.replace(/^[-•]\s+/, ""))
-          .map(
-            (l) =>
-              `<tr><td valign="top" width="18" style="padding:0 0 10px 0;color:${C.dorado};font-family:${FUENTE};font-size:16px;line-height:26px;">&bull;</td>` +
-              `<td style="padding:0 0 10px 0;color:${C.textoSuave};font-family:${FUENTE};font-size:16px;line-height:26px;">${enfatizar(l)}</td></tr>`,
-          )
-          .join("")
-        return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">${items}</table>`
-      }
+function parrafo(html: string): string {
+  return `<p style="margin:0 0 18px 0;color:${C.textoSuave};font-family:${FUENTE};font-size:16px;line-height:26px;">${html}</p>`
+}
 
-      // Los saltos sueltos dentro de un párrafo se respetan: una dirección o
-      // una firma se escriben así y partirlas en párrafos las separa de más.
-      const conSaltos = enfatizar(bloque).replace(/\n/g, "<br />")
-      return `<p style="margin:0 0 18px 0;color:${C.textoSuave};font-family:${FUENTE};font-size:16px;line-height:26px;">${conSaltos}</p>`
-    })
-    .join("")
+function dibujarBloque(bloque: string, acento: string): string {
+  const lineas = bloque.split("\n").map((l) => l.trim())
+
+  // ── Una separación ───────────────────────────────────────────────────
+  // Una celda con fondo, no un <hr>: los clientes de correo lo dibujan cada
+  // uno a su manera y alguno le pone relieve.
+  if (/^-{3,}$/.test(bloque)) {
+    return (
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 28px 0;"><tr>` +
+      `<td height="1" style="height:1px;line-height:1px;font-size:1px;background-color:${C.borde};">&nbsp;</td>` +
+      `</tr></table>`
+    )
+  }
+
+  // ── Un subtítulo ─────────────────────────────────────────────────────
+  if (lineas[0].startsWith("## ")) {
+    const titulo = lineas[0].slice(3)
+    const resto = lineas.slice(1).join("\n").trim()
+    return (
+      `<p style="margin:26px 0 12px 0;font-family:${FUENTE};font-size:18px;line-height:26px;font-weight:700;color:${C.texto};">` +
+      `${enLinea(titulo)}</p>` +
+      (resto ? parrafo(enLinea(resto).replace(/\n/g, "<br />")) : "")
+    )
+  }
+
+  // ── Una cita ─────────────────────────────────────────────────────────
+  // Barra de color a la izquierda mediante una celda, que es lo que Outlook
+  // entiende. `border-left` en un <p> lo ignora.
+  if (lineas.every((l) => l.startsWith(">"))) {
+    const dentro = lineas.map((l) => l.replace(/^>\s?/, "")).join("\n")
+    return (
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px 0;"><tr>` +
+      `<td width="3" style="width:3px;background-color:${acento};">&nbsp;</td>` +
+      `<td style="padding:2px 0 2px 16px;">` +
+      `<p style="margin:0;font-family:${FUENTE};font-size:17px;line-height:28px;font-style:italic;color:${C.texto};">` +
+      `${enLinea(dentro).replace(/\n/g, "<br />")}</p>` +
+      `</td></tr></table>`
+    )
+  }
+
+  // ── Un destacado ─────────────────────────────────────────────────────
+  // Lo que tiene que leer quien solo ojea el correo. Fondo tenue y marco del
+  // color de la familia: se ve antes que el resto sin gritar.
+  if (lineas.every((l) => l.startsWith("!!"))) {
+    const dentro = lineas.map((l) => l.replace(/^!!\s?/, "")).join("\n")
+    return (
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px 0;background-color:${C.panelSuave};border:1px solid ${acento};"><tr>` +
+      `<td style="padding:18px 20px;">` +
+      `<p style="margin:0;font-family:${FUENTE};font-size:16px;line-height:26px;color:${C.texto};">` +
+      `${enLinea(dentro).replace(/\n/g, "<br />")}</p>` +
+      `</td></tr></table>`
+    )
+  }
+
+  // ── Una lista ────────────────────────────────────────────────────────
+  if (lineas.every((l) => l.startsWith("- ") || l.startsWith("• "))) {
+    const items = lineas
+      .map((l) => l.replace(/^[-•]\s+/, ""))
+      .map(
+        (l) =>
+          `<tr><td valign="top" width="18" style="padding:0 0 10px 0;color:${acento};font-family:${FUENTE};font-size:16px;line-height:26px;">&bull;</td>` +
+          `<td style="padding:0 0 10px 0;color:${C.textoSuave};font-family:${FUENTE};font-size:16px;line-height:26px;">${enLinea(l)}</td></tr>`,
+      )
+      .join("")
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">${items}</table>`
+  }
+
+  // ── Un párrafo ───────────────────────────────────────────────────────
+  // Los saltos sueltos dentro de un párrafo se respetan: una dirección o una
+  // firma se escriben así y partirlas en párrafos las separa de más.
+  return parrafo(enLinea(bloque).replace(/\n/g, "<br />"))
 }
 
 /**
@@ -326,8 +410,8 @@ function Saludo(): string {
   )
 }
 
-function Cuerpo(texto: string, conSaludo: boolean): string {
-  const html = cuerpoAHtml(ponerTratamiento(texto))
+function Cuerpo(texto: string, conSaludo: boolean, acento: string): string {
+  const html = cuerpoAHtml(ponerTratamiento(texto), acento)
   if (!html) return ""
   return `<tr><td style="padding:${conSaludo ? 14 : 30}px 28px 0 28px;">${html}</td></tr>`
 }
@@ -463,10 +547,10 @@ export function renderCorreo(d: DatosCorreo): string {
     // esto quiere saber cuándo, y solo después por qué.
     piezas.push(BloqueFecha(d, acento))
     piezas.push(Saludo())
-    piezas.push(Cuerpo(d.body, conSaludo))
+    piezas.push(Cuerpo(d.body, conSaludo, acento.color))
   } else {
     piezas.push(Saludo())
-    piezas.push(Cuerpo(d.body, conSaludo))
+    piezas.push(Cuerpo(d.body, conSaludo, acento.color))
     piezas.push(BloqueFecha(d, acento))
   }
 
@@ -533,7 +617,7 @@ export function renderTexto(d: DatosCorreo): string {
   lineas.push(`Hola, ${TRATAMIENTO}.`, "")
 
   if (d.body.trim()) {
-    lineas.push(ponerTratamiento(d.body).replace(/\*\*(.+?)\*\*/g, "$1").trim(), "")
+    lineas.push(aTextoPlano(ponerTratamiento(d.body)), "")
   }
 
   if (d.eventAt && d.eventTimezone) {
@@ -556,6 +640,25 @@ export function renderTexto(d: DatosCorreo): string {
   lineas.push(d.siteUrl)
 
   return lineas.join("\n")
+}
+
+/**
+ * Las marcas, fuera.
+ *
+ * La versión en texto plano no es un trámite: algunos clientes la enseñan, y
+ * los filtros de spam la comparan con el HTML. Un correo cuyo texto plano
+ * estuviera lleno de asteriscos y corchetes puntuaría peor que uno limpio.
+ */
+function aTextoPlano(s: string): string {
+  return s
+    .replace(/^-{3,}$/gm, "—")
+    .replace(/^##\s+/gm, "")
+    .replace(/^>\s?/gm, "")
+    .replace(/^!!\s?/gm, "")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 ($2)")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1$2")
+    .trim()
 }
 
 /** De una fila de la base a lo que necesita el renderizador. */
