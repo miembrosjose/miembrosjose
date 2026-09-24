@@ -174,12 +174,36 @@ export function esCancelable(estado: EstadoComunicacion): boolean {
 
 // ── La comunicación ────────────────────────────────────────────────────────
 
+/**
+ * A quién va una comunicación.
+ *
+ * Un objeto y no columnas sueltas: añadir un filtro es añadir un campo, sin
+ * tocar el esquema. Los campos vacíos no filtran, así que `{kind:"todos"}` es
+ * exactamente lo mismo que el objeto entero sin nada puesto.
+ *
+ * ── LOS FILTROS SE SUMAN, NUNCA SE RESTAN ─────────────────────────────────
+ * Poner dos estrecha; no hay forma de que uno amplíe lo que otro quitó. Es la
+ * regla que hace que el número del ensayo de audiencia se pueda razonar: cada
+ * filtro que se añade, el número baja o se queda igual.
+ */
 export type Audiencia = {
-  /**
-   * Hoy solo existe «todos». Cuando haya datos para más —temporada, ciudad,
-   * círculo— serán campos de este mismo objeto, sin migración.
-   */
   kind: "todos"
+  /**
+   * Quien haya llegado AL MENOS a esta temporada.
+   *
+   * «Llegar» es haber visto algún capítulo de ella o tener su acceso. Las dos
+   * fuentes suman: quien ya estuvo dentro no puede quedarse fuera de un correo
+   * por un desajuste de la tabla comercial, y quien acaba de comprar la cuarta
+   * tampoco tiene que haberla empezado para que le hablen de ella.
+   */
+  temporadaMin?: number | null
+  /**
+   * Solo quien tenga alguno de estos roles de La Red.
+   *
+   * Vacío o ausente es «da igual el rol», no «sin rol». Un filtro que exige
+   * algo es lo contrario de un filtro que no se ha puesto.
+   */
+  roles?: string[] | null
 }
 
 export type Comunicacion = {

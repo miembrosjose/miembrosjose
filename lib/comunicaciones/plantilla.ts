@@ -45,6 +45,29 @@ const C = {
   violeta: "#a78bca",
 } as const
 
+/**
+ * EL COLOR DE CADA FAMILIA.
+ *
+ * ── POR QUÉ NO SON CUATRO DISEÑOS ──────────────────────────────────────────
+ * Cuatro plantillas distintas de verdad serían cuatro cosas que mantener y
+ * cuatro maneras de que Los 144.000 se vea distinto en una bandeja de entrada.
+ * Lo que cambia aquí es el ACENTO: la franja de arriba, el eyebrow, el botón,
+ * el marco de la fecha. Es suficiente para que se reconozca de un vistazo qué
+ * clase de correo es antes de leer una palabra, y no rompe la unidad.
+ *
+ * Los colores no se inventan: son los que ya usa la plataforma.
+ *   violeta   el camino, las temporadas, los contenidos
+ *   dorado    lo que ocurre en un momento señalado — sesiones, activaciones
+ *   verde     la comunidad — encuentros, novedades de La Red
+ *   claro     lo especial, que no pertenece a ninguna de las tres
+ */
+const ACENTO: Record<FamiliaPlantilla, { color: string; suave: string; tinta: string; sello: string }> = {
+  contenido: { color: "#a78bca", suave: "rgba(167,139,202,0.10)", tinta: "#14101f", sello: "Nuevo contenido" },
+  sesion:    { color: "#d9b866", suave: "rgba(217,184,102,0.10)", tinta: "#18120a", sello: "En directo" },
+  red:       { color: "#8fc46a", suave: "rgba(143,196,106,0.10)", tinta: "#0d1509", sello: "La Red" },
+  especial:  { color: "#f0dca8", suave: "rgba(240,220,168,0.10)", tinta: "#1a1508", sello: "" },
+}
+
 const FUENTE =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
 
@@ -67,8 +90,28 @@ export type DatosCorreo = {
   eventAt?: string | null
   eventTimezone?: string | null
   eventLocation?: string | null
-  /** El nombre de quien lo recibe. En el preview, uno de ejemplo. */
+  /**
+   * El nombre de quien lo recibe.
+   *
+   * En la vista previa y en la prueba va un nombre de verdad, para poder ver
+   * cómo queda. En un envío masivo no hay UN nombre: hay ochocientos.
+   */
   nombre?: string | null
+  /**
+   * Cómo se pone el nombre en un envío masivo.
+   *
+   * "literal"  · se escribe el de `nombre`. Vista previa y prueba.
+   * "variable" · se escribe la etiqueta de combinación del proveedor, que él
+   *              sustituye por el nombre de cada persona al repartir.
+   *
+   * ── POR QUÉ ESTO ES DELICADO ────────────────────────────────────────────
+   * Una etiqueta mal escrita no falla: se imprime tal cual. Mil personas
+   * leyendo «Hola {{{FIRST_NAME}}}» es peor que mil personas leyendo un correo
+   * sin saludo. Por eso la etiqueta se escribe en UN solo sitio —aquí— y lleva
+   * un valor de respaldo: quien no tenga nombre guardado lee «Hola viajero»,
+   * que es como ya le habla el correo de bienvenida.
+   */
+  nombreModo?: "literal" | "variable"
   /**
    * El enlace para darse de baja.
    *
@@ -112,6 +155,43 @@ export function esUrlValida(u: string | null | undefined): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * La etiqueta de combinación de Resend, con respaldo.
+ *
+ * Tres llaves, no dos: dos llaves escapan el contenido y el nombre saldría con
+ * las tildes rotas. El respaldo va detrás de la barra.
+ */
+const ETIQUETA_NOMBRE = "{{{FIRST_NAME|viajero}}}"
+
+/**
+ * Cómo se escribe el nombre en este correo.
+ *
+ * Es la única función que decide entre el nombre de verdad y la etiqueta. Todo
+ * lo demás —el saludo, el titular, el cuerpo— la usa a ella.
+ */
+function nombreDe(d: DatosCorreo): string {
+  if (d.nombreModo === "variable") return ETIQUETA_NOMBRE
+  const n = (d.nombre || "").trim().split(/\s+/)[0]
+  return n || ""
+}
+
+/**
+ * Sustituye {nombre} allí donde administración lo haya escrito.
+ *
+ * Es la personalización dentro del texto, y es deliberadamente una sola cosa:
+ * un sistema de variables con condiciones y bucles se convierte en algo que
+ * hay que aprender, y aquí lo que hace falta es poder decir «Hola {nombre}, la
+ * Temporada 4 ya está abierta» sin pensar en nada más.
+ *
+ * Cuando no hay nombre —una vista previa sin datos— el token desaparece junto
+ * con la coma o el espacio que lo seguía, para que no quede «Hola , la...».
+ */
+function ponerNombre(texto: string, nombre: string): string {
+  if (!texto.includes("{nombre}")) return texto
+  if (nombre) return texto.replace(/\{nombre\}/g, nombre)
+  return texto.replace(/\s*\{nombre\}\s*,?\s*/g, " ").replace(/\s{2,}/g, " ").trim()
 }
 
 /**
@@ -203,8 +283,13 @@ function Preheader(texto: string): string {
   )
 }
 
-function Cabecera(siteUrl: string): string {
+function Cabecera(siteUrl: string, acento: (typeof ACENTO)[FamiliaPlantilla]): string {
   return (
+    // La franja. Cuatro píxeles del color de la familia, lo primero que se ve
+    // al abrir. Es lo que hace que una sesión en vivo y un episodio nuevo se
+    // distingan antes de leer nada.
+    `<tr><td height="4" style="height:4px;line-height:4px;font-size:4px;background-color:${acento.color};">&nbsp;</td></tr>` +
+
     `<tr><td align="center" style="padding:32px 24px 8px 24px;">` +
     `<a href="${escapar(siteUrl)}" style="text-decoration:none;">` +
     `<span style="font-family:${FUENTE};font-size:15px;font-weight:700;letter-spacing:6px;color:${C.doradoClaro};text-transform:uppercase;">` +
@@ -214,27 +299,33 @@ function Cabecera(siteUrl: string): string {
     // distinto en cada cliente; una celda de 1px de alto con fondo, no.
     `<tr><td align="center" style="padding:16px 24px 0 24px;">` +
     `<table role="presentation" width="60" cellpadding="0" cellspacing="0" border="0"><tr>` +
-    `<td height="1" style="height:1px;line-height:1px;font-size:1px;background-color:${C.bordeCalido};">&nbsp;</td>` +
+    `<td height="1" style="height:1px;line-height:1px;font-size:1px;background-color:${acento.color};opacity:0.5;">&nbsp;</td>` +
     `</tr></table></td></tr>`
   )
 }
 
-function Hero(d: DatosCorreo): string {
+function Hero(d: DatosCorreo, acento: (typeof ACENTO)[FamiliaPlantilla]): string {
   const partes: string[] = []
+  const nombre = nombreDe(d)
 
   if (d.eyebrow.trim()) {
+    // El eyebrow va en una pastilla del color de la familia: a este tamaño, un
+    // texto de color sobre fondo oscuro se lee peor que uno claro sobre un
+    // fondo teñido, y además marca mejor la clase de correo.
     partes.push(
       `<tr><td align="center" style="padding:28px 28px 0 28px;">` +
-      `<span style="font-family:${FUENTE};font-size:11px;font-weight:700;letter-spacing:3px;color:${C.violeta};text-transform:uppercase;">` +
-      `${escapar(d.eyebrow)}</span></td></tr>`,
+      `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>` +
+      `<td style="background-color:${acento.suave};padding:6px 14px;">` +
+      `<span style="font-family:${FUENTE};font-size:11px;font-weight:700;letter-spacing:3px;color:${acento.color};text-transform:uppercase;">` +
+      `${escapar(d.eyebrow)}</span></td></tr></table></td></tr>`,
     )
   }
 
   if (d.heading.trim()) {
     partes.push(
-      `<tr><td align="center" style="padding:14px 28px 0 28px;">` +
+      `<tr><td align="center" style="padding:16px 28px 0 28px;">` +
       `<h1 style="margin:0;font-family:${FUENTE};font-size:27px;line-height:34px;font-weight:700;color:${C.texto};">` +
-      `${escapar(d.heading)}</h1></td></tr>`,
+      `${escapar(ponerNombre(d.heading, nombre))}</h1></td></tr>`,
     )
   }
 
@@ -253,18 +344,21 @@ function Hero(d: DatosCorreo): string {
   return partes.join("")
 }
 
-function Saludo(nombre?: string | null): string {
-  const n = (nombre || "").trim().split(/\s+/)[0]
-  if (!n) return ""
+function Saludo(nombre: string): string {
+  if (!nombre) return ""
+  // La etiqueta de combinación NO se escapa: si se escapara, las llaves
+  // saldrían convertidas y el proveedor no las reconocería. Un nombre literal
+  // sí, porque lo escribe una persona.
+  const texto = nombre === ETIQUETA_NOMBRE ? nombre : escapar(nombre)
   return (
     `<tr><td style="padding:30px 28px 0 28px;">` +
     `<p style="margin:0;font-family:${FUENTE};font-size:16px;line-height:26px;color:${C.texto};">` +
-    `Hola ${escapar(n)},</p></td></tr>`
+    `Hola ${texto},</p></td></tr>`
   )
 }
 
-function Cuerpo(texto: string, conSaludo: boolean): string {
-  const html = cuerpoAHtml(texto)
+function Cuerpo(texto: string, conSaludo: boolean, nombre: string): string {
+  const html = cuerpoAHtml(ponerNombre(texto, nombre))
   if (!html) return ""
   return `<tr><td style="padding:${conSaludo ? 14 : 30}px 28px 0 28px;">${html}</td></tr>`
 }
@@ -276,7 +370,7 @@ function Cuerpo(texto: string, conSaludo: boolean): string {
  * qué día, a qué hora, en qué zona horaria y dónde. La zona SIEMPRE escrita:
  * «7:00 PM» sin más es una cita a la que media Red llega tarde.
  */
-function BloqueFecha(d: DatosCorreo): string {
+function BloqueFecha(d: DatosCorreo, acento: (typeof ACENTO)[FamiliaPlantilla]): string {
   if (!d.eventAt || !d.eventTimezone) return ""
   const f = fechaLegible(d.eventAt, d.eventTimezone)
   if (!f) return ""
@@ -287,7 +381,7 @@ function BloqueFecha(d: DatosCorreo): string {
   if (d.eventTitle?.trim()) {
     filas.push(
       `<tr><td align="center" style="padding:0 0 12px 0;">` +
-      `<span style="font-family:${FUENTE};font-size:18px;font-weight:700;color:${C.doradoClaro};">${escapar(d.eventTitle)}</span>` +
+      `<span style="font-family:${FUENTE};font-size:18px;font-weight:700;color:${acento.color};">${escapar(d.eventTitle)}</span>` +
       `</td></tr>`,
     )
   }
@@ -297,7 +391,7 @@ function BloqueFecha(d: DatosCorreo): string {
     `<span style="font-family:${FUENTE};font-size:15px;line-height:24px;color:${C.texto};">${escapar(f.dia)}</span>` +
     `</td></tr>`,
     `<tr><td align="center" style="padding:0 0 4px 0;">` +
-    `<span style="font-family:${FUENTE};font-size:23px;line-height:30px;font-weight:700;color:${C.dorado};">${escapar(f.hora)}</span>` +
+    `<span style="font-family:${FUENTE};font-size:23px;line-height:30px;font-weight:700;color:${acento.color};">${escapar(f.hora)}</span>` +
     `</td></tr>`,
     `<tr><td align="center" style="padding:0;">` +
     `<span style="font-family:${FUENTE};font-size:12px;letter-spacing:1px;color:${C.textoTenue};text-transform:uppercase;">` +
@@ -315,7 +409,7 @@ function BloqueFecha(d: DatosCorreo): string {
   return (
     `<tr><td style="padding:26px 28px 0 28px;">` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ` +
-    `style="background-color:${C.panelSuave};border:1px solid ${C.bordeCalido};">` +
+    `style="background-color:${C.panelSuave};border:1px solid ${acento.color};">` +
     `<tr><td style="padding:24px 20px;">` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${filas.join("")}</table>` +
     `</td></tr></table></td></tr>`
@@ -329,14 +423,14 @@ function BloqueFecha(d: DatosCorreo): string {
  * en Outlook sin recurrir a VML. Sin `border-radius`, que Outlook ignora y
  * deja un rectángulo — mejor un rectángulo a propósito que uno por accidente.
  */
-function Boton(texto: string, url: string): string {
+function Boton(texto: string, url: string, acento: (typeof ACENTO)[FamiliaPlantilla]): string {
   return (
     `<tr><td align="center" style="padding:30px 28px 0 28px;">` +
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0">` +
-    `<tr><td align="center" style="background-color:${C.dorado};">` +
+    `<tr><td align="center" style="background-color:${acento.color};">` +
     `<a href="${escapar(url)}" target="_blank" ` +
     `style="display:inline-block;padding:15px 34px;font-family:${FUENTE};font-size:13px;font-weight:700;` +
-    `letter-spacing:2px;text-transform:uppercase;color:#18120a;text-decoration:none;">` +
+    `letter-spacing:2px;text-transform:uppercase;color:${acento.tinta};text-decoration:none;">` +
     `${escapar(texto)}</a></td></tr></table></td></tr>`
   )
 }
@@ -387,24 +481,26 @@ function Pie(d: DatosCorreo): string {
  */
 export function renderCorreo(d: DatosCorreo): string {
   const familia: FamiliaPlantilla = TIPOS[d.tipo].familia
-  const conSaludo = Boolean((d.nombre || "").trim())
+  const acento = ACENTO[familia]
+  const nombre = nombreDe(d)
+  const conSaludo = Boolean(nombre)
   const hayBoton = Boolean(d.ctaText?.trim()) && esUrlValida(d.ctaUrl)
 
-  const piezas: string[] = [Cabecera(d.siteUrl), Hero(d)]
+  const piezas: string[] = [Cabecera(d.siteUrl, acento), Hero(d, acento)]
 
   if (familia === "sesion" || familia === "red") {
     // En una sesión, la fecha es la noticia. Va antes que el texto: quien abre
     // esto quiere saber cuándo, y solo después por qué.
-    piezas.push(BloqueFecha(d))
-    if (conSaludo) piezas.push(Saludo(d.nombre))
-    piezas.push(Cuerpo(d.body, conSaludo))
+    piezas.push(BloqueFecha(d, acento))
+    if (conSaludo) piezas.push(Saludo(nombre))
+    piezas.push(Cuerpo(d.body, conSaludo, nombre))
   } else {
-    if (conSaludo) piezas.push(Saludo(d.nombre))
-    piezas.push(Cuerpo(d.body, conSaludo))
-    piezas.push(BloqueFecha(d))
+    if (conSaludo) piezas.push(Saludo(nombre))
+    piezas.push(Cuerpo(d.body, conSaludo, nombre))
+    piezas.push(BloqueFecha(d, acento))
   }
 
-  if (hayBoton) piezas.push(Boton(d.ctaText!.trim(), d.ctaUrl!))
+  if (hayBoton) piezas.push(Boton(d.ctaText!.trim(), d.ctaUrl!, acento))
   piezas.push(Pie(d))
 
   const cuerpo = piezas.filter(Boolean).join("")
@@ -462,12 +558,14 @@ export function renderTexto(d: DatosCorreo): string {
   const lineas: string[] = ["LOS 144000", ""]
 
   if (d.eyebrow.trim()) lineas.push(d.eyebrow.toUpperCase(), "")
-  if (d.heading.trim()) lineas.push(d.heading, "")
+  if (d.heading.trim()) lineas.push(ponerNombre(d.heading, nombreDe(d)), "")
 
-  const nombre = (d.nombre || "").trim().split(/\s+/)[0]
+  const nombre = nombreDe(d)
   if (nombre) lineas.push(`Hola ${nombre},`, "")
 
-  if (d.body.trim()) lineas.push(d.body.replace(/\*\*(.+?)\*\*/g, "$1").trim(), "")
+  if (d.body.trim()) {
+    lineas.push(ponerNombre(d.body, nombre).replace(/\*\*(.+?)\*\*/g, "$1").trim(), "")
+  }
 
   if (d.eventAt && d.eventTimezone) {
     const f = fechaLegible(d.eventAt, d.eventTimezone)
@@ -499,7 +597,12 @@ export function datosDesdeComunicacion(
     | "cta_text" | "cta_url" | "event_title" | "event_at" | "event_timezone"
     | "event_location"
   >,
-  extra: { nombre?: string | null; unsubscribeUrl?: string | null; siteUrl: string },
+  extra: {
+    nombre?: string | null
+    nombreModo?: "literal" | "variable"
+    unsubscribeUrl?: string | null
+    siteUrl: string
+  },
 ): DatosCorreo {
   return {
     tipo: c.type,
@@ -515,6 +618,7 @@ export function datosDesdeComunicacion(
     eventTimezone: c.event_timezone,
     eventLocation: c.event_location,
     nombre: extra.nombre ?? null,
+    nombreModo: extra.nombreModo ?? "literal",
     unsubscribeUrl: extra.unsubscribeUrl ?? null,
     siteUrl: extra.siteUrl,
   }

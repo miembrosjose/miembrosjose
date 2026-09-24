@@ -67,6 +67,22 @@ const ZONAS = [
   { id: "UTC", etiqueta: "UTC" },
 ]
 
+type Audiencia = {
+  kind: "todos"
+  temporadaMin?: number | null
+  roles?: string[] | null
+}
+
+const ROLES = [
+  { id: "organizador", etiqueta: "Organizador" },
+  { id: "facilitador", etiqueta: "Facilitador" },
+  { id: "embajador", etiqueta: "Embajador Galáctico" },
+  { id: "colaborador", etiqueta: "Colaborador" },
+  { id: "cartografo", etiqueta: "Cartógrafo" },
+  { id: "guardian", etiqueta: "Guardián de La Red" },
+  { id: "instructor", etiqueta: "Instructor" },
+]
+
 type Fila = {
   id: string
   type: string
@@ -79,6 +95,7 @@ type Fila = {
   sent_at: string | null
   metrics: Record<string, number> | null
   created_at: string
+  audience: Audiencia
 }
 
 type Comunicacion = Fila & {
@@ -521,6 +538,12 @@ function Campos({
           <p className="mt-1.5 text-[11px] leading-relaxed text-[#6a6a7a]">
             Línea en blanco = párrafo nuevo · «- » al principio = punto de lista · **negrita**
           </p>
+          {/* La personalización, dicha donde se usa y no en un manual aparte. */}
+          <p className="mt-2 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
+            Escribe <code className="text-[#c3b2e0]">{"{nombre}"}</code> donde quieras el nombre
+            de quien lo recibe, también en el titular. Cada persona verá el suyo. Quien no lo
+            tenga guardado leerá «viajero», nunca un hueco.
+          </p>
         </div>
         <div>
           <label className={labelCls}>Imagen (opcional)</label>
@@ -582,6 +605,8 @@ function Campos({
         </Bloque>
       )}
 
+      <Audiencias c={c} editar={editar} editable={editable} />
+
       <Bloque titulo="Para administración" nota="No sale en el correo. Es cómo la reconoces en la lista.">
         <div>
           <label className={labelCls}>Título interno</label>
@@ -590,6 +615,121 @@ function Campos({
       </Bloque>
     </>
   )
+}
+
+/**
+ * A quién va.
+ *
+ * ── LOS FILTROS SOLO ESTRECHAN ────────────────────────────────────────────
+ * Nada de lo que hay aquí puede ampliar la audiencia. Sin tocar nada va a
+ * todos; cada filtro que se añade, el número baja. Es lo que permite mirar el
+ * ensayo de audiencia y razonar la cifra en vez de confiar en ella.
+ *
+ * Solo se ofrecen filtros de cosas que la base SABE. «Por ciudad» no está
+ * porque apenas unas pocas personas la han puesto, y una audiencia de tres
+ * personas por un filtro que parecía razonable es la forma más rápida de
+ * dejar de fiarse de la herramienta.
+ */
+function Audiencias({
+  c, editar, editable,
+}: {
+  c: Comunicacion
+  editar: (campo: string, v: unknown) => void
+  editable: boolean
+}) {
+  const a: Audiencia = c.audience || { kind: "todos" }
+  const roles = a.roles || []
+
+  const cambiar = (parcial: Partial<Audiencia>) =>
+    editar("audience", { kind: "todos", temporadaMin: a.temporadaMin ?? null, roles: a.roles ?? null, ...parcial })
+
+  const alternarRol = (id: string) => {
+    const nuevos = roles.includes(id) ? roles.filter((r) => r !== id) : [...roles, id]
+    cambiar({ roles: nuevos.length > 0 ? nuevos : null })
+  }
+
+  return (
+    <Bloque titulo="A quién va" nota="Sin tocar nada, va a todos. Cada filtro que añades, a menos gente.">
+      <div>
+        <label className={labelCls}>Por avance en el camino</label>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla activa={!a.temporadaMin} onClick={() => cambiar({ temporadaMin: null })} desactivada={!editable}>
+            Da igual
+          </Pastilla>
+          {[1, 2, 3, 4].map((n) => (
+            <Pastilla
+              key={n}
+              activa={a.temporadaMin === n}
+              onClick={() => cambiar({ temporadaMin: n })}
+              desactivada={!editable}
+            >
+              Temporada {n}+
+            </Pastilla>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+          «Temporada 3+» es quien ha llegado a la tercera o más allá: por haber visto
+          algún capítulo de ella, o por tener su acceso.
+        </p>
+      </div>
+
+      <div>
+        <label className={labelCls}>Por rol en La Red</label>
+        <div className="flex flex-wrap gap-2">
+          {ROLES.map((r) => (
+            <Pastilla
+              key={r.id}
+              activa={roles.includes(r.id)}
+              onClick={() => alternarRol(r.id)}
+              desactivada={!editable}
+            >
+              {r.etiqueta}
+            </Pastilla>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+          Sin ninguno marcado, el rol da igual. Con varios, basta con tener uno de ellos.
+        </p>
+      </div>
+
+      <div className="border-t border-[#14141e] pt-4">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Va a</p>
+        <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a)}</p>
+      </div>
+    </Bloque>
+  )
+}
+
+function Pastilla({
+  children, activa, onClick, desactivada,
+}: {
+  children: React.ReactNode; activa: boolean; onClick: () => void; desactivada?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={desactivada}
+      className={`border px-3 py-1.5 text-[11px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+        activa
+          ? "border-[#6D4A9B] bg-[#6D4A9B]/15 text-[#c3b2e0]"
+          : "border-[#1f1f2c] text-[#7a7a8a] hover:border-[#2f2f42]"
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+/** La misma frase que compone el servidor, para que digan lo mismo. */
+function describir(a?: Audiencia | null): string {
+  if (!a) return "Todos los miembros activos"
+  const partes: string[] = []
+  if (a.temporadaMin) partes.push(`que llegaron a la Temporada ${a.temporadaMin} o más`)
+  if (a.roles?.length) {
+    partes.push(`con rol de ${a.roles.map((r) => ROLES.find((x) => x.id === r)?.etiqueta ?? r).join(" o ")}`)
+  }
+  return partes.length === 0 ? "Todos los miembros activos" : `Miembros ${partes.join(", ")}`
 }
 
 function Bloque({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
@@ -904,7 +1044,7 @@ function ResumenFinal({
         <dl className="space-y-3 border border-[#1f1f2c] bg-[#0d0d16] p-4 text-sm">
           <Dato etiqueta="Asunto" valor={c.subject} />
           <Dato etiqueta="Tipo" valor={TIPOS.find((t) => t.id === c.type)?.nombre ?? c.type} />
-          <Dato etiqueta="Audiencia" valor="Todos los miembros activos" />
+          <Dato etiqueta="Audiencia" valor={describir(c.audience)} />
           <Dato
             etiqueta="Envío"
             valor={modo === "ahora" ? "Ahora" : fecha && hora ? `${fecha} · ${hora} · ${zona.split("/").pop()?.replace(/_/g, " ")}` : "—"}

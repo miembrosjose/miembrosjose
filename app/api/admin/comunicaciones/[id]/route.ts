@@ -20,8 +20,35 @@ import {
 } from "@/lib/comunicaciones/servidor"
 import { esEditable, esTipoValido } from "@/lib/comunicaciones/tipos"
 import { validarComunicacion } from "@/lib/comunicaciones/validacion"
+import { isNetworkRole } from "@/lib/red/roles"
 
 export const dynamic = "force-dynamic"
+
+/**
+ * La audiencia, comprobada aquí y no solo en la pantalla.
+ *
+ * Una audiencia llega del navegador, y del navegador puede llegar cualquier
+ * cosa. Un rol inventado no ampliaría el envío —nadie lo tiene, así que la
+ * audiencia saldría vacía— pero una temporada disparatada sí dejaría una
+ * comunicación imposible de enviar sin decir por qué.
+ */
+function revisarAudiencia(v: unknown): string | null {
+  const a = v as { kind?: string; temporadaMin?: unknown; roles?: unknown } | null
+  if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
+
+  if (a.temporadaMin != null) {
+    const n = Number(a.temporadaMin)
+    if (!Number.isInteger(n) || n < 1 || n > 4) return "Esa temporada no existe"
+  }
+
+  if (a.roles != null) {
+    if (!Array.isArray(a.roles)) return "Los roles tienen que ser una lista"
+    const malos = a.roles.filter((r) => !isNetworkRole(r))
+    if (malos.length > 0) return "Hay un rol que no existe"
+  }
+
+  return null
+}
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const g = await exigirAdmin()
@@ -63,10 +90,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Tipo de comunicación desconocido" }, { status: 400 })
   }
   if ("audience" in cambios) {
-    const a = cambios.audience as { kind?: string } | null
-    if (!a || a.kind !== "todos") {
-      return NextResponse.json({ error: "Esa audiencia no está disponible" }, { status: 400 })
-    }
+    const problema = revisarAudiencia(cambios.audience)
+    if (problema) return NextResponse.json({ error: problema }, { status: 400 })
   }
 
   if (Object.keys(cambios).length === 0) {

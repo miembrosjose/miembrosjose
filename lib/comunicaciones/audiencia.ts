@@ -28,6 +28,8 @@ export type MotivoExclusion =
   | "baja_total"
   | "preferencia_apagada"
   | "duplicado"
+  | "no_llego_a_temporada"
+  | "sin_ese_rol"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -49,6 +51,8 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   baja_total: "Se dio de baja de todas las comunicaciones",
   preferencia_apagada: "Desactivó esta clase de comunicación",
   duplicado: "Correo repetido (se envía una sola vez)",
+  no_llego_a_temporada: "Todavía no ha llegado a esa temporada",
+  sin_ese_rol: "No tiene el rol pedido",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -77,6 +81,109 @@ export function correoPlausible(e: string | null | undefined): boolean {
 export type Destinatario = { userId: string; email: string; nombre: string | null }
 
 /**
+ * Hasta qué temporada ha llegado cada quien.
+ *
+ * Dos fuentes que SUMAN, nunca se contradicen:
+ *   · haber visto algún capítulo de una temporada
+ *   · tener su acceso concedido
+ *
+ * Quien ya estuvo dentro no puede quedarse fuera de un correo por un desajuste
+ * de la tabla comercial; y quien acaba de comprar la cuarta no tiene que
+ * haberla empezado para que le hablen de ella.
+ *
+ * Se lee de una vez para todo el padrón. Preguntar por persona serían mil
+ * consultas para enseñar un número.
+ */
+async function temporadaAlcanzada(): Promise<Map<string, number>> {
+  const admin = getSupabaseAdmin()
+  const mayor = new Map<string, number>()
+  const anotar = (uid: string, n: number) => {
+    if (!Number.isFinite(n)) return
+    const ya = mayor.get(uid)
+    if (ya === undefined || n > ya) mayor.set(uid, n)
+  }
+
+  // Por capítulos vistos.
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("user_episode_progress")
+      .select("user_id, season_num")
+      .range(desde, desde + 999)
+    if (error) break
+    const lote = (data || []) as Array<{ user_id: string; season_num: number }>
+    for (const f of lote) anotar(f.user_id, Number(f.season_num))
+    if (lote.length < 1000) break
+  }
+
+  // Por acceso concedido. El número de temporada es lo estable entre entornos,
+  // no su identificador, así que se traduce con la tabla seasons.
+  const { data: temporadas } = await admin.from("seasons").select("id, num")
+  const numPorId = new Map<string, number>()
+  for (const s of (temporadas || []) as Array<{ id: string; num: number }>) {
+    numPorId.set(s.id, Number(s.num))
+  }
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("user_season_access")
+      .select("user_id, season_id")
+      .range(desde, desde + 999)
+    if (error) break
+    const lote = (data || []) as Array<{ user_id: string; season_id: string }>
+    for (const f of lote) {
+      const n = numPorId.get(f.season_id)
+      if (n) anotar(f.user_id, n)
+    }
+    if (lote.length < 1000) break
+  }
+
+  return mayor
+}
+
+/** Quién tiene qué rol vigente en La Red. */
+async function rolesPorMiembro(): Promise<Map<string, Set<string>>> {
+  const admin = getSupabaseAdmin()
+  const mapa = new Map<string, Set<string>>()
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("network_role_assignments")
+      .select("user_id, role_code")
+      .is("revoked_at", null)
+      .range(desde, desde + 999)
+    if (error) break
+    const lote = (data || []) as Array<{ user_id: string; role_code: string }>
+    for (const f of lote) {
+      const s = mapa.get(f.user_id) ?? new Set<string>()
+      s.add(f.role_code)
+      mapa.set(f.user_id, s)
+    }
+    if (lote.length < 1000) break
+  }
+  return mapa
+}
+
+export const ETIQUETA_ROL: Record<string, string> = {
+  organizador: "Organizador",
+  facilitador: "Facilitador",
+  embajador: "Embajador Galáctico",
+  colaborador: "Colaborador",
+  cartografo: "Cartógrafo",
+  guardian: "Guardián de La Red",
+  instructor: "Instructor",
+}
+
+/** Cómo se lee esta audiencia en una línea. */
+export function describirAudiencia(a: Audiencia): string {
+  const partes: string[] = []
+  if (a.temporadaMin) partes.push("que llegaron a la Temporada " + a.temporadaMin + " o más")
+  if (a.roles?.length) {
+    partes.push("con rol de " + a.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(" o "))
+  }
+  return partes.length === 0
+    ? "Todos los miembros activos"
+    : "Miembros " + partes.join(", ")
+}
+
+/**
  * El padrón que recibiría esta comunicación, resuelto entero.
  *
  * Devuelve las personas, no solo el número, porque es lo que necesita la
@@ -94,6 +201,18 @@ export async function resolverAudiencia(
   if (audiencia?.kind !== "todos") {
     throw new Error("Audiencia no reconocida")
   }
+
+  // Los padrones de filtro solo se leen si algún filtro los pide. Sin filtros,
+  // esto no hace ni una consulta de más.
+  const temporadaMin = Number(audiencia.temporadaMin)
+  const pideTemporada = Number.isFinite(temporadaMin) && temporadaMin > 0
+  const rolesPedidos = (audiencia.roles || []).filter(Boolean)
+  const pideRol = rolesPedidos.length > 0
+
+  const [avance, roles] = await Promise.all([
+    pideTemporada ? temporadaAlcanzada() : Promise.resolve(new Map<string, number>()),
+    pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
+  ])
 
   // ── El padrón ───────────────────────────────────────────────────────────
   // Por páginas, porque una tabla puede crecer más que el límite por defecto
@@ -132,6 +251,7 @@ export async function resolverAudiencia(
   const cuenta: Record<MotivoExclusion, number> = {
     sin_correo: 0, correo_invalido: 0, baja_total: 0,
     preferencia_apagada: 0, duplicado: 0,
+    no_llego_a_temporada: 0, sin_ese_rol: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -143,6 +263,21 @@ export async function resolverAudiencia(
     if (!correoPlausible(correo)) { cuenta.correo_invalido++; continue }
     if (bajaTotal.has(f.id)) { cuenta.baja_total++; continue }
     if (apagada.has(f.id)) { cuenta.preferencia_apagada++; continue }
+
+    // Los filtros van DESPUÉS de las preferencias: quien se dio de baja
+    // aparece como «se dio de baja» y no como «no tiene el rol», que es lo que
+    // de verdad explica por qué no le llega.
+    if (pideTemporada && (avance.get(f.id) ?? 0) < temporadaMin) {
+      cuenta.no_llego_a_temporada++
+      continue
+    }
+    if (pideRol) {
+      const suyos = roles.get(f.id)
+      if (!suyos || !rolesPedidos.some((r) => suyos.has(r))) {
+        cuenta.sin_ese_rol++
+        continue
+      }
+    }
     // Dos perfiles con el mismo correo reciben un solo mensaje. Recibir dos
     // copias del mismo correo es lo que hace que alguien marque como spam.
     if (vistos.has(correo)) { cuenta.duplicado++; continue }
@@ -160,7 +295,7 @@ export async function resolverAudiencia(
   return {
     destinatarios,
     resumen: {
-      etiqueta: "Todos los miembros activos",
+      etiqueta: describirAudiencia(audiencia),
       total: filas.length,
       destinatarios: destinatarios.length,
       excluidos,
@@ -183,12 +318,14 @@ export function etiquetaPreferencia(p: PreferenciaCorreo): string {
   return ETIQUETA_PREFERENCIA[p]
 }
 
-/** Las audiencias que se pueden elegir hoy. */
-export const AUDIENCIAS_DISPONIBLES: Array<{ kind: "todos"; etiqueta: string; descripcion: string }> = [
-  {
-    kind: "todos",
-    etiqueta: "Todos los miembros activos",
-    descripcion:
-      "Todo el padrón, menos quien se dio de baja o desactivó esta clase de comunicación.",
-  },
-]
+/**
+ * Los filtros que se pueden elegir hoy.
+ *
+ * Solo hay filtros de cosas que la base SABE. Ofrecer «por ciudad» cuando
+ * apenas unas pocas personas la han puesto produciría audiencias de tres
+ * personas y la sensación de que el sistema está roto.
+ */
+export const FILTROS_DISPONIBLES = {
+  temporadas: [1, 2, 3, 4],
+  roles: Object.entries(ETIQUETA_ROL).map(([id, etiqueta]) => ({ id, etiqueta })),
+}

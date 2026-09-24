@@ -109,11 +109,22 @@ export function validarComunicacion(
   }
 
   // ── La audiencia ────────────────────────────────────────────────────────
-  const kind = (c.audience as { kind?: string } | undefined)?.kind
-  if (!kind) {
+  const aud = c.audience as { kind?: string; temporadaMin?: number | null; roles?: string[] | null } | undefined
+  if (!aud?.kind) {
     err("audience", "No hay audiencia elegida.")
-  } else if (kind !== "todos") {
+  } else if (aud.kind !== "todos") {
     err("audience", "Esa audiencia no está disponible.")
+  }
+
+  // Un aviso, no un error: filtrar mucho es legítimo —una nota para los siete
+  // organizadores es una comunicación perfectamente razonable— pero conviene
+  // que quien la manda sepa que la está estrechando.
+  if (aud?.temporadaMin && aud?.roles?.length) {
+    avi(
+      "audience",
+      "Estás filtrando por avance Y por rol a la vez. Solo lo recibirá quien cumpla las dos cosas; " +
+      "mira el número en el ensayo de audiencia antes de enviar.",
+    )
   }
 
   // ── La programación ─────────────────────────────────────────────────────
