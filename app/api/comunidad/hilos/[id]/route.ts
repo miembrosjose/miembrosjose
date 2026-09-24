@@ -45,9 +45,13 @@ export async function PATCH(req: NextRequest, ctxRuta: { params: Promise<{ id: s
 
   if (typeof body.fijar === "boolean") {
     cambios.pinned = body.fijar
-    // Al desfijar se limpia el orden: dejarlo puesto haría que al volver a
-    // fijarla reapareciera en un sitio que nadie recuerda haber elegido.
-    if (!body.fijar) cambios.pin_order = null
+    // Al desfijar se pone el orden a cero: dejarlo con su valor anterior haría
+    // que al volver a fijarla reapareciera en un sitio que nadie recuerda
+    // haber elegido.
+    //
+    // Cero y no null: la columna no admite nulos, y ponerlo hacía fallar la
+    // operación entera con un error que no decía nada útil.
+    if (!body.fijar) cambios.pin_order = 0
   }
   if (typeof body.cerrar === "boolean") cambios.is_locked = body.cerrar
 

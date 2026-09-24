@@ -216,8 +216,12 @@ update public.forum_posts
        is_official = true
  where title like 'Portal de Ingreso%';
 
+-- `pin_order` NO admite nulos en esta base. Ponerlo a null hacía fallar este
+-- update, y en el editor de Supabase un error aborta TODO el bloque: la
+-- migración entera se quedaba sin aplicar y el foro salía vacío. Cero es el
+-- valor neutro correcto para algo que ya no está fijado.
 update public.forum_posts
-   set pinned = false, pin_order = null
+   set pinned = false, pin_order = 0
  where pinned = true
    and title not like 'Portal de Ingreso%';
 
