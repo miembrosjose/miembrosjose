@@ -47,6 +47,7 @@ export async function GET() {
       description: e.description,
       tipo: e.tipo,
       season_num: e.season_num,
+      desbloquea_con: e.desbloquea_con,
       icono: e.icono,
       abierto,
       // De un espacio cerrado no sale ni el número de conversaciones: saber

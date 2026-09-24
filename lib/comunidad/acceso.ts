@@ -30,8 +30,16 @@ export type EspacioComunidad = {
   name: string
   kicker: string
   description: string
-  tipo: "global" | "season"
+  /**
+   * 'global' · permanente, de todos y siempre.
+   * 'season' · una de las cuatro temporadas.
+   * 'hito'   · un paso del camino que no es una temporada: los portales que
+   *            hay entre ellas, el Umbral, los Objetivos, la Misión.
+   */
+  tipo: "global" | "season" | "hito"
   season_num: number | null
+  /** Solo en los hitos: la temporada que hay que tener abierta para entrar. */
+  desbloquea_con: number | null
   icono: string
   sort_order: number
   activo: boolean
@@ -78,7 +86,7 @@ export async function todosLosEspacios(): Promise<EspacioComunidad[]> {
   const admin = getSupabaseAdmin()
   const { data } = await admin
     .from("community_spaces")
-    .select("id, slug, name, kicker, description, tipo, season_num, icono, sort_order, activo")
+    .select("id, slug, name, kicker, description, tipo, season_num, desbloquea_con, icono, sort_order, activo")
     .eq("activo", true)
     .order("sort_order", { ascending: true })
   return (data || []) as EspacioComunidad[]
@@ -141,11 +149,19 @@ export async function temporadasAbiertas(user: User, papel: PapelComunidad): Pro
 /**
  * ¿Puede entrar en este espacio?
  *
- * Global: siempre. De temporada: solo si la tiene abierta.
+ *   global · siempre. Presentarse, contar lo que se vivió o preguntar no
+ *            depende de por dónde vaya nadie.
+ *   season · solo con esa temporada abierta.
+ *   hito   · con la temporada que lo precede. El Portal del Compromiso se abre
+ *            al tener la Temporada 1; los Objetivos y la Misión, al tener la 4.
+ *            Así el final del camino no se lee antes de recorrerlo.
  */
 export function puedeEntrar(espacio: EspacioComunidad, abiertas: Set<number>): boolean {
-  if (espacio.tipo !== "season") return true
-  return espacio.season_num !== null && abiertas.has(espacio.season_num)
+  if (espacio.tipo === "global") return true
+  if (espacio.tipo === "season") {
+    return espacio.season_num !== null && abiertas.has(espacio.season_num)
+  }
+  return espacio.desbloquea_con !== null && abiertas.has(espacio.desbloquea_con)
 }
 
 /**

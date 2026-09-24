@@ -36,8 +36,9 @@ export type EspacioResumen = {
   name: string
   kicker: string
   description: string
-  tipo: "global" | "season"
+  tipo: "global" | "season" | "hito"
   season_num: number | null
+  desbloquea_con: number | null
   icono: string
   abierto: boolean
   conversaciones: number | null
@@ -56,10 +57,10 @@ type Datos = {
 const ICONOS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   presentaciones: Users,
   "experiencias-contacto": Sparkles,
-  "preparacion-contacto": Compass,
+  "preguntas-144000": HelpCircle,
+  "umbral-contacto": Compass,
   "objetivos-144000": Target,
   "mision-tierra": Globe2,
-  "preguntas-144000": HelpCircle,
 }
 
 export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
@@ -95,9 +96,14 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
     )
   }
 
-  const temporadas = datos.espacios.filter((e) => e.tipo === "season")
+  // El recorrido es el camino COMPLETO, en orden: las cuatro temporadas, los
+  // portales que hay entre ellas, el Umbral, los Objetivos y la Misión. Antes
+  // solo estaban las temporadas y lo demás vivía suelto entre los espacios
+  // permanentes, como si el final del camino fuera un tema más.
+  const camino = datos.espacios.filter((e) => e.tipo === "season" || e.tipo === "hito")
   const globales = datos.espacios.filter((e) => e.tipo === "global")
-  const actual = temporadas.find((t) => t.season_num === datos.recorrido.temporada_actual) ?? null
+  const actual =
+    camino.find((t) => t.tipo === "season" && t.season_num === datos.recorrido.temporada_actual) ?? null
 
   return (
     <div className={s.comunidad}>
@@ -130,26 +136,40 @@ export function ViewComunidad({ onAbrirEspacio, onAbrirHilo }: {
             <ArrowRight size={16} aria-hidden className={s.recorridoFlecha} />
           </button>
 
-          {/* Los peldaños. Una fila, no cuatro tarjetas: es un camino. */}
-          <div className={s.peldanos}>
-            {temporadas.map((t) => (
-              <button
-                key={t.slug}
-                type="button"
-                className={
-                  t.season_num === actual.season_num ? s.peldanoActual
-                  : t.abierto ? s.peldano : s.peldanoCerrado
-                }
-                onClick={() => t.abierto && onAbrirEspacio(t.slug)}
-                disabled={!t.abierto}
-                title={t.abierto ? t.name : "Continúa tu recorrido para entrar"}
-              >
-                <span className={s.peldanoNum}>{t.season_num}</span>
-                <span className={s.peldanoNombre}>{t.kicker}</span>
-                {!t.abierto && <Lock size={11} aria-hidden />}
-              </button>
-            ))}
-          </div>
+          {/* EL CAMINO, ENTERO Y EN ORDEN.
+              Una lista y no una fila de pastillas: son diez pasos, no cuatro,
+              y una fila que se desplaza a lo ancho esconde justo el final —los
+              Objetivos y la Misión—, que es a donde lleva todo esto.
+
+              Las temporadas se numeran; los pasos de en medio no, porque no
+              son etapas sino puertas entre ellas. */}
+          <ol className={s.camino}>
+            {camino.map((paso) => {
+              const esActual = paso.tipo === "season" && paso.season_num === actual.season_num
+              return (
+                <li key={paso.slug}>
+                  <button
+                    type="button"
+                    className={
+                      esActual ? s.pasoActual : paso.abierto ? s.paso : s.pasoCerrado
+                    }
+                    onClick={() => paso.abierto && onAbrirEspacio(paso.slug)}
+                    disabled={!paso.abierto}
+                    title={paso.abierto ? paso.name : "Continúa tu recorrido para entrar"}
+                  >
+                    <span className={paso.tipo === "season" ? s.pasoNum : s.pasoPunto}>
+                      {paso.tipo === "season" ? paso.season_num : ""}
+                    </span>
+                    <span className={s.pasoTextos}>
+                      <span className={s.pasoNombre}>{paso.name}</span>
+                      <span className={s.pasoKicker}>{paso.kicker}</span>
+                    </span>
+                    {!paso.abierto && <Lock size={12} aria-hidden className={s.pasoCandado} />}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
         </section>
       )}
 

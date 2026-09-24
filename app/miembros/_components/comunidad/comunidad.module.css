@@ -1,7 +1,7 @@
 /* ── CENTRO DE COMUNIDAD ───────────────────────────────────────────────────
    Limpio, con aire y con jerarquía tipográfica. Las tarjetas solo donde la
-   tarjeta aporta —los espacios—; el recorrido es una fila de peldaños y la
-   actividad una lista. Veinte rectángulos flotando no son jerarquía.
+   tarjeta aporta —los espacios—; el recorrido es una lista de pasos y la
+   actividad otra lista. Veinte rectángulos flotando no son jerarquía.
 
    Pensado primero para el teléfono: una columna, nada lateral, y todo lo que
    se toca por encima de 40px. */
@@ -115,49 +115,89 @@
 .recorridoSub { font-size: 0.8rem; line-height: 1.5; color: #a8a8c0; }
 .recorridoFlecha { flex-shrink: 0; color: #a78bca; }
 
-/* Los peldaños del camino. Una fila que se desplaza en móvil. */
-.peldanos {
+/* ── EL CAMINO ─────────────────────────────────────────────────────────
+   Una lista vertical, no una fila que se desplaza. Son diez pasos: en una
+   fila horizontal, el final —los Objetivos y la Misión— queda fuera de la
+   pantalla, y es justo a donde lleva todo esto.
+
+   La línea de la izquierda es el hilo que los une: sin ella parecen diez
+   botones sueltos en vez de un recorrido. */
+.camino {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 0.9rem;
+  border-left: 1px solid rgba(167, 139, 202, 0.25);
   display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.3rem;
-  scrollbar-width: thin;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.peldano,
-.peldanoActual,
-.peldanoCerrado {
-  display: inline-flex;
+.paso,
+.pasoActual,
+.pasoCerrado {
+  display: flex;
   align-items: center;
-  gap: 0.45rem;
-  flex-shrink: 0;
-  min-height: 40px;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 0.7rem;
+  width: 100%;
+  /* 44px es el mínimo para que un pulgar acierte sin ampliar la pantalla. */
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: transparent;
-  color: #8b8b9e;
-  font-size: 0.78rem;
+  color: #a8a8c0;
+  text-align: left;
   cursor: pointer;
-  transition: border-color 180ms ease, color 180ms ease;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
-.peldano:hover { border-color: rgba(167, 139, 202, 0.5); color: #c9c9d8; }
+.paso:hover { background: rgba(255, 255, 255, 0.035); color: #f3f6fa; }
 
-.peldanoActual {
-  border-color: rgba(217, 184, 102, 0.5);
-  background: rgba(217, 184, 102, 0.1);
+.pasoActual {
+  border-color: rgba(217, 184, 102, 0.4);
+  background: rgba(217, 184, 102, 0.08);
   color: #e6cf95;
 }
 
-.peldanoCerrado { opacity: 0.55; cursor: default; }
+.pasoCerrado { opacity: 0.45; cursor: default; }
 
-.peldanoNum {
+/* Las temporadas llevan número; los pasos de en medio, un punto: son puertas
+   entre etapas, no etapas. */
+.pasoNum,
+.pasoPunto {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: -1.55rem;
+  border-radius: 50%;
+  background: #0a0a18;
+  border: 1px solid rgba(167, 139, 202, 0.4);
   font-family: var(--font-cinzel, serif);
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
-.peldanoNombre { white-space: nowrap; }
+.pasoPunto {
+  width: 10px;
+  height: 10px;
+  margin-left: -1.4rem;
+  border-width: 1px;
+  background: rgba(167, 139, 202, 0.5);
+}
+
+.pasoTextos { display: flex; flex-direction: column; min-width: 0; }
+.pasoNombre { font-size: 0.88rem; line-height: 1.3; }
+.pasoKicker {
+  font-size: 0.72rem;
+  color: #6a6a85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pasoCandado { flex-shrink: 0; margin-left: auto; color: #6a6a85; }
+
 
 /* ── Espacios de la Red ─────────────────────────────────────────────────── */
 .espacios {
