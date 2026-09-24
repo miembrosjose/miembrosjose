@@ -35,9 +35,24 @@ type Props = {
   onSaved?: (loc: NonNullable<UbicacionActual>) => void
   /** Modo compacto para la invitación contextual del Inicio. */
   compact?: boolean
+  /**
+   * Modo INTEGRADO: este bloque vive dentro de otro formulario que ya tiene su
+   * propio botón de guardar.
+   *
+   * Existe por un fallo de diseño real: al meter la ubicación en el alta,
+   * quedaron dos botones en la misma pantalla —«Guardar ubicación» aquí y
+   * «Continuar» abajo—. Quien rellenaba país y ciudad y pulsaba el grande
+   * daba por guardado lo de arriba, y no se guardaba nada. Esa persona luego
+   * no aparecía en el mapa y no tenía forma de saber por qué.
+   *
+   * En este modo se esconde el botón propio y se avisa al formulario de
+   * fuera de cada cambio, para que lo guarde él junto con lo demás.
+   */
+  integrado?: boolean
+  onCambio?: (v: { country_code: string; city_id: number | null; show_city: boolean }) => void
 }
 
-export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: Props) {
+export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact, integrado, onCambio }: Props) {
   const [paises, setPaises] = useState<Pais[]>([])
   const [pais, setPais] = useState("")
   const [busqueda, setBusqueda] = useState("")
@@ -55,6 +70,15 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
   const [errorCarga, setErrorCarga] = useState(false)
 
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // En modo integrado, quien manda es el formulario de fuera: se le va
+  // contando lo elegido para que lo guarde con el resto.
+  const avisar = useRef(onCambio)
+  useEffect(() => { avisar.current = onCambio })
+  useEffect(() => {
+    if (!integrado) return
+    avisar.current?.({ country_code: pais, city_id: ciudad?.id ?? null, show_city: showCity })
+  }, [integrado, pais, ciudad, showCity])
 
   // ── Carga inicial: países disponibles + ubicación actual ─────────────────
   useEffect(() => {
@@ -352,9 +376,11 @@ export function UbicacionRed({ inputCls, labelCls, btnCls, onSaved, compact }: P
       )}
 
       <div className="flex items-center gap-4">
-        <button type="button" onClick={guardar} disabled={guardando || !pais} className={btnCls}>
-          {guardando ? "Guardando…" : "Guardar ubicación"}
-        </button>
+        {!integrado && (
+          <button type="button" onClick={guardar} disabled={guardando || !pais} className={btnCls}>
+            {guardando ? "Guardando…" : "Guardar ubicación"}
+          </button>
+        )}
         {msg && (
           <span
             className={`flex items-center gap-1.5 text-xs [font-family:var(--font-geist-sans)] ${msg.ok ? "text-[#009d68]" : "text-red-500"}`}

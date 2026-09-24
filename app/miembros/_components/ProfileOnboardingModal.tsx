@@ -64,6 +64,15 @@ export function ProfileOnboardingModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
 
+  // La ubicación elegida abajo. Se guarda con «Continuar», no con un botón
+  // aparte: dos botones de guardar en la misma pantalla hacían que quien
+  // pulsaba el grande perdiera lo de arriba sin enterarse.
+  const [ubicacion, setUbicacion] = useState<{
+    country_code: string
+    city_id: number | null
+    show_city: boolean
+  } | null>(null)
+
   // Trava scroll do body enquanto modal aberto
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -173,6 +182,18 @@ export function ProfileOnboardingModal({
         if (!resAbout.ok) {
           const d = await resAbout.json()
           throw new Error(d.error || "Error al guardar perfil")
+        }
+
+        // 3b) La ubicación, si eligió alguna. Va con el mismo botón que todo
+        // lo demás. Si falla, NO se corta el alta: la persona entra igual y
+        // puede ponerla luego desde su perfil.
+        if (ubicacion?.country_code) {
+          await fetch("/api/red/ubicacion", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(ubicacion),
+          }).catch(() => null)
         }
 
         // 4) Refresh auth — gate fecha sozinho quando isProfileComplete passa
@@ -423,6 +444,8 @@ export function ProfileOnboardingModal({
             </p>
             <UbicacionRed
               compact
+              integrado
+              onCambio={setUbicacion}
               inputCls="block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
               labelCls="block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
               btnCls="inline-flex items-center justify-center gap-2 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 [font-family:var(--font-geist-sans)]"
