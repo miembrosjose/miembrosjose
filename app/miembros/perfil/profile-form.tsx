@@ -64,6 +64,43 @@ async function convertToWebp(file: File): Promise<File> {
 
 type State = { type: "idle" } | { type: "saving" } | { type: "success"; msg: string } | { type: "error"; msg: string }
 
+/**
+ * El error de una Edge Function, legible.
+ *
+ * `functions.invoke` no da el motivo: devuelve «Edge Function returned a
+ * non-2xx status code» y deja el cuerpo de la respuesta dentro de
+ * `error.context`, que es un Response sin leer. Sin abrirlo, cualquier fallo
+ * —función no desplegada, token caducado, error dentro de la función— se ve
+ * exactamente igual, y no hay forma de saber cuál es.
+ *
+ * Esto lo abre y saca lo que haya dentro.
+ */
+async function mensajeDeFuncion(e: unknown): Promise<string> {
+  const base = e instanceof Error ? e.message : String(e)
+
+  const ctx = (e as { context?: unknown })?.context
+  if (ctx && typeof ctx === "object" && "text" in ctx && typeof (ctx as Response).text === "function") {
+    try {
+      const respuesta = ctx as Response
+      const cuerpo = await respuesta.text()
+      const estado = respuesta.status ? ` (HTTP ${respuesta.status})` : ""
+      if (cuerpo) return `${base}${estado} — ${cuerpo.slice(0, 500)}`
+      return `${base}${estado}`
+    } catch {
+      /* el cuerpo ya se había consumido; queda el mensaje base */
+    }
+  }
+
+  // El caso más probable mientras se prueba: la función todavía no existe en
+  // este proyecto de Supabase. Decirlo ahorra media hora de buscar en el
+  // sitio equivocado.
+  if (/not found|404/i.test(base)) {
+    return base + " — comprueba que la función telegram-link-start esté desplegada en este proyecto de Supabase."
+  }
+
+  return base
+}
+
 export function ProfileForm({
   initialName,
   initialAvatar,
@@ -435,6 +472,50 @@ export function ProfileForm({
 
   const inputCls = "block w-full border border-[#1a1a24] bg-[#12121a]/60 px-4 py-3 text-base text-[#F3F6FA] placeholder:text-[#6a6a7a] transition-colors focus:border-red-900 focus:bg-[#000000] focus:outline-none focus:ring-1 focus:ring-red-900/40 disabled:opacity-50 [font-family:var(--font-geist-sans)]"
   const labelCls = "block text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a0a0b0] [font-family:var(--font-geist-sans)] mb-2"
+  // ── CONECTAR TELEGRAM · TEMPORAL ────────────────────────────────────────
+  // Llama a la Edge Function `telegram-link-start` y abre lo que devuelva.
+  // Usa el cliente de Supabase que ya existe en el proyecto; no crea otro ni
+  // toca la sesión.
+  const [tgOcupado, setTgOcupado] = useState(false)
+  const [tgError, setTgError] = useState<string | null>(null)
+  const [tgUrl, setTgUrl] = useState<string | null>(null)
+
+  const conectarTelegram = async () => {
+    setTgError(null)
+    setTgUrl(null)
+
+    // ── LA PESTAÑA SE ABRE ANTES DE LA LLAMADA ──────────────────────────
+    // Un window.open() después de un await ya no cuenta como respuesta a un
+    // clic, y los navegadores lo bloquean. Se abre vacía ahora —dentro del
+    // gesto— y se le pone la dirección cuando llega. Si aun así viene null,
+    // es que el bloqueador la paró, y entonces se enseña el enlace a mano.
+    const pestana = window.open("", "_blank")
+    setTgOcupado(true)
+
+    try {
+      const supabase = getSupabaseBrowser()
+      const { data, error } = await supabase.functions.invoke("telegram-link-start")
+
+      if (error) throw error
+
+      const url = (data as { telegram_url?: string } | null)?.telegram_url
+      if (!url) {
+        throw new Error(
+          "La función respondió, pero sin `telegram_url`. Esto es lo que devolvió: " +
+          JSON.stringify(data),
+        )
+      }
+
+      setTgUrl(url)
+      if (pestana) pestana.location.href = url
+    } catch (e) {
+      pestana?.close()
+      setTgError(await mensajeDeFuncion(e))
+    } finally {
+      setTgOcupado(false)
+    }
+  }
+
   const sectionCls = "border border-[#1a1a24] bg-[#12121a]/40 p-6 sm:p-8"
   const sectionTitleCls = "text-sm font-semibold uppercase tracking-[0.25em] text-[#6D4A9B] [font-family:var(--font-geist-sans)] mb-6"
   const btnCls = "inline-flex items-center justify-center gap-2 border border-[#F3F6FA] bg-[#F3F6FA] px-6 py-3 text-[#000000] text-xs font-semibold uppercase tracking-[0.3em] transition-colors hover:border-red-900 hover:bg-red-900 hover:text-[#F3F6FA] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-[#F3F6FA] disabled:hover:text-[#000000] [font-family:var(--font-geist-sans)]"
@@ -555,6 +636,44 @@ export function ProfileForm({
         disabled={isFlamePending}
         state={flameState}
       />
+
+      {/* ─────────────────────────────────────────────────────────────────
+          CONECTAR TELEGRAM — TEMPORAL, PARA PROBAR.
+
+          Esto es un banco de pruebas de la Edge Function
+          `telegram-link-start`, no una funcionalidad terminada. Cuando el
+          enlace de cuentas esté resuelto, esta sección entera se borra o se
+          convierte en algo con su sitio propio.
+
+          Queda marcada para que nadie la confunda con producto acabado.
+          ───────────────────────────────────────────────────────────────── */}
+      <section className={sectionCls}>
+        <h2 className={sectionTitleCls}>Telegram</h2>
+        <p className="mb-6 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Prueba temporal del enlace con Telegram.
+        </p>
+
+        <button type="button" onClick={conectarTelegram} disabled={tgOcupado} className={btnCls}>
+          {tgOcupado ? "Conectando…" : "Conectar Telegram"}
+        </button>
+
+        {/* Si el navegador bloqueó la pestaña, el enlace se ofrece a mano en
+            vez de dejar a alguien pulsando un botón que no hace nada. */}
+        {tgUrl && (
+          <p className="mt-4 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+            Si no se abrió nada,{" "}
+            <a href={tgUrl} target="_blank" rel="noopener noreferrer" className="text-[#c3b2e0] underline">
+              entra por aquí
+            </a>.
+          </p>
+        )}
+
+        {tgError && (
+          <p className="mt-4 border border-[#3a1f1f] bg-[#1a0d0d]/60 p-3 text-xs leading-relaxed text-[#e0b0b0] [font-family:var(--font-geist-sans)]">
+            {tgError}
+          </p>
+        )}
+      </section>
 
       {/* TU LUGAR EN LA RED — país, ciudad y su privacidad */}
       <section className={sectionCls}>
