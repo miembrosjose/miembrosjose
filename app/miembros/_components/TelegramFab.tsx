@@ -42,7 +42,25 @@ export function TelegramFab() {
 
     try {
       const supabase = getSupabaseBrowser()
-      const { data, error: fallo } = await supabase.functions.invoke("telegram-link-start")
+
+      // ── POR QUÉ EL TOKEN VA A MANO ──────────────────────────────────────
+      // `functions.invoke` pone la cabecera Authorization por su cuenta, pero
+      // con lo que el cliente tenga en ese instante. Y `getSupabaseBrowser()`
+      // devuelve un cliente NUEVO en cada llamada: recién creado todavía no ha
+      // recuperado la sesión de las cookies, así que manda la clave anónima.
+      //
+      // Desde el otro lado eso se ve como una petición sin usuario — que es
+      // exactamente lo que respondía la función: «Usuario no identificado».
+      //
+      // Pedir la sesión y poner el token explícitamente quita la carrera: no
+      // depende de si al cliente le dio tiempo a despertarse.
+      const { data: sesion } = await supabase.auth.getSession()
+      const token = sesion.session?.access_token
+      if (!token) throw new Error("No hay sesión activa. Vuelve a entrar y prueba otra vez.")
+
+      const { data, error: fallo } = await supabase.functions.invoke("telegram-link-start", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (fallo) throw fallo
 
       const url = (data as { telegram_url?: string } | null)?.telegram_url
