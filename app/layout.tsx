@@ -51,10 +51,13 @@ export const metadata: Metadata = {
     title: "Los 144000",
     description: "[BRAND_DESCRIPTION]",
   },
-  icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
-  },
+  // El icono lo recoge Next.js solo, de app/icon.svg. Aquí apuntaba a
+  // "/favicon.png", un archivo que nunca estuvo en public/: daba 404 en cada
+  // carga y el manifiesto no podía leerlo, así que la web se guardaba en la
+  // pantalla de inicio sin icono.
+  //
+  // Declararlo a mano volvería a fijar una ruta que puede dejar de existir.
+  // Se deja que lo descubra el archivo.
   robots: {
     index: true,
     follow: true,

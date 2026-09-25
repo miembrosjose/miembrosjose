@@ -12,6 +12,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { getCloudflareContext } from "@opennextjs/cloudflare"
 
+// ── ESTAS DOS SIGUEN SIENDO MARCADORES, Y ES CORRECTO ────────────────────
+// La plataforma se sirve en los144000.com/miembros, no en un subdominio. La
+// rama que las usa (mas abajo) nunca se ejecuta, y esta desactivada a
+// proposito: ver el comentario de "subdominio bonito".
+//
+// NO se sustituyen por el dominio real. Hacerlo despertaria ese camino, que
+// reescribe rutas y fija el dominio de las cookies de sesion — y eso no se
+// toca sin querer activarlo de verdad.
 const MIEMBROS_HOST = "miembros.SEU_DOMINIO.com"
 // Rotas públicas dentro do subdomínio miembros — não exigem sessão.
 // /activar-cuenta: página pública de ativação (recebe a invitación do Supabase).
@@ -40,6 +48,14 @@ const SCRIPT_SOURCES = "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.c
 
 const STYLE_SOURCES = "'self' 'unsafe-inline' https://fonts.googleapis.com"
 
+// ── LOS MARCADORES DEL ANDAMIAJE, SUSTITUIDOS ─────────────────────────────
+// Esta lista arrastraba `SEU_DOMINIO.com` y `SEU_TRACKING_WEBHOOK.com`, que no
+// existen. El navegador no falla por eso: descarta la entrada inválida y sigue
+// —lo dice en la consola— pero el resultado es que la directiva protegía
+// menos de lo que parecía, y nadie se enteraba.
+//
+// Un dominio inventado en una lista blanca es peor que no tenerlo: da la
+// impresión de que algo está permitido a propósito.
 const buildCSP = (frameAncestors: string) => [
   "default-src 'self'",
   `script-src ${SCRIPT_SOURCES}`,
@@ -48,8 +64,8 @@ const buildCSP = (frameAncestors: string) => [
   `style-src-elem ${STYLE_SOURCES}`,
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://SEU_DOMINIO.com https://www.SEU_DOMINIO.com https://api.stripe.com https://*.stripe.com https://m.stripe.network https://*.supabase.co wss://*.supabase.co https://open.er-api.com https://www.googletagmanager.com https://www.google-analytics.com https://*.cloudflareinsights.com https://api.vturb.com.br https://*.vturb.net https://*.converteai.net https://*.b-cdn.net https://*.sentry.io https://pay.google.com https://*.applepay.cdn-apple.com https://www.clarity.ms https://*.clarity.ms https://www.facebook.com https://connect.facebook.net https://SEU_TRACKING_WEBHOOK.com https://cdn-st.adsmurai.com",
-  "frame-src 'self' https://SEU_DOMINIO.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://www.googletagmanager.com https://pay.google.com https://*.converteai.net https://scripts.converteai.net https://cdn.converteai.net",
+  "connect-src 'self' https://los144000.com https://www.los144000.com https://api.stripe.com https://*.stripe.com https://m.stripe.network https://*.supabase.co wss://*.supabase.co https://open.er-api.com https://www.googletagmanager.com https://www.google-analytics.com https://*.cloudflareinsights.com https://api.vturb.com.br https://*.vturb.net https://*.converteai.net https://*.b-cdn.net https://*.sentry.io https://pay.google.com https://*.applepay.cdn-apple.com https://www.clarity.ms https://*.clarity.ms https://www.facebook.com https://connect.facebook.net https://cdn-st.adsmurai.com",
+  "frame-src 'self' https://los144000.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://www.googletagmanager.com https://pay.google.com https://*.converteai.net https://scripts.converteai.net https://cdn.converteai.net",
   "media-src 'self' blob: https:",
   "worker-src 'self' blob:",
   "manifest-src 'self' https://pay.google.com",
@@ -61,7 +77,7 @@ const buildCSP = (frameAncestors: string) => [
 ].join("; ")
 
 const CSP = buildCSP("'none'")
-const CSP_EMBEDDABLE = buildCSP("'self' https://miembros.SEU_DOMINIO.com")
+const CSP_EMBEDDABLE = buildCSP("'self' https://los144000.com")
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl

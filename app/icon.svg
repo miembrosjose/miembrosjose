@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!--
+    EL ICONO DE LOS 144.000
+
+    ── POR QUÉ UN SVG Y NO UN PNG ──────────────────────────────────────────
+    El proyecto apuntaba a `/favicon.png`, un archivo que no existía: daba 404
+    en cada carga y el manifiesto no podía leerlo, así que al guardar la web en
+    la pantalla de inicio salía sin icono.
+
+    Un SVG se dibuja aquí mismo, no hay archivo que perder, y se ve nítido en
+    cualquier tamaño — desde los 16 píxeles de una pestaña hasta el icono
+    grande de un escritorio.
+
+    Next.js lo recoge solo por estar en app/icon.svg. No hay que declararlo.
+
+    ── EL DIBUJO ───────────────────────────────────────────────────────────
+    El 144 dentro de un círculo, en el dorado del camino sobre el fondo
+    profundo de la plataforma. A 16 píxeles no se leerá el número —ningún
+    icono se lee a ese tamaño— pero sí se reconocerá la moneda dorada, que es
+    lo que hace falta para encontrarla entre veinte pestañas.
+  -->
+  <rect width="64" height="64" rx="14" fill="#050510"/>
+
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#d9b866" stroke-width="1.6" opacity="0.55"/>
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#d9b866" stroke-width="0.8" opacity="0.3"/>
+
+  <text
+    x="32" y="32"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="19"
+    font-weight="700"
+    letter-spacing="0.5"
+    fill="#f0dca8"
+  >144</text>
+</svg>

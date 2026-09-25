@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next"
 
-// Manifest mínimo (identidad Los 144.000). Usa el favicon público existente.
+// Manifest mínimo (identidad Los 144.000).
+//
+// El icono es app/icon.svg, que Next.js sirve en /icon.svg. Antes apuntaba a
+// "/favicon.png", que no existía: el navegador no podía leerlo y al guardar la
+// web en la pantalla de inicio salía sin icono.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Los 144.000",
@@ -11,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#050510",
     theme_color: "#050510",
     icons: [
-      { src: "/favicon.png", sizes: "any", type: "image/png" },
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml" },
     ],
   }
 }
