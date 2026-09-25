@@ -9,12 +9,57 @@
  * El de abajo es el chat de la plataforma —lo que se usa a diario— y este
  * queda encima. El orden importa: el pulgar llega antes a lo de abajo.
  */
-.fab {
+/* La zona: el botón y, si hace falta, el aviso encima. Se posiciona ella y
+ * el botón queda relativo dentro, para que el aviso pueda colgar del mismo
+ * sitio sin tener que calcularle una posición aparte. */
+.zona {
   position: fixed;
   left: 24px;
   /* 24 de margen + 56 del botón del chat + 14 de aire entre los dos. */
   bottom: 94px;
   z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* El aviso de que algo falló. Ancho corto a propósito: es una nota al lado de
+ * un botón, no un panel. */
+.error {
+  max-width: 220px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(224, 176, 176, 0.3);
+  border-radius: 10px;
+  background: rgba(26, 13, 13, 0.95);
+  backdrop-filter: blur(8px);
+  color: #e0b0b0;
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* El aro que gira mientras se pide la dirección. Sin librería: es un borde
+ * con un lado transparente dando vueltas. */
+.girando {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: girar 700ms linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.fab {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 
   width: 56px;
   height: 56px;
@@ -54,6 +99,11 @@
   transition-duration: var(--duration-fast, 140ms);
 }
 
+.fab:disabled {
+  cursor: wait;
+  transform: none;
+}
+
 .fab:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 3px;
@@ -66,12 +116,18 @@
 }
 
 @media (max-width: 480px) {
-  .fab {
+  .zona {
     left: 16px;
     /* 16 de margen + 52 del botón del chat + 12 de aire. */
     bottom: 80px;
+  }
+  .fab {
     width: 52px;
     height: 52px;
+  }
+  .error {
+    /* En un teléfono, 220px al lado del borde izquierdo se sale. */
+    max-width: calc(100vw - 48px);
   }
 }
 
@@ -81,5 +137,11 @@
   .fab:active {
     transition: none;
     transform: none;
+  }
+  /* El aro sigue girando: aquí no es decoración, es la única señal de que la
+   * petición está en marcha. Quitarlo dejaría el botón congelado sin explicar
+   * por qué no pasa nada. */
+  .girando {
+    animation-duration: 1400ms;
   }
 }

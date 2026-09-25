@@ -1,92 +1,90 @@
 "use client"
 
-// El botón flotante del grupo de Telegram.
+// El botón flotante de Telegram.
 //
-// ── POR QUÉ LA DIRECCIÓN NO ESTÁ EN EL CÓDIGO ──────────────────────────────
-// El grupo todavía no existe, y cuando exista su enlace puede cambiar —un
-// grupo de Telegram se puede recrear, y entonces el enlace viejo lleva a un
-// sitio vacío—. Escribirlo aquí obligaría a tocar el código y desplegar cada
-// vez.
+// ── POR QUÉ NO ES UN ENLACE FIJO ───────────────────────────────────────────
+// Un enlace fijo al grupo lleva a todo el mundo al mismo sitio, y ahí Telegram
+// no tiene forma de saber quién ha entrado. La cuenta de Telegram y la cuenta
+// de Los 144.000 quedarían sin relación: ni se puede dar acceso según lo que
+// alguien tenga contratado, ni retirarlo cuando deja de tenerlo.
 //
-// Vive en `site_texts`, la misma tabla de textos que ya se edita desde
-// Admin → Textos do Site. Poner el enlace es escribir una fila; quitarlo es
-// borrarla.
-//
-// ── Y POR QUÉ NO SE DIBUJA SI NO HAY ENLACE ────────────────────────────────
-// Un botón que no lleva a ninguna parte es peor que no tener botón: quien lo
-// pulsa se queda mirando una pestaña en blanco y aprende que esta plataforma
-// tiene cosas rotas. Mientras no haya dirección, no hay botón.
+// La Edge Function `telegram-link-start` devuelve una dirección para ESTA
+// persona —con lo que haga falta dentro para reconocerla al otro lado—, así
+// que la dirección se pide en el momento de pulsar y no se guarda en ningún
+// sitio. Guardarla sería volver a tener un enlace fijo, solo que escondido.
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useView } from "../_lib/view-context"
 import { useAuth } from "../_lib/auth-context"
+import { getSupabaseBrowser } from "@/lib/supabase/client"
 import s from "./telegram-fab.module.css"
-
-/** La clave en `site_texts`. Se escribe desde el panel de textos. */
-const CLAVE = "telegram_group_url"
-
-/**
- * Solo se acepta un enlace de Telegram.
- *
- * No es desconfianza del administrador: es que un enlace mal pegado —con un
- * espacio delante, o la mitad copiada— rompería el botón en silencio, y desde
- * fuera parecería que Telegram no funciona.
- */
-function enlaceValido(v: string | undefined | null): string | null {
-  const s = (v || "").trim()
-  if (!s) return null
-  try {
-    const u = new URL(s)
-    const esTelegram = u.hostname === "t.me" || u.hostname === "telegram.me" || u.hostname.endsWith(".t.me")
-    return u.protocol === "https:" && esTelegram ? u.toString() : null
-  } catch {
-    return null
-  }
-}
 
 export function TelegramFab() {
   const { user } = useAuth()
   const { view } = useView()
-  const [url, setUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    let vivo = true
-    fetch("/api/site-texts", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { overrides?: Record<string, string> } | null) => {
-        if (!vivo) return
-        setUrl(enlaceValido(d?.overrides?.[CLAVE]))
-      })
-      .catch(() => { /* sin enlace, sin botón */ })
-    return () => { vivo = false }
-  }, [user])
+  const [ocupado, setOcupado] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // En la pantalla de mensajes se esconde, igual que la burbuja del chat
   // interno: ahí abajo a la izquierda está la lista de conversaciones.
-  if (!user || !url || view === "messages") return null
+  if (!user || view === "messages") return null
+
+  const abrir = async () => {
+    if (ocupado) return
+    setError(null)
+
+    // ── LA PESTAÑA SE ABRE ANTES DE LA LLAMADA ──────────────────────────
+    // Un window.open() después de un await ya no cuenta como respuesta a un
+    // clic, y los navegadores lo bloquean. Se abre vacía ahora —dentro del
+    // gesto— y se le pone la dirección cuando llega.
+    const pestana = window.open("", "_blank")
+    setOcupado(true)
+
+    try {
+      const supabase = getSupabaseBrowser()
+      const { data, error: fallo } = await supabase.functions.invoke("telegram-link-start")
+      if (fallo) throw fallo
+
+      const url = (data as { telegram_url?: string } | null)?.telegram_url
+      if (!url) throw new Error("No llegó ninguna dirección de Telegram.")
+
+      if (pestana) pestana.location.href = url
+      else window.location.href = url // el bloqueador paró la pestaña
+    } catch (e) {
+      pestana?.close()
+      console.error("[telegram] link-start:", e)
+      setError("No se pudo abrir Telegram. Inténtalo en un momento.")
+      // El aviso se va solo: es un botón flotante, no una pantalla, y un
+      // mensaje de error pegado ahí para siempre estorba más de lo que ayuda.
+      window.setTimeout(() => setError(null), 6000)
+    } finally {
+      setOcupado(false)
+    }
+  }
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={s.fab}
-      aria-label="Entrar al grupo de Telegram"
-      title="Grupo de Telegram"
-    >
-      {/* El avión de papel, dibujado a mano: no hay icono de Telegram en la
-          librería que usa el proyecto, y traer una librería entera de marcas
-          por un solo símbolo no compensa. */}
-      <svg
-        viewBox="0 0 24 24"
-        width="26"
-        height="26"
-        fill="currentColor"
-        aria-hidden="true"
+    <div className={s.zona}>
+      {error && <p className={s.error} role="status">{error}</p>}
+
+      <button
+        type="button"
+        onClick={abrir}
+        disabled={ocupado}
+        className={s.fab}
+        aria-label="Entrar a Telegram"
+        title="Telegram"
       >
-        <path d="M21.73 3.19a1.2 1.2 0 0 0-1.22-.2L2.9 9.86a1.2 1.2 0 0 0 .07 2.26l4.02 1.3 1.55 4.83a1.2 1.2 0 0 0 1.98.48l2.23-2.12 3.9 2.86a1.2 1.2 0 0 0 1.88-.72l3.6-14.2a1.2 1.2 0 0 0-.4-1.36ZM9.5 14.1l-.86 2.7-1.03-3.2 8.9-5.9-7.01 6.4Z" />
-      </svg>
-    </a>
+        {ocupado ? (
+          <span className={s.girando} aria-hidden />
+        ) : (
+          /* El avión de papel, dibujado a mano: no hay icono de Telegram en la
+             librería que usa el proyecto, y traer una librería entera de
+             marcas por un solo símbolo no compensa. */
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+            <path d="M21.73 3.19a1.2 1.2 0 0 0-1.22-.2L2.9 9.86a1.2 1.2 0 0 0 .07 2.26l4.02 1.3 1.55 4.83a1.2 1.2 0 0 0 1.98.48l2.23-2.12 3.9 2.86a1.2 1.2 0 0 0 1.88-.72l3.6-14.2a1.2 1.2 0 0 0-.4-1.36ZM9.5 14.1l-.86 2.7-1.03-3.2 8.9-5.9-7.01 6.4Z" />
+          </svg>
+        )}
+      </button>
+    </div>
   )
 }
