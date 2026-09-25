@@ -44,7 +44,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Navbar() {
   const { user, isAdmin } = useAuth()
-  const { view, anchor, setView } = useView()
+  const { view, anchor, setView, volver } = useView()
   const { count: unreadDM } = useUnreadDM()
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
@@ -188,12 +188,20 @@ export function Navbar() {
         >
           <BookOpen size={18} />
         </button>
-        {/* Mensajes — botão com badge de unread em tempo real */}
+        {/* Mensajes — botão com badge de unread em tempo real.
+
+            EL MISMO ICONO ABRE Y CIERRA, como la campana. Antes, estando ya en
+            mensajes, volver a pulsarlo no hacía nada visible: la vista ya era
+            esa. Quien lo pulsaba esperando cerrarla se quedaba dentro sin
+            entender por qué, y tenía que buscar el botón de volver.
+
+            Ahora, si ya se está en mensajes, retrocede a donde se estaba. */}
         <a
           href="/miembros/mensajes"
           onClick={(e) => {
             e.preventDefault()
-            setView("messages")
+            if (view === "messages") volver()
+            else setView("messages")
           }}
           aria-label="Mensajes"
           style={{

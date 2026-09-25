@@ -1,0 +1,85 @@
+/* El botón flotante de Telegram.
+ *
+ * ── DÓNDE VA Y POR QUÉ ────────────────────────────────────────────────────
+ * Justo encima de la burbuja del chat interno, en la misma columna de la
+ * izquierda. Apilados y no uno al lado del otro: en un teléfono estrecho, dos
+ * círculos de 56px en fila se comen el borde de la pantalla y acaban tapando
+ * lo que hay debajo.
+ *
+ * El de abajo es el chat de la plataforma —lo que se usa a diario— y este
+ * queda encima. El orden importa: el pulgar llega antes a lo de abajo.
+ */
+.fab {
+  position: fixed;
+  left: 24px;
+  /* 24 de margen + 56 del botón del chat + 14 de aire entre los dos. */
+  bottom: 94px;
+  z-index: 95;
+
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+
+  /* El azul de Telegram, que es el que la gente reconoce. Es el único sitio de
+     la plataforma donde entra un color que no es de la marca, y entra porque
+     un botón de Telegram en violeta no se lee como Telegram. */
+  background: linear-gradient(140deg, #3aa8e0 0%, #229ED9 55%, #1b7fb0 100%);
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+
+  box-shadow:
+    0 8px 24px -6px rgba(0, 0, 0, 0.7),
+    0 0 32px rgba(34, 158, 217, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  transition:
+    transform var(--duration-base, 220ms) var(--ease-out-quart, ease),
+    box-shadow var(--duration-base, 220ms) var(--ease-out-quart, ease);
+}
+
+.fab:hover {
+  transform: scale(1.06) translateY(-1px);
+  box-shadow:
+    0 12px 32px -6px rgba(0, 0, 0, 0.75),
+    0 0 44px rgba(34, 158, 217, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.fab:active {
+  transform: scale(0.95);
+  transition-duration: var(--duration-fast, 140ms);
+}
+
+.fab:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* El avión mira ligeramente hacia arriba; centrado geométricamente parece
+ * caído. Un pelo de corrección óptica. */
+.fab svg {
+  transform: translate(-1px, 1px);
+}
+
+@media (max-width: 480px) {
+  .fab {
+    left: 16px;
+    /* 16 de margen + 52 del botón del chat + 12 de aire. */
+    bottom: 80px;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab,
+  .fab:hover,
+  .fab:active {
+    transition: none;
+    transform: none;
+  }
+}

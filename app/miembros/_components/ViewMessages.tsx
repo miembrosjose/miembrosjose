@@ -388,9 +388,27 @@ export function ViewMessages() {
     setView("messages", null, { withUserId: otherId })
   }
 
+  /**
+   * Volver desde una conversación.
+   *
+   * ── EL BUCLE QUE HABÍA ──────────────────────────────────────────────────
+   * Esto llamaba a `setView("messages")`, que AÑADE una entrada al historial
+   * en vez de quitar la que había. Entrando desde el perfil de alguien, el
+   * historial quedaba así:
+   *
+   *     perfil  →  mensajes/con-esa-persona  →  mensajes
+   *
+   * Y desde ahí, el botón de atrás del navegador devolvía a
+   * «mensajes/con-esa-persona», que es de donde se acababa de salir. Dos
+   * pantallas dando vueltas y ninguna forma de llegar al perfil.
+   *
+   * `volver()` retrocede en el historial en lugar de apilar. Desde el perfil
+   * devuelve al perfil; desde la lista, a la lista. Sin bucle, y sin tener que
+   * saber de dónde se vino: eso ya lo sabe el navegador.
+   */
   const goBack = () => {
     setActiveUserId(null)
-    setView("messages")
+    volver()
   }
 
   return (

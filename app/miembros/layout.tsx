@@ -18,6 +18,7 @@ import { OnlinePresenceProvider } from "./_lib/online-presence"
 import { UnreadDMProvider } from "./_lib/unread-dm"
 import { OnlineToast } from "./_components/OnlineToast"
 import { MessengerWidget } from "./_components/MessengerWidget"
+import { TelegramFab } from "./_components/TelegramFab"
 import { SpaceBackground } from "./_components/SpaceBackground"
 import "./_styles/tokens.css"
 import "./_styles/episode-notes.css"
@@ -70,6 +71,9 @@ export default function MiembrosLayout({
                 <OnlineToast />
                 {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
                 <MessengerWidget />
+                {/* Grupo de Telegram — encima de la burbuja del chat. Solo aparece
+                    cuando hay un enlace puesto en Admin → Textos do Site. */}
+                <TelegramFab />
               </ViewProvider>
             </UnreadDMProvider>
           </OnlinePresenceProvider>
