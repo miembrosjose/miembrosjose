@@ -19,6 +19,42 @@ import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import s from "./telegram-fab.module.css"
 
+/**
+ * El motivo, dicho con las palabras del servidor.
+ *
+ * ── POR QUÉ NO VALE UN MENSAJE GENÉRICO ────────────────────────────────────
+ * Esto empezó diciendo siempre «no se pudo abrir Telegram». Y resulta que la
+ * mayoría de las veces que falla NO es un fallo: es que esa persona no tiene
+ * la membresía activa, y el servidor lo dice con todas las letras.
+ *
+ * Con el mensaje genérico, quien no tiene suscripción cree que la plataforma
+ * está rota, escribe a soporte, y alguien pierde una tarde averiguando que
+ * todo funcionaba correctamente.
+ *
+ * Así que cuando el servidor explica el motivo —un 4xx con su texto— se enseña
+ * ese texto. Los errores de verdad, los del servidor y los de red, siguen
+ * llevando un mensaje corto: ahí el detalle no le sirve de nada a quien mira,
+ * y va al registro de la consola.
+ */
+async function mensajeUtil(e: unknown): Promise<string> {
+  const ctx = (e as { context?: unknown })?.context
+
+  if (ctx && typeof ctx === "object" && "status" in ctx) {
+    const r = ctx as Response
+    // 4xx es «tú no puedes hacer esto, y por esto». 5xx es «algo se rompió
+    // por dentro», y de eso no hay nada útil que contarle a nadie.
+    if (r.status >= 400 && r.status < 500) {
+      try {
+        const cuerpo = await r.clone().json()
+        const motivo = (cuerpo as { error?: string })?.error
+        if (motivo) return motivo
+      } catch { /* no venía JSON; queda el mensaje de abajo */ }
+    }
+  }
+
+  return "No se pudo abrir Telegram. Inténtalo en un momento."
+}
+
 export function TelegramFab() {
   const { user } = useAuth()
   const { view } = useView()
@@ -71,10 +107,10 @@ export function TelegramFab() {
     } catch (e) {
       pestana?.close()
       console.error("[telegram] link-start:", e)
-      setError("No se pudo abrir Telegram. Inténtalo en un momento.")
+      setError(await mensajeUtil(e))
       // El aviso se va solo: es un botón flotante, no una pantalla, y un
       // mensaje de error pegado ahí para siempre estorba más de lo que ayuda.
-      window.setTimeout(() => setError(null), 6000)
+      window.setTimeout(() => setError(null), 9000)
     } finally {
       setOcupado(false)
     }
