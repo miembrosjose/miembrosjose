@@ -66,6 +66,16 @@ function readVar(name) {
 const WORKER_NAME = wrangler.match(/"name"\s*:\s*"([^"]+)"/)?.[1] || "los144000"
 const SUPABASE_URL = readVar("NEXT_PUBLIC_SUPABASE_URL")
 const SUPABASE_ANON_KEY = readVar("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+// Las NEXT_PUBLIC_* se incrustan en el paquete del navegador AL COMPILAR. Si
+// no están aquí, no valen las del Worker: llegan tarde.
+//
+// La de Stripe faltaba, y el fallo no se veía. El paquete salía con
+// `process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` sin sustituir, o sea `undefined`,
+// y el formulario de tarjeta no llegaba a dibujarse: se veía el botón de
+// pagar y al pulsarlo no pasaba nada. Solo lo notaba quien NO tuviera ya una
+// tarjeta guardada, que es justo quien compra por primera vez.
+const STRIPE_PK = readVar("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")
+const MIEMBROS_URL = readVar("NEXT_PUBLIC_MIEMBROS_URL")
 
 if (!SUPABASE_URL) die('No pude leer "NEXT_PUBLIC_SUPABASE_URL" de wrangler.jsonc')
 if (!SUPABASE_ANON_KEY) die('No pude leer "NEXT_PUBLIC_SUPABASE_ANON_KEY" de wrangler.jsonc')
@@ -101,6 +111,8 @@ function compilar() {
       ...process.env,
       NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+      ...(STRIPE_PK ? { NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: STRIPE_PK } : {}),
+      ...(MIEMBROS_URL ? { NEXT_PUBLIC_MIEMBROS_URL: MIEMBROS_URL } : {}),
     },
   })
 }

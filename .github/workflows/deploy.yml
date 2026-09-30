@@ -36,6 +36,24 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://kjozrcugsywykpuvuqzu.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqb3pyY3Vnc3l3eWtwdXZ1cXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTcwNTMsImV4cCI6MjA5NjE3MzA1M30.bp8_Une8jnLU8kMXjPBOGb04h1LgyFEZBLickodyajs
 
+          # ── LAS QUE FALTABAN, Y POR QUÉ NO SE NOTABA ──────────────────
+          # El build NO falla si una NEXT_PUBLIC_* no está: Next la sustituye
+          # por `undefined` y sigue. El paquete sale roto sin un solo aviso.
+          #
+          # Sin la clave de Stripe, el formulario de tarjeta no llega a
+          # dibujarse. Se ve el botón de pagar y al pulsarlo no pasa nada —
+          # pero SOLO le ocurre a quien no tenga ya una tarjeta guardada, o
+          # sea a quien compra por primera vez. Quien ya tenía tarjeta cobra
+          # bien, y por eso pasó meses sin detectarse.
+          #
+          # La `pk_live_` es PÚBLICA por diseño: viaja al navegador de todo el
+          # que entra. La secreta es la `sk_live_`, y esa nunca va en el repo.
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_live_51RQ8vaIwAkyNHR0CERYYwfFvt2z9zpgyfqVGe62DabtneJeAVe5rSgPZSs60xtjyPlU6MUvgYEG33b3PvBuc3mAG00W3Nswl15
+
+          # Sin esto, el enlace del correo de invitación apunta a
+          # https://miembros.SEU_DOMINIO.com — un dominio que no existe.
+          NEXT_PUBLIC_MIEMBROS_URL: https://los144000.com
+
       - name: Deploy (Wrangler)
         run: npx wrangler deploy
         env:
