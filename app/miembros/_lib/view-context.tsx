@@ -124,7 +124,12 @@ function parsePath(pathname: string, hash: string): ParseResult {
   if ((VALID_VIEWS as string[]).includes(clean)) {
     return { view: clean as ViewKey, anchor: null, params: {} }
   }
-  if (clean === "cursos" || clean === "biblioteca" || clean === "tienda" || clean === "servicios") {
+  // "libreria" faltaba, y el menú SÍ la usa: el enlace de «Biblioteca»
+  // funcionaba al pulsarlo —eso va por estado, sin pasar por aquí— pero
+  // /miembros#libreria compartido o recargado caía en la portada sin ancla.
+  // Un enlace que funciona hasta que lo compartes es de los peores fallos:
+  // nunca falla para quien lo escribe.
+  if (clean === "cursos" || clean === "biblioteca" || clean === "libreria" || clean === "tienda" || clean === "servicios") {
     return { view: "inicio", anchor: clean, params: {} }
   }
   return { view: "inicio", anchor: null, params: {} }

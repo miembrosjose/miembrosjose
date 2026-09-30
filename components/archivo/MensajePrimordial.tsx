@@ -32,11 +32,11 @@ export default function MensajePrimordial() {
 
   return (
     <ArchivoShell
-      guia="Ivika"
-      voz="Memoria abierta"
+      guia="José María"
+      voz="Archivo abierto"
       arco={{ pasos: ARCO_T4, actual: 7 }}
-      lead="Después de recorrer memoria solar, civilizaciones, pactos, ley, iniciación y amor, todo se resume en una clave viva: el perdón. No como gesto superficial, sino como alquimia profunda capaz de transformar herida en consciencia y separación en servicio."
-      registro="El verdadero mensaje primordial no consiste solamente en recordar una historia superior, sino en permitir que esa memoria transforme la forma en que te relacionas contigo, con los demás, con tu linaje, con tu territorio y con la vida misma. Allí comienza la misión."
+      lead="Todo el recorrido se resume en una clave viva: el perdón. No como gesto, sino como alquimia: lo que transforma la herida en consciencia y la separación en servicio."
+      registro="El mensaje no es recordar una historia superior, sino dejar que esa memoria cambie cómo te relacionas contigo, con los tuyos y con la vida. Ahí empieza la misión."
     >
       <ModuleTitle>Alquimia del perdón</ModuleTitle>
 
@@ -122,19 +122,13 @@ export default function MensajePrimordial() {
         <ModuleTitle>De la memoria a la misión</ModuleTitle>
         <div className="mp-mission">
           <p>
-            La memoria no fue entregada para contemplarla pasivamente. Después de recordar, comienza la
-            responsabilidad. Por eso el siguiente paso dentro de la plataforma es revelar la misión,
-            profundizar la bitácora y prepararse para que lo sanado en uno pueda convertirse también en
-            servicio para la red.
+            La memoria no se entregó para contemplarla. Después de recordar empieza la responsabilidad, y
+            nada de lo que se hace afuera se sostiene si no empezó adentro.
           </p>
-          <ul className="mp-list">
-            <li>Es muy importante <strong>actualizar la bitácora</strong>.</li>
-            <li>Mientras más profunda y honesta sea la información registrada, más precisa podrá ser la revelación de la misión.</li>
-            <li>Nada de lo que venimos a hacer afuera puede sostenerse si no comienza desde adentro.</li>
-            <li>Primero se reconocen heridas, vínculos, linajes, memorias y procesos personales.</li>
-            <li>Luego esa comprensión se lleva al territorio y a la red.</li>
-            <li>Posteriormente se abren convocatorias y procesos de preparación para protocolos de contacto.</li>
-          </ul>
+          <p>
+            De ahí que el siguiente paso sea <strong>la bitácora</strong>: cuanto más honesto sea lo
+            registrado, más precisa será la revelación de misión.
+          </p>
         </div>
       </Reveal>
 
@@ -205,10 +199,6 @@ export default function MensajePrimordial() {
           border-left: 2px solid var(--aa-gold);
         }
         .mp-mission > p { font-size: 0.97rem; line-height: 1.68; color: var(--aa-text); margin: 0 0 0.9rem; }
-        .mp-list { margin: 0; padding-left: 1.05rem; display: flex; flex-direction: column; gap: 0.42rem; }
-        .mp-list li { font-size: 0.92rem; line-height: 1.55; color: var(--aa-text-soft); }
-        .mp-list li::marker { color: var(--aa-gold-dim); }
-        .mp-list strong { color: var(--aa-gold-soft); font-weight: 400; }
 
         .mp-stage {
           display: flex; flex-direction: column; align-items: center; gap: 0.15rem;

@@ -4,16 +4,16 @@
 
     ── DE DÓNDE SALE EL DIBUJO ─────────────────────────────────────────────
     Del emblema que ya abre la página de ventas: un círculo profundo con el
-    144 en dorado y una corona de marcas alrededor, como un sol o un reloj sin
+    144 en violeta y una corona de marcas alrededor, como un sol o un reloj sin
     agujas. No se inventa una identidad nueva para la pestaña; se reduce la
     que ya existe hasta que quepa en dieciséis píxeles.
 
     ── QUÉ SOBREVIVE A DIECISÉIS PÍXELES Y QUÉ NO ──────────────────────────
     A ese tamaño no se lee ningún número —ningún icono se lee— así que lo que
-    tiene que funcionar es la SILUETA: un disco oscuro con un anillo dorado y
+    tiene que funcionar es la SILUETA: un disco oscuro con un anillo violeta y
     algo denso en el centro. Eso se reconoce entre veinte pestañas.
     Por eso las marcas son gruesas y pocas, y el 144 es grande y pesado: a
-    tamaño pequeño se funden en una mancha dorada que sigue siendo la suya.
+    tamaño pequeño se funden en una mancha violeta que sigue siendo la suya.
 
     ── POR QUÉ UN SVG Y NO UN PNG ──────────────────────────────────────────
     El proyecto apuntaba a /favicon.png, un archivo que no existía: daba 404
@@ -28,17 +28,22 @@
     <!-- El fondo no es negro plano: lleva la misma gota de azul que la
          plataforma, que es lo que hace que se vea profundo y no apagado. -->
     <radialGradient id="fondo" cx="50%" cy="38%" r="72%">
-      <stop offset="0%" stop-color="#131329"/>
-      <stop offset="62%" stop-color="#0a0a18"/>
+      <stop offset="0%" stop-color="#1b1136"/>
+      <stop offset="62%" stop-color="#0d0820"/>
       <stop offset="100%" stop-color="#050510"/>
     </radialGradient>
 
-    <!-- El dorado del camino, con algo de luz arriba para que el número no
-         parezca pegado con una capa de pintura. -->
-    <linearGradient id="oro" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f4e2b4"/>
-      <stop offset="55%" stop-color="#e0c078"/>
-      <stop offset="100%" stop-color="#c9a24f"/>
+    <!-- El violeta de la plataforma, con algo de luz arriba para que el número
+         no parezca pegado con una capa de pintura.
+
+         OJO: en globals.css las variables que se llaman "color gold" NO son
+         doradas: valen #6D4A9B. Son nombres heredados de una identidad
+         anterior que se remapeó sin renombrar. Este icono estuvo en dorado
+         justamente por fiarse del nombre. -->
+    <linearGradient id="tinta" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f3ecfd"/>
+      <stop offset="55%" stop-color="#cbb6e6"/>
+      <stop offset="100%" stop-color="#a78bca"/>
     </linearGradient>
   </defs>
 
@@ -47,8 +52,12 @@
   <!-- La corona. Veinticuatro marcas, una cada quince grados. Las de los
        cuatro puntos cardinales van más largas: dan un eje que se intuye
        incluso cuando el resto se ha convertido en textura. -->
-  <g stroke="url(#oro)" stroke-linecap="round" transform="translate(32 32)">
-    <g opacity="0.75" stroke-width="1.5">
+  <!-- Color plano, NO el degradado: un trazo vertical tiene caja de anchura
+       cero, y sobre una caja degenerada el degradado no pinta nada. La corona
+       llevaba meses sin dibujarse por eso, en silencio: el SVG es válido y
+       ningún renderizador se queja. -->
+  <g stroke="#cbb6e6" stroke-linecap="round" transform="translate(32 32)">
+    <g opacity="0.85" stroke-width="1.7">
       <path d="M0 -27 V -23.5" transform="rotate(15)"/>
       <path d="M0 -27 V -23.5" transform="rotate(30)"/>
       <path d="M0 -27 V -23.5" transform="rotate(45)"/>
@@ -80,7 +89,7 @@
 
   <!-- El disco interior y su anillo. Es lo que da la silueta reconocible. -->
   <circle cx="32" cy="32" r="19.5" fill="#080816"/>
-  <circle cx="32" cy="32" r="19.5" fill="none" stroke="url(#oro)" stroke-width="1.6"/>
+  <circle cx="32" cy="32" r="19.5" fill="none" stroke="url(#tinta)" stroke-width="2.2"/>
 
   <!-- El número. Serif, como los titulares de la plataforma. -->
   <text
@@ -91,6 +100,6 @@
     font-size="17.5"
     font-weight="700"
     letter-spacing="0.4"
-    fill="url(#oro)"
+    fill="url(#tinta)"
   >144</text>
 </svg>

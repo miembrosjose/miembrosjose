@@ -66,7 +66,7 @@ export default function MapaDelSer() {
 
   return (
     <ArchivoShell
-      lead="Dentro del Universo Material de siete dimensiones, el ser humano es una estructura de siete vehículos interrelacionados. Cada cuerpo permite a la consciencia operar desde un nivel diferente y, al mismo tiempo, transmitir información hacia los demás."
+      lead="Dentro del Universo Material de siete dimensiones, el ser humano es una estructura de siete vehículos: cada uno deja operar a la consciencia desde un nivel distinto."
       registro="Evolucionar significa aumentar la cantidad de nuestra propia estructura que podemos habitar conscientemente."
     >
       <ModuleTitle>Mapa del ser — siete vehículos</ModuleTitle>

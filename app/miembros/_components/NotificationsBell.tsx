@@ -24,7 +24,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { NotifPrefsModal } from "./NotifPrefsModal"
 import type { NotificationItem } from "../_lib/types"
 import { getAchievementSvg } from "@/lib/achievement-svg"
-import { getSoundForAchievement } from "../_lib/sounds"
+import { sonarInsigniaUnaVez } from "../_lib/sounds"
 import { sounds } from "../_lib/sounds"
 import styles from "./notifications.module.css"
 
@@ -154,7 +154,7 @@ export function NotificationsBell() {
           // los hechos— el aviso llegaba aquí, mudo. Este es su sitio: suena
           // lo que llega, venga de donde venga.
           if (n.source_insignia_id) {
-            getSoundForAchievement(n.source_insignia_id)()
+            sonarInsigniaUnaVez(n.source_insignia_id)
           } else {
             sounds.notification()
           }

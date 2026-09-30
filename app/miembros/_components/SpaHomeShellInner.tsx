@@ -148,6 +148,7 @@ import {
 } from "../_lib/seasons"
 import type { PremiumProduct } from "../_lib/products"
 import styles from "./views.module.css"
+import { sincronizarBitacora, engancharSincronizacion } from "../_lib/journal-sync"
 
 export function SpaHomeShellInner() {
   // introDone = Hero/views podem aparecer. Setado SÍNCRONO no click Saltar
@@ -264,6 +265,18 @@ export function SpaHomeShellInner() {
   // local volvía a pintarse. Esto lo comprueba y limpia si ha cambiado.
   useEffect(() => {
     if (limpiarSiCambioDePersona(user?.id)) window.location.reload()
+  }, [user?.id])
+
+  // ── LA BITÁCORA, ENGANCHADA DESDE EL ARRANQUE ──────────────────────────
+  // No basta con hacerlo al abrir la pantalla de la bitácora. Se escribe en
+  // ella desde el Portal de Ingreso, los portales de integración, la
+  // numerología y el Mapa Cósmico, y alguien puede llenar media bitácora sin
+  // haber abierto nunca la pantalla que la enseña. Si el enganche viviera
+  // allí, todo eso se quedaría solo en su navegador.
+  useEffect(() => {
+    if (!user?.id) return
+    engancharSincronizacion()
+    void sincronizarBitacora()
   }, [user?.id])
 
   useEffect(() => {

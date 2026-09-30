@@ -32,7 +32,7 @@ export default function CaminoAbraham() {
       guia="Ivika"
       voz="Memoria abierta"
       arco={{ pasos: ARCO_T4, actual: 4 }}
-      lead="Abraham representa una transición decisiva. La memoria ya no se expresa únicamente en templos, ciudades o retiros, sino en una relación viva entre el ser humano y una promesa. Con Abraham comienza un camino de fidelidad, escucha y desplazamiento interior."
+      lead="Con Abraham la memoria deja de vivir solo en templos y ciudades para volverse relación viva entre una persona y una promesa."
       registro="El pacto inaugura una forma nueva de memoria: ya no solo la que se preserva en piedra o escritura, sino la que se carga en el corazón de quienes aceptan caminar en fidelidad a un llamado."
     >
       <ModuleTitle>Mapa del pacto</ModuleTitle>

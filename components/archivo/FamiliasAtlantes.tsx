@@ -42,8 +42,8 @@ export default function FamiliasAtlantes() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 7 }}
-      lead="El mundo atlante no se organizaba alrededor de un individuo sino de un sistema de familias. Doce linajes, agrupados en cuatro trinidades, sostenían la estructura política, militar y religiosa de la civilización y se replicaban después dentro de cada territorio que alcanzaban."
-      registro="Cuando una estructura política sobrevive a quienes la fundaron, sus nombres pueden convertirse en símbolos, sus símbolos en dioses y sus antiguas funciones en mitologías que continúan organizando a pueblos que ya olvidaron su origen."
+      lead="El mundo atlante no giraba alrededor de un individuo sino de familias: doce linajes en cuatro trinidades sostenían su estructura política, militar y religiosa."
+      registro="Cuando una estructura sobrevive a sus fundadores, sus nombres se vuelven símbolos, los símbolos dioses, y sus funciones mitologías que aún organizan a quienes olvidaron su origen."
     >
       <ModuleTitle>La rueda de las doce familias</ModuleTitle>
 
@@ -131,10 +131,6 @@ export default function FamiliasAtlantes() {
             </div>
           ))}
         </div>
-      </Reveal>
-
-      <Reveal>
-        <Flow steps={['12 FAMILIAS', '4 TRINIDADES', '4 CAMPOS DE PODER', '1 SISTEMA']} />
       </Reveal>
 
       {/* Clave lingüística */}

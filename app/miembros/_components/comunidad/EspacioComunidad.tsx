@@ -127,11 +127,34 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
     setAbierto(encontrada)
   }, [abrirHiloId, datos])
 
+  /**
+   * Retirar una conversación entera desde la lista.
+   *
+   * Se pregunta antes: esto borra el hilo y todas sus respuestas, y no hay
+   * papelera. La lista se recarga desde el servidor en vez de quitar la fila a
+   * mano, para que los contadores del espacio queden bien.
+   */
+  const borrarHilo = async (h: { id: string; title: string }) => {
+    if (!confirm(`¿Borrar «${h.title}» y todas sus respuestas? No se puede deshacer.`)) return
+    try {
+      const res = await fetch(`/api/admin/forum/posts?id=${encodeURIComponent(h.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      olvidarComunidad()
+      await cargar()
+    } catch {
+      alert("No se pudo borrar la conversación.")
+    }
+  }
+
   if (!datos && !cerrado && primeraVez) return <div className={s.cargando} aria-hidden />
 
   // ── Cerrado: se sabe que existe, no lo que dice ─────────────────────────
   if (cerrado) {
-    return (
+
+  return (
       <div className={s.espacio}>
         <button type="button" className={s.volver} onClick={onVolver}>
           <ArrowLeft size={14} aria-hidden /> Comunidad
@@ -242,7 +265,7 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
           <p className={s.seccionKicker}>Destacadas</p>
           <div className={s.lista}>
             {datos.fijadas.map((h) => (
-              <HiloResumen key={h.id} hilo={h} onAbrir={setAbierto} />
+              <HiloResumen key={h.id} hilo={h} onAbrir={setAbierto} onBorrar={borrarHilo} />
             ))}
           </div>
         </section>
@@ -282,7 +305,7 @@ export function EspacioComunidad({ slug, abrirHiloId, onVolver }: {
         ) : (
           <div className={s.lista}>
             {datos.hilos.map((h) => (
-              <HiloResumen key={h.id} hilo={h} onAbrir={setAbierto} />
+              <HiloResumen key={h.id} hilo={h} onAbrir={setAbierto} onBorrar={borrarHilo} />
             ))}
           </div>
         )}

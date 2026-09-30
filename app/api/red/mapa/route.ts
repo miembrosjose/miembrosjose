@@ -25,6 +25,7 @@ import { getNetworkRolesFor } from "@/lib/red/roles"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { ORDEN_AURAS } from "@/lib/achievements"
 import { esGradoDelCamino, insigniasParaContar, rangoMasAlto } from "@/lib/achievements"
+import { conAccesoActivo, correosDe } from "@/lib/membresia"
 
 /**
  * Quién tiene cada insignia del Camino, entre los miembros dados.
@@ -141,10 +142,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
 
-  const todas = (data || []) as unknown as Array<{
+  const crudas = (data || []) as unknown as Array<{
     user_id: string; city_id: number; country_code: string; featured_badge_id: string | null
     network_cities: CityRef | null
   }>
+
+  // ── SOLO QUIEN SIGUE SIENDO MIEMBRO ───────────────────────────────────
+  // Quien canceló no puede entrar a la plataforma, pero su alfiler seguía en
+  // el mapa con su ciudad. Aquí pesa más que en una lista: el mapa es lo que
+  // se enseña para decir «somos estos y estamos aquí», y contar a quien se
+  // fue hincha esa cifra con gente que ya no está.
+  //
+  // Misma regla que la puerta. Ver lib/membresia.ts.
+  const adminBd = getSupabaseAdmin()
+  const personas = await correosDe(adminBd, [...new Set(crudas.map((r) => r.user_id))])
+  const activos = await conAccesoActivo(adminBd, personas)
+  const todas = crudas.filter((r) => activos.has(r.user_id))
 
   const tenencia = await insigniasDe(todas.map((r) => r.user_id))
   // Filtrar por un grado del Camino significa "quien se quedó ahí", no

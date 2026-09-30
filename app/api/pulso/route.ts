@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -246,7 +247,34 @@ export async function DELETE(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 })
 
-  const pulsoId = new URL(req.url).searchParams.get("pulsoId")
+  const url = new URL(req.url)
+  const pulsoId = url.searchParams.get("pulsoId")
+  const respuestaId = url.searchParams.get("respuestaId")
+
+  // ── MODERACIÓN ────────────────────────────────────────────────────────
+  // Con `respuestaId` se borra UNA respuesta concreta, sea de quien sea. Solo
+  // la administración, y por eso va con la clave de servicio: las policies de
+  // RLS impiden a propósito tocar lo ajeno, que es justo lo que hay que poder
+  // hacer para moderar.
+  //
+  // Antes esto no existía. El Pulso es la única parte de la Red donde
+  // cualquiera escribe en público, y no había forma de retirar nada: había
+  // que entrar a la base de datos a mano.
+  if (respuestaId) {
+    if (!isAdmin(user)) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
+    const admin = getSupabaseAdmin()
+    const { error } = await admin.from("pulso_respuestas").delete().eq("id", respuestaId)
+
+    if (error) {
+      console.error("[/api/pulso DELETE admin]", error)
+      return NextResponse.json({ error: "No se pudo borrar" }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   if (!pulsoId) return NextResponse.json({ error: "Falta el pulso" }, { status: 400 })
 
   // El `eq` sobre user_id es redundante con la policy, y se deja: si alguien

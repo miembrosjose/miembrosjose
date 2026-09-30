@@ -14,7 +14,6 @@ import { useSeasons, type ManagedSeason } from "../_lib/use-seasons"
 import { uploadMedia } from "../_lib/media-upload"
 import { EpisodesManagerModal } from "./EpisodesManagerModal"
 import { PortalIngresoBannerManager } from "./PortalIngresoBannerManager"
-import { UmbralEnlaceManager } from "./UmbralEnlaceManager"
 
 type Props = {
   open: boolean
@@ -138,7 +137,6 @@ export function SeasonsManagerModal({ open, onClose }: Props) {
             title="El Protocolo de Contacto — Video de fondo"
             hint="Banner de la última tarjeta del carrusel y del portal. Loop, silenciado, con velo oscuro."
           />
-          <UmbralEnlaceManager />
 
           {err && (
             <div className="mb-4 border border-[#6D4A9B]/60 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#a78bca] [font-family:var(--font-geist-sans)]"

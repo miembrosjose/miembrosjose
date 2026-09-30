@@ -125,7 +125,18 @@
   font-size: 0.875rem;
   letter-spacing: 0.5em;
   text-transform: uppercase;
-  color: var(--accent-red);
+  /* El violeta CLARO de la paleta, no --accent-red (#6D4A9B).
+   *
+   * Aquel es el violeta base y funciona sobre fondo oscuro, que es donde
+   * vive en el resto de la plataforma. Pero esta línea va ENCIMA de la
+   * portada de la temporada, y el velo se vuelve transparente antes de
+   * llegar hasta aquí: sobre una imagen clara queda casi negro.
+   *
+   * La sombra es para las portadas que además son claras justo detrás del
+   * texto. Sin ella, cambiar de temporada puede volver a romper la lectura
+   * y nadie sabría por qué. */
+  color: #cbb6e6;
+  text-shadow: 0 1px 10px rgba(5, 5, 16, 0.95), 0 0 2px rgba(5, 5, 16, 0.8);
   margin-bottom: 1rem;
 }
 

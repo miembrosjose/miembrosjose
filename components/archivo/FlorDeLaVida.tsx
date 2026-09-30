@@ -120,7 +120,7 @@ export default function FlorDeLaVida() {
 
   return (
     <ArchivoShell
-      lead="Antes de los mundos, las especies y las historias existe una arquitectura de relación. La creación puede observarse como un proceso en el que la unidad se diferencia, genera polaridad y utiliza esa diferencia para producir experiencia. La Flor de la Vida representa visualmente una parte de ese orden: múltiples esferas actuando dentro de una misma estructura."
+      lead="Antes de los mundos existe una arquitectura de relación: la unidad se diferencia, genera polaridad y usa esa diferencia para producir experiencia. La Flor de la Vida dibuja una parte de ese orden."
       registro="La unidad puede multiplicar sus perspectivas sin fragmentar su origen; cada experiencia amplía aquello que finalmente puede regresar al centro."
     >
       <ModuleTitle>Flor de la Vida — Arquitectura de manifestación</ModuleTitle>
@@ -273,10 +273,6 @@ export default function FlorDeLaVida() {
           movimiento genera experiencia; la experiencia produce consciencia; y la consciencia puede regresar
           al centro con nueva comprensión.
         </TechNote>
-      </Reveal>
-
-      <Reveal>
-        <Flow label="Circuito" steps={['CENTRO', 'POLARIDAD', 'EXPERIENCIA', 'INTEGRACIÓN', 'CENTRO']} />
       </Reveal>
 
       <style jsx global>{`

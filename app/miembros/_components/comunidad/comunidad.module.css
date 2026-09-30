@@ -278,6 +278,8 @@
 .hiloOficial {
   display: flex;
   flex-direction: column;
+  /* El botón de moderación se ancla a la fila, no al documento. */
+  position: relative;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(12, 12, 22, 0.5);
@@ -303,7 +305,10 @@
   flex-direction: column;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.9rem 1rem;
+  /* El hueco de la derecha es para el botón de moderación. Se reserva
+     siempre, también para quien no lo ve: si apareciera solo con permisos,
+     la fila cambiaría de forma según quién mire. */
+  padding: 0.9rem 2.6rem 0.9rem 1rem;
   border: none;
   background: transparent;
   text-align: left;
@@ -635,4 +640,47 @@
   margin: 0;
   font-size: 0.8rem;
   color: #e08a8a;
+}
+
+/* ── MODERACIÓN DESDE LA LISTA ─────────────────────────────────────────────
+ * Borrar una conversación ya se podía, pero había que abrirla primero. Para
+ * limpiar varias pruebas seguidas son tres clics por cada una, y es justo
+ * cuando más falta hace: al estrenar un espacio, lo que hay dentro son ensayos.
+ *
+ * Va apagado y solo se enciende al pasar por encima de la fila. Un icono de
+ * papelera a todo color en cada conversación convierte una lista de lectura en
+ * un panel de administración.
+ */
+.hiloBorrar {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: #6a6f92;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.hilo:hover .hiloBorrar,
+.hiloOficial:hover .hiloBorrar,
+.hiloBorrar:focus-visible {
+  opacity: 1;
+}
+.hiloBorrar:hover {
+  color: #ef8080;
+  border-color: rgba(239, 128, 128, 0.35);
+  background: rgba(239, 128, 128, 0.08);
+}
+
+/* En pantallas táctiles no hay «pasar por encima»: si estuviera oculto, no se
+ * podría pulsar nunca. */
+@media (hover: none) {
+  .hiloBorrar { opacity: 0.55; }
 }

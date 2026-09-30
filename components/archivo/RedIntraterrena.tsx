@@ -68,8 +68,8 @@ export default function RedIntraterrena() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 9 }}
-      lead="Después de la caída atlante, la memoria no desapareció: fue llevada al interior. Una fuerza compuesta por treinta y dos representantes de diferentes civilizaciones llegó a la Tierra para establecer una red interior destinada a preservar información y acompañar el proceso planetario."
-      registro="La memoria fue llevada al interior de la Tierra porque una civilización había demostrado que poseer conocimiento no equivalía todavía a saber utilizarlo; el verdadero retorno de los archivos comienza cuando la humanidad desarrolla la responsabilidad necesaria para recibir sin volver a destruir aquello que recuerda."
+      lead="Después de la caída atlante la memoria no desapareció: bajó al interior. Treinta y dos representantes de distintas civilizaciones llegaron a sostener esa red."
+      registro="Bajó al interior porque una civilización había demostrado que tener conocimiento no es todavía saber usarlo. Los archivos vuelven cuando se puede recibirlos sin destruirlos."
     >
       {/* Origen */}
       <div className="ri-origin">

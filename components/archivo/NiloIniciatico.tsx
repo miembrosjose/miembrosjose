@@ -51,7 +51,7 @@ export default function NiloIniciatico() {
       guia="Ivika"
       voz="Memoria abierta"
       arco={{ pasos: ARCO_T4, actual: 3 }}
-      lead="Si Sumeria tradujo memoria en ciudad y escritura, Egipto tradujo memoria en símbolo, piedra, alineación y trascendencia. Egipto aparece como un gran cuerpo iniciático recorrido por el Nilo, donde la vida, la muerte, el cielo y el alma quedaron inscritos en una arquitectura de eternidad."
+      lead="Si Sumeria tradujo la memoria en ciudad y escritura, Egipto la tradujo en símbolo, piedra y alineación: un cuerpo iniciático recorrido por el Nilo."
       registro="Egipto no solo construyó monumentos; construyó un lenguaje para enseñar que la vida visible no agota el destino del ser."
     >
       <ModuleTitle>El Nilo — columna de memoria</ModuleTitle>

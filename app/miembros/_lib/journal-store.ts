@@ -16,6 +16,7 @@ export type JournalCategory =
   | "revelaciones"  // MIS REVELACIONES — comprensiones-hito
   | "numerologia"   // NUMEROLOGÍA CÓSMICA — lecturas del escáner de código personal
   | "lugares"       // LUGARES DE CONTACTO — testimonios y visitas del mapa cósmico
+  | "experiencias"  // SUEÑOS Y EXPERIENCIAS — lo que pasa fuera del temario
 
 export const JOURNAL_CATEGORIES: { id: JournalCategory; label: string; hint: string }[] = [
   { id: "camino", label: "Mi Camino", hint: "Portal de Ingreso e integraciones generales" },
@@ -27,6 +28,12 @@ export const JOURNAL_CATEGORIES: { id: JournalCategory; label: string; hint: str
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Comprensiones que quieras guardar como hitos" },
   { id: "numerologia", label: "Numerología Cósmica", hint: "Lecturas de tu código personal (nombre · fecha · alma · misión)" },
   { id: "lugares", label: "Lugares de Contacto", hint: "Testimonios, visitas y prácticas en el Mapa Cósmico de la Red" },
+  // ── LA ÚNICA CATEGORÍA SIN PREGUNTAS ──────────────────────────────────
+  // Las demás nacen de un portal: alguien pregunta y alguien responde. Esta
+  // no. Un sueño llega cuando llega, y una sincronicidad no espera a que le
+  // toque el turno en una temporada. Si solo hubiera sitio para escribir
+  // cuando el temario lo pide, todo eso se perdería.
+  { id: "experiencias", label: "Sueños y Experiencias", hint: "Sueños, sincronicidades, contacto, lo que se movió en una meditación" },
 ]
 
 export type JournalEntry = {
@@ -70,9 +77,66 @@ export function loadEntries(): JournalEntry[] {
   } catch { return [] }
 }
 
-function saveEntries(entries: JournalEntry[]): void {
+/**
+ * El enganche de la sincronización.
+ *
+ * ── POR QUÉ UN ENGANCHE Y NO UN import ────────────────────────────────────
+ * Lo natural sería que este archivo llamara a journal-sync. Pero journal-sync
+ * necesita leer y reemplazar entradas, así que importa de aquí: importarse el
+ * uno al otro crea un ciclo, y los ciclos entre módulos fallan de formas
+ * difíciles de leer —uno de los dos ve al otro a medio definir—.
+ *
+ * Así este archivo no sabe que existe la sincronización. Solo avisa de que
+ * algo cambió, y quien quiera se apunta.
+ */
+let alGuardar: (() => void) | null = null
+
+export function alGuardarBitacora(fn: () => void): void { alGuardar = fn }
+
+function escribirCrudo(entries: JournalEntry[]): void {
   if (typeof window === "undefined") return
   try { localStorage.setItem(KEY, JSON.stringify(entries)) } catch { /* quota / privado */ }
+}
+
+function saveEntries(entries: JournalEntry[]): void {
+  escribirCrudo(entries)
+  alGuardar?.()
+}
+
+/**
+ * Deja la copia local EXACTAMENTE igual a lo que se le pase.
+ *
+ * La usa la sincronización tras juntar lo de aquí con lo del servidor. NO
+ * dispara el enganche a propósito: si lo hiciera, guardar lo que acaba de
+ * bajar programaría otro envío, y otro, y otro.
+ */
+export function reemplazarEntradas(entries: JournalEntry[]): void {
+  escribirCrudo(entries)
+  emit()
+}
+
+// ── LÁPIDAS ───────────────────────────────────────────────────────────────
+// Lo que se borra aquí tiene que borrarse también allí. Si solo se quitara de
+// esta copia, la siguiente sincronización lo vería en el servidor, no lo vería
+// en local, y lo devolvería: lo borrado reaparecería solo.
+const LAPIDAS_KEY = "los144k_journal_borradas"
+
+export function lapidas(): string[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(LAPIDAS_KEY)
+    const arr = raw ? (JSON.parse(raw) as string[]) : []
+    return Array.isArray(arr) ? arr : []
+  } catch { return [] }
+}
+
+export function guardarLapidas(ids: string[]): void {
+  if (typeof window === "undefined") return
+  try { localStorage.setItem(LAPIDAS_KEY, JSON.stringify([...new Set(ids)])) } catch { /* quota */ }
+}
+
+function anotarBorrada(id: string): void {
+  guardarLapidas([...lapidas(), id])
 }
 
 /** Crea o actualiza una entrada por (source, prompt). Answer vacía → la elimina. */
@@ -91,7 +155,7 @@ export function upsertAnswer(input: {
   const answer = input.answer
 
   if (!answer.trim()) {
-    if (idx >= 0) { entries.splice(idx, 1); saveEntries(entries); emit() }
+    if (idx >= 0) { anotarBorrada(id); entries.splice(idx, 1); saveEntries(entries); emit() }
     return
   }
   if (idx >= 0) {
@@ -128,6 +192,7 @@ export function readAnswer(source: string, prompt: string): string {
 }
 
 export function deleteEntry(id: string): void {
+  anotarBorrada(id)
   const entries = loadEntries().filter((e) => e.id !== id)
   saveEntries(entries)
   emit()

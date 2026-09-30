@@ -58,8 +58,8 @@ export default function EspiralPrecesion() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 8 }}
-      lead="El mundo atlante alcanzó una capacidad enorme antes de desarrollar la responsabilidad necesaria para sostenerla. Este archivo no cuenta su caída como una catástrofe lejana, sino como una posición dentro de un ciclo que vuelve a abrirse cuando una civilización recupera un poder semejante."
-      registro="El verdadero espejo del pasado no aparece cuando los acontecimientos se repiten exactamente, sino cuando una civilización vuelve a disponer de un poder semejante y debe decidir si reproducirá la misma relación con él."
+      lead="La Atlántida alcanzó un poder enorme antes de poder sostenerlo. Su caída no es una catástrofe lejana: es una posición dentro de un ciclo que vuelve a abrirse."
+      registro="El espejo del pasado no aparece cuando los hechos se repiten, sino cuando vuelve el mismo poder y hay que decidir otra vez qué se hace con él."
     >
       {/* Capa astronómica — sin interpretación */}
       <SourceBlock tipo="astronomia">

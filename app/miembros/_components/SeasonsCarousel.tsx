@@ -63,7 +63,6 @@ export function SeasonsCarousel({
   const [portalMedia, setPortalMedia] = useState<{ ingreso?: string; objetivos?: string; umbral?: string }>({})
   // Config del Umbral del Contacto gestionada por el admin (site_texts).
   // Enlace del grupo de la comunidad. Se configura en Gestionar temporadas.
-  const [umbralWhatsapp, setUmbralWhatsapp] = useState("")
   const [umbral, setUmbral] = useState<{ enabled: boolean; badge: string; name: string }>({
     enabled: false, badge: "EL CONTACTO", name: "Umbral del Contacto",
   })
@@ -79,7 +78,6 @@ export function SeasonsCarousel({
           objetivos: ov["portal.objetivos.video"] || "",
           umbral: ov["portal.umbral.video"] || ov["umbral.video"] || "",
         })
-        setUmbralWhatsapp((ov["umbral.cta_url"] || "").trim())
         const enabled = (ov["umbral.enabled"] || "").trim().toLowerCase()
         setUmbral({
           enabled: enabled === "si" || enabled === "sí" || enabled === "1" || enabled === "true",

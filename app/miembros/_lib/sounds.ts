@@ -468,3 +468,45 @@ const ACHIEVEMENT_SOUNDS: Record<string, () => void> = {
 export function getSoundForAchievement(id: string): () => void {
   return ACHIEVEMENT_SOUNDS[id] || sounds.unlock
 }
+
+/**
+ * El sonido de una insignia, UNA sola vez por insignia.
+ *
+ * ── EL FALLO QUE ARREGLA ───────────────────────────────────────────────────
+ * Al ganar una insignia sonaba dos veces, y parecía que se habían ganado dos.
+ * Eran dos reproductores distintos que no se conocían entre sí:
+ *
+ *   · AchievementToast, cuando sale el aviso en pantalla.
+ *   · NotificationsBell, cuando llega por realtime la fila de `notifications`
+ *     que el servidor escribe al conceder.
+ *
+ * Los dos son necesarios. El aviso en pantalla solo aparece cuando la
+ * desbloquea este navegador; la campana cubre las que concede el servidor por
+ * su cuenta —al guardar un capítulo, por ejemplo—, que antes llegaban mudas.
+ * El problema no es que haya dos, es que en el caso normal disparan los dos.
+ *
+ * ── POR QUÉ UNA VENTANA DE TIEMPO Y NO UN «QUIÉN MANDA» ────────────────────
+ * No se puede decidir de antemano cuál de los dos gana, porque cuál llega
+ * primero depende de la red. Lo que sí se sabe es que dos avisos de la MISMA
+ * insignia con segundos de diferencia son el mismo hecho contado dos veces.
+ * Suena el primero que llegue y el otro se calla.
+ *
+ * La ventana se cierra sola: pasados unos segundos la insignia vuelve a poder
+ * sonar. Hace falta para el reintento legítimo —volver a ganar algo que se
+ * había perdido en un reinicio— y para que el mapa no crezca sin fin.
+ */
+const VENTANA_INSIGNIA_MS = 10_000
+const insigniasQueYaSonaron = new Map<string, number>()
+
+export function sonarInsigniaUnaVez(id: string): void {
+  const ahora = Date.now()
+
+  for (const [otra, cuando] of insigniasQueYaSonaron) {
+    if (ahora - cuando > VENTANA_INSIGNIA_MS) insigniasQueYaSonaron.delete(otra)
+  }
+
+  if (insigniasQueYaSonaron.has(id)) return
+  insigniasQueYaSonaron.set(id, ahora)
+
+  getSoundForAchievement(id)()
+}

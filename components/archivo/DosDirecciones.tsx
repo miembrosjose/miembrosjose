@@ -37,7 +37,7 @@ export default function DosDirecciones() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 6 }}
-      lead="Pléyades y Arcturus representan dos movimientos complementarios. Uno comienza en el mundo interior y busca manifestarse afuera. El otro utiliza la materia y sus herramientas para producir un camino de regreso hacia la consciencia."
+      lead="Pléyades y Arcturus son dos movimientos complementarios: uno nace dentro y busca manifestarse afuera; el otro usa la materia para volver a la consciencia."
       registro="Una civilización madura cuando aquello que comprende interiormente puede convertirse en forma, y aquello que construye externamente puede conducirla nuevamente hacia una comprensión mayor."
     >
       <ModuleTitle>Dos direcciones</ModuleTitle>

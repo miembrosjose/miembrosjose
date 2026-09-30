@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from "react"
 import { getAchievementById, type Achievement, type AchievementTier } from "@/lib/achievements"
 import { getAchievementSvg } from "@/lib/achievement-svg"
-import { getSoundForAchievement } from "../_lib/sounds"
+import { sonarInsigniaUnaVez } from "../_lib/sounds"
 import styles from "./achievement-toast.module.css"
 
 const SHOW_MS = 5000
@@ -54,7 +54,7 @@ export function AchievementToast() {
       })
       // Som específico do achievement (procedural, único por ID).
       // Fallback pra sounds.unlock se ID não estiver no mapping.
-      getSoundForAchievement(ach.id)()
+      sonarInsigniaUnaVez(ach.id)
 
       setTimeout(() => {
         setShow(false)

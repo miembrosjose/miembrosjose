@@ -7,7 +7,7 @@
 // resurrección). El 12 se presenta como lectura simbólica, no como doctrina.
 
 import { useState } from 'react';
-import ArchivoShell, { Reveal, Flow, TechNote, SourceBlock, ModuleTitle } from './ArchivoShell';
+import ArchivoShell, { Reveal, TechNote, SourceBlock, ModuleTitle } from './ArchivoShell';
 import { ARCO_T4 } from './t4-arco';
 
 type Nodo = { k: string; titulo: string; lineas: string[]; a: number };
@@ -34,11 +34,11 @@ export default function CodigoJesus() {
 
   return (
     <ArchivoShell
-      guia="Ivika"
-      voz="Memoria abierta"
+      guia="José María"
+      voz="Archivo abierto"
       arco={{ pasos: ARCO_T4, actual: 6 }}
-      lead="Jesús representa una apertura decisiva en la historia espiritual de la humanidad. En él convergen linaje, pacto, ley, iniciación, compasión y una revelación superior: el amor como fuerza de transformación y el perdón como su manifestación más alta."
-      registro="Jesús no vino únicamente a fundar una creencia, sino a mostrar que el ser humano puede elevar su condición cuando el amor deja de ser emoción pasajera y se convierte en una fuerza consciente de transformación."
+      lead="En Jesús convergen linaje, pacto, ley e iniciación, y aparece algo nuevo: el amor como fuerza de transformación, y el perdón como su forma más alta."
+      registro="No vino solo a fundar una creencia, sino a mostrar hasta dónde puede llegar un ser humano cuando el amor deja de ser emoción y se vuelve fuerza consciente."
     >
       <ModuleTitle>El código de Jesús</ModuleTitle>
 
@@ -142,10 +142,6 @@ export default function CodigoJesus() {
             El amor abre la puerta; el perdón es la llave viva que lo vuelve operativo dentro de la materia.
           </p>
         </div>
-      </Reveal>
-
-      <Reveal>
-        <Flow label="Del maestro al camino" steps={['ADMIRAR', 'COMPRENDER', 'PRACTICAR', 'ENCARNAR']} />
       </Reveal>
 
       <Reveal>

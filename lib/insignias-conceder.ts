@@ -23,6 +23,7 @@ import type { Achievement } from "@/lib/achievements"
 import { esGradoDelCamino, getAchievementById, rangoMasAlto } from "@/lib/achievements"
 import { insigniasGanadas } from "@/lib/insignias-ganadas"
 import { emitCommunityEvent } from "@/lib/notify"
+import { propagarInsignia } from "@/lib/insignias-cascada"
 
 /** XP por categoría. Las compras no dan: ya dieron un nivel al comprarse. */
 const XP_POR_CATEGORIA: Record<string, number> = {
@@ -135,7 +136,7 @@ export async function concederInsignia(
   // ya se había ganado antes. Eso no es un momento de logro: avisar de seis
   // cosas a la vez convierte la campana en ruido y no dice nada nuevo.
   if (opciones.silencioso) {
-    await destacarSiProcede(user, ach)
+    await destacarSiProcede(user, ach, { recuperando: true })
     return true
   }
 
@@ -189,7 +190,7 @@ export async function concederInsignia(
     })
   }
 
-  await destacarSiProcede(user, ach)
+  await destacarSiProcede(user, ach, { recuperando: false })
 
   return true
 }
@@ -197,26 +198,37 @@ export async function concederInsignia(
 /**
  * Ponerle la insignia recién ganada, sin que tenga que ir a su perfil.
  *
- * ── CUÁNDO SÍ Y CUÁNDO NO ────────────────────────────────────────────────
- * Ganar algo y que no se note es la forma más rápida de que deje de
- * importar. Pero pisarle a alguien la insignia que eligió a mano es peor: esa
- * elección es suya. La regla intenta respetar las dos cosas:
+ * ── LA REGLA, Y POR QUÉ CAMBIÓ ───────────────────────────────────────────
+ * Antes esto era deliberadamente tímido: solo ponía la nueva si la persona no
+ * llevaba ninguna, si la que llevaba estaba retirada del catálogo, o si subía
+ * de grado dentro del Camino. En cualquier otro caso respetaba lo que hubiera.
  *
- *   · Si no lleva ninguna, se le pone.
- *   · Si lleva una retirada del catálogo —la vieja «Bienvenida», por
- *     ejemplo—, se sustituye: eso no lo eligió nadie.
- *   · Si sube de grado dentro del Camino, se actualiza al grado nuevo: la
- *     escalera es una sola y nadie quiere seguir enseñando el peldaño de
- *     abajo.
- *   · En cualquier otro caso se deja lo que tenga puesto.
+ * El efecto real era que, a partir de la segunda insignia, ganar una no se
+ * notaba en ningún sitio. Salía el aviso, sonaba, y el avatar seguía igual —en
+ * el foro, en el Mapa de la Red, en el directorio— hasta que la persona
+ * entraba a su perfil y la elegía a mano. Casi nadie lo hacía, así que casi
+ * ninguna insignia llegaba a verse.
+ *
+ * Ahora la recién ganada se pone SIEMPRE. Cambiarla sigue estando a un clic
+ * en el perfil, y esa elección manual se respeta hasta la siguiente.
+ *
+ * ── SALVO CUANDO NO SE ACABA DE GANAR ────────────────────────────────────
+ * Recuperando es el servidor poniéndose al día con insignias que ya se tenían
+ * —tabla recién limpiada, dispositivo nuevo—. Ahí no ha pasado nada hoy, y
+ * dejar que un lote de seis antiguas pise la que la persona eligió sería un
+ * destrozo silencioso. En ese caso vuelve a mandar la regla tímida: solo
+ * rellena el hueco si no hay nada que valga.
+ *
+ * Si caen VARIAS de golpe en un mismo gesto, se queda la última concedida.
+ * Es arbitrario, y da igual: las tiene todas y puede elegir.
  *
  * Las cuentas de administración no se tocan: su Sello va con el cargo.
- *
- * NO se reescriben los mensajes antiguos. Cambiar hacia atrás la firma de lo
- * ya publicado es más de lo que pide "ponérsela ahora"; eso solo pasa cuando
- * la persona elige a mano desde su perfil.
  */
-async function destacarSiProcede(user: User, ach: Achievement): Promise<void> {
+async function destacarSiProcede(
+  user: User,
+  ach: Achievement,
+  { recuperando }: { recuperando: boolean },
+): Promise<void> {
   // Una insignia retirada no se luce ni aunque se acabe de conceder.
   if (ach.retirada) return
   if ((user.app_metadata as { is_admin?: boolean } | undefined)?.is_admin === true) return
@@ -228,20 +240,32 @@ async function destacarSiProcede(user: User, ach: Achievement): Promise<void> {
   const { data } = await admin.auth.admin.getUserById(user.id)
   const meta = (data?.user?.user_metadata || {}) as Record<string, unknown>
   const actual = typeof meta.featured_badge_id === "string" ? meta.featured_badge_id : ""
-  const laDeAhora = actual ? getAchievementById(actual) : undefined
 
-  const noLlevaNadaQueValga = !actual || !laDeAhora || laDeAhora.retirada === true
-  const subeDeGrado =
-    esGradoDelCamino(actual) &&
-    esGradoDelCamino(ach.id) &&
-    rangoMasAlto([actual, ach.id]) === ach.id
+  // Ya la lleva puesta: ni escritura ni cascada sobre miles de filas.
+  if (actual === ach.id) return
 
-  if (!noLlevaNadaQueValga && !subeDeGrado) return
+  if (recuperando) {
+    const laDeAhora = actual ? getAchievementById(actual) : undefined
+    const noLlevaNadaQueValga = !actual || !laDeAhora || laDeAhora.retirada === true
+    const subeDeGrado =
+      esGradoDelCamino(actual) &&
+      esGradoDelCamino(ach.id) &&
+      rangoMasAlto([actual, ach.id]) === ach.id
+    if (!noLlevaNadaQueValga && !subeDeGrado) return
+  }
 
   const { error } = await admin.auth.admin.updateUserById(user.id, {
     user_metadata: { ...meta, featured_badge_id: ach.id },
   })
-  if (error) console.warn("[insignias] no se pudo destacar %s: %s", ach.id, error.message)
+  if (error) {
+    console.warn("[insignias] no se pudo destacar %s: %s", ach.id, error.message)
+    return
+  }
+
+  // Y que se vea donde ya está publicado: el foro, los comentarios y el resto
+  // guardan una COPIA de la insignia del autor, y sin esto seguirían con la
+  // anterior. Ver lib/insignias-cascada.ts.
+  await propagarInsignia(user.id, ach.id)
 }
 
 /**

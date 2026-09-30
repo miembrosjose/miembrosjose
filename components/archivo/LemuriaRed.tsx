@@ -10,7 +10,7 @@
 // El cierre separa explícitamente tres capas: enseñanza, historia del concepto
 // y geología moderna. Mauritia se nombra SIN presentarla como prueba.
 
-import ArchivoShell, { Reveal, Flow, KeyBox, SourceBlock, ModuleTitle } from './ArchivoShell';
+import ArchivoShell, { Reveal, KeyBox, SourceBlock, ModuleTitle } from './ArchivoShell';
 import { ARCO_T3 } from './t3-arco';
 
 const CX = 170;
@@ -38,7 +38,7 @@ export default function LemuriaRed() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 2 }}
-      lead="Antes de que las grandes estructuras atlantes dominaran la historia, la humanidad había desarrollado otra forma de relacionarse con la Tierra. Lemuria representa una civilización organizada menos alrededor de la conquista del territorio y más alrededor de la conexión entre consciencia, naturaleza y planeta."
+      lead="Antes de las grandes estructuras atlantes hubo otra forma de habitar la Tierra. Lemuria se organiza menos por la conquista del territorio y más por la conexión entre consciencia, naturaleza y planeta."
       registro="Una memoria antigua puede contener capas de historia, símbolo e interpretación; discernirlas no destruye el misterio, permite aproximarse a él con mayor profundidad."
     >
       <ModuleTitle>El Pacífico como red</ModuleTitle>
@@ -158,10 +158,6 @@ export default function LemuriaRed() {
           title="Mauritia ≠ prueba de Lemuria"
           text="La existencia de fragmentos continentales sumergidos demuestra que la historia geológica del planeta puede conservar estructuras hoy ocultas bajo el océano, pero no confirma la civilización descrita por las tradiciones lemurianas."
         />
-      </Reveal>
-
-      <Reveal>
-        <Flow label="Del modelo de red al modelo de imperio" steps={['RED DISTRIBUIDA', 'CENTRALIZACIÓN']} />
       </Reveal>
 
       <style jsx global>{`

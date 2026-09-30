@@ -11,11 +11,12 @@
 // El perfil del autor se reduce a lo imprescindible —foto, nombre e insignia—:
 // la conversación es lo importante, no la ficha de quien escribe.
 
-import { Lock, MessageSquare, Pin, Star } from "lucide-react"
+import { Lock, MessageSquare, Pin, Star, Trash2 } from "lucide-react"
 import { getAchievementById } from "@/lib/achievements"
 import type { ForumPost as THilo } from "../../_lib/types"
 import type { EspacioResumen } from "./ViewComunidad"
 import s from "./comunidad.module.css"
+import { useAuth } from "../../_lib/auth-context"
 
 type Props = {
   hilo: THilo & {
@@ -28,9 +29,12 @@ type Props = {
   /** Solo en las listas que cruzan espacios: dice de dónde viene cada una. */
   onAbrirEspacio?: (slug: string) => void
   onAbrir?: (hilo: THilo) => void
+  /** Moderación: se retira la conversación entera. Solo administración. */
+  onBorrar?: (hilo: THilo) => void
 }
 
-export function HiloResumen({ hilo, espacios, onAbrirEspacio, onAbrir }: Props) {
+export function HiloResumen({ hilo, espacios, onAbrirEspacio, onAbrir, onBorrar }: Props) {
+  const { isAdmin } = useAuth()
   const espacio = espacios?.find((e) => e.id === hilo.space_id)
   const insignia = hilo.author_badge_id ? getAchievementById(hilo.author_badge_id) : undefined
 
@@ -71,6 +75,18 @@ export function HiloResumen({ hilo, espacios, onAbrirEspacio, onAbrir }: Props) 
           )}
         </span>
       </button>
+
+      {isAdmin && onBorrar && (
+        <button
+          type="button"
+          className={s.hiloBorrar}
+          onClick={() => onBorrar(hilo)}
+          aria-label={`Borrar la conversación «${hilo.title}»`}
+          title="Borrar conversación"
+        >
+          <Trash2 size={13} aria-hidden />
+        </button>
+      )}
 
       {/* De qué espacio viene. Solo cuando la lista cruza varios: dentro de un
           espacio, decirlo en cada fila sería repetirlo veinte veces. */}

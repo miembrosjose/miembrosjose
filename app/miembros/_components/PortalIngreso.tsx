@@ -5,7 +5,7 @@
 // de la Temporada 1.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { X, ArrowDown, ArrowRight, MessageSquare, Check } from "lucide-react"
+import { X, ArrowDown, ArrowRight, MessageSquare, Check, ChevronDown } from "lucide-react"
 import styles from "./season5.module.css"
 import { CosmicField } from "./CosmicField"
 import { BannerVideo } from "./BannerVideo"
@@ -54,20 +54,41 @@ type Props = {
 }
 
 // La Gran Invocación — estrofas.
+//
+// Texto corregido por José el 29-09-2026. La versión anterior era otra
+// redacción («Aquél que Viene», «las pequeñas voluntades humanas») y le
+// faltaba el cierre entero.
 const INVOCATION = [
-  "Desde el punto de Luz en la Mente de Dios\nQue afluya luz a las mentes humanas\nQue la Luz descienda a la Tierra.",
-  "Desde el punto de Amor en el Corazón de Dios\nQue afluya amor a los corazones humanos\nQue Aquél que Viene retorne a la Tierra.",
-  "Desde el centro donde la Voluntad de Dios es conocida\nQue el propósito guíe a todas las pequeñas voluntades humanas\nEl propósito que los Maestros conocen y sirven.",
-  "Desde el centro que llamamos la raza humana\nQue se realice el Plan de Amor y de Luz\nY selle la puerta donde se halla el mal.",
-  "Que la Luz, el Amor y el Poder restablezcan el Plan en la Tierra.",
+  "Desde el punto de Luz en la Mente de Dios\nQue afluya luz a las mentes de los seres humanos\nQue la Luz descienda a la tierra.",
+  "Desde el punto de amor en el Corazón de Dios\nQue afluya amor a los corazones de los seres humanos\nQue Cristo retorne a la tierra.",
+  "Desde el centro donde la Voluntad de Dios es conocida\nQue el propósito guíe las voluntades de los seres humanos\nEl propósito que los Maestros conocen y sirven.",
+  "Desde el centro que llamamos la raza humana\nQue se realice el Plan de Amor y de Luz\nY se selle la puerta donde se halle el mal.",
+  "Que la luz, el amor y el poder restablezcan\nel Plan Divino en la Tierra.",
+  "¡Así es, así sea, así será y hecho está!\nY que todos cumplamos con nuestra parte\nen esta sagrada misión de amor.",
 ]
 
-const HOW = [
-  { n: 1, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No avances con prisa. Cada transmisión contiene una llave." },
-  { n: 2, name: "INTEGRA LO RECIBIDO", text: "Entre temporadas encontrarás portales de integración. Allí la información deja de ser teoría y comienza a tocar tu historia, tus heridas, tus creencias y tu propósito." },
-  { n: 3, name: "REGISTRA TU PROCESO", text: "La bitácora no es una tarea. Es tu archivo personal. Allí quedará la huella de lo que despertó en ti." },
-  { n: 4, name: "RECONOCE TUS PATRONES", text: "El camino también abre procesos de desprogramación: creencias heredadas, heridas familiares, memorias de abandono, escasez, abuso, miedo, no pertenencia y desconexión." },
-  { n: 5, name: "RESPONDE DESDE TU TERRITORIO", text: "Más adelante comprenderás que tu misión no ocurre lejos. Comienza en el lugar donde vives, en tu linaje, en tu ciudad y en la memoria de la Tierra que te rodea." },
+// ── LA RUTA, EN DOS ETAPAS ────────────────────────────────────────────────
+// Antes eran cinco tarjetas sueltas, todas abiertas a la vez. Dos problemas:
+// no se veía dónde termina el camino de formación y dónde empieza lo que
+// viene después, y el muro de texto era lo primero que aparecía.
+//
+// Ahora es una lista desplegable con un solo paso abierto. Los títulos se leen
+// de un vistazo —que es lo que hace falta para hacerse una idea— y el detalle
+// está a un toque de quien lo quiera.
+type Paso = { n: number; name: string; text: string }
+
+const ETAPA_1: Paso[] = [
+  { n: 1, name: "RECONÓCETE", text: "Reconoce tu origen, tu configuración y el llamado que te trajo hasta aquí." },
+  { n: 2, name: "RECIBE LA MEMORIA", text: "Las primeras temporadas abren archivos de conciencia. No avances con prisa. Cada transmisión contiene una llave." },
+  { n: 3, name: "INTEGRA LO RECIBIDO", text: "Entre temporadas encontrarás portales de integración. Allí la información deja de ser teoría y comienza a tocar tu historia, tus heridas, tus creencias y tu propósito." },
+  { n: 4, name: "REGISTRA TU PROCESO", text: "La bitácora no es una tarea. Es tu archivo personal. Allí quedará la huella de lo que despertó en ti." },
+  { n: 5, name: "RECONOCE TUS PATRONES", text: "El camino también abre procesos de desprogramación: creencias heredadas, heridas familiares, memorias de abandono, escasez, abuso, miedo, no pertenencia y desconexión." },
+]
+
+const ETAPA_2: Paso[] = [
+  { n: 6, name: "RESPONDE DESDE TU TERRITORIO", text: "Tu misión no ocurre lejos. Comienza en el lugar donde vives, en tu linaje, en tu ciudad y en la memoria de la Tierra que te rodea." },
+  { n: 7, name: "CONTACTO", text: "Conformar grupos afines de encuentro y de contacto extraterrestre." },
+  { n: 8, name: "SERVIR", text: "Comprender tu tarea planetaria y prepararte para cumplirla." },
 ]
 
 const INGRESO_QUESTIONS = [
@@ -76,8 +97,53 @@ const INGRESO_QUESTIONS = [
   "¿Estoy dispuesto a recibir información sin perder el discernimiento?",
 ]
 
+/**
+ * La ruta, como lista desplegable.
+ *
+ * Un solo paso abierto a la vez, y el mismo estado para las dos etapas: abrir
+ * uno cierra el anterior aunque esté en la otra. Con ocho pasos, permitir
+ * todos abiertos devuelve el muro de texto que veníamos a quitar.
+ *
+ * El primero arranca abierto para que se vea que esto se despliega. Una lista
+ * toda cerrada no parece una lista: parece un índice muerto.
+ */
+function Ruta({
+  pasos,
+  abierto,
+  onAbrir,
+}: {
+  pasos: Paso[]
+  abierto: number
+  onAbrir: (n: number) => void
+}) {
+  return (
+    <div className={styles.rutaLista}>
+      {pasos.map((p) => {
+        const on = abierto === p.n
+        return (
+          <div key={p.n} className={`${styles.rutaItem} ${on ? styles.rutaItemOn : ""}`}>
+            <button
+              type="button"
+              className={styles.rutaBoton}
+              onClick={() => onAbrir(on ? 0 : p.n)}
+              aria-expanded={on}
+            >
+              <span className={styles.rutaNum}>{String(p.n).padStart(2, "0")}</span>
+              <span className={styles.rutaName}>{p.name}</span>
+              <ChevronDown size={16} className={styles.rutaChevron} aria-hidden />
+            </button>
+            {on && <p className={styles.rutaTexto}>{p.text}</p>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
+  // Qué paso de la ruta está desplegado. 0 = ninguno.
+  const [paso, setPaso] = useState(1)
   const aperturaRef = useRef<HTMLDivElement>(null)
   const howRef = useRef<HTMLDivElement>(null)
   // Video de fondo del hero (opcional, gestionado desde admin vía site_texts).
@@ -216,29 +282,12 @@ export function PortalIngreso({ open, onClose, onEnterT1, onGoToForo }: Props) {
         <section className={`${styles.section} ${styles.reveal}`} ref={howRef}>
           <p className={styles.kicker}>La ruta</p>
           <h2 className={styles.sectionTitle}>CÓMO RECORRER LOS 144.000</h2>
-          <div className={styles.howGrid}>
-            {HOW.map((h) => (
-              <article key={h.n} className={styles.howCard}>
-                <span className={styles.howNum}>{String(h.n).padStart(2, "0")}</span>
-                <h3 className={styles.howName}>{h.name}</h3>
-                <p className={styles.howText}>{h.text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
 
-        {/* ACUERDO DE ENTRADA */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-          <p className={styles.kicker}>Compromiso</p>
-          <h2 className={styles.sectionTitle}>ACUERDO DE ENTRADA</h2>
-          <div className={styles.creed}>
-            <p>Al iniciar este camino, no se te pide creer ciegamente.</p>
-            <p>Se te pide observar, discernir, sentir, estudiar, practicar y sostener una actitud limpia frente a la información que recibes.</p>
-            <p>Los 144.000 no buscan fanatismo, superioridad ni dependencia espiritual.</p>
-            <p className={styles.declBig} style={{ color: "var(--s5-gold-soft)" }}>
-              Buscan seres humanos capaces de recordar con humildad, servir con claridad y caminar con responsabilidad.
-            </p>
-          </div>
+          <p className={styles.rutaEtapa}>Etapa 1 · El camino de formación</p>
+          <Ruta pasos={ETAPA_1} abierto={paso} onAbrir={setPaso} />
+
+          <p className={styles.rutaEtapa}>Etapa 2 · Lo que viene después</p>
+          <Ruta pasos={ETAPA_2} abierto={paso} onAbrir={setPaso} />
         </section>
 
         {/* BITÁCORA DE INGRESO */}

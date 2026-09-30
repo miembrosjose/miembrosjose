@@ -11,7 +11,7 @@
 // Ilumana (Paititi) es el Gran Disco Principal: lente y espejo dimensional.
 
 import { useState } from 'react';
-import ArchivoShell, { Reveal, Flow, TechNote, ModuleTitle } from './ArchivoShell';
+import ArchivoShell, { Reveal, TechNote, ModuleTitle } from './ArchivoShell';
 import { ARCO_T4 } from './t4-arco';
 
 type Disco = {
@@ -139,7 +139,7 @@ export default function DiscosSolares() {
       guia="Ivika"
       voz="Memoria abierta"
       arco={{ pasos: ARCO_T4, actual: 1 }}
-      lead="Los discos solares son archivos vivos de información y consciencia. No son objetos ni símbolos: son nodos de conexión con una red de memoria planetaria ligada a los retiros interiores, a la Hermandad Blanca y al proceso de reconexión entre la humanidad y su origen."
+      lead="Los discos solares son archivos vivos. No son objetos ni símbolos: son nodos de una red de memoria planetaria, ligada a los retiros interiores y a la Hermandad Blanca."
       registro="Los discos solares no fueron preservados para alimentar curiosidad, sino para sostener la memoria hasta que la humanidad desarrollara la madurez necesaria para volver a conectarse con ella."
     >
       {/* Arquitectura de la red */}
@@ -285,11 +285,6 @@ export default function DiscosSolares() {
         ))}
       </div>
 
-      {/* Reacción en cadena */}
-      <Reveal>
-        <Flow label="Resonancia" steps={['ILUMANA', '12 DISCOS', 'RED PLANETARIA']} />
-      </Reveal>
-
       {/* Cierre */}
       <Reveal>
         <ModuleTitle>Trece llaves, una red</ModuleTitle>
@@ -299,8 +294,7 @@ export default function DiscosSolares() {
           </p>
           <p className="ds-closeClaim">Ningún disco está aislado.</p>
           <p className="ds-closeText">
-            Cada uno trabaja una zona distinta del proceso. Pero cuando entran en resonancia —memoria,
-            cuerpo, emoción, voluntad, origen y propósito— empiezan a funcionar como una sola red.
+            Cada uno trabaja una zona distinta del proceso. En resonancia, funcionan como una sola red.
           </p>
         </div>
       </Reveal>

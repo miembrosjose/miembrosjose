@@ -42,8 +42,8 @@ export default function PlanCosmico() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 1 }}
-      lead="El Plan Cósmico es un experimento evolutivo destinado a explorar si determinadas civilizaciones podían desarrollar consciencia, libertad y capacidades suficientes para participar activamente en la reconexión de diferentes niveles de realidad. La Tierra no habría sido el único escenario. Formaba parte de un sistema mucho mayor."
-      registro="El Plan no necesitaba una especie perfectamente obediente; necesitaba una consciencia capaz de aprender dentro de la libertad y, después de equivocarse, elegir deliberadamente su propio regreso al equilibrio."
+      lead="Un experimento evolutivo: si ciertas civilizaciones podían desarrollar consciencia y libertad suficientes para participar en la reconexión. La Tierra no era el único escenario."
+      registro="El Plan no necesitaba una especie obediente, sino una consciencia capaz de equivocarse dentro de la libertad y elegir después su propio regreso."
     >
       <ModuleTitle>Arquitectura del Plan</ModuleTitle>
 
@@ -120,9 +120,8 @@ export default function PlanCosmico() {
 
       <Reveal>
         <TechNote label="La paradoja del Plan">
-          El éxito no podía consistir en fabricar una civilización obediente. Una humanidad completamente
-          dirigida habría aprendido a depender; una humanidad completamente abandonada podía destruirse. El
-          experimento necesitaba un tercer elemento: libertad consciente.
+          Dirigida del todo, la humanidad habría aprendido a depender. Abandonada del todo, podía destruirse.
+          Hacía falta un tercer elemento: libertad consciente.
         </TechNote>
       </Reveal>
 
@@ -161,9 +160,8 @@ export default function PlanCosmico() {
 
       <Reveal>
         <TechNote label="Objetivo final">
-          No «salvar» a la Tierra: reconexión. La humanidad debía desarrollar por sí misma las capacidades
-          necesarias para participar en la futura sincronización entre el Tiempo Alternativo y el Real Tiempo
-          del Universo.
+          No «salvar» a la Tierra: reconectarla. Y que la humanidad desarrolle por sí misma lo necesario
+          para sostener esa sincronización.
         </TechNote>
       </Reveal>
 

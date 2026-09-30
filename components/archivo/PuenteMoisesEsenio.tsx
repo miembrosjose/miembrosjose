@@ -7,7 +7,7 @@
 // como LECTURA DE CONTINUIDAD ESPIRITUAL, no como cadena histórica probada.
 
 import { useState } from 'react';
-import ArchivoShell, { Reveal, Flow, TechNote, SourceBlock, ModuleTitle } from './ArchivoShell';
+import ArchivoShell, { Reveal, TechNote, SourceBlock, ModuleTitle } from './ArchivoShell';
 import { ARCO_T4 } from './t4-arco';
 
 type Paso = { titulo: string; sub: string; texto: string };
@@ -23,7 +23,6 @@ const PUENTE: Paso[] = [
   { titulo: 'Comunidad', sub: 'preparación', texto: 'La ley encuentra su forma viva en un cuerpo colectivo que la practica y la transmite.' },
 ];
 
-const ESCUELA = ['despojo', 'dependencia de lo esencial', 'escucha', 'disciplina', 'purificación', 'aprendizaje colectivo'];
 const ESENIOS = ['pureza', 'servicio', 'comunidad', 'espera', 'disciplina', 'estudio', 'iniciación'];
 
 export default function PuenteMoisesEsenio() {
@@ -35,7 +34,7 @@ export default function PuenteMoisesEsenio() {
       guia="Ivika"
       voz="Memoria abierta"
       arco={{ pasos: ARCO_T4, actual: 5 }}
-      lead="Si Abraham inaugura el pacto, Moisés organiza un pueblo para sostenerlo. Con Moisés la memoria se convierte en ley, travesía, disciplina, liberación y estructura espiritual. Más adelante, esa corriente dará lugar a escuelas de pureza, retiro y preparación interior: los esenios."
+      lead="Si Abraham inaugura el pacto, Moisés organiza un pueblo para sostenerlo: la memoria se convierte en ley, travesía y estructura."
       registro="La ley fue un puente: primero sostuvo a un pueblo desde afuera, para que más adelante la humanidad pudiera descubrir la necesidad de escribir esa misma ley en lo profundo del ser."
     >
       <ModuleTitle>Del pacto a la ley</ModuleTitle>
@@ -61,16 +60,6 @@ export default function PuenteMoisesEsenio() {
         <p className="pm-cardText">{p.texto}</p>
       </div>
 
-      {/* El desierto */}
-      <Reveal>
-        <ModuleTitle>El desierto como escuela</ModuleTitle>
-        <div className="pm-school">
-          {ESCUELA.map((e) => (
-            <span key={e} className="pm-schoolItem">{e}</span>
-          ))}
-        </div>
-      </Reveal>
-
       {/* Continuidad */}
       <Reveal>
         <ModuleTitle>Del mosaísmo al esenismo</ModuleTitle>
@@ -78,10 +67,6 @@ export default function PuenteMoisesEsenio() {
           <p>
             Se presenta como <strong>lectura de continuidad espiritual</strong>, no como cadena histórica
             demostrada.
-          </p>
-          <p>
-            Los esenios aparecen aquí como una tradición de pureza, retiro, espera mesiánica, vida comunitaria
-            y preparación interior que recoge y radicaliza ciertas corrientes de la herencia mosaica.
           </p>
         </SourceBlock>
       </Reveal>
@@ -95,10 +80,6 @@ export default function PuenteMoisesEsenio() {
             ))}
           </div>
         </div>
-      </Reveal>
-
-      <Reveal>
-        <Flow steps={['LEY EXTERIOR', 'PRÁCTICA COMUNITARIA', 'PREPARACIÓN INTERIOR', 'LEY INTERIORIZADA']} />
       </Reveal>
 
       <Reveal>
@@ -150,13 +131,6 @@ export default function PuenteMoisesEsenio() {
         }
         .pm-cardText { font-size: 0.95rem; line-height: 1.64; color: var(--aa-text); margin: 0; }
 
-        .pm-school { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin: 0 0 1.7rem; }
-        .pm-schoolItem {
-          font-family: var(--aa-mono); font-size: 0.64rem; letter-spacing: 0.12em;
-          color: #cbb9e6; background: var(--aa-violet-ghost);
-          border: 1px solid var(--aa-violet-deep); padding: 0.38rem 0.7rem;
-          border-radius: 999px !important;
-        }
 
         .pm-essene {
           margin: 0 0 1.7rem; padding: 1.2rem 1rem;

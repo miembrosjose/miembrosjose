@@ -41,7 +41,7 @@ export default function MapaJerarquia() {
 
   return (
     <ArchivoShell
-      lead="Jerarquía significa organización de funciones. A medida que una consciencia puede percibir y sostener estructuras mayores, también aumenta la responsabilidad de sus decisiones sobre aquello que acompaña."
+      lead="Jerarquía significa organización de funciones: cuanta más estructura puede sostener una consciencia, más pesan sus decisiones sobre lo que acompaña."
       registro="La verdadera jerarquía aumenta responsabilidad mucho antes que privilegio."
     >
       <ModuleTitle>Mapa de responsabilidad cósmica</ModuleTitle>

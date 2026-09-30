@@ -16,7 +16,7 @@ export default function PuenteSirioOrion() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 5 }}
-      lead="Sirio y Orión aparecen una y otra vez en las tradiciones del cielo terrestre. Cumplen funciones complementarias dentro de nuestro vecindario galáctico: una vinculada con la siembra y organización de mundos; otra con la custodia de rutas, tiempos y portales."
+      lead="Sirio y Orión vuelven una y otra vez en las tradiciones del cielo, y cumplen funciones complementarias: una siembra y organiza mundos; la otra custodia rutas, tiempos y portales."
       registro="Una civilización puede aprender a construir caminos y otra a custodiar sus umbrales; el problema comienza cuando custodiar se confunde con controlar quién tiene derecho a recorrerlos."
     >
       <ModuleTitle>Dos sistemas · dos funciones</ModuleTitle>

@@ -9,7 +9,7 @@ import { Modal } from "./Modal"
 import { api } from "../_lib/api"
 
 export type ReportTarget = {
-  type: "forum_post" | "forum_reply" | "episode_comment" | "funnel_feedback"
+  type: "forum_post" | "forum_reply" | "episode_comment" | "funnel_feedback" | "pulso_respuesta"
   id: string
 }
 

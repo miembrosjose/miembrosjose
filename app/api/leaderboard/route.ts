@@ -13,6 +13,7 @@ import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { computeLevel } from "@/lib/xp"
 import { computeCommunityRank, getAchievementById } from "@/lib/achievements"
+import { conAccesoActivo } from "@/lib/membresia"
 
 export const dynamic = "force-dynamic"
 
@@ -41,12 +42,22 @@ export async function GET(req: NextRequest) {
   type UserMeta = { full_name?: string; username?: string; avatar_url?: string; unique_login_days?: number; featured_badge_id?: string | null }
   type AppMeta = { is_admin?: boolean; access_revoked?: boolean; is_test_account?: boolean }
   type AuthUserLite = { id: string; meta: UserMeta }
-  const authUsersById = new Map<string, AuthUserLite>()
-  for (const u of listed?.users || []) {
+  const candidatos = (listed?.users || []).filter((u) => {
     const appMeta = (u.app_metadata || {}) as AppMeta
-    if (appMeta.is_admin === true) continue          // Filtra admins do ranking
-    if (appMeta.access_revoked === true) continue    // Filtra users com acesso revogado (refund/dispute/manual)
-    if (appMeta.is_test_account === true) continue   // Filtra contas de teste
+    if (appMeta.is_admin === true) return false      // Filtra admins do ranking
+    if (appMeta.access_revoked === true) return false // Filtra users com acesso revogado (refund/dispute/manual)
+    if (appMeta.is_test_account === true) return false // Filtra contas de teste
+    return true
+  })
+
+  // Quien canceló sale del ranking. Un tablero de clasificación con gente que
+  // ya no participa deja de medir la comunidad y empieza a medir su historia.
+  // Misma regla que la puerta: ver lib/membresia.ts.
+  const activos = await conAccesoActivo(admin, candidatos.map((u) => ({ id: u.id, email: u.email })))
+
+  const authUsersById = new Map<string, AuthUserLite>()
+  for (const u of candidatos) {
+    if (!activos.has(u.id)) continue
     authUsersById.set(u.id, {
       id: u.id,
       meta: (u.user_metadata || {}) as UserMeta,

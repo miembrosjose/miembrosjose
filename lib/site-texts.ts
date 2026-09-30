@@ -48,7 +48,14 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   { key: "umbral.intro", default: "El contacto no se improvisa. Antes de sostener un encuentro con otra inteligencia hay que poder sostener la propia: una respiración que no se acelera, un cuerpo que no se defiende, una atención que no se dispersa y una intención que no pide nada para sí.", label: "Umbral — Introducción", group: "Umbral del Contacto", multiline: true },
   { key: "umbral.body", default: "El contacto no llega a quien lo espera.\nLlega a quien está listo para sostenerlo.", label: "Umbral — Frase de cierre (bajo las secciones)", group: "Umbral del Contacto", multiline: true },
   { key: "umbral.cta_label", default: "Entrar a la comunidad de preparación", label: "Umbral — Texto del botón", group: "Umbral del Contacto" },
-  { key: "umbral.cta_url", default: "", label: "Umbral — Enlace del grupo de WhatsApp", group: "Umbral del Contacto" },
+  // «umbral.cta_url» se retiró el 29-09-2026. Guardaba un enlace fijo de
+  // WhatsApp que viajaba al navegador de CUALQUIER usuario con sesión, a
+  // través de /api/site-texts: el gate del Umbral se veía, pero no se
+  // aplicaba. Ahora el acceso lo emite la Edge Function
+  // telegram-protocols-access, a nombre de una persona y por cinco minutos.
+  //
+  // La fila vieja de site_texts se borra a mano; mientras exista, el propio
+  // endpoint la filtra (ver NO_SALEN en app/api/site-texts/route.ts).
   { key: "umbral.video", default: "", label: "Umbral — Video de fondo (URL, opcional)", group: "Umbral del Contacto" },
 
   { key: "section.owned.subtitle", default: "Tu Biblioteca", label: "Sección Otros Productos — Subtítulo", group: "Secciones" },

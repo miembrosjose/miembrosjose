@@ -15,6 +15,7 @@ import { Play, Pause, RotateCcw, RotateCw, Lock, Sparkles, AlertCircle, Check } 
 import { loadStripe, type Stripe as StripeJs } from '@stripe/stripe-js';
 import type { MeditationClient } from '@/app/miembros/_lib/meditaciones';
 import { StripeInlinePayment } from '@/app/miembros/_components/StripeInlinePayment';
+import { readAnswer, upsertAnswer } from '@/app/miembros/_lib/journal-store';
 
 // ── Stripe.js (para 3DS del 1-clic) ─────────────────────────────────────────
 let cachedStripe: Promise<StripeJs | null> | null = null;
@@ -243,8 +244,119 @@ function AudioPlayer({ id, title, subtitle, image, badge, premium, guia = 'José
           )}
         </div>
       </div>
+      <ReflexionDeLaPractica id={id} title={title} />
       {styleTag}
     </>
+  );
+}
+
+/**
+ * Lo que se movió durante la práctica.
+ *
+ * ── POR QUÉ ESTO FALTABA ──────────────────────────────────────────────────
+ * Las meditaciones piden reflexionar —lo dice José dentro del audio— y no
+ * había NINGÚN sitio donde escribirlo. Quien quisiera hacerlo tenía que
+ * buscarse la vida fuera de la plataforma, y lo que se escribe fuera no
+ * vuelve: no llega a la bitácora, y por tanto tampoco a la revelación de
+ * misión, que se construye leyendo justo eso.
+ *
+ * ── POR QUÉ EL ORIGEN ES EL ID DE LA MEDITACIÓN ───────────────────────────
+ * Porque una práctica se repite. Con el id de la meditación como origen, la
+ * entrada es SIEMPRE la misma: volver a escucharla y escribir de nuevo
+ * actualiza lo que había en vez de acumular diez copias de la misma práctica.
+ *
+ * Si algún día se quisiera guardar cada escucha por separado, el origen
+ * tendría que llevar la fecha. Hoy no: interesa qué deja esta práctica, no
+ * cuántas veces se puso.
+ */
+function ReflexionDeLaPractica({ id, title }: { id: string; title: string }) {
+  const PREGUNTA = '¿Qué se movió durante la práctica?';
+  const [valor, setValor] = useState('');
+  const [guardado, setGuardado] = useState(true);
+  const tocado = useRef(false);
+
+  useEffect(() => {
+    setValor(readAnswer(id, PREGUNTA));
+    setGuardado(true);
+    tocado.current = false;
+  }, [id]);
+
+  useEffect(() => {
+    if (!tocado.current) return;
+    const t = setTimeout(() => {
+      upsertAnswer({
+        category: 'experiencias',
+        source: id,
+        sourceLabel: `Meditación · ${title}`,
+        prompt: PREGUNTA,
+        answer: valor,
+        isPrivate: true,
+      });
+      setGuardado(true);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [valor, id, title]);
+
+  return (
+    <div className="mpr-caja">
+      <label className="mpr-label">
+        <span>{PREGUNTA}</span>
+        <span
+          className="mpr-estado"
+          style={{ color: valor.trim() ? (guardado ? '#7ee0a8' : '#d9b866') : '#6a6f92' }}
+        >
+          {valor.trim()
+            ? (guardado ? <><Check size={11} /> Guardado en tu bitácora</> : 'Guardando…')
+            : 'Privado'}
+        </span>
+      </label>
+      <textarea
+        className="mpr-area"
+        value={valor}
+        placeholder="Imágenes, sensaciones, lo que apareció sin buscarlo… (privado, solo en tu bitácora)"
+        onChange={(e) => { setValor(e.target.value); setGuardado(false); tocado.current = true; }}
+      />
+      <style jsx>{`
+        .mpr-caja {
+          margin: -0.6rem 0 1.6rem;
+          padding: 1rem 1.1rem 1.1rem;
+          border: 1px solid rgba(167, 139, 202, 0.2);
+          border-top: none;
+          border-radius: 0 0 14px 14px;
+          background: rgba(10, 10, 24, 0.5);
+        }
+        .mpr-label {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.8rem;
+          margin-bottom: 0.6rem;
+          font-size: 0.82rem;
+          color: #cbb6e6;
+        }
+        .mpr-estado {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.66rem;
+          white-space: nowrap;
+        }
+        .mpr-area {
+          width: 100%;
+          min-height: 84px;
+          resize: vertical;
+          padding: 0.7rem 0.8rem;
+          border: 1px solid #251f30;
+          border-radius: 8px;
+          background: #050510;
+          color: #f3f6fa;
+          font-size: 0.88rem;
+          line-height: 1.6;
+          outline: none;
+        }
+        .mpr-area:focus { border-color: #6d4a9b; }
+      `}</style>
+    </div>
   );
 }
 

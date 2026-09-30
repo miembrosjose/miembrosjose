@@ -16,6 +16,10 @@ export const dynamic = "force-dynamic"
 const VALID_TYPES = new Set([
   "forum_post", "forum_reply", "episode_comment",
   "funnel", "funnel_feedback", "user",
+  // El Pulso faltaba, y era el hueco más grande: es la única parte de la Red
+  // donde cualquiera escribe en público, y no había forma de denunciar nada.
+  // Lo único que se podía hacer era esperar a que un administrador lo viera.
+  "pulso_respuesta",
 ])
 const VALID_CATEGORIES = new Set([
   "spam", "inappropriate", "harassment", "offensive",
@@ -29,6 +33,11 @@ async function fetchTargetSnapshot(targetType: string, targetId: string): Promis
   try {
     if (targetType === "forum_post") {
       const { data } = await admin.from("forum_posts").select("user_id, title, body, created_at").eq("id", targetId).maybeSingle()
+      if (!data) return { user_id: null, snapshot: null }
+      return { user_id: (data as { user_id: string }).user_id, snapshot: data as Record<string, unknown> }
+    }
+    if (targetType === "pulso_respuesta") {
+      const { data } = await admin.from("pulso_respuestas").select("user_id, cuerpo, pulso_id, creado_en").eq("id", targetId).maybeSingle()
       if (!data) return { user_id: null, snapshot: null }
       return { user_id: (data as { user_id: string }).user_id, snapshot: data as Record<string, unknown> }
     }

@@ -17,10 +17,10 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
-import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { getAchievementById } from "@/lib/achievements"
 import { insigniasDisponibles } from "@/lib/insignias-ganadas"
 import { isAdmin } from "@/lib/admin"
+import { propagarInsignia } from "@/lib/insignias-cascada"
 
 export const dynamic = "force-dynamic"
 
@@ -63,24 +63,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 })
   }
 
-  // Cascade: propaga la insignia a TODAS las interacciones públicas.
-  // Respeta la ELECCIÓN de la persona.
+  // Propaga la elección a todo lo publicado. El detalle de por qué se
+  // reescribe el pasado está en lib/insignias-cascada.ts.
   //
   // Quitarse la insignia deja los mensajes SIN insignia, no con la
   // «Bienvenida»: esa está retirada del catálogo y ponerla era inventarle a
   // alguien una distinción que no eligió ni ganó.
-  const cascadeBadgeId = badgeId || (isAdmin(user) ? "admin_seal" : null)
-  const admin = getSupabaseAdmin()
-  await Promise.all([
-    admin.from("forum_posts").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),
-    admin.from("forum_replies").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),
-    admin.from("episode_comments").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),
-    admin.from("funnel_feedbacks").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),
-    admin.from("user_funnels").update({ author_badge_id: cascadeBadgeId }).eq("user_id", user.id),
-  ]).catch((e) => {
-    console.warn("[/api/profile/featured-badge] cascade warning:", e)
-    // Não falha — o user_metadata foi atualizado com sucesso, cascade é best-effort
-  })
+  await propagarInsignia(user.id, badgeId || (isAdmin(user) ? "admin_seal" : null))
 
   return NextResponse.json({ featured_badge_id: badgeId })
 }

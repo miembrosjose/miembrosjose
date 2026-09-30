@@ -126,14 +126,12 @@ const S3E2: MeditationClient[] = [
     subtitle: "Regresa a la memoria del Pacífico: agua, sonido y consciencia sin separación.",
     image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/meditaciones/s3e2-lemuria-included.jpg",
   },
-  {
-    id: "s3e2-codigos-lemuria-premium",
-    access: "premium",
-    title: "Activación de los Códigos de Lemuria",
-    subtitle: "Práctica guiada completa para activar los códigos lemurianos dormidos en tu memoria.",
-    price: "4.99",
-    image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/meditaciones/s3e2-codigos-lemuria-premium.jpg",
-  },
+  // La premium «Activación de los Códigos de Lemuria» se retiró del episodio
+  // (27-09-2026). El Ep. 2 se queda solo con la incluida.
+  //
+  // Su fila en `meditations` NO se borra: quien ya la compró tiene derecho a
+  // seguir escuchándola, y el endpoint del audio la sirve mirando la tabla,
+  // no este archivo. Lo que se corta es la venta, con is_purchasable = false.
 ]
 
 const S3E3: MeditationClient[] = [
@@ -185,13 +183,15 @@ const S4E1: MeditationClient[] = [
     subtitle: "Vocalización del mantra de activación que enlaza con la red de discos solares.",
     image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/meditaciones/s4e1-am-on-included.jpg",
   },
-  {
-    id: "s4e1-discos-solares-included",
-    access: "included",
-    title: "Conexión con los Discos Solares",
-    subtitle: "Recorrido por los trece nodos de memoria, desde Ilumana hacia toda la red.",
-    image: "https://pub-f5fdabac2063461c88f966702309c7a3.r2.dev/meditaciones/s4e1-discos-solares-included.jpg",
-  },
+  // «Conexión con los Discos Solares» se retiró el 29-09-2026: el audio no
+  // estaba subido y el reproductor enseñaba un error en su lugar.
+  //
+  // Es peor que no tenerla. Una meditación anunciada que no suena hace dudar
+  // de las que sí funcionan, y quien la ve no sabe si el fallo es suyo.
+  //
+  // Para devolverla: sube el MP3 a R2 con el nombre que espera la tabla
+  // `meditations` (ver docs/sql/meditaciones_nuevas.sql) y vuelve a poner
+  // este bloque. El Ep. 1 se queda mientras tanto con el Mantra AM-ON.
 ]
 
 const S4E6: MeditationClient[] = [

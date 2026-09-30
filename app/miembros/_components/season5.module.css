@@ -831,63 +831,9 @@
   border-color: var(--s5-gold);
 }
 
-/* ── Portal de Ingreso: "Cómo recorrer" (4 tarjetas) ──────────────── */
-.howGrid {
-  margin-top: 2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: clamp(0.9rem, 2vw, 1.3rem);
-}
-.howCard {
-  position: relative;
-  padding: clamp(1.2rem, 2.6vw, 1.7rem);
-  border-radius: 18px;
-  border: 1px solid rgba(167, 139, 202, 0.18);
-  background: linear-gradient(155deg, rgba(20, 22, 48, 0.7), rgba(9, 10, 24, 0.6));
-  transition: transform 0.3s var(--ease-out-quart, ease), border-color 0.3s;
-}
-.howCard:hover { transform: translateY(-3px); border-color: rgba(217, 184, 102, 0.4); }
-.howNum {
-  font-family: var(--font-display, "Orbitron", sans-serif);
-  font-weight: 800;
-  font-size: 1.4rem;
-  background: linear-gradient(180deg, #fff, #d9b866);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.howName {
-  margin: 0.5rem 0 0;
-  font-family: var(--font-display, "Orbitron", sans-serif);
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  color: #fff;
-}
-.howText {
-  margin: 0.6rem 0 0;
-  font-size: 0.92rem;
-  line-height: 1.65;
-  color: #b9bfdd;
-}
-
-/* Acuerdo / bloque de texto ceremonial */
-.creed {
-  margin-top: 1.6rem;
-  padding: clamp(1.6rem, 4vw, 2.6rem);
-  border-radius: 20px;
-  border: 1px solid rgba(217, 184, 102, 0.2);
-  background: linear-gradient(160deg, rgba(109, 74, 155, 0.12), rgba(12, 14, 34, 0.5));
-  text-align: center;
-}
-.creed p {
-  margin: 0 auto 1rem;
-  max-width: 62ch;
-  line-height: 1.85;
-  color: #d3d8ef;
-  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
-}
-.creed p:last-child { margin-bottom: 0; }
+/* Las tarjetas de «Cómo recorrer» y el «Acuerdo de entrada» se retiraron el
+ * 29-09-2026: la ruta pasó a ser una lista desplegable —ver .rutaLista, al
+ * final de este archivo— y el acuerdo se quitó del portal. */
 
 /* Frase central de un portal de integración */
 .portalFrase {
@@ -1450,4 +1396,91 @@
 @keyframes rocketPulse {
   0%, 100% { filter: drop-shadow(0 0 6px rgba(230, 207, 149, 0.7)); }
   50% { filter: drop-shadow(0 0 15px rgba(230, 207, 149, 1)); }
+}
+
+/* ── LA RUTA DEL PORTAL DE INGRESO ─────────────────────────────────────────
+ * Sustituye a .howGrid, que pintaba cinco tarjetas abiertas a la vez. Con la
+ * ruta en dos etapas y ocho pasos, aquello era un muro: lo primero que veía
+ * quien entra por primera vez, y lo último que le apetece leer.
+ *
+ * Aquí solo se leen los títulos, que es lo que hace falta para hacerse una
+ * idea del camino. El detalle está a un toque.
+ */
+.rutaEtapa {
+  margin: 2.2rem 0 0.9rem;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+.rutaEtapa:first-of-type { margin-top: 2rem; }
+
+.rutaLista { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.rutaItem {
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  background: linear-gradient(155deg, rgba(20, 22, 48, 0.7), rgba(9, 10, 24, 0.6));
+  transition: border-color 0.3s;
+}
+.rutaItemOn { border-color: rgba(217, 184, 102, 0.4); }
+
+.rutaBoton {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.rutaNum {
+  flex: 0 0 auto;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 800;
+  font-size: 0.95rem;
+  background: linear-gradient(180deg, #fff, #d9b866);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.rutaName {
+  /* `min-width: 0` para que un título largo pueda encogerse en vez de empujar
+   * al chevron fuera de la caja. En móvil pasaba con «RESPONDE DESDE TU
+   * TERRITORIO». */
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-display, "Orbitron", sans-serif);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.rutaChevron {
+  flex: 0 0 auto;
+  color: #a78bca;
+  transition: transform 0.25s ease;
+}
+.rutaItemOn .rutaChevron { transform: rotate(180deg); }
+
+.rutaTexto {
+  margin: 0;
+  padding: 0 1.1rem 1.05rem 3.05rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #b9bfdd;
+}
+
+@media (max-width: 560px) {
+  .rutaTexto { padding-left: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rutaChevron { transition: none; }
 }

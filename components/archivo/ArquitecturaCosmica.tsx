@@ -83,7 +83,7 @@ export default function ArquitecturaCosmica() {
 
   return (
     <ArchivoShell
-      lead="La realidad material constituye solamente uno de los campos de la existencia, organizada en tres grandes universos contenidos y relacionados entre sí: Material, Mental y Espiritual. Cada uno representa una forma diferente mediante la cual la consciencia puede manifestarse y experimentar."
+      lead="Lo material es solo uno de los campos de la existencia. Hay tres universos contenidos unos en otros —Material, Mental y Espiritual—, y cada uno es una forma distinta de manifestarse la consciencia."
       registro="La escala cambia el campo de percepción; aquello que parece totalidad desde un nivel puede revelar que forma parte de una estructura mucho mayor."
     >
       <ModuleTitle>Los tres universos</ModuleTitle>

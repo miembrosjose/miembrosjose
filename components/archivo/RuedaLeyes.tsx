@@ -69,7 +69,7 @@ export default function RuedaLeyes() {
 
   return (
     <ArchivoShell
-      lead="Las siete leyes describen relaciones que se repiten dentro de la experiencia. Su importancia aparece cuando comenzamos a reconocerlas actuando simultáneamente en nuestras decisiones, vínculos y procesos de creación."
+      lead="Las siete leyes describen relaciones que se repiten en toda experiencia. Importan cuando empiezas a reconocerlas actuando a la vez en tus decisiones y tus vínculos."
       registro="Cuando una ley se comprende profundamente, aquello que antes parecía azar comienza a revelar nuestra participación."
     >
       <ModuleTitle>Rueda de las siete leyes</ModuleTitle>

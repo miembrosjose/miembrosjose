@@ -40,7 +40,7 @@ export default function RedConfederacion() {
 
   return (
     <ArchivoShell
-      lead="La Confederación Galáctica es una red de civilizaciones, mundos y consciencias capaces de participar de una estructura común de coordinación sin perder la identidad de cada planeta. Su arquitectura permite que civilizaciones diferentes participen de decisiones comunes sin perder aquello que las hace distintas."
+      lead="Una red de civilizaciones, mundos y consciencias que participan de decisiones comunes sin perder aquello que las hace distintas."
       registro="El contacto entre civilizaciones comienza cuando la identidad deja de ser una frontera y se convierte en una contribución a la red."
     >
       <ModuleTitle>Parlamento de mundos</ModuleTitle>

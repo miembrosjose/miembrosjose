@@ -17,6 +17,7 @@ import { BANK_CATEGORIES, bankByCategory, type BankQuestion } from "../_lib/ques
 import { SEALS, getUnlockedSeals, SEALS_CHANGED_EVENT } from "../_lib/seals"
 import { JournalPdfExportButton } from "./JournalPdfExportButton"
 import { consumeJournalTab } from "../_lib/journal-registry"
+import { sincronizarBitacora, engancharSincronizacion } from "../_lib/journal-sync"
 
 export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<JournalCategory>("historia")
@@ -27,6 +28,16 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
   useEffect(() => {
     if (!open) return
     migrateLegacyJournal()
+    // ── LA COPIA QUE SOBREVIVE AL DISPOSITIVO ────────────────────────────
+    // Hasta ahora la bitácora vivía solo en este navegador: abrirla desde el
+    // móvil después de escribir en el ordenador la mostraba vacía, y limpiar
+    // los datos del navegador la borraba entera.
+    //
+    // Al abrirla se junta con la del servidor —gana lo más reciente de cada
+    // entrada— y a partir de ahí cada guardado sube solo. Si el servidor no
+    // contesta no pasa nada: se sigue escribiendo en local, como antes.
+    engancharSincronizacion()
+    void sincronizarBitacora().then(refresh)
     const target = consumeJournalTab()
     if (target && BANK_CATEGORIES.some((c) => c.id === target)) setTab(target as JournalCategory)
     refresh()
@@ -70,7 +81,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
     const qs = bankByCategory(cat)
     const answered = qs.filter((q) => readAnswer(q.source, q.prompt).trim()).length
     const extraCount = entriesByCategory(cat).filter((e) => !qs.some((q) => q.id === e.id)).length
-    const showsExtras = cat === "revelaciones" || cat === "numerologia" || cat === "lugares"
+    const showsExtras = cat === "revelaciones" || cat === "numerologia" || cat === "lugares" || cat === "experiencias"
     return { answered: answered + (showsExtras ? extraCount : 0), total: qs.length }
   }, [])
 
@@ -160,9 +171,13 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
             <p className="mb-4 text-[0.78rem] leading-relaxed text-[#8b90b4] [font-family:var(--font-geist-sans)]">{activeCat.hint}</p>
           )}
 
+          {tab === "experiencias" && <AnotarExperiencia onHecho={refresh} />}
+
           {groups.length === 0 && extras.length === 0 ? (
             <p className="py-10 text-center text-sm text-[#8b90b4] [font-family:var(--font-geist-sans)]">
-              Aún no hay registros en esta sección. A medida que avanzas en el camino, tus respuestas aparecerán aquí como parte de tu archivo personal.
+              {tab === "experiencias"
+                ? "Todavía no has anotado nada aquí. Un sueño que se repite, una coincidencia que no parece coincidencia, lo que se movió en una meditación."
+                : "Aún no hay registros en esta sección. A medida que avanzas en el camino, tus respuestas aparecerán aquí como parte de tu archivo personal."}
             </p>
           ) : (
             <div className="flex flex-col gap-6">
@@ -177,7 +192,7 @@ export function GrandJournal({ open, onClose }: { open: boolean; onClose: () => 
               {extras.length > 0 && (
                 <div>
                   <div className="mb-2.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-[#a78bca] [font-family:var(--font-mono)]">
-                    {tab === "revelaciones" ? "Revelaciones guardadas" : tab === "numerologia" ? "Lecturas guardadas" : tab === "lugares" ? "Registros de lugares" : "Otros registros"}
+                    {tab === "revelaciones" ? "Revelaciones guardadas" : tab === "numerologia" ? "Lecturas guardadas" : tab === "lugares" ? "Registros de lugares" : tab === "experiencias" ? "Lo que has anotado" : "Otros registros"}
                   </div>
                   <div className="flex flex-col gap-3">
                     {extras.map((e) => <StoredCard key={e.id} entry={e} />)}
@@ -284,6 +299,113 @@ function StoredCard({ entry }: { entry: JournalEntry }) {
           aria-label="Borrar registro" className="rounded-full p-1.5 text-[#6a6f92] transition-colors hover:bg-[#2a1f24] hover:text-[#e88]">
           <Trash2 size={13} />
         </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Anotar un sueño o una experiencia.
+ *
+ * ── POR QUÉ ESTA PESTAÑA NECESITA ESTO Y LAS DEMÁS NO ──────────────────────
+ * Todas las demás categorías se llenan respondiendo: un portal pregunta y la
+ * respuesta queda guardada. Aquí no hay nadie preguntando. Un sueño llega
+ * cuando llega, y una sincronicidad no espera a que le toque el turno en una
+ * temporada.
+ *
+ * ── POR QUÉ SE ELIGE DE QUÉ TIPO ES ───────────────────────────────────────
+ * Sin etiqueta, la lista acaba siendo veinte textos iguales y no hay forma de
+ * volver a encontrar nada. Con el tipo y la fecha delante, seis meses después
+ * se puede recorrer y ver un patrón, que es justo para lo que sirve tener
+ * esto escrito.
+ *
+ * ── POR QUÉ EL ORIGEN LLEVA LA HORA ───────────────────────────────────────
+ * El id de una entrada se calcula con (origen + pregunta). Si el origen fuera
+ * siempre "libre", dos sueños anotados el mismo día con el mismo tipo tendrían
+ * el mismo id y el segundo PISARÍA al primero.
+ */
+function AnotarExperiencia({ onHecho }: { onHecho: () => void }) {
+  const TIPOS = ["Sueño", "Sincronicidad", "Experiencia de contacto", "Meditación", "Otra cosa"] as const
+  const [abierto, setAbierto] = useState(false)
+  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>("Sueño")
+  const [texto, setTexto] = useState("")
+
+  const guardar = () => {
+    if (!texto.trim()) return
+    const ahora = new Date()
+    const dia = ahora.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })
+    upsertAnswer({
+      category: "experiencias",
+      source: `libre_${ahora.getTime()}`,
+      sourceLabel: "Anotado por ti",
+      prompt: `${tipo} · ${dia}`,
+      answer: texto.trim(),
+      isPrivate: true,
+    })
+    setTexto("")
+    setAbierto(false)
+    onHecho()
+  }
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="mb-4 w-full rounded-xl border border-[#6D4A9B]/40 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#cbb6e6] transition-colors hover:bg-[#6D4A9B]/20 [font-family:var(--font-geist-sans)]"
+      >
+        + Anotar un sueño o una experiencia
+      </button>
+    )
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border border-[#6D4A9B]/40 bg-[#0b0b18] p-4">
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {TIPOS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTipo(t)}
+            className={`rounded-full border px-3 py-1 text-[0.7rem] transition-colors [font-family:var(--font-geist-sans)] ${
+              tipo === t
+                ? "border-[#6D4A9B] bg-[#6D4A9B]/25 text-[#F3F6FA]"
+                : "border-[#251f30] text-[#8b90b4] hover:border-[#6D4A9B]/60"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <textarea
+        autoFocus
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        placeholder="Cuéntalo como lo recuerdes. Nadie más lo va a leer."
+        rows={5}
+        className="w-full resize-y rounded-lg border border-[#251f30] bg-[#050510] px-3 py-2.5 text-sm leading-relaxed text-[#F3F6FA] outline-none focus:border-[#6D4A9B] [font-family:var(--font-geist-sans)]"
+      />
+
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={guardar}
+          disabled={!texto.trim()}
+          className="rounded-lg border border-[#6D4A9B] bg-[#6D4A9B]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#F3F6FA] transition-colors hover:bg-[#6D4A9B]/35 disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+        >
+          Guardar
+        </button>
+        <button
+          type="button"
+          onClick={() => { setTexto(""); setAbierto(false) }}
+          className="px-2 py-2 text-xs text-[#8b90b4] hover:text-[#F3F6FA] [font-family:var(--font-geist-sans)]"
+        >
+          Cancelar
+        </button>
+        <span className="ml-auto inline-flex items-center gap-1 text-[0.68rem] text-[#6a6f92] [font-family:var(--font-geist-sans)]">
+          <Lock size={10} /> Privado
+        </span>
       </div>
     </div>
   )

@@ -18,8 +18,10 @@
 //     una persona sola que para cincuenta, porque responderla ya vale por sí.
 
 import { useCallback, useEffect, useState } from "react"
-import { Activity, ArrowRight, Send, Pencil, Trash2, Heart } from "lucide-react"
+import { Activity, ArrowRight, Send, Pencil, Trash2, Heart, AlertTriangle } from "lucide-react"
 import s from "./pulso.module.css"
+import { useAuth } from "../_lib/auth-context"
+import { ReportModal, type ReportTarget } from "./ReportModal"
 
 type Respuesta = {
   id: string
@@ -69,6 +71,8 @@ type Props = {
 }
 
 export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
+  const { isAdmin } = useAuth()
+  const [denunciando, setDenunciando] = useState<ReportTarget | null>(null)
   const [datos, setDatos] = useState<Datos | null>(null)
   const [cargando, setCargando] = useState(true)
   const [texto, setTexto] = useState("")
@@ -168,6 +172,29 @@ export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
             }
           : d,
       )
+    }
+  }
+
+  /**
+   * Retirar la respuesta de otra persona. Solo administración.
+   *
+   * Se pregunta antes porque esto no se puede deshacer y el texto es de otro:
+   * un clic de más aquí borra algo que su autor no puede recuperar.
+   */
+  const borrarAjena = async (r: Respuesta) => {
+    if (!confirm(`¿Borrar la respuesta de ${r.autor.nombre}? No se puede deshacer.`)) return
+    setEnviando(true)
+    try {
+      const res = await fetch(`/api/pulso?respuestaId=${encodeURIComponent(r.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      await cargar()
+    } catch {
+      alert("No se pudo borrar la respuesta.")
+    } finally {
+      setEnviando(false)
     }
   }
 
@@ -370,11 +397,39 @@ export function PulsoSemana({ compacto = false, onIrALaRed }: Props) {
                   </span>
                 </button>
               )}
+              {!compacto && !r.esMia && (
+                <button
+                  type="button"
+                  className={s.accionMenor}
+                  onClick={() => setDenunciando({ type: "pulso_respuesta", id: r.id })}
+                  title="Denunciar"
+                >
+                  <AlertTriangle size={12} /> Denunciar
+                </button>
+              )}
+              {/* Moderación. El Pulso es la única parte de la Red donde
+                  cualquiera escribe en público, y hasta ahora no había forma
+                  de retirar nada sin entrar a la base de datos a mano. */}
+              {!compacto && isAdmin && (
+                <button
+                  type="button"
+                  className={s.accionMenor}
+                  onClick={() => void borrarAjena(r)}
+                  disabled={enviando}
+                >
+                  <Trash2 size={12} /> Borrar
+                </button>
+              )}
             </article>
           ))}
           </div>
         </div>
       )}
+
+      {/* El mismo modal que usa el foro. No se duplica: las categorías de
+          denuncia y el texto tienen que ser los mismos en toda la Red, o la
+          cola de moderación se llena de motivos que no encajan entre sí. */}
+      <ReportModal target={denunciando} onClose={() => setDenunciando(null)} />
     </section>
   )
 }

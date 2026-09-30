@@ -7,11 +7,11 @@
 // Temporada 4 se resuelve en el carrusel (aquí ya llega abierto).
 
 import { useEffect, useRef, useState } from "react"
+import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { X, ArrowRight } from "lucide-react"
 import styles from "./season5.module.css"
 import u from "./umbral-secciones.module.css"
 import { CosmicField } from "./CosmicField"
-import { openExternal } from "../_lib/url-helpers"
 import { getSiteTextDefault } from "@/lib/site-texts"
 import { ENCUENTROS, FORMACIONES } from "../_lib/umbral-programa"
 
@@ -27,7 +27,6 @@ type UmbralConfig = {
   intro: string
   body: string
   ctaLabel: string
-  ctaUrl: string
   video: string
 }
 
@@ -38,7 +37,6 @@ function readDefaults(): UmbralConfig {
     intro: getSiteTextDefault("umbral.intro"),
     body: getSiteTextDefault("umbral.body"),
     ctaLabel: getSiteTextDefault("umbral.cta_label"),
-    ctaUrl: getSiteTextDefault("umbral.cta_url"),
     video: getSiteTextDefault("umbral.video"),
   }
 }
@@ -67,7 +65,6 @@ export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
           intro: pick("umbral.intro", def.intro),
           body: pick("umbral.body", def.body),
           ctaLabel: pick("umbral.cta_label", def.ctaLabel),
-          ctaUrl: pick("umbral.cta_url", def.ctaUrl),
           video: pick("umbral.video", def.video),
         })
       })
@@ -238,17 +235,138 @@ export function UmbralPortal({ open, onClose, onGoToForo }: Props) {
   )
 }
 
-/** El botón que lleva a la comunidad. Solo aparece si hay enlace configurado. */
+/**
+ * El botón que lleva a la comunidad de preparación.
+ *
+ * ── LO QUE HACÍA ANTES, Y POR QUÉ NO PODÍA SEGUIR ────────────────────────
+ * Abría `umbral.cta_url`: un enlace fijo de WhatsApp guardado en site_texts.
+ * Eso tenía dos problemas, y el segundo es el grave.
+ *
+ * El primero: un enlace permanente no caduca ni distingue a nadie. Quien lo
+ * tuviera entraba, para siempre, aunque cancelara al día siguiente.
+ *
+ * El segundo: `GET /api/site-texts` devuelve TODOS los textos a cualquier
+ * usuario autenticado. El enlace del grupo privado estaba ahí dentro, así que
+ * bastaba con abrir la consola del navegador recién registrado para sacarlo.
+ * La puerta del Umbral era decorativa: el gate se veía, no se aplicaba.
+ *
+ * ── LO QUE HACE AHORA ────────────────────────────────────────────────────
+ * Pide a `telegram-protocols-access` una invitación de cinco minutos emitida
+ * a nombre de esta persona. El enlace no autoriza nada: cuando llegue a
+ * Telegram, el bot vuelve a comprobarlo todo desde cero y compara quién pide
+ * entrar con quién pidió el enlace. Compartirlo no sirve de nada.
+ *
+ * El texto sigue saliendo de `umbral.cta_label`, que es editable. Lo que ya
+ * no se usa —ni se envía al navegador— es la dirección.
+ */
 function Unirse({ cfg, margen }: { cfg: UmbralConfig; margen: string }) {
-  if (!cfg.ctaLabel || !cfg.ctaUrl) return null
+  const [ocupado, setOcupado] = useState(false)
+  const [aviso, setAviso] = useState<string | null>(null)
+
+  if (!cfg.ctaLabel) return null
+
+  const entrar = async () => {
+    if (ocupado) return
+    setAviso(null)
+
+    // La pestaña se abre DENTRO del clic, vacía, y se le pone la dirección
+    // cuando llega. Abrirla después de esperar al servidor la convierte en
+    // una ventana emergente, y el navegador la bloquea.
+    const pestana = window.open("", "_blank")
+    setOcupado(true)
+
+    try {
+      const supabase = getSupabaseBrowser()
+
+      // El token va a mano: `getSupabaseBrowser()` devuelve un cliente nuevo
+      // que todavía no ha leído la sesión de las cookies, así que
+      // `functions.invoke` mandaría la clave anónima y la función vería un
+      // anónimo. Es la misma trampa que ya documenta TelegramFab.
+      const { data: sesion } = await supabase.auth.getSession()
+      const token = sesion.session?.access_token
+      if (!token) throw new Error("No hay sesión activa. Vuelve a entrar y prueba otra vez.")
+
+      const cabeceras = { Authorization: `Bearer ${token}` }
+      const { data, error } = await supabase.functions.invoke("telegram-protocols-access", {
+        headers: cabeceras,
+      })
+      if (error) throw error
+
+      const r = (data ?? {}) as { status?: string; invite_url?: string; telegram_url?: string }
+
+      // Sin Telegram vinculado se reutiliza el camino que ya existe para el
+      // grupo general. No hay un segundo sistema de vinculación: es el mismo.
+      if (r.status === "not_linked") {
+        const { data: enlace, error: fallo } = await supabase.functions.invoke("telegram-link-start", {
+          headers: cabeceras,
+        })
+        if (fallo) throw fallo
+        const url = (enlace as { telegram_url?: string } | null)?.telegram_url
+        if (!url) throw new Error("No llegó ninguna dirección de Telegram.")
+        if (pestana) pestana.location.href = url
+        else window.location.href = url
+        return
+      }
+
+      if (r.status === "already_member") {
+        pestana?.close()
+        setAviso("Ya estás dentro de la comunidad de preparación. Ábrela desde tu Telegram.")
+        return
+      }
+
+      const url = r.invite_url || r.telegram_url
+      if (!url) throw new Error("No llegó ninguna dirección de Telegram.")
+
+      if (pestana) pestana.location.href = url
+      else window.location.href = url
+    } catch (e) {
+      pestana?.close()
+      console.error("[umbral] protocols-access:", e)
+      setAviso(await motivoDelServidor(e))
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   return (
-    <button
-      type="button"
-      className={styles.cta}
-      style={{ margin: margen, borderColor: "var(--s5-gold)" }}
-      onClick={() => openExternal(cfg.ctaUrl)}
-    >
-      {cfg.ctaLabel} <ArrowRight size={15} />
-    </button>
+    <div style={{ margin: margen }}>
+      <button
+        type="button"
+        className={styles.cta}
+        style={{ margin: 0, borderColor: "var(--s5-gold)", opacity: ocupado ? 0.6 : 1 }}
+        onClick={entrar}
+        disabled={ocupado}
+      >
+        {ocupado ? "Abriendo…" : cfg.ctaLabel} <ArrowRight size={15} />
+      </button>
+      {aviso && (
+        <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", lineHeight: 1.5, color: "#cbb9e6" }}>
+          {aviso}
+        </p>
+      )}
+    </div>
   )
+}
+
+/**
+ * El motivo, dicho con las palabras del servidor.
+ *
+ * Un 4xx aquí casi nunca es un fallo: es «todavía no te toca», y el servidor
+ * lo explica. Enseñar un mensaje genérico manda a soporte a gente a la que no
+ * le pasa nada. Los 5xx sí llevan un mensaje corto: el detalle no le sirve a
+ * quien mira, y va al registro.
+ */
+async function motivoDelServidor(e: unknown): Promise<string> {
+  const ctx = (e as { context?: unknown })?.context
+  if (ctx && typeof ctx === "object" && "status" in ctx) {
+    const r = ctx as Response
+    if (r.status >= 400 && r.status < 500) {
+      try {
+        const cuerpo = await r.clone().json()
+        const motivo = (cuerpo as { error?: string })?.error
+        if (motivo) return motivo
+      } catch { /* no venía JSON */ }
+    }
+  }
+  return "No se pudo abrir la comunidad. Inténtalo en un momento."
 }

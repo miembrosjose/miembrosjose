@@ -6,6 +6,65 @@
   max-width: 720px;
   margin: 0 auto;
   padding: 88px 20px 120px;
+  /* `isolation` crea un contexto de apilado propio. Sin él, el z-index -1 de
+     la capa de abajo se escaparía DETRÁS del fondo cósmico del layout y no se
+     vería nada. */
+  position: relative;
+  isolation: isolate;
+}
+
+/* ── LA PRESENCIA DE JOSÉ, DE FONDO ───────────────────────────────────────
+ * La misma foto del banner de Transmisiones, fija mientras se baja por el
+ * artículo. Da color al fondo y mantiene la voz de quien habla presente
+ * durante toda la lectura.
+ *
+ * ── POR QUÉ position: fixed Y NO background-attachment: fixed ────────────
+ * `background-attachment: fixed` es la forma obvia y está rota en iOS desde
+ * hace años: Safari la ignora o la deja temblando al hacer scroll. Una capa
+ * con `position: fixed` hace lo mismo y se comporta igual en todas partes.
+ *
+ * ── POR QUÉ TAN APAGADA ──────────────────────────────────────────────────
+ * Esto va DEBAJO de un texto largo, y un artículo se lee durante minutos.
+ *
+ * Se probó al 32% y quedaba peor: la figura compite con las letras y la
+ * página entera se enturbia. Al 12% se intuye una presencia sin que nada
+ * estorbe, que es justo lo que se pedía. Si alguien vuelve a pensar que «no
+ * se ve», que sepa que subirlo ya se probó y se descartó.
+ *
+ * La máscara la desvanece hacia abajo, que es donde está el grueso de la
+ * lectura: arriba acompaña, abajo desaparece.
+ */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/images/transmisiones-jose.jpg");
+  background-repeat: no-repeat;
+  background-position: center 18%;
+  background-size: cover;
+  opacity: 0.12;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.45) 40%, transparent 78%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.45) 40%, transparent 78%);
+}
+
+/* En pantalla ancha la columna de texto va centrada y estrecha, así que la
+ * foto puede correrse a la derecha y dejarla del todo libre. */
+@media (min-width: 900px) {
+  .page::before {
+    left: 42%;
+    background-position: center 16%;
+    opacity: 0.16;
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 35%, rgba(0,0,0,0.95) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 45%, transparent 82%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 35%, rgba(0,0,0,0.95) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 45%, transparent 82%);
+    mask-composite: intersect;
+  }
 }
 
 .back {

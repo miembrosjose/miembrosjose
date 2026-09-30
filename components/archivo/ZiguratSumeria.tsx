@@ -50,7 +50,7 @@ export default function ZiguratSumeria() {
       guia="Ivika"
       voz="Memoria abierta"
       arco={{ pasos: ARCO_T4, actual: 2 }}
-      lead="Tras la caída de antiguas civilizaciones y la preservación de la memoria en retiros y archivos, parte del conocimiento volvió a emerger en la historia visible a través de Sumeria. En esta etapa, la relación entre cielo, genética, poder, agricultura, ciudad y escritura se vuelve central."
+      lead="Parte del conocimiento guardado en los retiros vuelve a la historia visible por Sumeria, donde cielo, genética, poder, ciudad y escritura quedan anudados."
       registro="En Sumeria la memoria comenzó a escribirse, pero al mismo tiempo el poder aprendió a custodiar el conocimiento y a decidir quién podía acceder a él."
     >
       <ModuleTitle>Zigurat del conocimiento</ModuleTitle>
@@ -153,10 +153,6 @@ export default function ZiguratSumeria() {
           title="El riesgo sumerio"
           text="Conocimiento entregado antes de suficiente consciencia puede traducirse en civilización, pero también en dominación."
         />
-      </Reveal>
-
-      <Reveal>
-        <Flow steps={['CONOCIMIENTO ENTREGADO', 'CIVILIZACIÓN', 'CUSTODIA DEL SABER', 'ACCESO RESTRINGIDO']} />
       </Reveal>
 
       <Reveal>

@@ -1,0 +1,28 @@
+# Configuración de las Edge Functions.
+#
+# ── LO QUE PROTEGE ESTE ARCHIVO ────────────────────────────────────────────
+# `telegram-webhook` está desplegada SIN verificación de JWT, y tiene que
+# seguir así: Telegram no puede mandar un token de Supabase. Se protege por su
+# cuenta, comparando la cabecera X-Telegram-Bot-Api-Secret-Token.
+#
+# Si alguien la redespliega con la verificación puesta, la pasarela de
+# Supabase empieza a devolver 401 a Telegram ANTES de que la función llegue a
+# ejecutarse. El grupo general deja de aceptar a nadie, y en Telegram no se ve
+# ningún error: simplemente no pasa nada.
+#
+# Escrito aquí, deja de depender de acordarse de poner --no-verify-jwt.
+project_id = "kjozrcugsywykpuvuqzu"
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+# Las otras dos SÍ la llevan. La del barrido es la que impide que cualquiera
+# que descubra la dirección pueda vaciar los grupos.
+[functions.telegram-sweep]
+verify_jwt = true
+
+[functions.telegram-protocols-access]
+verify_jwt = true
+
+[functions.telegram-link-start]
+verify_jwt = true

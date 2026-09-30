@@ -28,6 +28,9 @@ export const BANK_CATEGORIES: { id: JournalCategory; label: string; hint: string
   { id: "acciones", label: "Acciones Alquímicas", hint: "Cartas, actos simbólicos, reparación." },
   { id: "revelaciones", label: "Mis Revelaciones", hint: "Lecturas del Revelador de Misión." },
   { id: "numerologia", label: "Numerología Cósmica", hint: "Lecturas de tu código personal." },
+  // Sin preguntas propias: lo que hay aquí lo escribe cada uno cuando le pasa.
+  // Ver el compositor de GrandJournal.
+  { id: "experiencias", label: "Sueños y Experiencias", hint: "Sueños, sincronicidades, contacto, lo que se movió en una meditación." },
 ]
 
 const PORTAL_LABEL: Record<string, { label: string; season: number }> = {

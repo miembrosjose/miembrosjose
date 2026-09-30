@@ -94,7 +94,10 @@
   font-size: 0.75rem;
   letter-spacing: 0.55em;
   text-transform: uppercase;
-  color: var(--accent-red);
+  /* Ver la nota de episodes-drawer.module.css: sobre la portada, el
+   * violeta base no se lee. */
+  color: #cbb6e6;
+  text-shadow: 0 1px 10px rgba(5, 5, 16, 0.95), 0 0 2px rgba(5, 5, 16, 0.8);
   margin-bottom: 0.25rem;
 }
 

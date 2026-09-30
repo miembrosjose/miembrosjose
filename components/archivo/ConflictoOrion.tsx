@@ -7,7 +7,7 @@
 // libertad con riesgo—. El bloque "No todo Orión" es obligatorio: la enseñanza
 // distingue entre los grupos que siguieron la rebelión y el resto.
 
-import ArchivoShell, { Reveal, Flow, KeyBox, TechNote, ModuleTitle } from './ArchivoShell';
+import ArchivoShell, { Reveal, KeyBox, TechNote, ModuleTitle } from './ArchivoShell';
 import { ARCO_T3 } from './t3-arco';
 
 const ESCALADA = ['DESACUERDO', 'DISIDENCIA', 'CONFLICTO', 'GUERRA', 'DERROTA', 'DEPORTACIÓN'];
@@ -17,8 +17,8 @@ export default function ConflictoOrion() {
     <ArchivoShell
       guia="Antarel"
       arco={{ pasos: ARCO_T3, actual: 3 }}
-      lead="Orión y Pléyades fueron enviadas a la Tierra como Guardianes y Vigilantes del proceso humano. El conflicto no comienza con una invasión: comienza con un desacuerdo sobre cuánta libertad podía sostener una humanidad todavía en formación."
-      registro="El conflicto de Orión plantea una pregunta que continúa abierta en toda civilización: cuánto orden puede imponerse antes de que aquello que se intenta proteger pierda precisamente la libertad que debía aprender a utilizar."
+      lead="Orión y Pléyades llegaron como Guardianes del proceso humano. El conflicto no empieza con una invasión, sino con un desacuerdo: cuánta libertad aguantaba una humanidad en formación."
+      registro="Cuánto orden puede imponerse antes de que aquello que se protege pierda justo la libertad que tenía que aprender a usar. La pregunta sigue abierta."
     >
       <ModuleTitle>El punto de ruptura</ModuleTitle>
 
@@ -138,19 +138,11 @@ export default function ConflictoOrion() {
         </div>
       </Reveal>
 
-      {/* Eco humano */}
-      <Reveal>
-        <ModuleTitle>Eco humano</ModuleTitle>
-        <div className="co-echo">
-          <Flow label="Circuito cerrado" steps={['MIEDO', 'CONTROL', 'DEPENDENCIA', 'PÉRDIDA DE AUTONOMÍA']} />
-          <Flow label="Circuito abierto" steps={['RIESGO', 'ELECCIÓN', 'APRENDIZAJE', 'CONSCIENCIA']} />
-        </div>
-      </Reveal>
-
       <Reveal>
         <TechNote label="Lectura">
           No es un conflicto entre bandos, sino entre dos modelos de evolución: uno que confía en el orden
-          impuesto y otro que acepta el riesgo como precio del aprendizaje.
+          impuesto y otro que acepta el riesgo como precio del aprendizaje. El mismo pulso se repite dentro
+          de cada uno, cada vez que el miedo pide control.
         </TechNote>
       </Reveal>
 
@@ -272,8 +264,6 @@ export default function ConflictoOrion() {
           color: var(--aa-gold-soft); margin: 0;
         }
 
-        .co-echo { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
-        .co-echo .aa-flow { margin: 0; }
 
         @media (max-width: 560px) {
           .co-fork { grid-template-columns: 1fr; }
@@ -281,7 +271,6 @@ export default function ConflictoOrion() {
           .co-vs { flex-direction: row; }
           .co-vsLine { width: 22px; height: 1px; }
           .co-vsWord { writing-mode: horizontal-tb; }
-          .co-echo { grid-template-columns: 1fr; }
           .co-stepName { min-width: 88px; font-size: 0.62rem; }
         }
       `}</style>

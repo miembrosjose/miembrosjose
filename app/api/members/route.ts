@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { computeLevel, applyAdminLevelOverride } from "@/lib/xp"
+import { conAccesoActivo } from "@/lib/membresia"
 
 export const dynamic = "force-dynamic"
 
@@ -33,12 +34,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
 
-  const users = (listed?.users || []).filter((u) => {
+  const candidatos = (listed?.users || []).filter((u) => {
     if (!u.email) return false                                              // só com email = miembro real
     const appMeta = (u.app_metadata || {}) as { access_revoked?: boolean }
     if (appMeta.access_revoked === true) return false                       // esconde users com acesso revogado (refund/dispute/manual)
     return true
   })
+
+  // ── SOLO QUIEN SIGUE SIENDO MIEMBRO ───────────────────────────────────
+  // Esto listaba a TODO el que tuviera correo, hubiera cancelado o no. Gente
+  // que ya no puede entrar a la plataforma —y a la que el barrido de Telegram
+  // ya había echado del grupo— seguía apareciendo en «Explorar la Red» con su
+  // ciudad y su botón de mensaje.
+  //
+  // La regla es la misma que la de la puerta, y vive en un solo sitio para que
+  // no vuelva a separarse. Ver lib/membresia.ts.
+  const activos = await conAccesoActivo(admin, candidatos.map((u) => ({ id: u.id, email: u.email })))
+  const users = candidatos.filter((u) => activos.has(u.id))
   const userIds = users.map((u) => u.id)
 
   // XP de todos
