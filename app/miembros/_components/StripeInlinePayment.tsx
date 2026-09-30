@@ -276,10 +276,33 @@ function CheckoutForm({
     }
 
     // 3) Confirma o pagamento — Stripe processa e cobra cartão
+    //
+    // ── POR QUÉ HACE FALTA return_url ─────────────────────────────────────
+    // El PaymentIntent se crea con `automatic_payment_methods`, y en ese modo
+    // Stripe.js EXIGE `confirmParams.return_url`. Da igual que se le pase
+    // `redirect: "if_required"` y que el intento tenga `allow_redirects:
+    // "never"`: la comprobación es previa, y sin esa dirección lanza
+    //
+    //   IntegrationError: the `confirmParams.return_url` argument is required
+    //   when using automatic payment methods
+    //
+    // y NO llega a cobrar nada.
+    //
+    // Faltaba desde que se escribió esto, así que el pago con tarjeta nueva no
+    // funcionó nunca. No se vio porque antes fallaba una cosa anterior: sin la
+    // clave pública, el formulario ni siquiera se dibujaba.
+    //
+    // ── POR QUÉ LA PÁGINA ACTUAL ──────────────────────────────────────────
+    // Con tarjeta no hay redirección —`if_required` la evita— así que esta
+    // dirección no se usa casi nunca. Cuando se use, devuelve a la persona
+    // exactamente a donde estaba, con su compra ya hecha.
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       clientSecret,
       redirect: "if_required",
+      confirmParams: {
+        return_url: typeof window !== "undefined" ? window.location.href : "https://los144000.com/miembros",
+      },
     })
 
     if (confirmError) {
