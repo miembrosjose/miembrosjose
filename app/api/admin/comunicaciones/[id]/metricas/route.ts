@@ -57,6 +57,75 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     }
   }
 
+  // ── SI SALIÓ POR NOTIFICACIÓN, LOS NÚMEROS SON OTROS ────────────────────
+  // Y hay que decir con precisión qué significan, porque la tentación de
+  // presentarlos como los del correo es grande y sería mentir:
+  //
+  //   intentos      dispositivos a los que se habló. Una persona con el
+  //                 teléfono y la tableta son dos.
+  //   aceptados     el servicio de push dijo que sí. NO quiere decir que
+  //                 llegara al teléfono: de ahí en adelante no informa de
+  //                 nada. Nunca se llama «entregado» a esto.
+  //   personas      a cuántas les llegó al menos a un dispositivo.
+  //   tocaron       cuántas lo abrieron. Este sí es un dato nuestro, porque
+  //                 el toque ocurre en nuestro trabajador de servicio.
+  //   retiradas     suscripciones que ya no existen. Se apagan solas.
+  //
+  // No hay «abrieron sin tocar»: nadie informa de si una notificación se miró
+  // en la pantalla de bloqueo. Esa cifra no existe y no se finge.
+  if (c.canal === "push") {
+    const filas: Array<{ user_id: string | null; resultado: string; clic_at: string | null }> = []
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await admin
+        .from("push_envios")
+        .select("user_id, resultado, clic_at")
+        .eq("communication_id", id)
+        .range(desde, desde + 999)
+      if (error) break
+      const lote = (data || []) as typeof filas
+      filas.push(...lote)
+      if (lote.length < 1000) break
+    }
+
+    const personas = new Set<string>()
+    const tocaron = new Set<string>()
+    let aceptados = 0
+    let fallidos = 0
+    let retiradas = 0
+
+    for (const f of filas) {
+      if (f.resultado === "ok") {
+        aceptados++
+        if (f.user_id) personas.add(f.user_id)
+      } else if (f.resultado === "gone") retiradas++
+      else fallidos++
+
+      if (f.clic_at && f.user_id) tocaron.add(f.user_id)
+    }
+
+    const base = personas.size
+    return NextResponse.json({
+      ok: true,
+      estado,
+      canal: "push",
+      push: {
+        intentos: filas.length,
+        aceptados,
+        personas: base,
+        tocaron: tocaron.size,
+        fallidos,
+        retiradas,
+        // Sobre las personas alcanzadas, no sobre los dispositivos: a nadie le
+        // interesa qué porcentaje de pantallas se tocó.
+        tasaToque: base > 0 ? Math.round((tocaron.size / base) * 1000) / 10 : null,
+      },
+      destinatariosPrevistos: c.recipients_estimated,
+      // Sin ni una fila es que el envío no llegó a ocurrir, no que no le
+      // interesara a nadie. Distinguirlo evita una conclusión falsa.
+      sinDatos: filas.length === 0,
+    })
+  }
+
   // ── El recuento ─────────────────────────────────────────────────────────
   // Un `count` por suceso, sin traerse ni una fila. Seis consultas de cabecera
   // frente a traer miles de filas para contarlas en memoria.

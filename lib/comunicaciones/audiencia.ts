@@ -20,6 +20,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { ACHIEVEMENTS } from "@/lib/achievements"
+import { nombrePais } from "@/lib/red/paises"
 import type { Audiencia, Canal, PreferenciaCorreo, TipoComunicacion } from "./tipos"
 import { preferenciaDe } from "./tipos"
 
@@ -33,6 +34,14 @@ export type MotivoExclusion =
   | "sin_ese_rol"
   | "sin_esa_insignia"
   | "no_termino_temporada"
+  | "aun_activo"
+  | "inactivo_hace_mucho"
+  | "sin_senal"
+  | "ya_la_termino"
+  | "no_la_empezo"
+  | "otro_pais"
+  | "otra_ciudad"
+  | "no_en_la_lista"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -58,6 +67,14 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   sin_ese_rol: "No tiene el rol pedido",
   sin_esa_insignia: "No ha desbloqueado esa insignia",
   no_termino_temporada: "Todavía no ha terminado esa temporada",
+  aun_activo: "Ha aparecido hace menos de ese tiempo",
+  inactivo_hace_mucho: "Lleva más tiempo sin aparecer del pedido",
+  sin_senal: "Nunca hemos registrado una señal suya",
+  ya_la_termino: "Ya terminó esa temporada",
+  no_la_empezo: "Todavía no ha empezado esa temporada",
+  otro_pais: "Está en otro país, o no lo ha puesto",
+  otra_ciudad: "Está en otra ciudad, o no la ha puesto",
+  no_en_la_lista: "No está entre las personas elegidas",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -65,6 +82,7 @@ const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
   contenidos: "Nuevos contenidos y transmisiones",
   sesiones: "Sesiones en vivo y activaciones",
   red: "Encuentros y actividad de La Red",
+  recordatorios: "Recordatorios para continuar",
 }
 
 /**
@@ -284,6 +302,79 @@ export const ETIQUETA_ROL: Record<string, string> = {
   instructor: "Instructor",
 }
 
+/**
+ * La última señal de vida de cada miembro.
+ *
+ * ── POR QUÉ UNA FUNCIÓN DE LA BASE Y NO UNA CONSULTA DE AQUÍ ───────────────
+ * Lo que hace falta es un máximo por persona, y la API de tablas no sabe
+ * agrupar: habría que traerse `xp_events` entera —decenas de miles de filas—
+ * para calcular un número por miembro. `actividad_de_miembros()` lo calcula
+ * dentro y devuelve una fila por persona.
+ *
+ * Qué cuenta como señal, y por qué es una sola y no dos, está explicado en
+ * docs/sql/campanas_01_actividad.sql.
+ *
+ * ── SI LA FUNCIÓN NO EXISTE TODAVÍA ────────────────────────────────────────
+ * Se devuelve un mapa vacío y se lanza, porque un filtro de inactividad sin
+ * datos de actividad no da «nadie»: daría «todos», y eso es una campaña de
+ * reactivación mandada a toda La Red. Es mejor que el envío no salga.
+ */
+async function actividadDeTodos(): Promise<Map<string, number>> {
+  const admin = getSupabaseAdmin()
+  const { data, error } = await admin.rpc("actividad_de_miembros")
+
+  if (error) {
+    throw new Error(
+      "No se pudo leer la actividad de los miembros. " +
+      "Si es la primera vez, falta correr docs/sql/campanas_01_actividad.sql. " +
+      `Detalle: ${error.message}`,
+    )
+  }
+
+  const cuando = new Map<string, number>()
+  for (const f of (data || []) as Array<{ user_id: string; ultima_senal: string | null }>) {
+    if (!f.ultima_senal) continue
+    const t = new Date(f.ultima_senal).getTime()
+    if (Number.isFinite(t)) cuando.set(f.user_id, t)
+  }
+  return cuando
+}
+
+/**
+ * Dónde está cada miembro, según lo que él mismo puso.
+ *
+ * No una deducción por la dirección IP: eso dice dónde está el teléfono hoy.
+ *
+ * `show_city` no se mira a propósito. Ese interruptor decide si su ciudad se
+ * ENSEÑA a los demás en el mapa y en el directorio, que es otra cosa: aquí no
+ * se enseña a nadie, se usa para decidir a quién le interesa un encuentro en
+ * su ciudad. Y nada de esto viaja al navegador: lo que sale al panel es un
+ * número.
+ */
+async function ubicacionDeTodos(): Promise<Map<string, { pais: string; ciudad: number | null }>> {
+  const admin = getSupabaseAdmin()
+  const donde = new Map<string, { pais: string; ciudad: number | null }>()
+
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("member_location")
+      .select("user_id, country_code, city_id")
+      .range(desde, desde + 999)
+    if (error) throw new Error(`No se pudo leer la ubicación: ${error.message}`)
+
+    const lote = (data || []) as Array<{ user_id: string; country_code: string; city_id: number | null }>
+    for (const f of lote) {
+      donde.set(f.user_id, {
+        pais: (f.country_code || "").toUpperCase(),
+        ciudad: f.city_id ?? null,
+      })
+    }
+    if (lote.length < 1000) break
+  }
+
+  return donde
+}
+
 /** Cómo se lee esta audiencia en una línea. */
 export function describirAudiencia(a: Audiencia): string {
   const partes: string[] = []
@@ -300,6 +391,27 @@ export function describirAudiencia(a: Audiencia): string {
   }
   if (a.insignias?.length) {
     partes.push("con la insignia " + a.insignias.map((i) => nombreInsignia(i)).join(" o "))
+  }
+  if (a.empezoSinTerminar) {
+    partes.push("que empezaron la Temporada " + a.empezoSinTerminar + " y no la terminaron")
+  }
+  if (a.inactivoDias) {
+    partes.push("sin aparecer desde hace " + a.inactivoDias + " días o más")
+  }
+  if (a.activoDias) {
+    partes.push("que han aparecido en los últimos " + a.activoDias + " días")
+  }
+  if (a.paises?.length) {
+    partes.push("de " + a.paises.map((c) => nombrePais(c)).join(" o "))
+  }
+  if (a.ciudades?.length) {
+    partes.push(a.ciudades.length === 1 ? "de una ciudad concreta" : "de " + a.ciudades.length + " ciudades")
+  }
+  // Las personas nombradas van al principio de la frase, no al final: si
+  // hay una lista, es el dato que manda y lo demás son matices.
+  if (a.personas?.length) {
+    const cuantas = a.personas.length === 1 ? "Una persona" : a.personas.length + " personas elegidas"
+    return partes.length === 0 ? cuantas : cuantas + ", " + partes.join(", ")
   }
   return partes.length === 0
     ? "Todos los miembros activos"
@@ -339,17 +451,49 @@ export async function resolverAudiencia(
   const completadaMin = Number(audiencia.temporadaCompletada)
   const pideCompletada = Number.isFinite(completadaMin) && completadaMin > 0
 
-  const avanceCompleto = (pideTemporada || pideCompletada)
+  // ── EMPEZÓ Y NO TERMINÓ ─────────────────────────────────────────────────
+  // El segmento más útil que tiene la plataforma, y el único que necesita las
+  // dos caras del avance a la vez: haber llegado a esa temporada Y no tenerla
+  // completa.
+  const aMedias = Number(audiencia.empezoSinTerminar)
+  const pideAMedias = Number.isFinite(aMedias) && aMedias > 0
+
+  const diasInactivo = Number(audiencia.inactivoDias)
+  const pideInactivo = Number.isFinite(diasInactivo) && diasInactivo > 0
+  const diasActivo = Number(audiencia.activoDias)
+  const pideActivo = Number.isFinite(diasActivo) && diasActivo > 0
+
+  const paisesPedidos = (audiencia.paises || []).filter(Boolean).map((c) => c.toUpperCase())
+  const pidePais = paisesPedidos.length > 0
+  const ciudadesPedidas = (audiencia.ciudades || []).filter((n) => Number.isFinite(Number(n))).map(Number)
+  const pideCiudad = ciudadesPedidas.length > 0
+
+  const elegidas = new Set((audiencia.personas || []).filter(Boolean))
+  const pidePersonas = elegidas.size > 0
+
+  // El avance se calcula una vez y sirve a los tres filtros que lo usan.
+  const avanceCompleto = (pideTemporada || pideCompletada || pideAMedias)
     ? await avanceDeTodos()
     : { alcanzada: new Map<string, number>(), completadas: new Map<string, Set<number>>() }
 
-  const [, roles, insignias] = await Promise.all([
-    Promise.resolve(null),
+  // ── POR QUÉ ESTOS DOS VAN EN PARALELO Y LOS DE ARRIBA NO ────────────────
+  // Porque son independientes entre sí y cada uno es una ida y vuelta a la
+  // base. Esperar a uno para empezar el otro sería sumar dos esperas donde
+  // cabe una sola.
+  const [actividad, ubicacion, roles, insignias] = await Promise.all([
+    (pideInactivo || pideActivo) ? actividadDeTodos() : Promise.resolve(new Map<string, number>()),
+    (pidePais || pideCiudad) ? ubicacionDeTodos() : Promise.resolve(new Map<string, { pais: string; ciudad: number | null }>()),
     pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
     pideInsignia ? insigniasPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
   ])
   const avance = avanceCompleto.alcanzada
   const completadas = avanceCompleto.completadas
+
+  // El corte en el tiempo se calcula UNA vez, antes del bucle. Dentro sería
+  // un `Date.now()` por miembro, y con mil personas el primero y el último se
+  // medirían contra instantes distintos.
+  const ahoraMs = Date.now()
+  const DIA = 24 * 60 * 60 * 1000
 
   // ── El padrón ───────────────────────────────────────────────────────────
   // Por páginas, porque una tabla puede crecer más que el límite por defecto
@@ -371,10 +515,27 @@ export async function resolverAudiencia(
   // ── Quién ha dicho que no ───────────────────────────────────────────────
   // Solo las filas que EXCLUYEN. Quien no ha tocado nunca sus preferencias no
   // tiene fila, y lo recibe todo: es lo que espera alguien que acaba de entrar.
-  const { data: prefs } = await admin
+  //
+  // ── Y POR QUÉ UN FALLO AQUÍ DETIENE TODO ───────────────────────────
+  // Esta consulta no se podía fallar en silencio, y lo hacía: sin mirar el
+  // error, una tabla inaccesible o una columna que todavía no existe daban
+  // una lista vacía de exclusiones, que no significa "nadie se dio de baja"
+  // sino "no se sabe". Y el envío seguía, a todos.
+  //
+  // Escribirle a quien pidió no recibir nada no se deshace. Ante la duda, no
+  // se envía.
+  const { data: prefs, error: errPrefs } = await admin
     .from("email_preferences")
     .select(`user_id, unsubscribed_all, ${preferencia}`)
     .or(`unsubscribed_all.eq.true,${preferencia}.eq.false`)
+
+  if (errPrefs) {
+    throw new Error(
+      "No se pudieron leer las preferencias de quien se dio de baja, así que " +
+      "el envío no sale. Si la preferencia es nueva, falta correr " +
+      `docs/sql/campanas_02_categorias.sql. Detalle: ${errPrefs.message}`,
+    )
+  }
 
   const bajaTotal = new Set<string>()
   const apagada = new Set<string>()
@@ -390,6 +551,9 @@ export async function resolverAudiencia(
     preferencia_apagada: 0, duplicado: 0,
     no_llego_a_temporada: 0, sin_ese_rol: 0, sin_esa_insignia: 0,
     no_termino_temporada: 0,
+    aun_activo: 0, inactivo_hace_mucho: 0, sin_senal: 0,
+    ya_la_termino: 0, no_la_empezo: 0,
+    otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -408,6 +572,16 @@ export async function resolverAudiencia(
     if (bajaTotal.has(f.id)) { cuenta.baja_total++; continue }
     if (apagada.has(f.id)) { cuenta.preferencia_apagada++; continue }
 
+    // ── LAS PERSONAS ELEGIDAS, PRIMERO ──────────────────────────────────
+    // Si hay una lista, es el filtro que manda: todo lo demás son matices
+    // sobre ella. Y va antes que las preferencias para que el panel diga
+    // «no está entre las elegidas» en vez de «se dio de baja», que explica
+    // otra cosa.
+    if (pidePersonas && !elegidas.has(f.id)) {
+      cuenta.no_en_la_lista++
+      continue
+    }
+
     // Los filtros van DESPUÉS de las preferencias: quien se dio de baja
     // aparece como «se dio de baja» y no como «no tiene el rol», que es lo que
     // de verdad explica por qué no le llega.
@@ -419,6 +593,60 @@ export async function resolverAudiencia(
       cuenta.no_termino_temporada++
       continue
     }
+
+    // ── EMPEZÓ Y NO TERMINÓ ─────────────────────────────────────────────
+    // Dos condiciones, y cada una con su propio motivo: «todavía no la ha
+    // empezado» y «ya la terminó» son dos razones distintas de quedarse
+    // fuera, y verlas separadas en el ensayo es lo que permite entender la
+    // cifra en vez de confiar en ella.
+    if (pideAMedias) {
+      if ((avance.get(f.id) ?? 0) < aMedias) {
+        cuenta.no_la_empezo++
+        continue
+      }
+      if (completadas.get(f.id)?.has(aMedias)) {
+        cuenta.ya_la_termino++
+        continue
+      }
+    }
+
+    // ── EL TIEMPO SIN APARECER ──────────────────────────────────────────
+    // Quien no tiene ninguna señal registrada queda FUERA de los dos
+    // filtros, no dentro del de inactividad. Un nulo no significa «hace
+    // mucho», significa «no lo sabemos», y mandarle un «vuelve» a quien
+    // quizá entró ayer es peor que no mandarle nada.
+    if (pideInactivo || pideActivo) {
+      const senal = actividad.get(f.id)
+      if (senal === undefined) {
+        cuenta.sin_senal++
+        continue
+      }
+      if (pideInactivo && senal > ahoraMs - diasInactivo * DIA) {
+        cuenta.aun_activo++
+        continue
+      }
+      if (pideActivo && senal < ahoraMs - diasActivo * DIA) {
+        cuenta.inactivo_hace_mucho++
+        continue
+      }
+    }
+
+    // ── DÓNDE ESTÁ ──────────────────────────────────────────────────────
+    // Sin fila en `member_location` no hay país ni ciudad, y quien no lo ha
+    // puesto no puede entrar en un filtro geográfico: no es que esté fuera
+    // del país, es que no sabemos dónde está.
+    if (pidePais || pideCiudad) {
+      const donde = ubicacion.get(f.id)
+      if (pidePais && (!donde || !paisesPedidos.includes(donde.pais))) {
+        cuenta.otro_pais++
+        continue
+      }
+      if (pideCiudad && (!donde || donde.ciudad == null || !ciudadesPedidas.includes(donde.ciudad))) {
+        cuenta.otra_ciudad++
+        continue
+      }
+    }
+
     if (pideRol) {
       const suyos = roles.get(f.id)
       if (!suyos || !rolesPedidos.some((r) => suyos.has(r))) {
@@ -481,11 +709,91 @@ export function etiquetaPreferencia(p: PreferenciaCorreo): string {
 }
 
 /**
- * Los filtros que se pueden elegir hoy.
+ * Los países y las ciudades DONDE HAY MIEMBROS, con cuántos hay en cada uno.
  *
- * Solo hay filtros de cosas que la base SABE. Ofrecer «por ciudad» cuando
- * apenas unas pocas personas la han puesto produciría audiencias de tres
- * personas y la sensación de que el sistema está roto.
+ * ── POR QUÉ NO SE OFRECE LA LISTA DE PAÍSES DEL MUNDO ──────────────────────
+ * Porque un filtro que da cero no es un filtro, es una pérdida de tiempo con
+ * forma de opción. Ofrecer «Japón» cuando no hay nadie en Japón obliga a
+ * elegirlo, mirar el ensayo de audiencia, ver un cero y volver atrás.
+ *
+ * Aquí cada opción trae su número al lado. Con eso, elegir «Colombia · 34» es
+ * una decisión informada antes de pulsar nada, y la ciudad —que mucha gente no
+ * ha puesto— se ve enseguida que es un filtro estrecho.
+ *
+ * ── POR QUÉ SOLO LAS CIUDADES CON DOS O MÁS ────────────────────────────────
+ * Una ciudad con un solo miembro es, en la práctica, el nombre de esa persona.
+ * Una lista de cuarenta ciudades de una persona cada una es un directorio
+ * encubierto en un desplegable de administración, y para escribirle a alguien
+ * concreto ya están las personas elegidas.
+ */
+export async function dondeHayMiembros(): Promise<{
+  paises: Array<{ id: string; etiqueta: string; cuantos: number }>
+  ciudades: Array<{ id: number; etiqueta: string; pais: string; cuantos: number }>
+}> {
+  const admin = getSupabaseAdmin()
+
+  const porPais = new Map<string, number>()
+  const porCiudad = new Map<number, number>()
+
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("member_location")
+      .select("country_code, city_id")
+      .range(desde, desde + 999)
+    if (error) break
+
+    const lote = (data || []) as Array<{ country_code: string; city_id: number | null }>
+    for (const f of lote) {
+      const pais = (f.country_code || "").toUpperCase()
+      if (pais) porPais.set(pais, (porPais.get(pais) || 0) + 1)
+      if (f.city_id != null) porCiudad.set(f.city_id, (porCiudad.get(f.city_id) || 0) + 1)
+    }
+    if (lote.length < 1000) break
+  }
+
+  // Los nombres de las ciudades, solo de las que tienen a alguien. Pedir el
+  // catálogo entero serían miles de filas para nombrar veinte.
+  const conGente = [...porCiudad.entries()].filter(([, n]) => n >= 2)
+  const nombres = new Map<number, { nombre: string; pais: string }>()
+
+  if (conGente.length > 0) {
+    const { data } = await admin
+      .from("network_cities")
+      .select("id, name, country_code, admin1")
+      .in("id", conGente.map(([id]) => id))
+
+    for (const c of (data || []) as Array<{ id: number; name: string; country_code: string; admin1: string | null }>) {
+      // La provincia va en el nombre porque hay ciudades homónimas, y dos
+      // «Córdoba» en un desplegable no se pueden distinguir.
+      nombres.set(c.id, {
+        nombre: c.admin1 ? `${c.name} (${c.admin1})` : c.name,
+        pais: (c.country_code || "").toUpperCase(),
+      })
+    }
+  }
+
+  return {
+    paises: [...porPais.entries()]
+      .map(([id, cuantos]) => ({ id, etiqueta: nombrePais(id), cuantos }))
+      .sort((a, b) => b.cuantos - a.cuantos || a.etiqueta.localeCompare(b.etiqueta, "es")),
+    ciudades: conGente
+      .map(([id, cuantos]) => ({
+        id,
+        etiqueta: nombres.get(id)?.nombre ?? `Ciudad ${id}`,
+        pais: nombres.get(id)?.pais ?? "",
+        cuantos,
+      }))
+      .sort((a, b) => b.cuantos - a.cuantos || a.etiqueta.localeCompare(b.etiqueta, "es")),
+  }
+}
+
+/**
+ * Los filtros que se pueden elegir hoy, sin consultar nada.
+ *
+ * Solo hay filtros de cosas que la base SABE. El país y la ciudad no están
+ * aquí porque dependen de quién hay en cada sitio hoy: salen de
+ * `dondeHayMiembros()`, con el recuento al lado, para que elegir uno sea una
+ * decisión informada y no una apuesta que luego hay que deshacer.
  */
 export const FILTROS_DISPONIBLES = {
   temporadas: [1, 2, 3, 4],

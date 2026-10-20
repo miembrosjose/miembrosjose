@@ -206,6 +206,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           url: c.cta_url,
         },
         id,
+        c.type,
       )
 
       // ── CUANDO NO SE HA MANDADO NADA ────────────────────────────────────
@@ -224,14 +225,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         .update({
           status: "sent",
           recipients_estimated: r.alcanzadas,
-          recipients_excluded: resumen.excluidos + r.sinDispositivo + r.noQuieren,
+          recipients_excluded:
+            resumen.excluidos + r.sinDispositivo + r.noQuieren + r.frenadas,
           sent_at: new Date().toISOString(),
           // Si no le llegó a nadie, eso NO es un fallo del envío: es que
           // todavía no hay nadie de esa audiencia con los avisos activados.
           // Se anota para que el panel lo diga, en vez de dejar un «enviada»
           // que no llegó a ninguna parte.
           provider_error: r.alcanzadas === 0
-            ? `No llegó a nadie: ${r.sinDispositivo} sin dispositivo, ${r.noQuieren} lo tienen apagado, ${r.fallidos} fallaron.`
+            ? `No llegó a nadie: ${r.sinDispositivo} sin dispositivo, ${r.noQuieren} lo tienen apagado, `
+              + `${r.frenadas} ya habían recibido avisos de sobra esta semana, ${r.fallidos} fallaron.`
             : null,
         })
         .eq("id", id)
@@ -246,6 +249,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         no_quieren: r.noQuieren,
         fallidos: r.fallidos,
         retiradas: r.retiradas,
+        frenadas: r.frenadas,
         error: r.error ?? null,
       })
 

@@ -46,6 +46,38 @@ export async function GET(req: NextRequest) {
   const auth = await requireAdmin()
   if (!auth.ok) return auth.response
 
+  // ── TRADUCIR IDENTIFICADORES A NOMBRES ──────────────────────────────────
+  // Una audiencia de campaña guarda identificadores, no nombres: si alguien se
+  // cambia el nombre, la campaña sigue dirigida a la misma persona. Pero el
+  // panel tiene que poder ENSEÑAR a quién eligió.
+  //
+  // Esto vive aquí y no en una ruta aparte porque es la misma pregunta —«quién
+  // es esta gente»— con la misma barrera de administración y la misma forma de
+  // respuesta. Una ruta nueva sería el mismo código con otro nombre.
+  const idsPedidos = (req.nextUrl.searchParams.get("ids") || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter((x) => /^[0-9a-f-]{36}$/i.test(x))
+    .slice(0, 100)
+
+  if (idsPedidos.length > 0) {
+    const { data } = await getSupabaseAdmin()
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", idsPedidos)
+    return NextResponse.json({
+      miembros: ((data || []) as Array<{ id: string; full_name: string | null; email: string | null }>)
+        .map((f) => ({
+          id: f.id,
+          // Sin nombre se usa el correo, y sin correo el identificador
+          // recortado. Feo, pero nunca una pastilla vacía en el panel.
+          full_name: f.full_name || f.email || f.id.slice(0, 8),
+          username: null,
+          email: f.email,
+        })),
+    })
+  }
+
   const q = (req.nextUrl.searchParams.get("q") || "").trim()
   if (q.length < 2) return NextResponse.json({ miembros: [] })
 

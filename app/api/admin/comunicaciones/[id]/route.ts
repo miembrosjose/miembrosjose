@@ -56,19 +56,44 @@ function revisarAudiencia(v: unknown): string | null {
     kind?: string
     temporadaMin?: unknown
     temporadaCompletada?: unknown
+    empezoSinTerminar?: unknown
     roles?: unknown
     insignias?: unknown
+    inactivoDias?: unknown
+    activoDias?: unknown
+    paises?: unknown
+    ciudades?: unknown
+    personas?: unknown
   } | null
   if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
 
-  if (a.temporadaMin != null) {
-    const n = Number(a.temporadaMin)
-    if (!Number.isInteger(n) || n < 1 || n > 4) return "Esa temporada no existe"
+  const temporada = (x: unknown): boolean => {
+    const n = Number(x)
+    return Number.isInteger(n) && n >= 1 && n <= 4
   }
 
-  if (a.temporadaCompletada != null) {
-    const n = Number(a.temporadaCompletada)
-    if (!Number.isInteger(n) || n < 1 || n > 4) return "Esa temporada no existe"
+  if (a.temporadaMin != null && !temporada(a.temporadaMin)) return "Esa temporada no existe"
+  if (a.temporadaCompletada != null && !temporada(a.temporadaCompletada)) return "Esa temporada no existe"
+  if (a.empezoSinTerminar != null && !temporada(a.empezoSinTerminar)) return "Esa temporada no existe"
+
+  // ── POR QUÉ SE ACOTAN LOS DÍAS ────────────────────────────────────────────
+  // Un cero sería «sin aparecer desde hace cero días», que es todo el mundo:
+  // una campaña de reactivación mandada a La Red entera. Y un número
+  // disparatado deja una audiencia vacía sin decir por qué.
+  const dias = (x: unknown): boolean => {
+    const n = Number(x)
+    return Number.isInteger(n) && n >= 1 && n <= 3650
+  }
+  if (a.inactivoDias != null && !dias(a.inactivoDias)) {
+    return "Los días de inactividad tienen que ser un número entre 1 y 3650"
+  }
+  if (a.activoDias != null && !dias(a.activoDias)) {
+    return "Los días de actividad tienen que ser un número entre 1 y 3650"
+  }
+  // Pedir las dos cosas a la vez es pedir a quien no apareció en treinta días
+  // y sí apareció en siete. Siempre da cero, y el cero no explica nada.
+  if (a.inactivoDias != null && a.activoDias != null) {
+    return "No se puede filtrar por inactividad y por actividad a la vez: no hay nadie que cumpla las dos"
   }
 
   if (a.roles != null) {
@@ -85,6 +110,63 @@ function revisarAudiencia(v: unknown): string | null {
     }
   }
 
+  if (a.paises != null) {
+    if (!Array.isArray(a.paises)) return "Los países tienen que ser una lista"
+    // Solo la forma: dos letras. Que ese país tenga miembros o no lo dice el
+    // ensayo de audiencia, que es donde hay que mirarlo.
+    if (a.paises.some((c) => typeof c !== "string" || !/^[A-Za-z]{2}$/.test(c))) {
+      return "Hay un país que no es un código de dos letras"
+    }
+  }
+
+  if (a.ciudades != null) {
+    if (!Array.isArray(a.ciudades)) return "Las ciudades tienen que ser una lista"
+    if (a.ciudades.some((n) => !Number.isInteger(Number(n)) || Number(n) <= 0)) {
+      return "Hay una ciudad que no es válida"
+    }
+  }
+
+  // ── LAS PERSONAS SE COMPRUEBAN DE VERDAD ──────────────────────────────────
+  // Un identificador inventado aquí no ampliaría nada —no existe, así que no
+  // recibiría nada— pero dejaría una audiencia que dice «3 personas elegidas»
+  // y le llega a dos, sin explicar a quién falta. Se comprueba que existan.
+  if (a.personas != null) {
+    if (!Array.isArray(a.personas)) return "Las personas tienen que ser una lista"
+    if (a.personas.length === 0) return null
+    if (a.personas.length > MAX_PERSONAS) {
+      return `Como mucho ${MAX_PERSONAS} personas elegidas una por una. Para más, usa los filtros.`
+    }
+    if (a.personas.some((p) => typeof p !== "string" || !/^[0-9a-f-]{36}$/i.test(p))) {
+      return "Hay un identificador de persona que no es válido"
+    }
+  }
+
+  return null
+}
+
+/**
+ * Cuántas personas se pueden nombrar una por una.
+ *
+ * No es un límite técnico: es que una lista de doscientos nombres elegidos a
+ * mano no es una lista, es un filtro mal hecho. Para eso están los demás.
+ */
+const MAX_PERSONAS = 50
+
+/** Que las personas elegidas existan de verdad. */
+async function personasQueExisten(ids: string[]): Promise<string | null> {
+  if (ids.length === 0) return null
+  const { data, error } = await getSupabaseAdmin()
+    .from("profiles")
+    .select("id")
+    .in("id", ids)
+  if (error) return "No se pudo comprobar la lista de personas"
+  const halladas = new Set((data || []).map((f) => (f as { id: string }).id))
+  const faltan = ids.filter((i) => !halladas.has(i))
+  if (faltan.length > 0) {
+    return faltan.length === 1
+      ? "Una de las personas elegidas ya no existe"
+      : `${faltan.length} de las personas elegidas ya no existen`
+  }
   return null
 }
 
@@ -144,6 +226,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if ("audience" in cambios) {
     const problema = revisarAudiencia(cambios.audience)
     if (problema) return NextResponse.json({ error: problema }, { status: 400 })
+
+    // Esta comprobación va aparte porque pregunta a la base, y lo de arriba
+    // no pregunta nada. Solo se hace si hay una lista: en el caso normal
+    // —audiencia por filtros— no cuesta ni una consulta.
+    const nombradas = (cambios.audience as { personas?: unknown } | null)?.personas
+    if (Array.isArray(nombradas) && nombradas.length > 0) {
+      const falta = await personasQueExisten(nombradas as string[])
+      if (falta) return NextResponse.json({ error: falta }, { status: 400 })
+    }
   }
 
   if (Object.keys(cambios).length === 0) {

@@ -35,6 +35,27 @@ export async function POST() {
     return NextResponse.json({ ok: true, days: meta.unique_login_days || 0, incremented: false })
   }
 
+  // ── LA SEÑAL DE VIDA, DONDE SÍ SE PUEDE CONSULTAR ──────────────────────
+  // `last_login_date` vive en los metadatos de la cuenta, y eso no se puede
+  // consultar en masa: para contar a los inactivos habría que recorrer todas
+  // las cuentas de cien en cien. La misma fecha va también a una columna de
+  // `profiles`, que sí es una consulta con índice.
+  //
+  // Va aquí dentro y no antes del corte de arriba a propósito: una escritura
+  // al día por persona, igual que el contador. Para ventanas de siete, catorce
+  // o treinta días, la hora exacta no cambia nada.
+  //
+  // Si falla, no se interrumpe el resto: perder una señal es una campaña de
+  // reactivación algo menos precisa; abortar aquí es perder los XP del día.
+  const admin = getSupabaseAdmin()
+  try {
+    await admin.from("profiles")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("id", user.id)
+  } catch (e) {
+    console.warn("[login-ping] last_seen_at:", e instanceof Error ? e.message : e)
+  }
+
   const newDays = (meta.unique_login_days || 0) + 1
   const { error } = await supabase.auth.updateUser({
     data: {
@@ -48,7 +69,6 @@ export async function POST() {
   }
 
   // +50 XP pelo 1º acesso do dia. Server-side via service_role pra bypassar RLS.
-  const admin = getSupabaseAdmin()
   try {
     await admin.rpc("apply_xp_delta", {
       p_user_id: user.id,

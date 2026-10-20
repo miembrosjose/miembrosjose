@@ -127,6 +127,26 @@ self.addEventListener("notificationclick", (event) => {
     (event.notification.data && event.notification.data.url) || "/miembros",
   );
 
+  // ── APUNTAR EL TOQUE, SIN HACER ESPERAR A NADIE ──────────────────────────
+  // Es el único dato real que hay después de un envío: el servicio de push dice
+  // "aceptado" y de ahí en adelante no informa de nada.
+  //
+  // Va sin `await` dentro del flujo de abrir la ventana a propósito: lo que la
+  // persona ha pedido es que se abra la pantalla, y una estadística no puede
+  // retrasar eso ni fallar en su nombre. Si no hay sesión o la red falla, se
+  // pierde el apunte y no pasa nada más.
+  const campana = event.notification.data && event.notification.data.id;
+  if (campana) {
+    event.waitUntil(
+      fetch("/api/push/clic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: campana }),
+      }).catch(() => {}),
+    );
+  }
+
   event.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({

@@ -219,6 +219,7 @@ type PrefsPush = {
   vista_previa: boolean
   logros: boolean
   comunicados: boolean
+  recordatorios: boolean
 }
 
 function QuePuedeLlegar() {
@@ -239,6 +240,7 @@ function QuePuedeLlegar() {
             vista_previa: p.vista_previa !== false,
             logros: p.logros !== false,
             comunicados: p.comunicados !== false,
+            recordatorios: p.recordatorios !== false,
           })
         }
       })
@@ -298,6 +300,18 @@ function QuePuedeLlegar() {
         nota="Lo que José manda a La Red: un encuentro, una transmisión"
         activo={prefs.comunicados}
         onCambio={(v) => void cambiar("comunicados", v)}
+        deshabilitado={guardando}
+      />
+      {/* ── POR QUÉ ESTE VA APARTE DE LOS COMUNICADOS ─────────────────────
+          Un comunicado cuenta algo que ha pasado. Un recordatorio no cuenta
+          nada nuevo: insiste. Si fueran el mismo interruptor, quien no quiere
+          que le insistan tendría que renunciar también a enterarse de un
+          encuentro, y lo que acabaría haciendo es apagarlo todo. */}
+      <Linea
+        etiqueta="Recordatorios"
+        nota="Para continuar algo a medias, o si llevas tiempo sin aparecer"
+        activo={prefs.recordatorios}
+        onCambio={(v) => void cambiar("recordatorios", v)}
         deshabilitado={guardando}
       />
     </div>

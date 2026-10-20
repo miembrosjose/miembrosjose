@@ -1,7 +1,7 @@
 // API — qué correos quiere recibir cada miembro.
 //
 //   GET  /api/profile/email-prefs
-//   POST /api/profile/email-prefs   { novedades?, contenidos?, sesiones?, red?, unsubscribed_all? }
+//   POST /api/profile/email-prefs   { novedades?, contenidos?, sesiones?, red?, recordatorios?, unsubscribed_all? }
 //
 // ── ESTO NO ES notification-prefs ──────────────────────────────────────────
 // Aquella ruta gobierna la CAMPANA de dentro de la plataforma: quién responde
@@ -24,7 +24,7 @@ import { PREFERENCIAS_POR_DEFECTO, type PreferenciasCorreo } from "@/lib/comunic
 
 export const dynamic = "force-dynamic"
 
-const CAMPOS = ["novedades", "contenidos", "sesiones", "red", "unsubscribed_all"] as const
+const CAMPOS = ["novedades", "contenidos", "sesiones", "red", "recordatorios", "unsubscribed_all"] as const
 
 /**
  * Lo que se enseña en el perfil, con las mismas palabras que usa el panel al
@@ -55,7 +55,46 @@ const FAMILIAS = [
     titulo: "Encuentros y actividad de La Red",
     descripcion: "Encuentros y lo que se mueve en la comunidad.",
   },
+  // ── POR QUÉ ESTA FAMILIA EXISTE APARTE ──────────────────────────────
+  // Las otras cuatro responden a algo que la persona está siguiendo: un
+  // episodio de su temporada, una sesión a la que va. Un recordatorio no
+  // responde a nada suyo: es una decisión nuestra de insistirle para que
+  // vuelva.
+  //
+  // Sin su propio interruptor, quien no quiere que le insistan tendría que
+  // apagar también los avisos de las sesiones, y lo que acabaría haciendo
+  // es darse de baja de todo.
+  {
+    id: "recordatorios" as const,
+    titulo: "Recordatorios para continuar",
+    descripcion: "Si dejaste algo a medias, o si llevas tiempo sin aparecer.",
+  },
 ]
+
+/**
+ * Las columnas que se leen, y la vuelta atrás si una todavía no existe.
+ *
+ * ── POR QUÉ ESTO NO ES PARANOIA ────────────────────────────────────────────
+ * El código se despliega con un empujón a `main`, y el SQL lo corre una
+ * persona a mano en Supabase. Entre las dos cosas hay un hueco, y a veces son
+ * horas o días.
+ *
+ * Sin esta vuelta atrás, durante ese hueco la pantalla de preferencias de
+ * TODOS los miembros devolvería un error: la consulta pide una columna que
+ * aún no está. Nadie podría cambiar nada, y lo que se vería es que la
+ * plataforma se rompió — no que falta un paso.
+ *
+ * Es el mismo patrón que usa /api/notifications con `source_insignia_id`, y
+ * por la misma razón. Cuando la columna lleve tiempo puesta, esto se puede
+ * borrar y quedarse con la lista de arriba.
+ */
+const COLUMNAS = "novedades, contenidos, sesiones, red, recordatorios, unsubscribed_all"
+const COLUMNAS_ANTES = "novedades, contenidos, sesiones, red, unsubscribed_all"
+
+/** ¿Es el error de una columna que no existe, y no otra cosa? */
+function faltaLaColumna(mensaje: string | undefined): boolean {
+  return /recordatorios|column|schema cache/i.test(mensaje || "")
+}
 
 export async function GET() {
   const supabase = await getSupabaseServer()
@@ -65,14 +104,28 @@ export async function GET() {
   // Con la sesión de quien pregunta, no con la clave de servicio: la policy de
   // fila propia es la que garantiza que nadie lea las de otro, y usarla aquí es
   // la forma de comprobar que funciona.
-  const { data } = await supabase
+  const leer = (columnas: string) => supabase
     .from("email_preferences")
-    .select("novedades, contenidos, sesiones, red, unsubscribed_all")
+    .select(columnas)
     .eq("user_id", user.id)
     .maybeSingle()
 
+  let { data, error } = await leer(COLUMNAS)
+  if (error && faltaLaColumna(error.message)) {
+    ;({ data, error } = await leer(COLUMNAS_ANTES))
+  }
+  if (error) {
+    console.error("[email-prefs] leer:", error.message)
+    return NextResponse.json({ error: "No se pudieron leer las preferencias" }, { status: 500 })
+  }
+
   // Sin fila, todo encendido. Quien acaba de entrar no ha dicho que no a nada.
-  const prefs: PreferenciasCorreo = { ...PREFERENCIAS_POR_DEFECTO, ...(data || {}) }
+  // Y si la columna de los recordatorios todavía no existe, el valor por
+  // defecto la rellena encendida, que es lo correcto: nadie la ha apagado.
+  // El `select` con una cadena variable no deja inferir la forma de la fila,
+  // así que se afirma: un registro de banderas, que es lo que la tabla tiene.
+  const fila = (data || {}) as Partial<PreferenciasCorreo>
+  const prefs: PreferenciasCorreo = { ...PREFERENCIAS_POR_DEFECTO, ...fila }
 
   return NextResponse.json({ ok: true, prefs, familias: FAMILIAS })
 }
@@ -101,23 +154,42 @@ export async function POST(req: NextRequest) {
     cambios.unsubscribed_at = cambios.unsubscribed_all ? new Date().toISOString() : null
   }
 
-  const { error } = await supabase
+  const guardar = (c: Record<string, unknown>) => supabase
     .from("email_preferences")
-    .upsert({ user_id: user.id, ...cambios }, { onConflict: "user_id" })
+    .upsert({ user_id: user.id, ...c }, { onConflict: "user_id" })
+
+  let { error } = await guardar(cambios)
+  if (error && faltaLaColumna(error.message)) {
+    // Se guarda lo demás y se dice que el recordatorio no se pudo. Tirar el
+    // cambio entero porque falta UNA columna significa que quien quiso
+    // apagar las novedades tampoco lo consigue, y eso sí importa.
+    const { recordatorios, ...resto } = cambios
+    void recordatorios
+    if (Object.keys(resto).length > 0) {
+      ;({ error } = await guardar(resto))
+    } else {
+      error = null
+    }
+  }
 
   if (error) {
     console.error("[email-prefs] guardar:", error.message)
     return NextResponse.json({ error: "No se pudo guardar" }, { status: 500 })
   }
 
-  const { data } = await supabase
+  const leer = (columnas: string) => supabase
     .from("email_preferences")
-    .select("novedades, contenidos, sesiones, red, unsubscribed_all")
+    .select(columnas)
     .eq("user_id", user.id)
     .maybeSingle()
 
+  let { data, error: errLeer } = await leer(COLUMNAS)
+  if (errLeer && faltaLaColumna(errLeer.message)) {
+    ;({ data } = await leer(COLUMNAS_ANTES))
+  }
+
   return NextResponse.json({
     ok: true,
-    prefs: { ...PREFERENCIAS_POR_DEFECTO, ...(data || {}) },
+    prefs: { ...PREFERENCIAS_POR_DEFECTO, ...((data || {}) as Partial<PreferenciasCorreo>) },
   })
 }

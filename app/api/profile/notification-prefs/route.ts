@@ -56,8 +56,21 @@ export type NotificationPrefs = {
     vista_previa: boolean
     /** Insignias y subidas de grado. */
     logros: boolean
-    /** Comunicados de la administración. */
+    /**
+     * Comunicados de la administración: un encuentro, una transmisión, algo
+     * nuevo que se abre.
+     */
     comunicados: boolean
+    /**
+     * Recordatorios para continuar o para volver.
+     *
+     * Aparte de `comunicados` a propósito. Un comunicado cuenta algo que
+     * ha pasado; un recordatorio no cuenta nada nuevo, solo insiste. Quien
+     * no quiere que le insistan tendría que renunciar también a enterarse de
+     * un encuentro si fueran el mismo interruptor, y lo que acabaría
+     * haciendo es apagarlo todo.
+     */
+    recordatorios: boolean
   }
 }
 
@@ -87,6 +100,7 @@ export const DEFAULT_PREFS: NotificationPrefs = {
     vista_previa: true,
     logros: true,
     comunicados: true,
+    recordatorios: true,
   },
 }
 

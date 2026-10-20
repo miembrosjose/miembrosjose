@@ -29,6 +29,9 @@ import {
   Undo2, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
+// La única cosa del servidor que se importa aquí: no toca la base, es un mapa
+// de países y una cuenta de horas. Tener dos copias sería tener dos verdades.
+import { avisoDeHora, type AvisoDeHora } from "@/lib/comunicaciones/horas"
 
 // ── Vocabulario, duplicado a propósito ─────────────────────────────────────
 // El servidor tiene el suyo en lib/comunicaciones/tipos.ts. Importarlo aquí
@@ -42,6 +45,9 @@ const TIPOS = [
   { id: "encuentro", nombre: "Encuentro", desc: "Un encuentro de La Red.", fecha: true },
   { id: "novedades", nombre: "Novedades de La Red", desc: "Lo que está ocurriendo en la comunidad.", fecha: false },
   { id: "especial", nombre: "Comunicación especial", desc: "Un mensaje que no encaja en los demás.", fecha: false },
+  { id: "lanzamiento", nombre: "Próximo lanzamiento", desc: "Algo que estará disponible pronto. Se anuncia antes de abrirlo.", fecha: false },
+  { id: "recursos", nombre: "Nuevos recursos", desc: "Guías, meditaciones, materiales y herramientas de preparación.", fecha: false },
+  { id: "recordatorio", nombre: "Recordatorio", desc: "Para quien dejó algo a medias o lleva tiempo sin aparecer.", fecha: false },
 ] as const
 
 const ESTADOS: Record<string, { etiqueta: string; cls: string }> = {
@@ -73,8 +79,18 @@ type Audiencia = {
   kind: "todos"
   temporadaMin?: number | null
   temporadaCompletada?: number | null
+  /** Empezó esa temporada y no la terminó. El segmento de la continuidad. */
+  empezoSinTerminar?: number | null
   roles?: string[] | null
   insignias?: string[] | null
+  /** Sin señales de vida desde hace estos días o más. */
+  inactivoDias?: number | null
+  /** Lo contrario: que haya aparecido en los últimos días. */
+  activoDias?: number | null
+  paises?: string[] | null
+  ciudades?: number[] | null
+  /** Nombradas una por una. Se cruza con los demás filtros, no los sustituye. */
+  personas?: string[] | null
 }
 
 /** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
@@ -83,6 +99,11 @@ type Filtros = {
   roles: Array<{ id: string; etiqueta: string }>
   insignias: Array<{ grupo: string; items: Array<{ id: string; etiqueta: string }> }>
   total_insignias: number
+  /** Los tramos de tiempo que se ofrecen, con su nombre en palabras. */
+  tramos_dias?: Array<{ dias: number; etiqueta: string }>
+  /** Solo donde hay gente, con cuánta hay. Un filtro que da cero no se ofrece. */
+  paises?: Array<{ id: string; etiqueta: string; cuantos: number }>
+  ciudades?: Array<{ id: number; etiqueta: string; pais: string; cuantos: number }>
 }
 
 const ROLES = [
@@ -737,17 +758,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
           a cuántos teléfonos llegó, que lo guarda la propia fila. */}
       {c.status === "sent" && c.canal !== "push" && <Resultados id={id} previstos={c.recipients_estimated} />}
       {c.status === "sent" && c.canal === "push" && (
-        <section className="border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
-          <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">Resultados</h3>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <Metrica etiqueta="Les llegó" valor={c.recipients_estimated ?? 0} />
-            <Metrica etiqueta="Fuera" valor={c.recipients_excluded ?? 0} />
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-[#6a6a7a]">
-            «Fuera» son quienes no tenían ningún dispositivo con los avisos
-            activados, más quienes los tienen apagados para esta clase de cosas.
-          </p>
-        </section>
+        <ResultadosPush id={id} previstos={c.recipients_estimated} />
       )}
 
       {/* ── EL LAYOUT ───────────────────────────────────────────────────────
@@ -1158,19 +1169,41 @@ function Audiencias({
     })()
   }, [])
 
+  // Se manda la audiencia ENTERA en cada cambio, no solo lo que cambió.
+  // El guardado junta campos de distintos tecleos en una sola petición, y un
+  // parcial haría que marcar un país borrara el rol elegido medio segundo
+  // antes.
   const cambiar = (parcial: Partial<Audiencia>) =>
     editar("audience", {
       kind: "todos",
       temporadaMin: a.temporadaMin ?? null,
       temporadaCompletada: a.temporadaCompletada ?? null,
+      empezoSinTerminar: a.empezoSinTerminar ?? null,
       roles: a.roles ?? null,
       insignias: a.insignias ?? null,
+      inactivoDias: a.inactivoDias ?? null,
+      activoDias: a.activoDias ?? null,
+      paises: a.paises ?? null,
+      ciudades: a.ciudades ?? null,
+      personas: a.personas ?? null,
       ...parcial,
     })
 
   const alternarRol = (id: string) => {
     const nuevos = roles.includes(id) ? roles.filter((r) => r !== id) : [...roles, id]
     cambiar({ roles: nuevos.length > 0 ? nuevos : null })
+  }
+
+  const alternarPais = (id: string) => {
+    const ya = a.paises ?? []
+    const nuevos = ya.includes(id) ? ya.filter((x) => x !== id) : [...ya, id]
+    cambiar({ paises: nuevos.length > 0 ? nuevos : null })
+  }
+
+  const alternarCiudad = (id: number) => {
+    const ya = a.ciudades ?? []
+    const nuevas = ya.includes(id) ? ya.filter((x) => x !== id) : [...ya, id]
+    cambiar({ ciudades: nuevas.length > 0 ? nuevas : null })
   }
 
   const alternarInsignia = (id: string) => {
@@ -1247,6 +1280,137 @@ function Audiencias({
           de terminarla dirían cosas distintas de la misma persona.
         </p>
       </div>
+
+      {/* ── EMPEZÓ Y LO DEJÓ ───────────────────────────────────────────────
+          El segmento más útil que tiene la plataforma, y el que no se puede
+          construir con los dos de arriba: «llegó a la 3» incluye a quien la
+          terminó, y los filtros de esta pantalla solo estrechan — no hay forma
+          de decir «y que NO la haya terminado». Por eso tiene su propia fila. */}
+      <div>
+        <label className={labelCls}>Por preparación a medias</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Quien <strong className="text-[#8a8fa8]">empezó</strong> una temporada y no la ha
+          terminado. Es a quien tiene sentido decirle «continúa donde lo dejaste».
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla activa={!a.empezoSinTerminar} onClick={() => cambiar({ empezoSinTerminar: null })} desactivada={!editable}>
+            Da igual
+          </Pastilla>
+          {[1, 2, 3, 4].map((n) => (
+            <Pastilla
+              key={n}
+              activa={a.empezoSinTerminar === n}
+              onClick={() => cambiar({ empezoSinTerminar: n })}
+              desactivada={!editable}
+            >
+              Dejó la {n} a medias
+            </Pastilla>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CUÁNTO LLEVA SIN APARECER ──────────────────────────────────────
+          Lo que hace posible una campaña de reactivación. Las dos direcciones
+          se excluyen a propósito: pedir «sin aparecer en 30 días» y «apareció
+          en los últimos 7» a la vez da siempre cero, y un cero sin explicación
+          parece que la herramienta está rota. */}
+      <div>
+        <label className={labelCls}>Por tiempo sin aparecer</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Cuenta como aparecer tanto entrar en la plataforma como hacer algo en ella: un
+          comentario, un capítulo, un corazón. Lo más reciente de las dos cosas.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla
+            activa={!a.inactivoDias && !a.activoDias}
+            onClick={() => cambiar({ inactivoDias: null, activoDias: null })}
+            desactivada={!editable}
+          >
+            Da igual
+          </Pastilla>
+          {(filtros?.tramos_dias ?? TRAMOS).map((t) => (
+            <Pastilla
+              key={`in-${t.dias}`}
+              activa={a.inactivoDias === t.dias}
+              onClick={() => cambiar({ inactivoDias: t.dias, activoDias: null })}
+              desactivada={!editable}
+            >
+              Sin aparecer {t.etiqueta}
+            </Pastilla>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(filtros?.tramos_dias ?? TRAMOS).slice(0, 3).map((t) => (
+            <Pastilla
+              key={`ac-${t.dias}`}
+              activa={a.activoDias === t.dias}
+              onClick={() => cambiar({ activoDias: t.dias, inactivoDias: null })}
+              desactivada={!editable}
+            >
+              Activos en {t.etiqueta}
+            </Pastilla>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+          Quien no tiene ninguna señal registrada queda <strong className="text-[#8a8fa8]">fuera</strong> de
+          los dos. No sabemos cuándo apareció, y mandarle un «vuelve» a quien quizá entró
+          ayer es peor que no mandarle nada.
+        </p>
+      </div>
+
+      {/* ── DÓNDE ESTÁ ─────────────────────────────────────────────────────
+          Solo se ofrecen los sitios donde hay gente, con el recuento al lado:
+          un filtro que da cero no es un filtro, es una opción que obliga a
+          elegirla, mirar el ensayo y volver atrás. */}
+      {(filtros?.paises?.length ?? 0) > 0 && (
+        <div>
+          <label className={labelCls}>Por país</label>
+          <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+            Según lo que cada miembro puso al entrar en La Red. El número es cuánta gente
+            hay en cada sitio.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(filtros?.paises ?? []).map((p) => (
+              <Pastilla
+                key={p.id}
+                activa={(a.paises ?? []).includes(p.id)}
+                onClick={() => alternarPais(p.id)}
+                desactivada={!editable}
+              >
+                {p.etiqueta} <span className="opacity-50">{p.cuantos}</span>
+              </Pastilla>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(filtros?.ciudades?.length ?? 0) > 0 && (
+        <div>
+          <label className={labelCls}>Por ciudad</label>
+          <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+            Solo las ciudades con dos o más miembros. La ciudad es opcional, así que este
+            filtro estrecha mucho: míralo en el ensayo antes de enviar.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(filtros?.ciudades ?? []).map((ciu) => (
+              <Pastilla
+                key={ciu.id}
+                activa={(a.ciudades ?? []).includes(ciu.id)}
+                onClick={() => alternarCiudad(ciu.id)}
+                desactivada={!editable}
+              >
+                {ciu.etiqueta} <span className="opacity-50">{ciu.cuantos}</span>
+              </Pastilla>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <PersonasElegidas
+        elegidas={a.personas ?? []}
+        onCambiar={(ids) => cambiar({ personas: ids.length > 0 ? ids : null })}
+        editable={editable}
+      />
 
       <div>
         <label className={labelCls}>Por rol en La Red</label>
@@ -1345,7 +1509,9 @@ function Audiencias({
         <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a, filtros)}</p>
         {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
             entre mandar a doscientos y mandar a tres. */}
-        {(a.temporadaMin || a.temporadaCompletada || roles.length > 0 || insignias.length > 0) && (
+        {(a.temporadaMin || a.temporadaCompletada || a.empezoSinTerminar ||
+          a.inactivoDias || a.activoDias || roles.length > 0 || insignias.length > 0 ||
+          (a.paises?.length ?? 0) > 0 || (a.ciudades?.length ?? 0) > 0) && (
           <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
             Entre bloques distintos se cumple <strong className="text-[#c3b2e0]">todo</strong>:
             hay que tener el avance <em>y</em> el rol <em>y</em> la insignia. Dentro de un
@@ -1355,6 +1521,168 @@ function Audiencias({
         )}
       </div>
     </Bloque>
+  )
+}
+
+/**
+ * Los tramos de tiempo, por si el servidor no los manda.
+ *
+ * Es una copia de respaldo, no la fuente: la de verdad está en la ruta de
+ * filtros. Sin esto, un fallo de red dejaría la fila de inactividad sin
+ * ninguna opción y parecería que el filtro no existe.
+ */
+const TRAMOS = [
+  { dias: 7, etiqueta: "una semana" },
+  { dias: 14, etiqueta: "dos semanas" },
+  { dias: 30, etiqueta: "un mes" },
+  { dias: 60, etiqueta: "dos meses" },
+]
+
+type Hallada = { id: string; full_name: string; username: string | null; email: string | null }
+
+/**
+ * Escribirle a personas concretas.
+ *
+ * ── POR QUÉ ESTO ES UN FILTRO Y NO OTRA CLASE DE AUDIENCIA ────────────────
+ * Porque sigue la regla de toda la pantalla: cada casilla baja el número,
+ * ninguna lo sube. Una lista de personas junto con «que terminaron la 2» da
+ * la intersección, que es lo que uno espera aquí. Si fuera otra clase de
+ * audiencia habría que decidir qué pasa con los filtros ya puestos, y
+ * cualquier respuesta sorprendería a alguien.
+ *
+ * ── POR QUÉ SE BUSCA EN EL SERVIDOR ───────────────────────────────────────
+ * Porque el padrón entero no tiene por qué estar en el navegador de
+ * administración para escribir tres nombres. Se busca lo que se teclea y
+ * vuelven como mucho veinticinco resultados.
+ *
+ * ── LO QUE SE GUARDA ES EL IDENTIFICADOR ──────────────────────────────────
+ * El nombre se enseña, pero lo que queda en la audiencia es el identificador.
+ * Si alguien se cambia el nombre después, la campaña sigue dirigida a la
+ * misma persona.
+ */
+function PersonasElegidas({
+  elegidas, onCambiar, editable,
+}: {
+  elegidas: string[]
+  onCambiar: (ids: string[]) => void
+  editable: boolean
+}) {
+  const [busca, setBusca] = useState("")
+  const [resultados, setResultados] = useState<Hallada[]>([])
+  const [buscando, setBuscando] = useState(false)
+  // Los nombres de quienes ya están elegidos, para poder enseñarlos al abrir
+  // una comunicación guardada: la audiencia solo tiene identificadores.
+  const [nombres, setNombres] = useState<Record<string, string>>({})
+
+  // Se busca poco después de dejar de teclear. Sin esperar, cada letra sería
+  // una consulta al padrón.
+  useEffect(() => {
+    const q = busca.trim()
+    if (q.length < 2) { setResultados([]); return }
+    const t = window.setTimeout(async () => {
+      setBuscando(true)
+      try {
+        const r = await fetch(`/api/admin/red/buscar?q=${encodeURIComponent(q)}`, { credentials: "include" })
+        const j = await r.json()
+        if (r.ok) setResultados((j.resultados || j.miembros || []) as Hallada[])
+      } catch { /* la búsqueda no rompe el editor */ }
+      finally { setBuscando(false) }
+    }, 400)
+    return () => window.clearTimeout(t)
+  }, [busca])
+
+  // Al abrir una comunicación ya guardada hay identificadores sin nombre. Se
+  // piden TODOS de una vez: uno por uno serían cincuenta peticiones para
+  // dibujar cincuenta pastillas.
+  useEffect(() => {
+    const faltan = elegidas.filter((id) => !nombres[id])
+    if (faltan.length === 0) return
+    void (async () => {
+      try {
+        const r = await fetch(`/api/admin/red/buscar?ids=${faltan.join(",")}`, { credentials: "include" })
+        const j = await r.json()
+        if (!r.ok) return
+        const nuevos: Record<string, string> = {}
+        for (const m of (j.miembros || []) as Hallada[]) nuevos[m.id] = m.full_name
+        // Un identificador que ya no existe se queda sin nombre para siempre si
+        // no se le pone algo: se enseña recortado, y así se ve que hay que
+        // quitarlo en vez de mirar una pastilla en blanco.
+        for (const id of faltan) if (!nuevos[id]) nuevos[id] = id.slice(0, 8)
+        setNombres((v) => ({ ...v, ...nuevos }))
+      } catch { /* se queda sin nombres; la campaña sigue siendo válida */ }
+    })()
+  }, [elegidas, nombres])
+
+  const anadir = (p: Hallada) => {
+    if (elegidas.includes(p.id)) return
+    setNombres((v) => ({ ...v, [p.id]: p.full_name }))
+    onCambiar([...elegidas, p.id])
+    setBusca("")
+    setResultados([])
+  }
+
+  const quitar = (id: string) => onCambiar(elegidas.filter((x) => x !== id))
+
+  return (
+    <div>
+      <label className={labelCls}>A personas concretas</label>
+      <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+        Para escribirle a alguien en particular. Si eliges personas, se cruza con los
+        demás filtros: no los sustituye.
+      </p>
+
+      {elegidas.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {elegidas.map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => quitar(id)}
+              disabled={!editable}
+              className="inline-flex items-center gap-1.5 border border-[#6D4A9B] bg-[#6D4A9B]/20 px-3 py-1.5 text-[11px] text-[#c3b2e0] disabled:opacity-40"
+            >
+              {nombres[id] ?? "…"} <X size={11} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="relative">
+        <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a6a]" />
+        <input
+          type="search"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nombre o correo…"
+          disabled={!editable}
+          className={`${inputCls} pl-9`}
+        />
+        {buscando && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[#6a6a7a]" />}
+      </div>
+
+      {resultados.length > 0 && (
+        <div className="mt-2 max-h-52 overflow-y-auto border border-[#14141e] bg-[#07070f]">
+          {resultados.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => anadir(p)}
+              disabled={!editable || elegidas.includes(p.id)}
+              className="flex w-full items-baseline justify-between gap-3 border-b border-[#14141e] px-3 py-2 text-left last:border-0 hover:bg-[#6D4A9B]/10 disabled:opacity-40"
+            >
+              <span className="truncate text-xs text-[#F3F6FA]">{p.full_name}</span>
+              <span className="shrink-0 text-[10px] text-[#6a6a7a]">
+                {elegidas.includes(p.id) ? "ya está" : p.username ? `@${p.username}` : ""}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {busca.trim().length >= 2 && !buscando && resultados.length === 0 && (
+        <p className="mt-2 text-[11px] text-[#6a6a7a]">Nadie coincide con «{busca.trim()}».</p>
+      )}
+    </div>
   )
 }
 
@@ -1396,6 +1724,22 @@ function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   }
   if (a.insignias?.length) {
     partes.push(`con la insignia ${a.insignias.map((i) => nombreDeInsignia(i, filtros)).join(" o ")}`)
+  }
+  if (a.empezoSinTerminar) {
+    partes.push(`que empezaron la Temporada ${a.empezoSinTerminar} y no la terminaron`)
+  }
+  if (a.inactivoDias) partes.push(`sin aparecer desde hace ${a.inactivoDias} días o más`)
+  if (a.activoDias) partes.push(`que han aparecido en los últimos ${a.activoDias} días`)
+  if (a.paises?.length) {
+    const nombre = (c: string) => filtros?.paises?.find((p) => p.id === c)?.etiqueta ?? c
+    partes.push(`de ${a.paises.map(nombre).join(" o ")}`)
+  }
+  if (a.ciudades?.length) {
+    partes.push(a.ciudades.length === 1 ? "de una ciudad concreta" : `de ${a.ciudades.length} ciudades`)
+  }
+  if (a.personas?.length) {
+    const cuantas = a.personas.length === 1 ? "Una persona" : `${a.personas.length} personas elegidas`
+    return partes.length === 0 ? cuantas : `${cuantas}, ${partes.join(", ")}`
   }
   return partes.length === 0 ? "Todos los miembros activos" : `Miembros ${partes.join(", ")}`
 }
@@ -2219,6 +2563,11 @@ function ResumenFinal({
           </div>
         )}
 
+        {/* Solo en las notificaciones, y solo si sale ahora: una programada
+            para mañana a las siete no tiene nada que ver con la hora que es
+            en este momento. */}
+        {esPush && modo === "ahora" && <AvisoDeMadrugada />}
+
         <div className="flex items-start gap-3 border border-[#3a2a1a] bg-[#1a1208]/60 p-4">
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#e6cf95]" />
           <p className="text-xs leading-relaxed text-[#d8c9a4]">
@@ -2253,6 +2602,66 @@ function ResumenFinal({
         </div>
       </div>
     </Modal>
+  )
+}
+
+/**
+ * «Son las tres de la mañana en Colombia, donde hay 34 miembros.»
+ *
+ * ── POR QUÉ UN AVISO Y NO UNA REGLA ───────────────────────────────────────
+ * Porque no sabemos la hora de nadie: sabemos el país que cada quien eligió, y
+ * México, Brasil y Estados Unidos tienen varias zonas. Retener un envío por
+ * una suposición es retenerlo mal para mucha gente, y además dejar de
+ * enviarlo justo cuando alguien decidió enviarlo.
+ *
+ * Decirlo, en cambio, siempre acierta. Y muchas veces la respuesta correcta es
+ * «da igual, es urgente» — que una regla automática no sabría.
+ *
+ * Solo aparece en las notificaciones. Un correo espera en la bandeja; un aviso
+ * en el teléfono no espera a nada.
+ */
+function AvisoDeMadrugada() {
+  const [aviso, setAviso] = useState<AvisoDeHora | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch("/api/admin/comunicaciones/filtros", { credentials: "include" })
+        const j = await r.json()
+        if (r.ok) setAviso(avisoDeHora(j.paises || []))
+      } catch { /* sin esto la confirmación sigue funcionando */ }
+    })()
+  }, [])
+
+  if (!aviso || aviso.durmiendo === 0) return null
+
+  const primeros = aviso.sitios.slice(0, 3)
+
+  return (
+    <div className="flex items-start gap-3 border border-[#2a2440] bg-[#120f20]/70 p-4">
+      <Clock size={16} className="mt-0.5 shrink-0 text-[#a78bca]" />
+      <div className="text-xs leading-relaxed text-[#a8a8c0]">
+        <p>
+          Ahora mismo es de noche para{" "}
+          <strong className="text-[#c3b2e0]">{aviso.durmiendo} miembros</strong>:{" "}
+          {primeros.map((s, i) => (
+            <span key={s.pais}>
+              {i > 0 && (i === primeros.length - 1 ? " y " : ", ")}
+              {s.etiqueta} ({s.hora}, {s.cuantos})
+            </span>
+          ))}
+          {aviso.sitios.length > primeros.length && ` y ${aviso.sitios.length - primeros.length} país(es) más`}.
+          Un aviso suena igual a esa hora.
+        </p>
+        {aviso.sinSituar > 0 && (
+          <p className="mt-2 text-[#8b90b4]">
+            De otros {aviso.sinSituar} no se puede decir la hora: están en países con varias
+            zonas horarias —México, Brasil, Estados Unidos— y suponerla sería decir una hora
+            equivocada.
+          </p>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -2307,6 +2716,85 @@ function Resultados({ id, previstos }: { id: string; previstos: number | null })
           {d.metricas.rebotes > 0 && `${d.metricas.rebotes} rebotaron. `}
           {d.metricas.quejas > 0 && `${d.metricas.quejas} lo marcaron como no deseado.`}
         </p>
+      )}
+    </section>
+  )
+}
+
+/**
+ * Los resultados de una campaña de notificaciones.
+ *
+ * ── POR QUÉ NO SON LAS MISMAS CIFRAS QUE EL CORREO ────────────────────────
+ * Porque de un correo se sabe si se entregó y si se abrió, y de una
+ * notificación no. El servicio de push responde «aceptado» cuando recibe el
+ * aviso, y de ahí en adelante no informa de nada: ni si el teléfono estaba
+ * encendido, ni si llegó, ni si alguien lo miró.
+ *
+ * Así que aquí no aparece ningún «entregado» y ningún «abrieron». Lo que se
+ * enseña es lo que de verdad se sabe, con el nombre que le corresponde. Una
+ * cifra inventada en esta pantalla es una decisión equivocada el mes que
+ * viene.
+ */
+function ResultadosPush({ id, previstos }: { id: string; previstos: number | null }) {
+  const [d, setD] = useState<{
+    push: {
+      intentos: number
+      aceptados: number
+      personas: number
+      tocaron: number
+      fallidos: number
+      retiradas: number
+      tasaToque: number | null
+    }
+    sinDatos: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch(`/api/admin/comunicaciones/${id}/metricas`, { credentials: "include" })
+        if (r.ok) setD(await r.json())
+      } catch { /* la pantalla se abre igual */ }
+    })()
+  }, [id])
+
+  if (!d) return null
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">Resultados</h3>
+
+      {d.sinDatos ? (
+        <p className="mt-3 text-xs leading-relaxed text-[#6a6a7a]">
+          No hay ni un envío apuntado. No significa que no le interesara a nadie: significa
+          que el envío no llegó a ocurrir.
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Metrica etiqueta="Les llegó" valor={d.push.personas} />
+            <Metrica etiqueta="Lo tocaron" valor={d.push.tocaron} pct={d.push.tasaToque} />
+            <Metrica etiqueta="Dispositivos" valor={d.push.aceptados} />
+            <Metrica etiqueta="Previstos" valor={previstos ?? 0} />
+          </div>
+
+          {/* Lo que la cifra NO dice, dicho donde se lee la cifra y no en un
+              manual aparte. */}
+          <p className="mt-4 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
+            <strong className="text-[#c3b2e0]">«Les llegó»</strong> es a cuántas personas lo
+            aceptó el servicio de push en al menos un dispositivo. No es lo mismo que
+            «entregado»: desde ahí, ni Apple ni Google dicen si el aviso apareció en el
+            teléfono. <strong className="text-[#c3b2e0]">«Lo tocaron»</strong> sí es un dato
+            nuestro, y es el único seguro que hay después de enviar.
+          </p>
+
+          {(d.push.fallidos > 0 || d.push.retiradas > 0) && (
+            <p className="mt-3 text-xs text-[#8a8fa8]">
+              {d.push.fallidos > 0 && `${d.push.fallidos} dispositivos fallaron. `}
+              {d.push.retiradas > 0 && `${d.push.retiradas} suscripciones ya no existían y se han apagado.`}
+            </p>
+          )}
+        </>
       )}
     </section>
   )

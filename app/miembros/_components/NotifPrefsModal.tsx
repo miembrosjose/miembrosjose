@@ -103,11 +103,13 @@ type PrefsCorreo = {
   contenidos: boolean
   sesiones: boolean
   red: boolean
+  recordatorios: boolean
   unsubscribed_all: boolean
 }
 
 const CORREO_POR_DEFECTO: PrefsCorreo = {
-  novedades: true, contenidos: true, sesiones: true, red: true, unsubscribed_all: false,
+  novedades: true, contenidos: true, sesiones: true, red: true, recordatorios: true,
+  unsubscribed_all: false,
 }
 
 const FILAS_CORREO: Array<{ key: keyof Omit<PrefsCorreo, "unsubscribed_all">; title: string; desc: string }> = [
@@ -115,6 +117,7 @@ const FILAS_CORREO: Array<{ key: keyof Omit<PrefsCorreo, "unsubscribed_all">; ti
   { key: "contenidos", title: "Nuevos contenidos", desc: "Episodios, módulos y transmisiones" },
   { key: "sesiones", title: "Sesiones en vivo", desc: "Directos, activaciones y sus recordatorios" },
   { key: "red", title: "Encuentros y La Red", desc: "Encuentros y actividad de la comunidad" },
+  { key: "recordatorios", title: "Recordatorios", desc: "Si dejaste algo a medias o llevas tiempo sin aparecer" },
 ]
 
 export function NotifPrefsModal({ open, onClose }: Props) {

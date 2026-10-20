@@ -17,7 +17,7 @@
 // enlace de acceso porque se dio de baja de las novedades, o escribirle
 // novedades a quien pidió no recibirlas. Por eso están separados desde el tipo.
 
-/** Las seis clases de comunicación que administración puede crear. */
+/** Las nueve clases de comunicación que administración puede crear. */
 export type TipoComunicacion =
   | "contenido"
   | "sesion"
@@ -25,6 +25,9 @@ export type TipoComunicacion =
   | "encuentro"
   | "novedades"
   | "especial"
+  | "lanzamiento"
+  | "recursos"
+  | "recordatorio"
 
 /**
  * Las cuatro familias de plantilla.
@@ -36,14 +39,24 @@ export type TipoComunicacion =
 export type FamiliaPlantilla = "contenido" | "sesion" | "red" | "especial"
 
 /**
- * Las cuatro preferencias de correo.
+ * Las cinco preferencias de correo.
  *
  * Coinciden con las columnas de `email_preferences` y con lo que se ve en el
  * perfil. Un tipo pertenece a una y solo a una: quien apaga «sesiones en vivo»
  * tiene que dejar de recibir sesiones Y activaciones, sin excepciones que
  * haya que recordar.
+ *
+ * ── POR QUÉ `recordatorios` ESTÁ APARTE DE TODO LO DEMÁS ──────────────────
+ * Las otras cuatro responden a algo que la persona está siguiendo: un
+ * episodio de la temporada que ve, una sesión a la que va, la actividad de
+ * una Red en la que participa. Un recordatorio no responde a nada suyo: es
+ * una decisión nuestra de interrumpirla para que vuelva.
+ *
+ * Esa diferencia tiene que poder expresarse. Sin su propio interruptor, quien
+ * no quiere que le insistan tendría que apagar también los avisos de las
+ * sesiones, y lo que acabaría haciendo es darse de baja de todo.
  */
-export type PreferenciaCorreo = "novedades" | "contenidos" | "sesiones" | "red"
+export type PreferenciaCorreo = "novedades" | "contenidos" | "sesiones" | "red" | "recordatorios"
 
 export type DefinicionTipo = {
   id: TipoComunicacion
@@ -120,6 +133,57 @@ export const TIPOS: Record<TipoComunicacion, DefinicionTipo> = {
     preferencia: "novedades",
     llevaFecha: false,
     ctaPorDefecto: "Leer más",
+    eyebrowPorDefecto: "",
+  },
+  /**
+   * Algo que estará disponible próximamente.
+   *
+   * ── POR QUÉ ES UN TIPO Y NO UN CONTENIDO MÁS ────────────────────────────
+   * Porque dice lo contrario: un «nuevo contenido» invita a entrar a verlo, y
+   * esto invita a esperar. El botón por defecto no puede llevar al producto,
+   * porque el producto todavía está cerrado, y mandar a alguien a una puerta
+   * cerrada es peor que no mandarle nada.
+   */
+  lanzamiento: {
+    id: "lanzamiento",
+    nombre: "Próximo lanzamiento",
+    descripcion: "Algo que estará disponible pronto. Se anuncia antes de abrirlo.",
+    familia: "especial",
+    preferencia: "novedades",
+    llevaFecha: false,
+    ctaPorDefecto: "Ver la biblioteca",
+    eyebrowPorDefecto: "Pronto en Los 144.000",
+  },
+  recursos: {
+    id: "recursos",
+    nombre: "Nuevos recursos",
+    descripcion: "Guías, meditaciones, materiales y herramientas de preparación.",
+    familia: "contenido",
+    preferencia: "contenidos",
+    llevaFecha: false,
+    ctaPorDefecto: "Explorar",
+    eyebrowPorDefecto: "Nuevos recursos",
+  },
+  /**
+   * «Continúa donde lo dejaste», «hace un mes que no apareces».
+   *
+   * ── EL ÚNICO TIPO QUE NO RESPONDE A NADA QUE HAYA PEDIDO NADIE ──────────
+   * Todos los demás salen de un hecho que le interesa a quien lo recibe: hay
+   * un episodio nuevo, hay una sesión el jueves. Este sale de una decisión
+   * nuestra sobre su tiempo, y por eso es el único con su propio interruptor
+   * en las preferencias: se puede apagar sin perder nada más.
+   *
+   * No lleva eyebrow. «RECORDATORIO» en mayúsculas encima de un mensaje que
+   * dice «tu preparación continúa» convierte una invitación en una factura.
+   */
+  recordatorio: {
+    id: "recordatorio",
+    nombre: "Recordatorio",
+    descripcion: "Para quien dejó algo a medias o lleva tiempo sin aparecer.",
+    familia: "especial",
+    preferencia: "recordatorios",
+    llevaFecha: false,
+    ctaPorDefecto: "Continuar",
     eyebrowPorDefecto: "",
   },
 }
@@ -245,6 +309,83 @@ export type Audiencia = {
    * son tres filtros y no uno con tres nombres.
    */
   insignias?: string[] | null
+
+  /**
+   * Solo quien no ha dado señales de vida en estos días o más.
+   *
+   * ── QUÉ CUENTA COMO SEÑAL ───────────────────────────────────────────────
+   * Haber abierto la plataforma, o haber hecho algo en ella: un comentario,
+   * un capítulo visto, un «me gusta». Lo más reciente de las dos cosas.
+   *
+   * ── POR QUÉ NO ES «EL ÚLTIMO INICIO DE SESIÓN» ──────────────────────────
+   * Porque entrar y participar no son lo mismo, y tratarlos igual sería decir
+   * que alguien está activo porque abrió la aplicación y la cerró. Pero
+   * tampoco hacen falta dos filtros: participar implica haber entrado, así
+   * que lo que de verdad importa para reactivar a alguien es cuándo fue la
+   * última vez que se supo algo de esa persona, por cualquiera de las dos
+   * vías.
+   *
+   * ── Y POR QUÉ QUIEN NO TIENE NINGUNA SEÑAL QUEDA FUERA ──────────────────
+   * Un nulo no significa «hace mucho», significa «no lo sabemos»: cuentas de
+   * antes de que esto existiera que no han vuelto a entrar. Mandarles una
+   * campaña de «vuelve» sin saber si se fueron es adivinar, y en el peor caso
+   * es escribirle a alguien que entró ayer.
+   */
+  inactivoDias?: number | null
+
+  /**
+   * Lo contrario: solo quien SÍ ha aparecido en los últimos días.
+   *
+   * Para lo que no tiene sentido mandar a quien no está: un encuentro mañana,
+   * una convocatoria que se cierra el viernes.
+   */
+  activoDias?: number | null
+
+  /**
+   * Solo quien empezó esta temporada y NO la ha terminado.
+   *
+   * ── POR QUÉ ES UN FILTRO APARTE Y NO LA RESTA DE LOS OTROS DOS ──────────
+   * Se podría pedir «llegó a la 3» y «no completó la 3», pero los filtros de
+   * esta pantalla solo estrechan: no hay forma de expresar una negación. Y es
+   * justamente el segmento más útil que tiene la plataforma — gente que
+   * empezó algo y lo dejó a medias— así que merece su propia casilla en vez
+   * de un truco.
+   */
+  empezoSinTerminar?: number | null
+
+  /**
+   * Solo quien esté en estos países. Códigos ISO de dos letras.
+   *
+   * Sale de `member_location`, que es donde el miembro puso su país al
+   * entrar en La Red. No de una deducción por la dirección IP: eso dice
+   * dónde está el teléfono hoy, no dónde vive la persona.
+   */
+  paises?: string[] | null
+
+  /**
+   * Solo quien esté en estas ciudades. Identificadores de `network_cities`.
+   *
+   * ── CUIDADO CON ESTE FILTRO ─────────────────────────────────────────────
+   * La ciudad es opcional para el miembro y mucha gente no la ha puesto.
+   * Filtrar por ciudad puede dejar una audiencia de cuatro personas cuando
+   * en esa ciudad hay cuarenta. El ensayo de audiencia lo dice antes de
+   * enviar, y por eso hay que mirarlo.
+   */
+  ciudades?: number[] | null
+
+  /**
+   * Solo estas personas, nombradas una por una.
+   *
+   * ── POR QUÉ ES UN FILTRO Y NO OTRA CLASE DE AUDIENCIA ───────────────────
+   * Porque sigue la regla de la pantalla: nada de lo que hay aquí amplía la
+   * audiencia, todo la estrecha. Una lista de personas combinada con «que
+   * terminaron la Temporada 2» da la intersección, no la suma — y eso es lo
+   * que uno espera de una pantalla donde cada casilla baja el número.
+   *
+   * Es también lo que permite escribirle a UNA persona sin montar un camino
+   * aparte para ello: se pone su nombre y la audiencia es ella.
+   */
+  personas?: string[] | null
 }
 
 /**

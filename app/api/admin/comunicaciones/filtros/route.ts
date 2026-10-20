@@ -17,7 +17,7 @@
 
 import { NextResponse } from "next/server"
 import { exigirAdmin } from "@/lib/comunicaciones/servidor"
-import { FILTROS_DISPONIBLES } from "@/lib/comunicaciones/audiencia"
+import { FILTROS_DISPONIBLES, dondeHayMiembros } from "@/lib/comunicaciones/audiencia"
 
 export const dynamic = "force-dynamic"
 
@@ -37,6 +37,25 @@ const GRUPOS: Record<string, string> = {
   exclusive: "Excepcionales",
 }
 
+/**
+ * Los tiempos de inactividad que se ofrecen.
+ *
+ * ── POR QUÉ UNOS CUANTOS Y NO UNA CASILLA LIBRE ─────────────────────────
+ * Porque la casilla libre invita a afinar un número que no se puede afinar:
+ * entre 23 y 25 días no hay ninguna diferencia real, y pararse a elegirlo es
+ * tiempo gastado en una precisión falsa. Cuatro tramos cubren lo que de
+ * verdad se distingue: la semana, las dos semanas, el mes y los dos meses.
+ *
+ * Un valor a mano sigue siendo válido si llega por la API —el servidor
+ * acepta de 1 a 3650 días—; esto es lo que la pantalla ofrece.
+ */
+const TRAMOS_DIAS = [
+  { dias: 7,  etiqueta: "una semana" },
+  { dias: 14, etiqueta: "dos semanas" },
+  { dias: 30, etiqueta: "un mes" },
+  { dias: 60, etiqueta: "dos meses" },
+]
+
 export async function GET() {
   const g = await exigirAdmin()
   if ("respuesta" in g) return g.respuesta
@@ -49,9 +68,22 @@ export async function GET() {
     porGrupo.set(grupo, lista)
   }
 
+  // Dónde hay gente se pregunta a la base: cambia cada vez que alguien pone
+  // su ubicación. Si falla, la pantalla se queda sin esos dos filtros en vez
+  // de no abrirse: los demás siguen sirviendo.
+  let donde: Awaited<ReturnType<typeof dondeHayMiembros>> = { paises: [], ciudades: [] }
+  try {
+    donde = await dondeHayMiembros()
+  } catch (e) {
+    console.error("[comunicaciones] filtros de ubicación:", e instanceof Error ? e.message : e)
+  }
+
   return NextResponse.json({
     ok: true,
     temporadas: FILTROS_DISPONIBLES.temporadas,
+    tramos_dias: TRAMOS_DIAS,
+    paises: donde.paises,
+    ciudades: donde.ciudades,
     roles: FILTROS_DISPONIBLES.roles,
     insignias: [...porGrupo.entries()].map(([grupo, items]) => ({ grupo, items })),
     total_insignias: FILTROS_DISPONIBLES.insignias.length,
