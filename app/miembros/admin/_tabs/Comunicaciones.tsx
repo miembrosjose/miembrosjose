@@ -50,6 +50,84 @@ const TIPOS = [
   { id: "recordatorio", nombre: "Recordatorio", desc: "Para quien dejó algo a medias o lleva tiempo sin aparecer.", fecha: false },
 ] as const
 
+/**
+ * Lo que se ofrece al crear una NOTIFICACIÓN.
+ *
+ * ── POR QUÉ SON CINCO Y NO LOS NUEVE DEL CORREO ───────────────────────────
+ * Porque en un aviso al teléfono el tipo solo decide una cosa: qué interruptor
+ * de las preferencias respeta. Las otras dos que distinguen a los nueve —la
+ * plantilla del correo y el bloque de fecha— no existen aquí: una notificación
+ * tiene título, texto y destino, y la pinta el sistema operativo.
+ *
+ * Y de los nueve tipos solo salen CINCO interruptores distintos. Es decir:
+ *
+ *   «Nuevos recursos»          hace exactamente lo mismo que «Nuevo contenido»
+ *   «Activación»               lo mismo que «Sesión en vivo»
+ *   «Comunicación especial»    lo mismo que «Novedades de La Red»
+ *   «Próximo lanzamiento»      lo mismo que «Novedades de La Red»
+ *
+ * Ofrecer nueve tarjetas de las que cuatro no cambian nada —ni a quién llega,
+ * ni cómo se ve, ni qué respeta— y no decir cuáles son las repetidas es pedir
+ * una decisión que no existe. Lo que se aprende de una pantalla así es a
+ * dejar de fiarse de ella.
+ *
+ * ── Y POR QUÉ EN EL CORREO SÍ SE GANAN LAS NUEVE ──────────────────────────
+ * Allí el tipo elige plantilla. Una sesión en vivo se dibuja distinta de un
+ * episodio nuevo y lleva su bloque de fecha con zona horaria. Esa diferencia
+ * se ve en la bandeja de entrada, así que allí los nueve tienen sentido.
+ *
+ * ── EL TIPO QUE SE GUARDA ─────────────────────────────────────────────────
+ * Cada grupo guarda uno de los nueve de siempre: no se inventa ningún tipo
+ * nuevo, y una comunicación creada aquí se puede pasar a correo sin más.
+ *
+ * Estos nombres son los MISMOS que ve el miembro en sus preferencias. Que el
+ * panel ofrezca justo lo que el otro lado puede apagar es lo que hace que
+ * elegir aquí signifique algo.
+ */
+const TIPOS_PUSH = [
+  {
+    id: "contenido",
+    nombre: "Contenidos y recursos",
+    desc: "Episodios, módulos, transmisiones, guías y materiales.",
+  },
+  {
+    id: "sesion",
+    nombre: "Sesiones y activaciones",
+    desc: "Lo que ocurre en directo, con momento señalado.",
+  },
+  {
+    id: "encuentro",
+    nombre: "Encuentros de La Red",
+    desc: "Encuentros y convocatorias de la comunidad.",
+  },
+  {
+    id: "novedades",
+    nombre: "Novedades y anuncios",
+    desc: "Lo que está ocurriendo, y lo que está por llegar.",
+  },
+  {
+    id: "recordatorio",
+    nombre: "Recordatorio",
+    desc: "Para quien dejó algo a medias o lleva tiempo sin aparecer.",
+  },
+] as const
+
+/**
+ * Cómo se llama este tipo, en el idioma del canal por el que sale.
+ *
+ * Quien crea una notificación elige entre cinco grupos; si luego la lista
+ * dijera el nombre del tipo del correo que hay debajo —«Novedades de La
+ * Red» donde eligió «Novedades y anuncios»— parecería que la plataforma
+ * cambió su decisión por su cuenta.
+ */
+function nombreDeTipo(tipo: string, canal: "email" | "push"): string {
+  if (canal === "push") {
+    const grupo = TIPOS_PUSH.find((t) => t.id === tipo)
+    if (grupo) return grupo.nombre
+  }
+  return TIPOS.find((t) => t.id === tipo)?.nombre ?? tipo
+}
+
 const ESTADOS: Record<string, { etiqueta: string; cls: string }> = {
   draft: { etiqueta: "Borrador", cls: "border-[#2a2a3a] text-[#9a9ab0]" },
   scheduled: { etiqueta: "Programada", cls: "border-[#6D4A9B] text-[#a78bca]" },
@@ -309,7 +387,7 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
   onCambio: () => void
 }) {
   const est = ESTADOS[f.status] ?? ESTADOS.draft
-  const tipo = TIPOS.find((t) => t.id === f.type)
+  const nombreTipo = nombreDeTipo(f.type, f.canal)
 
   return (
     // Una fila, no un botón gigante: dentro hay otro botón —el menú— y anidar
@@ -338,7 +416,7 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
             </span>
           )}
           <span className="text-[10px] uppercase tracking-[0.15em] text-[#6a6a7a]">
-            {tipo?.nombre ?? f.type}
+            {nombreTipo}
           </span>
         </div>
         <p className="mt-2 truncate text-[15px] font-medium text-[#F3F6FA]">
@@ -624,12 +702,15 @@ function ElegirTipo({ onElegir, onCerrar }: {
       </button>
       {canal === "push" && (
         <p className="mb-4 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
-          El tipo no se ve en el teléfono, pero decide a quién le llega: quien
-          apagó los avisos de esta clase de cosas no lo recibe.
+          Esto no se ve en el teléfono: decide a quién le llega. Son los mismos
+          cinco grupos que cada miembro puede apagar en sus preferencias.
         </p>
       )}
+      {/* Cinco en notificación y nueve en correo, y no es una simplificación:
+          en un aviso al teléfono cuatro de los nueve no cambian nada. El
+          porqué, en `TIPOS_PUSH`. */}
       <div className="grid gap-2 sm:grid-cols-2">
-        {TIPOS.map((t) => (
+        {(canal === "push" ? TIPOS_PUSH : TIPOS).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -2516,7 +2597,7 @@ function ResumenFinal({
         <dl className="space-y-3 border border-[#1f1f2c] bg-[#0d0d16] p-4 text-sm">
           <Dato etiqueta="Canal" valor={esPush ? "Notificación en el teléfono" : "Correo"} />
           <Dato etiqueta={esPush ? "Título" : "Asunto"} valor={c.subject} />
-          <Dato etiqueta="Tipo" valor={TIPOS.find((t) => t.id === c.type)?.nombre ?? c.type} />
+          <Dato etiqueta="Tipo" valor={nombreDeTipo(c.type, c.canal)} />
           <Dato etiqueta="Audiencia" valor={describir(c.audience, null)} />
           <Dato
             etiqueta="Envío"
