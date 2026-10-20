@@ -76,6 +76,7 @@ const SUPABASE_ANON_KEY = readVar("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 // tarjeta guardada, que es justo quien compra por primera vez.
 const STRIPE_PK = readVar("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")
 const MIEMBROS_URL = readVar("NEXT_PUBLIC_MIEMBROS_URL")
+const VAPID_PUB = readVar("NEXT_PUBLIC_VAPID_PUBLIC_KEY")
 
 if (!SUPABASE_URL) die('No pude leer "NEXT_PUBLIC_SUPABASE_URL" de wrangler.jsonc')
 if (!SUPABASE_ANON_KEY) die('No pude leer "NEXT_PUBLIC_SUPABASE_ANON_KEY" de wrangler.jsonc')
@@ -113,6 +114,7 @@ function compilar() {
       NEXT_PUBLIC_SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
       ...(STRIPE_PK ? { NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: STRIPE_PK } : {}),
       ...(MIEMBROS_URL ? { NEXT_PUBLIC_MIEMBROS_URL: MIEMBROS_URL } : {}),
+      ...(VAPID_PUB ? { NEXT_PUBLIC_VAPID_PUBLIC_KEY: VAPID_PUB } : {}),
     },
   })
 }

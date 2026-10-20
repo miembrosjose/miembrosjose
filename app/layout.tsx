@@ -36,12 +36,26 @@ export const metadata: Metadata = {
     "format-detection": "telephone=no",
   },
   title: "Los 144000",
-  description: "[BRAND_DESCRIPTION]",
+  description: "La Red de Los 144.000: preparación, transmisiones y comunidad.",
+
+  // ── QUE EL IPHONE LA ABRA COMO APLICACIÓN ──────────────────────────────
+  // El manifest ya pide `display: standalone`, y desde iOS 11 Safari lo
+  // respeta. Esto lo dice además por el canal antiguo de Apple, que algunas
+  // versiones siguen prefiriendo.
+  //
+  // Importa más de lo que parece: en iPhone las notificaciones web SOLO
+  // llegan si la web está añadida a la pantalla de inicio y abre en modo
+  // aplicación. Si abriera como pestaña normal, no habría avisos.
+  appleWebApp: {
+    capable: true,
+    title: "Los 144.000",
+    statusBarStyle: "black-translucent",
+  },
   keywords: ["copywriting", "anuncios", "marketing digital", "ventas", "conversiones"],
   authors: [{ name: "Los 144000" }],
   openGraph: {
     title: "Los 144000",
-    description: "[BRAND_DESCRIPTION]",
+    description: "La Red de Los 144.000: preparación, transmisiones y comunidad.",
     type: "website",
     locale: "es_LA",
     siteName: "Los 144000",
@@ -49,7 +63,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Los 144000",
-    description: "[BRAND_DESCRIPTION]",
+    description: "La Red de Los 144.000: preparación, transmisiones y comunidad.",
   },
   // El icono lo recoge Next.js solo, de app/icon.svg. Aquí apuntaba a
   // "/favicon.png", un archivo que nunca estuvo en public/: daba 404 en cada

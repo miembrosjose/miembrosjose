@@ -17,6 +17,7 @@ import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { api } from "../_lib/api"
 import styles from "./notif-prefs-modal.module.css"
+import { PushEnElMovil } from "./PushEnElMovil"
 
 type NotificationPrefs = {
   own: {
@@ -229,6 +230,11 @@ export function NotifPrefsModal({ open, onClose }: Props) {
         </header>
 
         <div className={styles.body}>
+          {/* Los avisos en el móvil van PRIMERO: es lo único de esta
+              pantalla que depende de un permiso del sistema, y lo que la
+              gente viene a buscar cuando entra aquí. */}
+          <PushEnElMovil />
+
           {/* Master — Sonidos */}
           <section className={styles.section}>
             <div className={`${styles.row} ${styles.rowMaster}`}>

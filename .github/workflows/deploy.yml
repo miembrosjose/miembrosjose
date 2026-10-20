@@ -54,6 +54,11 @@ jobs:
           # https://miembros.SEU_DOMINIO.com — un dominio que no existe.
           NEXT_PUBLIC_MIEMBROS_URL: https://los144000.com
 
+          # La clave PÚBLICA de VAPID. Como la de Stripe, viaja al navegador:
+          # es con lo que el dispositivo se suscribe. La PRIVADA nunca está
+          # aquí — vive como secreto del Worker y solo firma en el servidor.
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: BOk_OPJD2omr9WTS2mifRFVJB8cbie6s4oGG4QtNSgI3ymOTkGhLPmC6JWTW_7xaxUl7A7PIdbkKh9qXTi6vFzs
+
       - name: Deploy (Wrangler)
         run: npx wrangler deploy
         env:
