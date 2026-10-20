@@ -1,212 +1,112 @@
 "use client"
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  INSTALAR LA PLATAFORMA EN EL TELÉFONO · la invitación
+//  QUIÉN DECIDE QUÉ SE ENSEÑA · el orquestador de las invitaciones
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// ── POR QUÉ HACE FALTA INVITAR ─────────────────────────────────────────────
-// En iPhone, las notificaciones web NO funcionan desde una pestaña de Safari.
-// Punto. Apple solo las entrega a una web añadida a la pantalla de inicio. Así
-// que para buena parte de La Red, «activar los avisos» empieza por un paso que
-// nadie va a descubrir solo, porque está escondido detrás del botón de
-// compartir.
+// Hay dos invitaciones —instalar la aplicación y activar los avisos— y la
+// regla principal es que nunca se enseñan las dos a la vez. Dos peticiones
+// juntas no son una invitación: son un peaje.
 //
-// En Android no es obligatorio, pero instalada se abre a pantalla completa y
-// los avisos llegan con el icono de la plataforma en vez del de Chrome.
+// ── POR QUÉ ESA DECISIÓN VIVE AQUÍ Y NO EN CADA PIEZA ─────────────────────
+// Porque si cada una decide por su cuenta, las dos pueden decidir que sí. Y
+// la comprobación cruzada —«no me enseño si la otra se está enseñando»—
+// repartida en dos componentes es la clase de condición que acaba
+// contradiciéndose a sí misma el día que se toca uno de los dos.
 //
-// ── LO QUE ESTO NO HACE, Y NO VA A HACER ───────────────────────────────────
-// No bloquea nada. No es un muro, no tapa la pantalla, no exige instalar para
-// seguir. Quien use la plataforma desde el navegador del ordenador tiene que
-// poder seguir haciéndolo exactamente igual, hoy y siempre: es una tarjeta en
-// una esquina con una equis.
+// Aquí hay un solo sitio donde se decide, y las piezas solo saben dibujarse.
 //
-// ── CUÁNDO APARECE ─────────────────────────────────────────────────────────
-// No en la primera visita. Alguien que acaba de entrar por primera vez está
-// mirando qué es esto, no decidiendo si lo quiere en su pantalla de inicio, y
-// una invitación ahí es una interrupción antes de haber dado nada.
+// ── EL ORDEN, Y POR QUÉ ES ESE ────────────────────────────────────────────
+// Instalar va primero. No por preferencia: en iPhone y iPad, sin la
+// aplicación en la pantalla de inicio NO HAY avisos posibles, así que ofrecer
+// el permiso antes sería ofrecer algo que el sistema no va a conceder.
 //
-// A partir de la segunda, y después de medio minuto dentro: el tiempo es la
-// señal de que de verdad está usando la plataforma y no se equivocó de
-// pestaña.
+// Si no toca instalar —ya lo está, se aplazó, o es un ordenador— entonces le
+// toca a la tarjeta de los avisos.
 //
-// ── Y CUÁNDO DEJA DE APARECER ──────────────────────────────────────────────
-// «Ahora no» la calla un mes. La equis, también. No hay una forma de decir
-// «nunca» porque tampoco hace falta: un mes es tiempo de sobra para que deje
-// de ser molesta, y quien la vea trece veces es porque entra cada día desde el
-// navegador, que es precisamente a quien le compensa instalarla.
-//
-// Nada de esto viaja al servidor: es una preferencia de ESTE teléfono, y el
-// mismo dispositivo es el que sabe si está instalada o no.
+// ── LO QUE ESTO NO HACE ───────────────────────────────────────────────────
+// No bloquea nada, ni ahora ni nunca. Quien use la plataforma desde el
+// navegador del ordenador tiene que poder seguir haciéndolo exactamente igual.
 
 import { useEffect, useState } from "react"
-import { Download, Plus, Share, X } from "lucide-react"
-import { estaInstalada, esIOS } from "../_lib/push-cliente"
-import estilos from "./InvitarAInstalar.module.css"
-
-const CLAVE_SILENCIO = "los144k_instalar_silencio"
-const CLAVE_VISITAS = "los144k_visitas"
-
-/** Lo que calla la invitación cuando alguien dice «ahora no». */
-const UN_MES = 30 * 24 * 60 * 60 * 1000
-
-/** Lo que se espera dentro antes de ofrecerla. */
-const ESPERA_MS = 30_000
-
-/**
- * El evento que Chrome lanza cuando la web se puede instalar.
- *
- * No está en los tipos del DOM porque no es estándar: solo lo implementan los
- * navegadores basados en Chromium. En iPhone no existe y nunca existirá, que
- * es justo por lo que ahí hay que explicar los pasos a mano.
- */
-type EventoInstalacion = Event & {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>
-}
-
-function silenciada(): boolean {
-  try {
-    const hasta = Number(localStorage.getItem(CLAVE_SILENCIO) || 0)
-    return Number.isFinite(hasta) && hasta > Date.now()
-  } catch {
-    // Sin almacenamiento —ventana privada, cookies bloqueadas— se asume que
-    // no está silenciada. Es menos malo enseñarla de más que no poder
-    // enseñarla nunca a quien sí la necesita.
-    return false
-  }
-}
-
-function silenciar() {
-  try { localStorage.setItem(CLAVE_SILENCIO, String(Date.now() + UN_MES)) } catch { /* da igual */ }
-}
-
-/** Cuenta esta visita y devuelve cuántas van. */
-function contarVisita(): number {
-  try {
-    const n = Number(localStorage.getItem(CLAVE_VISITAS) || 0) + 1
-    localStorage.setItem(CLAVE_VISITAS, String(n))
-    return n
-  } catch {
-    // Sin almacenamiento no se puede contar. Se devuelve 1 —como si fuera la
-    // primera— para pecar de discreto.
-    return 1
-  }
-}
+import { useAuth } from "../_lib/auth-context"
+import { usePwa } from "../_lib/pwa-contexto"
+import { HojaInstalacion } from "./HojaInstalacion"
+import {
+  PLAZOS, aplazarInstalacion, instalacionHecha, instalacionSilenciada, visitasSuficientes,
+} from "@/lib/pwa/reglas"
 
 export function InvitarAInstalar() {
-  const [visible, setVisible] = useState(false)
-  const [evento, setEvento] = useState<EventoInstalacion | null>(null)
-  const [iphone, setIphone] = useState(false)
+  const { user } = useAuth()
+  const { aparato, instalada, listo } = usePwa()
+  const [abierta, setAbierta] = useState(false)
+  // Una vez cerrada en esta sesión, no vuelve a asomar aunque pasen los
+  // treinta segundos otra vez al cambiar de sección.
+  const [yaSeVio, setYaSeVio] = useState(false)
 
   useEffect(() => {
+    if (!listo || !user?.id || yaSeVio) return
+
     // Ya instalada: no hay nada que ofrecer. Es la comprobación más barata y
     // va primera.
-    if (estaInstalada()) return
-    if (silenciada()) return
+    if (instalada) return
 
-    const visitas = contarVisita()
-    if (visitas < 2) return
+    // En un ordenador la aplicación no aporta nada: la plataforma ya está en
+    // una pestaña y los avisos del escritorio no son lo que esto promete.
+    if (aparato === "escritorio") return
 
-    const enIOS = esIOS()
-    setIphone(enIOS)
+    if (!visitasSuficientes(user.id)) return
+    if (instalacionSilenciada(user.id)) return
 
-    // ── ANDROID: SE ESPERA AL NAVEGADOR ───────────────────────────────────
-    // `beforeinstallprompt` es la única forma honesta de saber que el botón
-    // de instalar va a hacer algo. Si el navegador no lo lanza —ya está
-    // instalada, no cumple los requisitos, o es un navegador que no lo
-    // soporta— no se enseña ningún botón, porque no habría nada detrás.
-    const alPoderInstalar = (e: Event) => {
-      // Sin esto, Chrome enseña ADEMÁS su propia barra, y salen dos
-      // invitaciones a la vez diciendo lo mismo.
-      e.preventDefault()
-      setEvento(e as EventoInstalacion)
-    }
-    window.addEventListener("beforeinstallprompt", alPoderInstalar)
+    // ── POR QUÉ SE ESPERA MEDIO MINUTO ───────────────────────────────────
+    // Alguien que acaba de entrar está mirando qué es esto, no decidiendo si
+    // lo quiere en su pantalla de inicio. El tiempo dentro es la señal de que
+    // de verdad está usando la plataforma y no se equivocó de pestaña.
+    const reloj = window.setTimeout(() => setAbierta(true), PLAZOS.esperaDentroMs)
+    return () => window.clearTimeout(reloj)
+  }, [listo, user?.id, instalada, aparato, yaSeVio])
 
-    const reloj = window.setTimeout(() => setVisible(true), ESPERA_MS)
-
-    // Si la instalan —por aquí o por el menú del navegador— la tarjeta sobra.
-    const alInstalar = () => { setVisible(false); silenciar() }
-    window.addEventListener("appinstalled", alInstalar)
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", alPoderInstalar)
-      window.removeEventListener("appinstalled", alInstalar)
-      window.clearTimeout(reloj)
-    }
-  }, [])
-
-  // En iPhone se explican los pasos. Fuera de iPhone solo se ofrece si el
-  // navegador ha dicho que se puede: un botón de instalar que no instala es
-  // peor que no tener botón.
-  if (!visible) return null
-  if (!iphone && !evento) return null
-
-  const cerrar = () => { setVisible(false); silenciar() }
-
-  const instalar = async () => {
-    if (!evento) return
-    setVisible(false)
-    try {
-      await evento.prompt()
-      // Se mire lo que se mire, el evento solo sirve una vez: el navegador no
-      // lo vuelve a lanzar hasta que se den de nuevo las condiciones.
-      await evento.userChoice
-    } catch {
-      /* si el navegador se niega, se queda como estaba */
-    }
-    silenciar()
-    setEvento(null)
-  }
+  if (!abierta || !user?.id) return null
 
   return (
-    <div className={estilos.caja} role="complementary" aria-label="Instalar la plataforma">
-      <div className={estilos.cabecera}>
-        <Download size={15} color="#a78bca" />
-        <span className={estilos.titulo}>Tenla a mano</span>
-        <button type="button" onClick={cerrar} className={estilos.cerrar} aria-label="Cerrar">
-          <X size={14} />
-        </button>
-      </div>
+    <HojaInstalacion
+      onCerrar={() => {
+        setAbierta(false)
+        setYaSeVio(true)
+        aplazarInstalacion(user.id)
+      }}
+      onInstalada={() => {
+        setAbierta(false)
+        setYaSeVio(true)
+        instalacionHecha(user.id)
+      }}
+    />
+  )
+}
 
-      {iphone ? (
-        <>
-          <p className={estilos.texto}>
-            Añade <strong>Los 144.000</strong> a tu pantalla de inicio: se abre como una
-            aplicación y es la única forma de que el iPhone te deje recibir los avisos.
-          </p>
-          <ol className={estilos.pasos}>
-            <li>
-              Toca <Share size={12} style={{ verticalAlign: "-2px" }} />{" "}
-              <strong>Compartir</strong>, abajo
-            </li>
-            <li>
-              Baja y elige <Plus size={12} style={{ verticalAlign: "-2px" }} />{" "}
-              <strong>Añadir a pantalla de inicio</strong>
-            </li>
-          </ol>
-          <div className={estilos.acciones}>
-            <button type="button" onClick={cerrar} className={estilos.ahoraNo}>
-              Ahora no
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p className={estilos.texto}>
-            Instálala en este dispositivo y se abrirá a pantalla completa, con su propio
-            icono. Sigue siendo la misma plataforma: no ocupa casi nada.
-          </p>
-          <div className={estilos.acciones}>
-            <button type="button" onClick={instalar} className={estilos.boton}>
-              <Download size={13} /> Instalar
-            </button>
-            <button type="button" onClick={cerrar} className={estilos.ahoraNo}>
-              Ahora no
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+/**
+ * La misma hoja, pero abierta a propósito.
+ *
+ * ── PARA QUÉ HACE FALTA ESTO ──────────────────────────────────────────────
+ * Quien dice «ahora no» no se queda sin poder instalarla: la tarjeta del
+ * inicio y el panel de la campana pueden volver a abrir las instrucciones
+ * cuando la persona las busque. Pedirlo no es lo mismo que recibirlo sin
+ * pedirlo, y por eso esto no comprueba plazos ni visitas — los plazos
+ * existen para no insistir, no para impedir.
+ */
+export function HojaInstalacionBajoPeticion({ abierta, onCerrar }: {
+  abierta: boolean
+  onCerrar: () => void
+}) {
+  const { user } = useAuth()
+  if (!abierta) return null
+  return (
+    <HojaInstalacion
+      onCerrar={onCerrar}
+      onInstalada={() => {
+        if (user?.id) instalacionHecha(user.id)
+        onCerrar()
+      }}
+    />
   )
 }

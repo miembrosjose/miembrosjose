@@ -20,6 +20,7 @@ import { OnlineToast } from "./_components/OnlineToast"
 import { MessengerWidget } from "./_components/MessengerWidget"
 import { TelegramFab } from "./_components/TelegramFab"
 import { InvitarAInstalar } from "./_components/InvitarAInstalar"
+import { PwaProvider } from "./_lib/pwa-contexto"
 import { SpaceBackground } from "./_components/SpaceBackground"
 import "./_styles/tokens.css"
 import "./_styles/episode-notes.css"
@@ -64,25 +65,32 @@ export default function MiembrosLayout({
       <SpaceBackground />
       <div style={{ position: "relative", zIndex: 1 }}>
         <AuthProvider>
-          <OnlinePresenceProvider>
-            <UnreadDMProvider>
-              <ViewProvider>
-                <BroadcastProvider>{children}</BroadcastProvider>
-                {/* Toast 'fulano se conectó' — escuta app:user-online */}
-                <OnlineToast />
-                {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
-                <MessengerWidget />
-                {/* Grupo de Telegram — encima de la burbuja del chat. Solo aparece
-                    cuando hay un enlace puesto en Admin → Textos do Site. */}
-                <TelegramFab />
-                {/* Invitación a instalar la plataforma en el teléfono. No bloquea
-                    nada: es una tarjeta con una equis, y callada un mes en
-                    cuanto alguien dice que no. En iPhone es además el único
-                    camino para que lleguen los avisos. */}
-                <InvitarAInstalar />
-              </ViewProvider>
-            </UnreadDMProvider>
-          </OnlinePresenceProvider>
+          {/* El estado de la aplicación en este aparato. Va aquí arriba y no
+              dentro de la invitación porque Chrome lanza su evento de
+              instalación a los pocos segundos de cargar: un oyente que se
+              registrara medio minuto después llegaría tarde, y en Android no
+              habría botón de instalar nunca. */}
+          <PwaProvider>
+            <OnlinePresenceProvider>
+              <UnreadDMProvider>
+                <ViewProvider>
+                  <BroadcastProvider>{children}</BroadcastProvider>
+                  {/* Toast 'fulano se conectó' — escuta app:user-online */}
+                  <OnlineToast />
+                  {/* Messenger flutuante (DMs internas) — bolinha canto inferior esquerdo */}
+                  <MessengerWidget />
+                  {/* Grupo de Telegram — encima de la burbuja del chat. Solo aparece
+                      cuando hay un enlace puesto en Admin → Textos do Site. */}
+                  <TelegramFab />
+                  {/* Decide cuál de las dos invitaciones toca —instalar o activar
+                      los avisos— y se asegura de que nunca salgan las dos a la
+                      vez. No bloquea nada: la hoja se cierra tocando fuera, con
+                      Escape o con el «ahora no». Los plazos: lib/pwa/reglas.ts. */}
+                  <InvitarAInstalar />
+                </ViewProvider>
+              </UnreadDMProvider>
+            </OnlinePresenceProvider>
+          </PwaProvider>
         </AuthProvider>
       </div>
     </div>

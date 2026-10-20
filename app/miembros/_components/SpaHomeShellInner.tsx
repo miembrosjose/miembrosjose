@@ -21,6 +21,13 @@ const CodigoOrigen = dynamic(() => import("./CodigoOrigen").then((m) => m.Codigo
 // y bajo demanda, para no engordar el arranque de /miembros.
 const CartografiaEstelar = dynamic(() => import("./cartografia-estelar/CartografiaEstelar").then((m) => m.CartografiaEstelar), { ssr: false })
 // El Pulso lee de la red al montar: solo cliente, para no gastar CPU del Worker.
+// `ssr: false` como todo lo de aquí: esta pantalla ya costó un 1102 por
+// dibujarse en el servidor, y además la tarjeta lee el estado del navegador
+// —permisos, suscripción, almacenamiento local— que en el servidor no existe.
+const TarjetaNotificaciones = dynamic(
+  () => import("./TarjetaNotificaciones").then((m) => m.TarjetaNotificaciones),
+  { ssr: false },
+)
 const PulsoSemana = dynamic(() => import("./PulsoSemana").then((m) => m.PulsoSemana), { ssr: false })
 const ProximoEncuentro = dynamic(() => import("./ProximoEncuentro").then((m) => m.ProximoEncuentro), { ssr: false })
 import { getIntegrationPortal } from "../_lib/portals-data"
@@ -681,6 +688,11 @@ function ViewInicio({
           a casi dos pantallas de distancia. */}
       <section className={`${styles.section} ${styles.arriba}`}>
         <div className={styles.avisosArriba}>
+          {/* Avisos en el móvil. Se dibuja sola cuando sirve de algo y
+              desaparece en cuanto el servidor confirma la suscripción, sin
+              recargar nada. Va la primera porque es lo único de aquí que
+              deja de verse para siempre en cuanto se atiende. */}
+          <TarjetaNotificaciones />
           <PulsoSemana compacto onIrALaRed={() => setView("red")} />
           {/* A la pestaña de encuentros, no al Pulso: quien pulsa "Ver
               todos" bajo un anuncio de encuentros quiere los encuentros. */}

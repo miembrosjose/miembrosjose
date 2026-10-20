@@ -96,6 +96,79 @@ function clavesPlausibles(p256dh: string, auth: string): boolean {
   return bytes(p256dh) === 65 && bytes(auth) === 16
 }
 
+/**
+ * ¿Este dispositivo está registrado, y es de quien pregunta?
+ *
+ *   GET /api/push/subscribe?endpoint=<el del navegador>
+ *
+ * ── POR QUÉ NO BASTA CON MIRAR EL NAVEGADOR ───────────────────────────────
+ * El navegador sabe si TIENE una suscripción, y durante meses eso se tomó por
+ * «los avisos están activos». No es lo mismo, y hay tres maneras de que
+ * mientan la una sobre la otra:
+ *
+ *   · Dos cuentas en el mismo teléfono. El navegador conserva la suscripción
+ *     de la primera persona. La segunda entra, la plataforma ve que hay
+ *     suscripción y le dice «activo» — pero los avisos de esa suscripción le
+ *     llegan a la otra.
+ *
+ *   · El registro falló. Se concedió el permiso, el navegador creó la
+ *     suscripción y la llamada para guardarla no llegó. Local dice que sí;
+ *     el servidor no sabe a dónde mandar nada.
+ *
+ *   · La suscripción se apagó por el otro lado. Un servicio de push responde
+ *     410 cuando ya no existe, y entonces se marca `activa = false`. El
+ *     navegador puede seguir teniendo el objeto viejo.
+ *
+ * En los tres casos la pantalla diría que todo está bien y no llegaría nada.
+ * Esta ruta es la única forma de saberlo de verdad.
+ *
+ * ── LO QUE DEVUELVE, Y LO QUE NO ──────────────────────────────────────────
+ * Un sí o un no sobre ESTE endpoint, y cuántos dispositivos tiene en total
+ * quien pregunta —que sirve para decir «lo tienes activo en otro sitio»—.
+ * Nunca la lista de endpoints ni las claves: no hacen falta para nada que
+ * ocurra en el navegador, y son lo único sensible que guarda esa tabla.
+ */
+export async function GET(req: NextRequest) {
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+
+  const endpoint = texto(req.nextUrl.searchParams.get("endpoint"), 2000)
+
+  const admin = getSupabaseAdmin()
+
+  // Cuántos dispositivos activos tiene en total. Es lo que permite decirle a
+  // alguien «aquí no, pero en tu teléfono sí» en vez de dejarle pensando que
+  // no los activó nunca.
+  const { count: otros } = await admin
+    .from("push_subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("activa", true)
+
+  if (!endpoint) {
+    return NextResponse.json({ ok: true, esteDispositivo: false, dispositivos: otros ?? 0 })
+  }
+
+  // ── EL `user_id` VA EN LA CONSULTA, NO SE COMPRUEBA DESPUÉS ─────────────
+  // Buscar solo por endpoint y mirar luego de quién es significaría que, por
+  // un descuido de una línea, esta ruta confirmaría la suscripción de otra
+  // persona. Así no hay nada que recordar comprobar.
+  const { data } = await admin
+    .from("push_subscriptions")
+    .select("id")
+    .eq("endpoint", endpoint)
+    .eq("user_id", user.id)
+    .eq("activa", true)
+    .maybeSingle()
+
+  return NextResponse.json({
+    ok: true,
+    esteDispositivo: Boolean(data),
+    dispositivos: otros ?? 0,
+  })
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()

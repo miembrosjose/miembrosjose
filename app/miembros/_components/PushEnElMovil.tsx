@@ -18,37 +18,64 @@
 // no puede activarlo es peor que explicarle lo que le falta.
 
 import { useCallback, useEffect, useState } from "react"
-import { Bell, BellOff, Check, Share, Plus, Loader2 } from "lucide-react"
+import { AlertTriangle, Bell, BellOff, Check, Share, Plus, Loader2 } from "lucide-react"
+import { useAuth } from "../_lib/auth-context"
 import {
   estadoActual,
   activarNotificaciones,
   desactivarNotificaciones,
-  registrarWorker,
+  reintentarRegistro,
+  esIPad,
   type EstadoPush,
+  registrarWorker,
 } from "../_lib/push-cliente"
 
 const CLAVE = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""
 
 export function PushEnElMovil() {
+  const { user } = useAuth()
   const [estado, setEstado] = useState<EstadoPush | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  // Las instrucciones del iPad son otras: el botón de compartir está arriba a
+  // la derecha, no abajo en el centro.
+  const [enIPad, setEnIPad] = useState(false)
 
   const refrescar = useCallback(async () => {
-    setEstado(await estadoActual())
-  }, [])
+    setEstado(await estadoActual(user?.id))
+  }, [user?.id])
 
   useEffect(() => {
+    setEnIPad(esIPad())
     // Registrar el worker no pide nada ni molesta: solo lo deja listo para
     // cuando la persona decida activar. Hacerlo aquí evita la carrera de
     // registrarlo y suscribirse en el mismo clic.
     void registrarWorker().then(refrescar)
   }, [refrescar])
 
+  // ── QUE LA TARJETA DEL INICIO SE ENTERE ─────────────────────────────────
+  // El inicio tiene su propia invitación con los mismos botones. Sin este
+  // aviso, activar los avisos aquí dejaba allí una tarjeta ofreciendo
+  // exactamente lo que se acababa de hacer, hasta recargar la página.
+  const avisarDelCambio = () => {
+    window.dispatchEvent(new CustomEvent("los144k:push-cambio"))
+  }
+
   const activar = async () => {
     if (!CLAVE) return
     setOcupado(true)
     try {
-      setEstado(await activarNotificaciones(CLAVE))
+      setEstado(await activarNotificaciones(CLAVE, user?.id))
+      avisarDelCambio()
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  const reintentar = async () => {
+    setOcupado(true)
+    try {
+      setEstado(await reintentarRegistro(user?.id))
+      avisarDelCambio()
     } finally {
       setOcupado(false)
     }
@@ -57,8 +84,9 @@ export function PushEnElMovil() {
   const desactivar = async () => {
     setOcupado(true)
     try {
-      await desactivarNotificaciones()
+      await desactivarNotificaciones(user?.id)
       await refrescar()
+      avisarDelCambio()
     } finally {
       setOcupado(false)
     }
@@ -105,17 +133,21 @@ export function PushEnElMovil() {
         </>
       )}
 
-      {/* ── EL CASO DEL IPHONE ──────────────────────────────────────────── */}
+      {/* ── EL CASO DEL IPHONE Y DEL IPAD ───────────────────────────────
+          El botón de compartir no está en el mismo sitio en los dos, y unas
+          instrucciones que mandan a mirar donde no es dejan a alguien
+          buscando hasta concluir que esto no funciona. */}
       {estado === "requiere_instalar" && (
         <>
           <p style={texto}>
-            En iPhone, los avisos solo llegan si añades <strong>Los 144.000</strong> a tu
-            pantalla de inicio. Es cosa de Safari, y se hace una sola vez:
+            En {enIPad ? "iPad" : "iPhone"}, los avisos solo llegan si añades{" "}
+            <strong>Los 144.000</strong> a tu pantalla de inicio. Es cosa de Safari, y se
+            hace una sola vez:
           </p>
           <ol style={pasos}>
             <li>
               Toca <Share size={12} style={{ verticalAlign: "-2px" }} /> <strong>Compartir</strong>,
-              abajo en el centro
+              {enIPad ? " arriba a la derecha" : " abajo en el centro"}
             </li>
             <li>
               Baja y elige <Plus size={12} style={{ verticalAlign: "-2px" }} />{" "}
@@ -126,12 +158,62 @@ export function PushEnElMovil() {
         </>
       )}
 
+      {/* ── DIO EL PERMISO Y EL REGISTRO NO LLEGÓ ────────────────────────
+          Antes esto se veía como «activo» y no llegaba nada: el navegador
+          tenía su suscripción y el servidor no sabía a dónde mandar. Ahora
+          se dice, y se arregla sin volver a pedir ningún permiso. */}
+      {estado === "incompleto" && (
+        <>
+          <p style={texto}>
+            <AlertTriangle size={12} style={{ verticalAlign: "-2px", color: "#c9a86b" }} />{" "}
+            Diste el permiso, pero este dispositivo no llegó a quedar registrado, así que
+            no te está llegando nada. Vuelve a intentarlo: no te pedirá permiso otra vez.
+          </p>
+          <button type="button" onClick={reintentar} disabled={ocupado} style={boton}>
+            {ocupado ? <Loader2 size={13} className="animate-spin" /> : <Bell size={13} />}
+            Reintentar
+          </button>
+        </>
+      )}
+
+      {/* ── LOS APAGÓ A PROPÓSITO ────────────────────────────────────────
+          Se le ofrece volver, pero sin insistir y sin el texto de venta: ya
+          sabe para qué sirven, los tuvo. La tarjeta del inicio, mientras
+          tanto, no le dice nada — es aquí donde se viene a cambiar esto. */}
+      {estado === "desactivado" && (
+        <>
+          <p style={texto}>
+            Apagaste los avisos en este dispositivo. No volverán a aparecer invitaciones en
+            el inicio; puedes encenderlos otra vez cuando quieras.
+          </p>
+          <button type="button" onClick={activar} disabled={ocupado} style={boton}>
+            {ocupado ? <Loader2 size={13} className="animate-spin" /> : <Bell size={13} />}
+            Volver a activar aquí
+          </button>
+        </>
+      )}
+
       {estado === "denegado" && (
-        <p style={texto}>
-          Bloqueaste los avisos en este dispositivo. El navegador ya no vuelve a preguntar:
-          hay que activarlos desde los ajustes del sistema, en las notificaciones de Los
-          144.000.
-        </p>
+        <>
+          <p style={texto}>
+            Bloqueaste los avisos en este dispositivo. El navegador ya no vuelve a
+            preguntar: hay que activarlos desde los ajustes del sistema.
+          </p>
+          {/* ── DÓNDE MIRAR, QUE ES LO QUE SE VIENE A BUSCAR ───────────────
+              «Ve a los ajustes» a secas no sirve de nada: son tres sitios
+              distintos según el aparato, y ninguno obvio. */}
+          <ol style={pasos}>
+            <li>
+              En iPhone o iPad: <strong>Ajustes → Notificaciones → Los 144.000</strong>
+            </li>
+            <li>
+              En Android: <strong>Ajustes → Aplicaciones → Los 144.000 → Notificaciones</strong>
+            </li>
+            <li>
+              En el navegador: el candado junto a la dirección → <strong>Notificaciones</strong>
+            </li>
+          </ol>
+        </>
       )}
 
       {estado === "no_soportado" && (

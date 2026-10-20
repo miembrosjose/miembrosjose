@@ -1,0 +1,200 @@
+/* LA HOJA DE INSTALACIÓN — colocación, entrada y áreas seguras.
+ *
+ * ── POR QUÉ UNA HOJA Y NO UNA PANTALLA COMPLETA ───────────────────────────
+ * Una pantalla completa al entrar es un peaje: intercepta a alguien que
+ * todavía no ha visto la plataforma y le pide que la instale. Una hoja que
+ * sube desde abajo ocupa lo mismo donde importa —el móvil— pero deja ver que
+ * hay algo detrás, y el «ahora no» queda a la vista sin tener que buscarlo.
+ *
+ * En escritorio no se enseña nunca, así que no hay versión de escritorio.
+ */
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  /* Oscurece lo de detrás sin taparlo. Se sigue viendo que la plataforma
+     está ahí, que es la diferencia entre una invitación y un muro. */
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  animation: aparecer 200ms ease-out;
+}
+
+.hoja {
+  width: 100%;
+  max-width: 34rem;
+  max-height: 88vh;
+  overflow-y: auto;
+
+  border: 1px solid rgba(167, 139, 202, 0.28);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: #0b0b13;
+
+  padding: 1.6rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+
+  animation: subir 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* En tabletas y pantallas anchas se centra y respira más: un iPad no es un
+   iPhone estirado, y una hoja pegada abajo en horizontal queda rarísima. */
+@media (min-width: 768px) {
+  .fondo { align-items: center; }
+  .hoja {
+    border-bottom: 1px solid rgba(167, 139, 202, 0.28);
+    border-radius: 20px;
+    padding: 2rem 2rem;
+    max-height: 86vh;
+  }
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes subir {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo, .hoja { animation: none; }
+}
+
+/* El asidero de las hojas inferiores: dice «esto se puede cerrar» antes de
+   leer nada. En pantallas anchas sobra, porque ahí no se arrastra. */
+.asidero {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0 auto 1.2rem;
+  border-radius: 999px;
+  background: #2a2a3a;
+}
+
+@media (min-width: 768px) {
+  .asidero { display: none; }
+}
+
+.marca {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.titulo {
+  margin: 0.6rem 0 0;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: #f3f6fa;
+  font-family: var(--font-cinzel, serif);
+}
+
+.texto {
+  margin: 0.7rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #a8a8c0;
+}
+
+.ventajas {
+  margin: 1.3rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.ventaja {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #c8c8dc;
+}
+
+.ventajaIcono {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: #a78bca;
+}
+
+/* Los pasos, cuando hay que explicarlos a mano. */
+.pasos {
+  margin: 1.3rem 0 0;
+  padding: 1rem 1rem 1rem 2.1rem;
+  border: 1px solid #1a1a24;
+  border-radius: 12px;
+  background: #07070f;
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: #b8b8cc;
+}
+
+.pasos li + li { margin-top: 0.35rem; }
+
+.pasos strong { color: #f3f6fa; }
+
+.acciones {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.principal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid #6d4a9b;
+  border-radius: 10px;
+  background: rgba(109, 74, 155, 0.3);
+  color: #f3f6fa;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.principal:hover { background: rgba(109, 74, 155, 0.45); }
+
+/* ── EL «AHORA NO» NO SE ESCONDE ──────────────────────────────────────────
+   Es texto subrayado y centrado, no un enlace minúsculo en una esquina. Una
+   salida que cuesta encontrar convierte la invitación en una trampa, y lo que
+   se gana así son instalaciones de gente que no la quería. */
+.secundaria {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: #8b90b4;
+  font-size: 0.8rem;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.secundaria:hover { color: #f3f6fa; }
+
+.nota {
+  margin: 0.9rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: center;
+  color: #6a6a7a;
+}
