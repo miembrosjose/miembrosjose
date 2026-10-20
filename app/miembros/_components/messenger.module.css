@@ -4,10 +4,21 @@
 
 /* ─── BOTÃO FLUTUANTE ────────────────────────────────────────────────── */
 
+/* ── LAS ZONAS SEGURAS NO SON OPCIONALES AQUÍ ──────────────────────────
+ * Instalada en la pantalla de inicio, la aplicación ocupa toda la pantalla y
+ * abajo está la barra del indicador de inicio del iPhone. Con `bottom: 24px`
+ * a secas, este botón queda pegado a ella: se ve apretado y los deslizamientos
+ * del sistema se comen parte del toque.
+ *
+ * `env()` vale 0 donde no hay muesca, así que en Android y en el escritorio
+ * no cambia nada.
+ *
+ * El de la izquierda es por el móvil en horizontal: ahí la muesca está en un
+ * lado y un botón a 24px cae debajo de ella. */
 .fab {
   position: fixed;
-  left: 24px;
-  bottom: 24px;
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   z-index: 95;
   width: 56px;
   height: 56px;
@@ -65,12 +76,16 @@
 
 .popover {
   position: fixed;
-  left: 24px;
-  bottom: 96px;
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  /* 24 de margen + 56 del botón + 16 de aire. */
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   z-index: 95;
   width: 360px;
   height: 520px;
-  max-height: calc(100vh - 120px);
+  /* Lo que queda de alto descontando el botón de abajo, su margen y el
+     indicador de inicio. Sin esta última parte, el panel se metía bajo la
+     barra del iPhone y la última línea del chat quedaba medio tapada. */
+  max-height: calc(100vh - 120px - env(safe-area-inset-bottom, 0px));
   background:
     linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 40%),
     rgba(10, 10, 15, 0.92);

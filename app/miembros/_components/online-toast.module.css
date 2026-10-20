@@ -2,10 +2,22 @@
  * 3s visível, slide-out. Sem som por default (pra não ser spam quando
  * vários users entram em sequência). */
 
+/* ── POR QUÉ NO VA EN LA ESQUINA, QUE ES DONDE PARECE QUE VA ──────────
+ * Estaba en bottom:24 left:24, que es EXACTAMENTE donde está la burbuja del
+ * chat. Y con menos z-index que ella, así que cada vez que alguien se
+ * conectaba el aviso entraba por debajo del botón y salía con el avatar
+ * tapado. Se veía como un fallo de dibujo, no como un aviso.
+ *
+ * Ahora se apila encima de los dos botones flotantes: 24 de margen + 56 del
+ * chat + 20 de aire + 56 de Telegram + 16 más. Sigue entrando deslizando
+ * desde la izquierda, que es como se reconoce.
+ *
+ * Si algún día se quita el botón de Telegram, esto queda un hueco alto. Es
+ * preferible a que vuelva a taparse. */
 .toast {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
+  bottom: calc(172px + env(safe-area-inset-bottom, 0px));
+  left: calc(24px + env(safe-area-inset-left, 0px));
   z-index: 90;
   display: flex;
   align-items: center;
