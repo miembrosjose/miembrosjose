@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Los 144.000",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
   },
   keywords: ["copywriting", "anuncios", "marketing digital", "ventas", "conversiones"],
   authors: [{ name: "Los 144000" }],

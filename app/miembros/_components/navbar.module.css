@@ -414,3 +414,33 @@
     gap: 0.35rem;
   }
 }
+
+/* ── EL HUECO DEL RELOJ EN EL IPHONE ───────────────────────────────────────
+ * Instalada en la pantalla de inicio, la aplicación ocupa TODA la pantalla
+ * —reloj, batería y cobertura incluidos— porque el layout pide
+ * `viewport-fit: cover`. Sin reservar ese espacio, la hora se dibuja encima
+ * de los iconos de esta barra, y lo que queda debajo del reloj NO recibe el
+ * toque: la campana deja de poder pulsarse.
+ *
+ * ── POR QUÉ UN BLOQUE APARTE Y NO TOCAR CADA REGLA ────────────────────────
+ * El `padding` de la barra se redefine en dos puntos de ruptura y en dos
+ * estados. Añadir el margen en cada uno son cinco sitios donde olvidarse de
+ * uno. Aquí solo se toca `padding-top`, se respeta el valor original de cada
+ * tamaño, y va al final para ganar por orden.
+ *
+ * `env()` vale 0 en pantallas sin muesca, así que esto no cambia nada en
+ * Android ni en escritorio.
+ */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .navbar { padding-top: calc(1.25rem + env(safe-area-inset-top, 0px)); }
+
+  @media (max-width: 968px) {
+    .navbar          { padding-top: calc(1rem    + env(safe-area-inset-top, 0px)); }
+    .navbar.scrolled { padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)); }
+  }
+
+  @media (max-width: 480px) {
+    .navbar          { padding-top: calc(0.85rem + env(safe-area-inset-top, 0px)); }
+    .navbar.scrolled { padding-top: calc(0.6rem  + env(safe-area-inset-top, 0px)); }
+  }
+}
