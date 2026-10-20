@@ -20,7 +20,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { ACHIEVEMENTS } from "@/lib/achievements"
-import type { Audiencia, PreferenciaCorreo, TipoComunicacion } from "./tipos"
+import type { Audiencia, Canal, PreferenciaCorreo, TipoComunicacion } from "./tipos"
 import { preferenciaDe } from "./tipos"
 
 export type MotivoExclusion =
@@ -317,7 +317,9 @@ export function describirAudiencia(a: Audiencia): string {
 export async function resolverAudiencia(
   audiencia: Audiencia,
   tipo: TipoComunicacion,
+  canal: Canal = "email",
 ): Promise<{ destinatarios: Destinatario[]; resumen: ResumenAudiencia }> {
+  const esPush = canal === "push"
   const admin = getSupabaseAdmin()
   const preferencia = preferenciaDe(tipo)
 
@@ -395,8 +397,14 @@ export async function resolverAudiencia(
   for (const f of filas) {
     const correo = (f.email || "").trim().toLowerCase()
 
-    if (!correo) { cuenta.sin_correo++; continue }
-    if (!correoPlausible(correo)) { cuenta.correo_invalido++; continue }
+    // ── POR QUE UNA NOTIFICACION NO EXIGE CORREO ──────────────────────
+    // A un aviso en el teléfono no le hace falta la dirección: va a los
+    // dispositivos de la persona. Dejar fuera a quien tiene el correo mal
+    // escrito habría sido quitarle avisos por un dato que no se usa.
+    if (!esPush) {
+      if (!correo) { cuenta.sin_correo++; continue }
+      if (!correoPlausible(correo)) { cuenta.correo_invalido++; continue }
+    }
     if (bajaTotal.has(f.id)) { cuenta.baja_total++; continue }
     if (apagada.has(f.id)) { cuenta.preferencia_apagada++; continue }
 
@@ -427,9 +435,15 @@ export async function resolverAudiencia(
     }
     // Dos perfiles con el mismo correo reciben un solo mensaje. Recibir dos
     // copias del mismo correo es lo que hace que alguien marque como spam.
-    if (vistos.has(correo)) { cuenta.duplicado++; continue }
+    //
+    // Por push se agrupa por persona y no por correo: ahi el duplicado no
+    // puede ocurrir —cada perfil es una fila— y agrupar por correo habría
+    // dejado sin aviso al segundo perfil de quien tiene dos, que en el
+    // teléfono sí son dos personas distintas.
+    const llave = esPush ? f.id : correo
+    if (vistos.has(llave)) { cuenta.duplicado++; continue }
 
-    vistos.add(correo)
+    vistos.add(llave)
     destinatarios.push({ userId: f.id, email: correo, nombre: f.full_name })
   }
 
@@ -456,8 +470,9 @@ export async function resolverAudiencia(
 export async function contarAudiencia(
   audiencia: Audiencia,
   tipo: TipoComunicacion,
+  canal: Canal = "email",
 ): Promise<ResumenAudiencia> {
-  const { resumen } = await resolverAudiencia(audiencia, tipo)
+  const { resumen } = await resolverAudiencia(audiencia, tipo, canal)
   return resumen
 }
 

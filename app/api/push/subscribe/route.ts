@@ -27,6 +27,75 @@ function texto(v: unknown, max: number): string {
   return typeof v === "string" ? v.slice(0, max) : ""
 }
 
+/**
+ * ¿Es esto la dirección de un servicio de push?
+ *
+ * ── POR QUÉ SE COMPRUEBA ───────────────────────────────────────────────────
+ * El endpoint llega del navegador, y del navegador llega lo que sea. Con una
+ * sesión válida se puede mandar aquí cualquier dirección, y a partir de ese
+ * momento el servidor le haría peticiones POST cada vez que esa persona
+ * tuviera un aviso.
+ *
+ * El daño es limitado —una suscripción solo recibe los avisos de SU dueño, y
+ * el contenido va cifrado con las claves que el propio cliente dio— pero
+ * convierte la plataforma en un cliente HTTP a donde le digan, y eso no tiene
+ * ninguna razón de ser.
+ *
+ * ── POR QUÉ NO HAY UNA LISTA DE SERVICIOS PERMITIDOS ───────────────────────
+ * Sería más estricto y es tentador: son tres o cuatro —Google, Apple, Mozilla,
+ * Microsoft—. Pero cada navegador nuevo trae el suyo, y una lista cerrada
+ * significa que el día que alguien entre desde un navegador que no estaba
+ * previsto, active los avisos y no le llegue nada, no habrá forma de saber por
+ * qué: la plataforma diría que todo está bien.
+ *
+ * Dejar sin avisos a una persona real para cerrar un riesgo que solo le afecta
+ * a quien lo provoca es un mal cambio. Lo que sí se rechaza es lo que no puede
+ * ser legítimo de ninguna manera.
+ */
+function direccionDeServicioValida(endpoint: string): boolean {
+  let u: URL
+  try { u = new URL(endpoint) } catch { return false }
+
+  // Un servicio de push es siempre https. Sin excepciones.
+  if (u.protocol !== "https:") return false
+
+  const host = u.hostname.toLowerCase()
+
+  // Nada de direcciones numéricas ni de nombres sin dominio: no hay ningún
+  // servicio de push que viva en una IP o en «localhost», y sí son la forma
+  // de intentar que el servidor hable con algo de su propia red.
+  if (!host.includes(".")) return false
+  if (/^[\d.]+$/.test(host)) return false
+  if (host.endsWith(".localhost") || host.endsWith(".local")) return false
+  if (host.includes(":")) return false
+
+  return true
+}
+
+/**
+ * ¿Son estas claves las que dice el estándar?
+ *
+ * `p256dh` es un punto de curva P-256 sin comprimir: 65 bytes que empiezan por
+ * 0x04. `auth` es un secreto de 16 bytes. Lo dice el RFC 8291 y lo cumplen
+ * todos los navegadores.
+ *
+ * ── POR QUÉ SE MIRA AQUÍ Y NO AL ENVIAR ────────────────────────────────────
+ * Porque al enviar ya es tarde. Una clave mal formada no rompe nada visible:
+ * el cifrado falla, el envío se apunta como fallido y esa persona se queda sin
+ * avisos para siempre creyendo que los tiene activados. Comprobarlo al
+ * registrar convierte un silencio permanente en un error inmediato.
+ */
+function clavesPlausibles(p256dh: string, auth: string): boolean {
+  const bytes = (clave: string): number => {
+    // El relleno con = no debería venir, pero algún navegador lo manda y
+    // no es motivo para rechazar un dispositivo que funciona.
+    const limpio = clave.replace(/=+$/, "")
+    if (!/^[A-Za-z0-9_+/-]+$/.test(limpio)) return -1
+    return Math.floor((limpio.length * 3) / 4)
+  }
+  return bytes(p256dh) === 65 && bytes(auth) === 16
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -46,6 +115,13 @@ export async function POST(req: NextRequest) {
   // cifrar, y el servicio de push lo rechazaría en cada envío.
   if (!endpoint || !p256dh || !auth) {
     return NextResponse.json({ error: "suscripcion_incompleta" }, { status: 400 })
+  }
+
+  if (!direccionDeServicioValida(endpoint)) {
+    return NextResponse.json({ error: "endpoint_no_valido" }, { status: 400 })
+  }
+  if (!clavesPlausibles(p256dh, auth)) {
+    return NextResponse.json({ error: "claves_no_validas" }, { status: 400 })
   }
 
   const admin = getSupabaseAdmin()

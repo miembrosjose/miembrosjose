@@ -44,6 +44,7 @@ import {
   audienciaPrincipal, crearBroadcast, enviarBroadcast, hayProveedor,
   mensajeDeError, sincronizarContactos, sitio,
 } from "@/lib/comunicaciones/proveedor"
+import { enviarComunicacionPush } from "@/lib/comunicaciones/push"
 import type { Comunicacion } from "@/lib/comunicaciones/tipos"
 
 export const dynamic = "force-dynamic"
@@ -120,7 +121,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     )
   }
 
-  if (!hayProveedor()) {
+  // El proveedor de correo solo hace falta si sale por correo. Una
+  // notificación la reparte esta plataforma, y exigir aquí una clave de
+  // Resend habría bloqueado los avisos por una cosa que no usan.
+  if (c.canal !== "push" && !hayProveedor()) {
     return NextResponse.json(
       { error: "El proveedor de correo no está configurado en este entorno." },
       { status: 503 },
@@ -173,13 +177,79 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     // ── Quién lo recibe ───────────────────────────────────────────────────
-    const { destinatarios, resumen } = await resolverAudiencia(c.audience, c.type)
+    const { destinatarios, resumen } = await resolverAudiencia(c.audience, c.type, c.canal)
 
     if (destinatarios.length === 0) {
       return await fallar(
         "No hay nadie a quien enviársela. Revisa la audiencia y las preferencias.",
         "audiencia vacía",
       )
+    }
+
+    // ── SI SALE POR NOTIFICACIÓN, AQUÍ SE BIFURCA ─────────────────────────
+    // Todo lo de arriba es común: la reserva contra el doble clic, la
+    // audiencia, la comprobación de que hay a quién mandárselo. Lo único
+    // distinto es por dónde sale.
+    //
+    // Va antes de tocar nada del proveedor de correo: una notificación no
+    // tiene por qué sincronizar listas de contactos ni crear un broadcast.
+    if (c.canal === "push") {
+      const r = await enviarComunicacionPush(
+        destinatarios,
+        {
+          titulo: c.subject,
+          // El cuerpo de un correo puede tener párrafos; una notificación
+          // enseña dos líneas. Se recorta aquí y no al redactar, para que el
+          // texto completo siga guardado por si algún día esta misma
+          // comunicación se manda por correo.
+          cuerpo: (c.body || "").replace(/\s+/g, " ").trim().slice(0, 300),
+          url: c.cta_url,
+        },
+        id,
+      )
+
+      // ── CUANDO NO SE HA MANDADO NADA ────────────────────────────────────
+      // `abortado` significa que se paró ANTES de tocar ningún teléfono: no
+      // se pudo leer quién lo tiene apagado, o la tanda no cabía de una vez.
+      // Eso es un fallo, y tiene que quedar como tal: `fallar` devuelve la
+      // comunicación a «falló», suelta la llave al reeditarla y deja el
+      // motivo escrito. Lo contrario —marcarla como enviada— sería decir que
+      // salió algo que no salió.
+      if (r.abortado) {
+        return await fallar(r.abortado, "push abortado")
+      }
+
+      const { data: final } = await admin
+        .from("communications")
+        .update({
+          status: "sent",
+          recipients_estimated: r.alcanzadas,
+          recipients_excluded: resumen.excluidos + r.sinDispositivo + r.noQuieren,
+          sent_at: new Date().toISOString(),
+          // Si no le llegó a nadie, eso NO es un fallo del envío: es que
+          // todavía no hay nadie de esa audiencia con los avisos activados.
+          // Se anota para que el panel lo diga, en vez de dejar un «enviada»
+          // que no llegó a ninguna parte.
+          provider_error: r.alcanzadas === 0
+            ? `No llegó a nadie: ${r.sinDispositivo} sin dispositivo, ${r.noQuieren} lo tienen apagado, ${r.fallidos} fallaron.`
+            : null,
+        })
+        .eq("id", id)
+        .select("*")
+        .single()
+
+      await registrarEvento(id, g.user.id, "sent", {
+        canal: "push",
+        personas: r.personas,
+        alcanzadas: r.alcanzadas,
+        sin_dispositivo: r.sinDispositivo,
+        no_quieren: r.noQuieren,
+        fallidos: r.fallidos,
+        retiradas: r.retiradas,
+        error: r.error ?? null,
+      })
+
+      return NextResponse.json({ ok: true, comunicacion: final, resumen, push: r })
     }
 
     // ── La lista del proveedor, al día ────────────────────────────────────

@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (!c) return NextResponse.json({ error: "No existe" }, { status: 404 })
 
   try {
-    const resumen = await contarAudiencia(c.audience, c.type)
+    const resumen = await contarAudiencia(c.audience, c.type, c.canal)
 
     // Se guarda lo calculado. Si el envío ocurre después, el resumen final
     // enseña esta misma cifra y no otra hecha en otro momento.

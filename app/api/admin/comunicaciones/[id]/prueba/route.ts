@@ -2,11 +2,16 @@
 //
 //   POST /api/admin/comunicaciones/<id>/prueba   { destinatarios: string[] }
 //
+// Si la comunicación sale por notificación, `destinatarios` se ignora: la
+// prueba va a los dispositivos de quien la pide y a ninguno más. El porqué,
+// en la bifurcación de abajo.
+//
 // ── LO QUE ESTO NO ES ──────────────────────────────────────────────────────
 // No es una campaña pequeña. No toca la audiencia, no crea un Broadcast, no
 // cuenta como envío, no aparece en las métricas de nada y NO PUEDE alcanzar a
 // un miembro por accidente: va por el canal de correo suelto, exactamente a
-// las direcciones que se escriban aquí.
+// las direcciones que se escriban aquí —o, en una notificación, solo a los
+// dispositivos de quien pulsa el botón.
 //
 // Esa es toda la idea. Antes de mandar algo a mil personas hay que poder verlo
 // llegar a una bandeja de verdad —Gmail pinta distinto que Outlook, y el móvil
@@ -22,6 +27,7 @@ import { renderCorreo, renderTexto } from "@/lib/comunicaciones/plantilla"
 import { datosDesdeComunicacion } from "@/lib/comunicaciones/plantilla"
 import { enviarPrueba, hayProveedor, mensajeDeError, sitio } from "@/lib/comunicaciones/proveedor"
 import { correoPlausible } from "@/lib/comunicaciones/audiencia"
+import { avisarAPersona } from "@/lib/push/repartir"
 
 export const dynamic = "force-dynamic"
 
@@ -41,6 +47,68 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params
   const c = await leerComunicacion(id)
   if (!c) return NextResponse.json({ error: "No existe" }, { status: 404 })
+
+  // ── LA PRUEBA DE UNA NOTIFICACIÓN VA SOLO A QUIEN LA PIDE ───────────────
+  // En el correo la prueba lleva direcciones: hay que verla en Gmail y en
+  // Outlook, que pintan distinto. Una notificación no tiene de eso —la pinta
+  // el sistema operativo— así que lo único que hay que comprobar es cómo se
+  // lee el título y el texto en una pantalla de bloqueo.
+  //
+  // Por eso aquí NO se acepta destinatario. Va a los dispositivos de quien
+  // pulsa el botón, y a ninguno más. Aceptar un identificador de otra persona
+  // habría convertido «enviar prueba» en una forma de mandarle un aviso a
+  // alguien saltándose la audiencia, la validación y el registro.
+  if (c.canal === "push") {
+    if (!(c.subject || "").trim()) {
+      return NextResponse.json(
+        { error: "Ponle título antes de probarla: es la línea que se lee primero." },
+        { status: 400 },
+      )
+    }
+
+    const r = await avisarAPersona(
+      g.user.id,
+      {
+        title: c.subject,
+        body: (c.body || "").replace(/\s+/g, " ").trim().slice(0, 300),
+        url: c.cta_url || "/miembros",
+        // Etiqueta propia: una prueba no debe reemplazar en el teléfono al
+        // aviso de verdad si luego se manda la misma comunicación.
+        tag: `prueba-${id}`,
+      },
+      "prueba",
+    )
+
+    await registrarEvento(id, g.user.id, "test_sent", {
+      canal: "push",
+      dispositivos: r.dispositivos,
+      entregados: r.entregados,
+      fallidos: r.fallidos,
+    })
+
+    if (r.dispositivos === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No tienes ningún dispositivo con los avisos activados. " +
+            "Actívalos en la campana, desde el teléfono, y vuelve a probar.",
+        },
+        { status: 400 },
+      )
+    }
+    if (r.entregados === 0) {
+      return NextResponse.json(
+        { error: r.error || "No se pudo entregar en ninguno de tus dispositivos." },
+        { status: 502 },
+      )
+    }
+
+    return NextResponse.json({
+      ok: true,
+      push: r,
+      cuando: new Date().toISOString(),
+    })
+  }
 
   let body: { destinatarios?: unknown }
   try { body = await req.json() } catch { body = {} }

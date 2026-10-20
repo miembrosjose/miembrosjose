@@ -70,8 +70,48 @@ self.addEventListener("push", (event) => {
     silent: false,
   };
 
-  event.waitUntil(self.registration.showNotification(titulo, opciones));
+  // ── NO VIBRAR A QUIEN YA ESTÁ MIRANDO ────────────────────────────────────
+  // Completar una temporada ocurre DENTRO de la aplicación: la persona está
+  // ahí, acaba de ver el último capítulo y el aviso en pantalla ya se lo dijo.
+  // Que además le suene el teléfono en la mano es el aviso contándole algo que
+  // acaba de leer.
+  //
+  // La notificación se muestra igual —el navegador exige que todo push acabe
+  // en una visible, y además queda en el historial— pero sin sonido ni
+  // vibración. Interrumpir solo tiene sentido cuando no estás delante.
+  //
+  // Los mensajes NO llevan esta marca a propósito: alguien puede tener la
+  // aplicación abierta en otra pantalla y querer enterarse igual.
+  event.waitUntil(
+    (async () => {
+      if (datos.silenciarSiAbierta) {
+        const ventanas = await self.clients.matchAll({ type: "window" });
+        if (ventanas.some((v) => v.focused)) opciones.silent = true;
+      }
+      await self.registration.showNotification(titulo, opciones);
+    })(),
+  );
 });
+
+// ── EL DESTINO SIEMPRE ES DE ESTA PLATAFORMA ───────────────────────────────
+//
+// `data.url` llega dentro del push, y quien manda un push es el servidor. Pero
+// este es el único sitio de todo el sistema que abre una ventana a partir de un
+// dato recibido, y si algún día ese dato llegara mal, lo que se abriría es una
+// página cualquiera con toda la apariencia de venir de aquí: la persona ha
+// tocado un aviso de Los 144.000 y confiará en lo que vea.
+//
+// Resolverlo contra el origen y descartar lo que caiga fuera cuesta seis líneas.
+function dentroDelSitio(bruto) {
+  const inicio = self.location.origin + "/miembros";
+  try {
+    // Resuelve tanto "/miembros/mensajes/x" como una dirección completa.
+    const u = new URL(bruto, self.location.origin);
+    return u.origin === self.location.origin ? u.href : inicio;
+  } catch {
+    return inicio;
+  }
+}
 
 // ── EL CLIC ────────────────────────────────────────────────────────────────
 //
@@ -83,7 +123,9 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const destino = (event.notification.data && event.notification.data.url) || "/miembros";
+  const destino = dentroDelSitio(
+    (event.notification.data && event.notification.data.url) || "/miembros",
+  );
 
   event.waitUntil(
     (async () => {

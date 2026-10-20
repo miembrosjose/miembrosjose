@@ -24,6 +24,8 @@ import { esGradoDelCamino, getAchievementById, rangoMasAlto } from "@/lib/achiev
 import { insigniasGanadas } from "@/lib/insignias-ganadas"
 import { emitCommunityEvent } from "@/lib/notify"
 import { propagarInsignia } from "@/lib/insignias-cascada"
+import { avisarAPersona } from "@/lib/push/repartir"
+import { laInsigniaMereceMovil, quiereLogrosEnElMovil } from "@/lib/push/reglas"
 
 /** XP por categoría. Las compras no dan: ya dieron un nivel al comprarse. */
 const XP_POR_CATEGORIA: Record<string, number> = {
@@ -191,6 +193,29 @@ export async function concederInsignia(
   }
 
   await destacarSiProcede(user, ach, { recuperando: false })
+
+  // ── Y EN EL MÓVIL, SOLO SI LO MERECE ──────────────────────────────────
+  // No toda insignia interrumpe: la regla vive en lib/push/reglas.ts, donde
+  // se puede leer entera. En corto: grados del Camino, hitos de temporada y
+  // los dos niveles más altos. Lo demás se queda en la campana.
+  //
+  // Va al final y no puede fallar nada: `avisarAPersona` no lanza. Si el push
+  // se cae, la insignia ya está concedida, el XP dado y el aviso en pantalla
+  // puesto — que es lo que de verdad tiene que ocurrir.
+  if (laInsigniaMereceMovil(ach, false) && quiereLogrosEnElMovil(user.user_metadata)) {
+    await avisarAPersona(
+      user.id,
+      {
+        title: `Desbloqueaste "${ach.name}"`,
+        body: ach.desc,
+        url: "/miembros/perfil",
+        // Una por insignia: dos logros distintos no se pisan entre sí.
+        tag: `insignia-${ach.id}`,
+        silenciarSiAbierta: true,
+      },
+      "logros",
+    )
+  }
 
   return true
 }

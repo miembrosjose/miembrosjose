@@ -23,7 +23,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  AlertTriangle, Archive, ArrowLeft, Calendar, Check, Clock, Copy, ImagePlus,
+  AlertTriangle, Archive, ArrowLeft, Bell, Calendar, Check, Clock, Copy, ImagePlus,
   Bold, Heading2, Italic, Link2, List, Loader2, Mail, Minus, Monitor,
   MoreVertical, Plus, Quote, Search, Send, Smartphone, Sparkles, Trash2,
   Undo2, Users, X,
@@ -97,6 +97,8 @@ const ROLES = [
 
 type Fila = {
   id: string
+  /** Por dónde sale. Lo que se creó antes de que existiera el push es correo. */
+  canal: "email" | "push"
   type: string
   internal_title: string
   subject: string
@@ -183,13 +185,13 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         (f.internal_title || "").toLowerCase().includes(q))
     : filas
 
-  const crear = async (tipo: string) => {
+  const crear = async (tipo: string, canal: "email" | "push") => {
     try {
       const r = await fetch("/api/admin/comunicaciones", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: tipo }),
+        body: JSON.stringify({ type: tipo, canal }),
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || "No se pudo crear")
@@ -301,6 +303,19 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
           <span className={`border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] ${est.cls}`}>
             {est.etiqueta}
           </span>
+          {/* El canal, antes que nada: lo primero que hay que saber de una
+              fila es si eso sonó en el teléfono de alguien o llegó a una
+              bandeja. Se dibuja distinto porque se deshacen distinto: un
+              correo se puede ignorar, un aviso ya interrumpió. */}
+          {f.canal === "push" ? (
+            <span className="inline-flex items-center gap-1 border border-[#6D4A9B] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#c3b2e0]">
+              <Bell size={9} /> Notificación
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 border border-[#2a2a3a] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#8a8fa8]">
+              <Mail size={9} /> Correo
+            </span>
+          )}
           <span className="text-[10px] uppercase tracking-[0.15em] text-[#6a6a7a]">
             {tipo?.nombre ?? f.type}
           </span>
@@ -520,15 +535,84 @@ function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
   )
 }
 
-function ElegirTipo({ onElegir, onCerrar }: { onElegir: (t: string) => void; onCerrar: () => void }) {
+/**
+ * Dos preguntas, en este orden: por dónde sale, y qué es.
+ *
+ * ── POR QUÉ EL CANAL VA PRIMERO ───────────────────────────────────────────
+ * Porque cambia todo lo que viene después. Un correo se lee sentado, acepta
+ * un titular, una imagen y cinco párrafos. Una notificación interrumpe, y lo
+ * que cabe es un título y dos líneas. Preguntarlo al final habría dejado a
+ * alguien escribiendo un correo entero para descubrir luego que de todo eso
+ * solo salen dos líneas.
+ *
+ * ── POR QUÉ LA NOTIFICACIÓN TAMBIÉN TIENE TIPO ────────────────────────────
+ * Parece de más —en el teléfono no se ve el tipo por ninguna parte— pero el
+ * tipo es lo que dice de qué va: quien apagó los avisos de sesiones en vivo
+ * no quiere que le suene una sesión en vivo, ni por correo ni por teléfono.
+ */
+function ElegirTipo({ onElegir, onCerrar }: {
+  onElegir: (t: string, canal: "email" | "push") => void
+  onCerrar: () => void
+}) {
+  const [canal, setCanal] = useState<"email" | "push" | null>(null)
+
+  if (!canal) {
+    return (
+      <Modal titulo="¿Por dónde quieres que salga?" onCerrar={onCerrar}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setCanal("email")}
+            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
+          >
+            <Mail size={20} className="text-[#a78bca]" />
+            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Correo</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
+              Llega a la bandeja de entrada. Admite titular, imagen y texto
+              largo. Se puede programar para otro día.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCanal("push")}
+            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
+          >
+            <Bell size={20} className="text-[#a78bca]" />
+            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Notificación</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
+              Suena en el teléfono al momento, aunque la plataforma esté
+              cerrada. Un título y dos líneas. Solo a quien los activó.
+            </p>
+          </button>
+        </div>
+      </Modal>
+    )
+  }
+
   return (
-    <Modal titulo="¿Qué quieres comunicar?" onCerrar={onCerrar}>
+    <Modal
+      titulo={canal === "push" ? "¿De qué es el aviso?" : "¿Qué quieres comunicar?"}
+      onCerrar={onCerrar}
+    >
+      <button
+        type="button"
+        onClick={() => setCanal(null)}
+        className="mb-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] text-[#7a7a8a] transition-colors hover:text-[#c3b2e0]"
+      >
+        <ArrowLeft size={12} /> {canal === "push" ? "Notificación" : "Correo"}
+      </button>
+      {canal === "push" && (
+        <p className="mb-4 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
+          El tipo no se ve en el teléfono, pero decide a quién le llega: quien
+          apagó los avisos de esta clase de cosas no lo recibe.
+        </p>
+      )}
       <div className="grid gap-2 sm:grid-cols-2">
         {TIPOS.map((t) => (
           <button
             key={t.id}
             type="button"
-            onClick={() => onElegir(t.id)}
+            onClick={() => onElegir(t.id, canal)}
             className="border border-[#1f1f2c] bg-[#0d0d16] p-4 text-left transition-colors hover:border-[#6D4A9B]"
           >
             <p className="text-sm font-medium text-[#F3F6FA]">{t.nombre}</p>
@@ -647,7 +731,24 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
         </Aviso>
       )}
 
-      {c.status === "sent" && <Resultados id={id} previstos={c.recipients_estimated} />}
+      {/* Aperturas y clics son del proveedor de correo. Un aviso no tiene
+          nada de eso —nadie informa de si se miró la pantalla de bloqueo—
+          así que en vez de cuatro cifras en cero se dice lo que sí se sabe:
+          a cuántos teléfonos llegó, que lo guarda la propia fila. */}
+      {c.status === "sent" && c.canal !== "push" && <Resultados id={id} previstos={c.recipients_estimated} />}
+      {c.status === "sent" && c.canal === "push" && (
+        <section className="border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">Resultados</h3>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <Metrica etiqueta="Les llegó" valor={c.recipients_estimated ?? 0} />
+            <Metrica etiqueta="Fuera" valor={c.recipients_excluded ?? 0} />
+          </div>
+          <p className="mt-4 text-xs leading-relaxed text-[#6a6a7a]">
+            «Fuera» son quienes no tenían ningún dispositivo con los avisos
+            activados, más quienes los tienen apagados para esta clase de cosas.
+          </p>
+        </section>
+      )}
 
       {/* ── EL LAYOUT ───────────────────────────────────────────────────────
           Dos columnas en escritorio: lo que se escribe a la izquierda, lo que
@@ -657,15 +758,17 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
 
           En móvil se apilan y el preview va primero de la lista de la derecha:
           ahí no cabe tenerlo siempre a la vista, pero sí que esté cerca. */}
-      <NavSecciones editable={editable} />
+      <NavSecciones editable={editable} canal={c.canal} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <div className="space-y-5">
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
         </div>
         <div className="space-y-5 lg:sticky lg:top-4">
-          <Previsualizacion c={c} />
-          {editable && <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />}
+          {c.canal === "push" ? <VistaPreviaPush c={c} /> : <Previsualizacion c={c} />}
+          {editable && (c.canal === "push"
+            ? <PruebaPush id={id} titulo={c.subject} onEnviada={setUltimaPrueba} />
+            : <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />)}
         </div>
       </div>
 
@@ -736,18 +839,28 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
  * vista. Se queda pegado arriba porque su utilidad es justamente estar cuando
  * uno ya ha bajado mucho.
  */
-const SECCIONES = [
-  { id: "bandeja", etiqueta: "Bandeja" },
-  { id: "correo", etiqueta: "El correo" },
-  { id: "boton", etiqueta: "Botón" },
-  { id: "audiencia", etiqueta: "A quién va" },
-]
+const SECCIONES: Record<"email" | "push", Array<{ id: string; etiqueta: string }>> = {
+  email: [
+    { id: "bandeja", etiqueta: "Bandeja" },
+    { id: "correo", etiqueta: "El correo" },
+    { id: "boton", etiqueta: "Botón" },
+    { id: "audiencia", etiqueta: "A quién va" },
+  ],
+  // Una notificación tiene tres cosas y ya: lo que se lee, a dónde lleva y a
+  // quién le suena. El índice lo dice tal cual, para que nadie busque dónde
+  // se pone la imagen.
+  push: [
+    { id: "aviso", etiqueta: "El aviso" },
+    { id: "destino", etiqueta: "A dónde lleva" },
+    { id: "audiencia", etiqueta: "A quién le suena" },
+  ],
+}
 
-function NavSecciones({ editable }: { editable: boolean }) {
+function NavSecciones({ editable, canal }: { editable: boolean; canal: "email" | "push" }) {
   if (!editable) return null
   return (
     <nav className="sticky top-0 z-10 -mx-4 flex gap-1 overflow-x-auto border-b border-[#14141e] bg-[#000000]/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
-      {SECCIONES.map((s) => (
+      {SECCIONES[canal].map((s) => (
         <button
           key={s.id}
           type="button"
@@ -764,6 +877,125 @@ function NavSecciones({ editable }: { editable: boolean }) {
   )
 }
 
+/**
+ * Los campos de una notificación.
+ *
+ * ── POR QUÉ NO SON LOS MISMOS CON LA MITAD ESCONDIDA ──────────────────────
+ * Porque no son los mismos campos con otro nombre. «Asunto» y «título» se
+ * escriben distinto: un asunto puede ser una frase entera porque hay un correo
+ * debajo que la explica; un título de notificación es lo único que mucha gente
+ * va a leer, con la pantalla apagándose.
+ *
+ * Lo mismo con el cuerpo. Allí hay un editor con negritas, listas y citas,
+ * porque el correo las pinta. Aquí no hay nada que pintar: el sistema
+ * operativo enseña texto plano, así que el editor rico habría sido una
+ * promesa falsa. Un recuadro de texto, y el contador diciendo cuánto se ve.
+ */
+function CamposPush({
+  c, editar, editable,
+}: {
+  c: Comunicacion
+  editar: (campo: string, v: unknown) => void
+  editable: boolean
+}) {
+  const titulo = c.subject ?? ""
+  const texto = c.body ?? ""
+
+  return (
+    <>
+      <Bloque
+        id="aviso"
+        titulo="El aviso"
+        nota="Lo que se lee en la pantalla de bloqueo, sin abrir nada."
+      >
+        <div>
+          <label className={labelCls}>Título</label>
+          <input
+            type="text"
+            placeholder="Nueva transmisión disponible"
+            value={titulo}
+            onChange={(e) => editar("subject", e.target.value)}
+            disabled={!editable}
+            className={inputCls}
+          />
+          <Contador largo={titulo.length} comodo={45} que="El teléfono corta el título" />
+        </div>
+        <div>
+          <label className={labelCls}>Texto</label>
+          <textarea
+            rows={3}
+            placeholder="José María acaba de publicar el cierre de la temporada."
+            value={texto}
+            onChange={(e) => editar("body", e.target.value)}
+            disabled={!editable}
+            className={`${inputCls} resize-y`}
+          />
+          <Contador largo={texto.length} comodo={120} que="En el aviso se ven unos" />
+          <p className="mt-2 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
+            Aquí no hay negritas ni enlaces: el teléfono enseña texto tal cual.
+            Y no empieza con «Hola, semilla estelar» —eso es del correo—: un
+            aviso tiene dos líneas y el saludo se come una.
+          </p>
+        </div>
+      </Bloque>
+
+      <Bloque
+        id="destino"
+        titulo="A dónde lleva"
+        nota="Dónde se abre la plataforma cuando alguien toca el aviso."
+      >
+        <div>
+          <label className={labelCls}>Destino</label>
+          <input
+            type="text"
+            placeholder="/miembros/transmisiones"
+            value={c.cta_url ?? ""}
+            onChange={(e) => editar("cta_url", e.target.value)}
+            disabled={!editable}
+            className={inputCls}
+          />
+          <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+            Una ruta de la plataforma —<code className="text-[#c3b2e0]">/miembros/transmisiones</code>—
+            o una dirección completa. Si lo dejas vacío, se abre por el inicio.
+          </p>
+        </div>
+      </Bloque>
+
+      <Audiencias c={c} editar={editar} editable={editable} />
+
+      <Bloque titulo="Para administración" nota="No se ve en el aviso. Es cómo la reconoces en la lista.">
+        <div>
+          <label className={labelCls}>Título interno</label>
+          <input
+            type="text"
+            value={c.internal_title ?? ""}
+            onChange={(e) => editar("internal_title", e.target.value)}
+            disabled={!editable}
+            className={inputCls}
+          />
+        </div>
+      </Bloque>
+    </>
+  )
+}
+
+/**
+ * Cuánto de lo escrito se va a leer.
+ *
+ * No impide pasarse —a veces la frase necesita esa palabra de más y el corte
+ * cae en buen sitio— pero lo dice mientras se escribe, que es cuando sirve.
+ * Enterarse al enviar es enterarse tarde.
+ */
+function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: string }) {
+  const pasado = largo > comodo
+  return (
+    <p className={`mt-1.5 text-[11px] ${pasado ? "text-[#c9a86b]" : "text-[#5a5a6a]"}`}>
+      {largo} caracteres · {que} cerca de los {comodo}
+      {pasado && " — lo de más no se lee"}
+    </p>
+  )
+}
+
 function Campos({
   c, editar, editable, llevaFecha,
 }: {
@@ -772,6 +1004,10 @@ function Campos({
   editable: boolean
   llevaFecha: boolean
 }) {
+  // Una notificación se escribe en otra pantalla, no en esta con la mitad
+  // de los campos ocultos. Ver `CamposPush`.
+  if (c.canal === "push") return <CamposPush c={c} editar={editar} editable={editable} />
+
   const campo = (k: keyof Comunicacion) => ({
     value: (c[k] as string) ?? "",
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editar(k, e.target.value),
@@ -1645,6 +1881,147 @@ function Prueba({ id, asunto, onEnviada }: {
   )
 }
 
+/**
+ * Cómo se va a ver el aviso.
+ *
+ * ── POR QUÉ SE DIBUJA AQUÍ Y NO SE PIDE AL SERVIDOR ───────────────────────
+ * La vista previa del correo la dibuja el servidor porque el correo lo dibuja
+ * el servidor: el HTML que se enseña es literalmente el que se manda, y si lo
+ * montara el navegador por su cuenta no estaría probando nada.
+ *
+ * Un aviso no tiene HTML. Lo pinta el sistema operativo del teléfono con sus
+ * propios tipos de letra y su propio recorte. Nada que pidiéramos al servidor
+ * se parecería más a lo real que esto, y en cambio costaría una petición por
+ * cada tecla.
+ *
+ * Lo que sí es fiel es el recorte: dos líneas de texto, y el título en una.
+ * Que es justo lo que hay que poder mirar antes de mandarlo.
+ */
+function VistaPreviaPush({ c }: { c: Comunicacion }) {
+  const titulo = (c.subject || "").trim()
+  const texto = (c.body || "").replace(/\s+/g, " ").trim()
+  const hora = new Date().toLocaleTimeString("es-419", { hour: "2-digit", minute: "2-digit" })
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0d0d16]/40">
+      <div className="flex items-center justify-between border-b border-[#1a1a24] px-4 py-3">
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">
+          Cómo se verá
+        </h3>
+        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-[#6a6a7a]">
+          <Smartphone size={12} /> Pantalla de bloqueo
+        </span>
+      </div>
+
+      {/* El fondo oscuro no es decoración: un aviso se lee casi siempre sobre
+          una pantalla apagada, y el contraste real es ese. */}
+      <div className="bg-[#07070f] px-4 py-8">
+        <div className="mx-auto max-w-[340px]">
+          <p className="mb-5 text-center text-[42px] font-light leading-none tracking-tight text-white/90">
+            {hora}
+          </p>
+
+          <div className="rounded-[20px] bg-white/[0.14] p-3.5 backdrop-blur">
+            <div className="flex items-center gap-2">
+              <span className="grid h-5 w-5 place-items-center rounded-[5px] bg-[#6D4A9B] text-[9px] font-bold text-white">
+                144
+              </span>
+              <span className="text-[11px] uppercase tracking-wide text-white/60">
+                Los 144.000
+              </span>
+              <span className="ml-auto text-[11px] text-white/40">ahora</span>
+            </div>
+
+            <p className="mt-2 line-clamp-1 text-[14px] font-semibold leading-snug text-white">
+              {titulo || <span className="text-red-300">Sin título</span>}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-white/75">
+              {texto || "…"}
+            </p>
+          </div>
+
+          <p className="mt-5 text-center text-[11px] leading-relaxed text-[#6a6a7a]">
+            Cada teléfono lo pinta a su manera. Lo que sí es igual en todos es
+            el recorte: un renglón de título y dos de texto.
+          </p>
+        </div>
+      </div>
+
+      {c.cta_url && (
+        <div className="border-t border-[#1a1a24] px-4 py-3">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Al tocarlo abre</p>
+          <p className="mt-1 truncate text-xs text-[#c3b2e0]">{c.cta_url}</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+/**
+ * La prueba de un aviso.
+ *
+ * Va a los dispositivos de quien está mirando esta pantalla, y a ninguno más.
+ * No acepta destinatario a propósito: ver cómo queda es cosa de uno, y poder
+ * escribir aquí el nombre de otra persona habría convertido el botón de
+ * probar en una forma de mandarle un aviso saltándose la audiencia.
+ */
+function PruebaPush({ id, titulo, onEnviada }: {
+  id: string
+  titulo: string
+  onEnviada?: (cuando: string) => void
+}) {
+  const [enviando, setEnviando] = useState(false)
+  const [hecho, setHecho] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const enviar = async () => {
+    setEnviando(true); setError(null); setHecho(null)
+    try {
+      const r = await fetch(`/api/admin/comunicaciones/${id}/prueba`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo enviar")
+      setHecho(new Date(j.cuando).toLocaleTimeString("es-419", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
+      onEnviada?.(j.cuando)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo enviar")
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0d0d16]/40 p-5">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">
+        Probarla antes
+      </h3>
+      <p className="mt-1.5 text-xs leading-relaxed text-[#6a6a7a]">
+        Va solo a tus dispositivos. No toca la audiencia, no cuenta como envío
+        y no puede alcanzar a ningún miembro. Si tienes la plataforma instalada
+        en el teléfono, míralo ahí: en el escritorio se ve distinto.
+      </p>
+      <button
+        type="button"
+        onClick={enviar}
+        disabled={enviando || !titulo.trim()}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 border border-[#2f2f42] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a0a0b0] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {enviando ? <Loader2 size={13} className="animate-spin" /> : <Bell size={13} />}
+        {enviando ? "Enviando…" : "Enviármela a mí"}
+      </button>
+      {!titulo.trim() && (
+        <p className="mt-2 text-[11px] text-[#6a6a7a]">Ponle título antes: es la línea que se lee primero.</p>
+      )}
+      {hecho && <p className="mt-3 text-xs text-emerald-400">Enviada a las {hecho}. Mira tu teléfono.</p>}
+      {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
+    </section>
+  )
+}
+
 // ── El ensayo de audiencia ─────────────────────────────────────────────────
 
 function EnsayoAudiencia({ id, onCerrar, onSeguir }: { id: string; onCerrar: () => void; onSeguir: () => void }) {
@@ -1744,6 +2121,10 @@ function ResumenFinal({
   onCerrar: () => void
   onEnviada: () => void
 }) {
+  // Un aviso no se puede programar: lo reparte esta plataforma, y nada
+  // despierta al servidor a las siete de la tarde. Ver `validarNotificacion`
+  // en lib/comunicaciones/validacion.ts.
+  const esPush = c.canal === "push"
   const [modo, setModo] = useState<"ahora" | "programar">("ahora")
   const [fecha, setFecha] = useState("")
   const [hora, setHora] = useState("19:00")
@@ -1789,7 +2170,8 @@ function ResumenFinal({
     <Modal titulo="Confirmar comunicación" onCerrar={enviando ? undefined : onCerrar}>
       <div className="space-y-5">
         <dl className="space-y-3 border border-[#1f1f2c] bg-[#0d0d16] p-4 text-sm">
-          <Dato etiqueta="Asunto" valor={c.subject} />
+          <Dato etiqueta="Canal" valor={esPush ? "Notificación en el teléfono" : "Correo"} />
+          <Dato etiqueta={esPush ? "Título" : "Asunto"} valor={c.subject} />
           <Dato etiqueta="Tipo" valor={TIPOS.find((t) => t.id === c.type)?.nombre ?? c.type} />
           <Dato etiqueta="Audiencia" valor={describir(c.audience, null)} />
           <Dato
@@ -1805,12 +2187,13 @@ function ResumenFinal({
         {/* No lo impide —a veces se duplica algo ya probado— pero lo dice. */}
         {!ultimaPrueba && (
           <p className="text-xs leading-relaxed text-[#c9a86b]">
-            No has enviado ninguna prueba desde que abriste esta comunicación. Mandarte una
-            antes cuesta un minuto y es la única forma de ver cómo llega de verdad.
+            {esPush
+              ? "No te has mandado ninguna prueba desde que abriste esta comunicación. Verla en tu propio teléfono cuesta un minuto y es la única forma de saber dónde corta el texto."
+              : "No has enviado ninguna prueba desde que abriste esta comunicación. Mandarte una antes cuesta un minuto y es la única forma de ver cómo llega de verdad."}
           </p>
         )}
 
-        <div className="flex gap-2">
+        {!esPush && <div className="flex gap-2">
           {([["ahora", "Enviar ahora", Send], ["programar", "Programar", Calendar]] as const).map(([m, txt, Icono]) => (
             <button
               key={m}
@@ -1824,7 +2207,7 @@ function ResumenFinal({
               <Icono size={13} /> {txt}
             </button>
           ))}
-        </div>
+        </div>}
 
         {modo === "programar" && (
           <div className="grid gap-3 sm:grid-cols-3">
@@ -1839,9 +2222,10 @@ function ResumenFinal({
         <div className="flex items-start gap-3 border border-[#3a2a1a] bg-[#1a1208]/60 p-4">
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#e6cf95]" />
           <p className="text-xs leading-relaxed text-[#d8c9a4]">
-            Esta acción envía correos reales a personas reales. No se puede
-            deshacer: una vez entregado, el correo está en su bandeja.
-            {modo === "programar" && " Una programada sí se puede cancelar mientras no haya salido."}
+            {esPush
+              ? "Esta acción hace sonar el teléfono de personas reales, ahora mismo. No se puede deshacer ni cancelar: cuando el aviso sale, ya ha interrumpido a quien lo recibe."
+              : "Esta acción envía correos reales a personas reales. No se puede deshacer: una vez entregado, el correo está en su bandeja."}
+            {!esPush && modo === "programar" && " Una programada sí se puede cancelar mientras no haya salido."}
           </p>
         </div>
 

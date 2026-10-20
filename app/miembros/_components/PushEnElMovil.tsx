@@ -83,6 +83,9 @@ export function PushEnElMovil() {
             <Check size={12} style={{ verticalAlign: "-2px" }} /> Este dispositivo recibirá
             avisos aunque tengas la aplicación cerrada.
           </p>
+
+          <QuePuedeLlegar />
+
           <button type="button" onClick={desactivar} disabled={ocupado} style={botonTenue}>
             {ocupado ? <Loader2 size={12} className="animate-spin" /> : null} Dejar de recibir aquí
           </button>
@@ -185,4 +188,153 @@ const botonTenue: React.CSSProperties = {
   background: "transparent",
   color: "#8b90b4",
   fontWeight: 400,
+}
+
+/**
+ * Qué puede llegar al móvil, y cuánto se enseña.
+ *
+ * ── POR QUÉ SOLO SE VE CUANDO YA ESTÁN ACTIVAS ─────────────────────────────
+ * Elegir categorías antes de haber dado el permiso es pedir una decisión
+ * sobre algo que todavía no ocurre. Primero se activa, y entonces tiene
+ * sentido afinar.
+ *
+ * ── POR QUÉ SON CUATRO Y NO QUINCE ─────────────────────────────────────────
+ * La plataforma genera avisos de muchas cosas, pero al teléfono solo salen
+ * tres clases: alguien te escribe, llegas a un hito del camino, o José manda
+ * algo a La Red. Un interruptor por cada aviso posible convertiría esto en
+ * una pantalla de configuración que nadie termina de leer, y lo que la gente
+ * acaba haciendo con esas pantallas es apagarlo todo.
+ *
+ * Lo que NO está aquí tampoco llega al teléfono: ver quién respondió en el
+ * foro o quién te sigue se mira en la campana, cuando uno entra.
+ *
+ * ── LA VISTA PREVIA NO ES UN DETALLE ───────────────────────────────────────
+ * Una notificación se lee en la pantalla BLOQUEADA, a la vista de quien esté
+ * al lado. Apagarla hace que el aviso diga QUIÉN escribe y nunca QUÉ: hay que
+ * desbloquear para enterarse. En una plataforma donde se habla de heridas y
+ * de procesos personales, esa diferencia importa.
+ */
+type PrefsPush = {
+  mensajes: boolean
+  vista_previa: boolean
+  logros: boolean
+  comunicados: boolean
+}
+
+function QuePuedeLlegar() {
+  const [prefs, setPrefs] = useState<PrefsPush | null>(null)
+  const [guardando, setGuardando] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/profile/notification-prefs", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const p = d?.prefs?.push
+        // Se lee como «apagado solo si lo dice expresamente». Una cuenta de
+        // antes de esta pantalla no tiene la sección, y lo correcto ahí es
+        // que lo reciba todo, no que se quede sin avisos sin haber elegido.
+        if (p) {
+          setPrefs({
+            mensajes: p.mensajes !== false,
+            vista_previa: p.vista_previa !== false,
+            logros: p.logros !== false,
+            comunicados: p.comunicados !== false,
+          })
+        }
+      })
+      .catch(() => { /* se queda oculto: mejor nada que un interruptor que miente */ })
+  }, [])
+
+  const cambiar = async (clave: keyof PrefsPush, valor: boolean) => {
+    if (!prefs) return
+    const siguiente = { ...prefs, [clave]: valor }
+    setPrefs(siguiente)          // se pinta ya: esperar al servidor se nota
+    setGuardando(true)
+    try {
+      const r = await fetch("/api/profile/notification-prefs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ push: siguiente }),
+      })
+      // Un 500 no lanza por sí solo: sin esto, un guardado que falla se veía
+      // igual que uno que funcionó, y la persona se iba creyendo que lo tenía
+      // apagado.
+      if (!r.ok) throw new Error("no se guardó")
+    } catch {
+      setPrefs(prefs)            // no se guardó: se devuelve a como estaba
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  if (!prefs) return null
+
+  return (
+    <div style={{ margin: "0 0 0.85rem" }}>
+      <Linea
+        etiqueta="Mensajes privados"
+        nota="Cuando alguien te escribe"
+        activo={prefs.mensajes}
+        onCambio={(v) => void cambiar("mensajes", v)}
+        deshabilitado={guardando}
+      />
+      <Linea
+        etiqueta="Enseñar el texto"
+        nota="Apagado, el aviso dice quién escribe pero no qué"
+        activo={prefs.vista_previa}
+        onCambio={(v) => void cambiar("vista_previa", v)}
+        deshabilitado={guardando || !prefs.mensajes}
+      />
+      <Linea
+        etiqueta="Hitos del camino"
+        nota="Subir de grado y terminar una temporada. Las insignias pequeñas no suenan"
+        activo={prefs.logros}
+        onCambio={(v) => void cambiar("logros", v)}
+        deshabilitado={guardando}
+      />
+      <Linea
+        etiqueta="Comunicados"
+        nota="Lo que José manda a La Red: un encuentro, una transmisión"
+        activo={prefs.comunicados}
+        onCambio={(v) => void cambiar("comunicados", v)}
+        deshabilitado={guardando}
+      />
+    </div>
+  )
+}
+
+function Linea({
+  etiqueta, nota, activo, onCambio, deshabilitado,
+}: {
+  etiqueta: string
+  nota: string
+  activo: boolean
+  onCambio: (v: boolean) => void
+  deshabilitado?: boolean
+}) {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "0.6rem",
+        padding: "0.45rem 0",
+        cursor: deshabilitado ? "default" : "pointer",
+        opacity: deshabilitado ? 0.5 : 1,
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={activo}
+        disabled={deshabilitado}
+        onChange={(e) => onCambio(e.target.checked)}
+        style={{ marginTop: "0.2rem", accentColor: "#6D4A9B" }}
+      />
+      <span>
+        <span style={{ display: "block", fontSize: "0.82rem", color: "#F3F6FA" }}>{etiqueta}</span>
+        <span style={{ display: "block", fontSize: "0.72rem", color: "#8b90b4" }}>{nota}</span>
+      </span>
+    </label>
+  )
 }

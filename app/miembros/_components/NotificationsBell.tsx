@@ -213,10 +213,18 @@ export function NotificationsBell() {
 
   function handleItemClick(n: NotificationItem) {
     void markRead(n.id)
-    if (n.source_user_id) {
+    if (!n.source_user_id) return
+
+    // ── UN MENSAJE ABRE LA CONVERSACIÓN, NO LA FICHA ────────────────────
+    // El resto de avisos hablan DE alguien —ganó una insignia, subió de
+    // grado— y ahí su perfil es el destino lógico. Un mensaje privado no:
+    // quien lo toca quiere leerlo y responder, no ver un currículum.
+    if (n.type === "dm_message") {
+      setView("messages", null, { withUserId: n.source_user_id })
+    } else {
       setView("user", null, { userId: n.source_user_id })
-      setOpen(false)
     }
+    setOpen(false)
   }
 
   return (

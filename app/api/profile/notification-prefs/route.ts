@@ -29,6 +29,36 @@ export type NotificationPrefs = {
     top3: boolean
   }
   sound: boolean
+
+  /**
+   * Lo que llega al MÓVIL. Separado de lo de arriba a propósito.
+   *
+   * ── POR QUÉ NO SE REAPROVECHAN LAS DE ARRIBA ──────────────────────────
+   * `own` y `others` dicen qué aparece DENTRO de la plataforma, donde la
+   * persona ya está mirando. Esto dice qué interrumpe su día. No es lo
+   * mismo querer ver algo al entrar que querer que suene el teléfono.
+   *
+   * ── Y POR QUÉ NO SUSTITUYEN AL PERMISO DEL SISTEMA ────────────────────
+   * El permiso del navegador decide SI PUEDE llegar algo. Esto decide QUÉ.
+   * Son dos capas distintas: se puede tener el permiso dado y no querer los
+   * mensajes, y al revés no se puede nada.
+   */
+  push: {
+    /** Mensajes privados. */
+    mensajes: boolean
+    /**
+     * Enseñar el texto del mensaje en la notificación.
+     *
+     * Apagado, el aviso dice solo quién escribe. Importa porque una
+     * notificación se lee en la pantalla BLOQUEADA, a la vista de
+     * cualquiera que esté al lado.
+     */
+    vista_previa: boolean
+    /** Insignias y subidas de grado. */
+    logros: boolean
+    /** Comunicados de la administración. */
+    comunicados: boolean
+  }
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -50,6 +80,14 @@ export const DEFAULT_PREFS: NotificationPrefs = {
     top3: true,
   },
   sound: true,
+  // Todo encendido salvo que se diga lo contrario. Quien no quiera avisos en
+  // el móvil ya tiene una forma más contundente: no dar el permiso.
+  push: {
+    mensajes: true,
+    vista_previa: true,
+    logros: true,
+    comunicados: true,
+  },
 }
 
 function mergePrefs(stored: unknown): NotificationPrefs {
@@ -58,6 +96,9 @@ function mergePrefs(stored: unknown): NotificationPrefs {
     own: { ...DEFAULT_PREFS.own, ...(s.own || {}) },
     others: { ...DEFAULT_PREFS.others, ...(s.others || {}) },
     sound: typeof s.sound === "boolean" ? s.sound : DEFAULT_PREFS.sound,
+    // Las cuentas de antes de esto no tienen la sección: se rellena con los
+    // valores por defecto en vez de quedar indefinida.
+    push: { ...DEFAULT_PREFS.push, ...(s.push || {}) },
   }
 }
 
@@ -83,6 +124,7 @@ export async function POST(req: NextRequest) {
     own: { ...current.own, ...(body.own || {}) },
     others: { ...current.others, ...(body.others || {}) },
     sound: typeof body.sound === "boolean" ? body.sound : current.sound,
+    push: { ...current.push, ...(body.push || {}) },
   }
 
   const { error } = await supabase.auth.updateUser({ data: { notification_prefs: next } })

@@ -95,7 +95,7 @@ export async function leerComunicacion(id: string): Promise<Comunicacion | null>
  * El estado y lo del proveedor los escribe el servidor, y solo el servidor.
  */
 export const CAMPOS_EDITABLES = [
-  "type", "internal_title", "subject", "preheader",
+  "canal", "type", "internal_title", "subject", "preheader",
   "eyebrow", "heading", "body", "image_url",
   "cta_text", "cta_url",
   "event_title", "event_at", "event_timezone", "event_location",
@@ -109,6 +109,13 @@ export function soloEditable(body: Record<string, unknown>): Record<string, unkn
   const limpio: Record<string, unknown> = {}
   for (const campo of CAMPOS_EDITABLES) {
     if (!(campo in body)) continue
+    if (campo === "canal") {
+      // Un valor que no sea uno de los dos dejaría una comunicación que
+      // nadie sabe enviar. La base también lo rechaza, pero allí el error
+      // sale como un fallo de la base y en pantalla no se entiende nada.
+      limpio.canal = body.canal === "push" ? "push" : "email"
+      continue
+    }
     const v = body[campo]
     if (typeof v === "string") {
       const s = v.trim()

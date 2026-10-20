@@ -10,6 +10,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { computeCommunityRank } from "@/lib/achievements"
 import { emitCommunityEvent } from "@/lib/notify"
 import type { User } from "@supabase/supabase-js"
+import { avisarAPersona } from "@/lib/push/repartir"
+import { quiereLogrosEnElMovil } from "@/lib/push/reglas"
 
 /**
  * Verifica se o user cruzou um novo nível de patente após este post/reply
@@ -81,6 +83,27 @@ export async function maybeBroadcastRankUp(user: User): Promise<void> {
       visibility: "members",
       priority: rank.tier === "platinum" || rank.tier === "gold" ? "important" : "normal",
     })
+
+    // ── Y EN EL MÓVIL ───────────────────────────────────────────────────
+    // Una patente sí justifica interrumpir: son pocas, cuestan meses y es la
+    // escalera principal de la comunidad. Lo que NO suena son las insignias
+    // corrientes — la regla entera está en lib/push/reglas.ts.
+    //
+    // Solo al propio interesado. La Red se entera por el pulso, no por el
+    // teléfono de cada uno.
+    if (quiereLogrosEnElMovil(meta)) {
+      await avisarAPersona(
+        user.id,
+        {
+          title: `Ascendiste a ${rank.label} ${tierEmoji}`,
+          body: "Tu trabajo en la comunidad fue reconocido.",
+          url: "/miembros/perfil",
+          tag: `rango-${rank.level}`,
+          silenciarSiAbierta: true,
+        },
+        "logros",
+      )
+    }
 
     console.log(`[rank-broadcast] ${fullName} → ${rank.label} (level=${rank.level}) → community_event`)
   } catch (e) {

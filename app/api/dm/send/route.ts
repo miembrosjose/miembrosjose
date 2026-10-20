@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit"
+import { avisarMensajeNuevo } from "@/lib/mensajes/avisar"
 
 export const dynamic = "force-dynamic"
 
@@ -110,6 +111,24 @@ export async function POST(req: NextRequest) {
     console.error("[/api/dm/send] insert", insErr)
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
+
+  // ── EL AVISO ────────────────────────────────────────────────────────────
+  // Va DESPUÉS de guardar, y se espera a propósito en vez de dejarlo suelto:
+  // en Cloudflare Workers, una promesa que nadie espera puede quedarse a
+  // medias cuando la petición termina, y el aviso no se mandaría nunca.
+  //
+  // No puede tumbar la petición: `avisarMensajeNuevo` no lanza. Si algo falla
+  // ahí, el mensaje ya está guardado y quien lo envió no tiene por qué
+  // enterarse — el fallo no es suyo ni afecta a lo que hizo.
+  const meta = (user.user_metadata || {}) as { full_name?: string; avatar_url?: string }
+  await avisarMensajeNuevo({
+    remitenteId: user.id,
+    remitenteNombre: meta.full_name?.trim() || user.email?.split("@")[0] || "Alguien",
+    remitenteAvatar: typeof meta.avatar_url === "string" ? meta.avatar_url : null,
+    destinatarioId: recipientId,
+    texto: text || null,
+    tipoMedia: mediaType,
+  })
 
   return NextResponse.json({ message: inserted })
 }

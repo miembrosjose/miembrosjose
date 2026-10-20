@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic"
 
 /** Lo que se lista. El cuerpo entero no hace falta para una fila. */
 const CAMPOS_LISTA =
-  "id, type, internal_title, subject, status, audience, scheduled_at, scheduled_timezone, " +
+  "id, canal, type, internal_title, subject, status, audience, scheduled_at, scheduled_timezone, " +
   "recipients_estimated, recipients_excluded, sent_at, metrics, created_at, updated_at, " +
   "provider_error"
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   const g = await exigirAdmin()
   if ("respuesta" in g) return g.respuesta
 
-  let body: { type?: string }
+  let body: { type?: string; canal?: string }
   try { body = await req.json() } catch { body = {} }
 
   const tipo = body.type
@@ -96,15 +96,24 @@ export async function POST(req: NextRequest) {
 
   const def = TIPOS[tipo]
 
+  // Por dónde va a salir se elige al crearla, y se puede cambiar mientras
+  // sea borrador. Cualquier cosa que no sea "push" es correo: es lo que
+  // eran todas las que ya existen.
+  const canal = body.canal === "push" ? "push" : "email"
+
   // Se nace con lo que el tipo ya sabe de sí mismo: el eyebrow y el texto del
   // botón. No es relleno, es no empezar delante de seis campos vacíos.
   const { data, error } = await getSupabaseAdmin()
     .from("communications")
     .insert({
       type: tipo,
+      canal,
       internal_title: `${def.nombre} · sin título`,
-      eyebrow: def.eyebrowPorDefecto,
-      cta_text: def.ctaPorDefecto,
+      // El eyebrow y el texto del botón son del correo: en una
+      // notificación no se ven. Nacer con ellos no rompe nada, pero deja
+      // dos campos rellenos que luego avisan de que no se usan.
+      eyebrow: canal === "push" ? "" : def.eyebrowPorDefecto,
+      cta_text: canal === "push" ? null : def.ctaPorDefecto,
       audience: { kind: "todos" },
       status: "draft",
       created_by: g.user.id,
@@ -117,6 +126,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No se pudo crear la comunicación" }, { status: 500 })
   }
 
-  await registrarEvento(data.id, g.user.id, "created", { type: tipo })
+  await registrarEvento(data.id, g.user.id, "created", { type: tipo, canal })
   return NextResponse.json({ ok: true, id: data.id })
 }

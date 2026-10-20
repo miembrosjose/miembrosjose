@@ -19,6 +19,7 @@ import { UnreadDMProvider } from "./_lib/unread-dm"
 import { OnlineToast } from "./_components/OnlineToast"
 import { MessengerWidget } from "./_components/MessengerWidget"
 import { TelegramFab } from "./_components/TelegramFab"
+import { InvitarAInstalar } from "./_components/InvitarAInstalar"
 import { SpaceBackground } from "./_components/SpaceBackground"
 import "./_styles/tokens.css"
 import "./_styles/episode-notes.css"
@@ -74,6 +75,11 @@ export default function MiembrosLayout({
                 {/* Grupo de Telegram — encima de la burbuja del chat. Solo aparece
                     cuando hay un enlace puesto en Admin → Textos do Site. */}
                 <TelegramFab />
+                {/* Invitación a instalar la plataforma en el teléfono. No bloquea
+                    nada: es una tarjeta con una equis, y callada un mes en
+                    cuanto alguien dice que no. En iPhone es además el único
+                    camino para que lleguen los avisos. */}
+                <InvitarAInstalar />
               </ViewProvider>
             </UnreadDMProvider>
           </OnlinePresenceProvider>

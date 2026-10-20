@@ -1,0 +1,120 @@
+/* LA INVITACIÓN A INSTALAR — colocación y nada más.
+ *
+ * Vive en un módulo de CSS y no en estilos en línea por una sola razón: hace
+ * falta una consulta de medios. En móvil hay dos burbujas flotando abajo a la
+ * izquierda —el mensajero y Telegram— y una tarjeta a lo ancho las taparía.
+ * En escritorio sobra sitio y se queda en su esquina.
+ */
+
+.caja {
+  position: fixed;
+  z-index: 60;
+  right: 1rem;
+  bottom: 1rem;
+  /* Despejado de las burbujas de abajo a la izquierda. */
+  left: 5.5rem;
+  max-width: 23rem;
+  margin-left: auto;
+
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(167, 139, 202, 0.3);
+  border-radius: 14px;
+  background: rgba(13, 13, 22, 0.96);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  /* Entra sin sobresaltos: aparece mientras alguien está leyendo otra cosa. */
+  animation: asomar 320ms ease-out;
+}
+
+@media (min-width: 640px) {
+  .caja {
+    left: auto;
+    width: 23rem;
+  }
+}
+
+@keyframes asomar {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caja { animation: none; }
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.titulo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f3f6fa;
+}
+
+.cerrar {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6a6a7a;
+  cursor: pointer;
+}
+
+.cerrar:hover { color: #f3f6fa; }
+
+.texto {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #a8a8c0;
+}
+
+.pasos {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: #a8a8c0;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid #6d4a9b;
+  border-radius: 8px;
+  background: rgba(109, 74, 155, 0.25);
+  color: #f3f6fa;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.ahoraNo {
+  padding: 0.5rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: #8b90b4;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.ahoraNo:hover { color: #f3f6fa; }

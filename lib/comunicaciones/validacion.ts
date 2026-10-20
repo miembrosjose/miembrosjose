@@ -38,10 +38,128 @@ export type OpcionesValidacion = {
   margenMinutos?: number
 }
 
+/** Lo que se lee de un título de notificación antes de que lo corte el sistema. */
+const TITULO_COMODO = 45
+/** Lo que caben las dos líneas de texto de una notificación. */
+const TEXTO_COMODO = 120
+
+/**
+ * ¿A dónde puede llevar una notificación?
+ *
+ * A diferencia del botón de un correo, aquí vale una ruta de la propia
+ * plataforma —`/miembros/transmisiones`— porque la notificación se abre dentro
+ * de la aplicación. El trabajador de servicio la resuelve contra el origen.
+ *
+ * Lo que NO vale es cualquier otra cosa: un `javascript:` o un esquema raro
+ * acabaría en `clients.openWindow`, y eso se abre sin que nadie lo revise.
+ */
+function destinoDeNotificacionValido(url: string): boolean {
+  if (url.startsWith("/")) return !url.startsWith("//")
+  return esUrlValida(url)
+}
+
+/**
+ * La validación de una notificación.
+ *
+ * ── POR QUÉ ES OTRA FUNCIÓN Y NO UNOS `if` DENTRO DE LA DEL CORREO ─────────
+ * Porque casi nada coincide. El correo exige titular y preheader, y una
+ * notificación no tiene ni uno ni otro; el correo avisa si no lleva botón, y
+ * una notificación sin destino simplemente abre la aplicación, que está bien.
+ * Mezclarlas habría dejado la mitad de las comprobaciones con un «salvo si es
+ * push» colgando, que es la forma segura de que dentro de un año una de las
+ * dos reglas se corrija y la otra no.
+ *
+ * Lo que sí comparten —que haya audiencia, y que una fecha programada sea
+ * futura— está repetido a propósito: son cuatro líneas, y la alternativa es un
+ * tercer sitio donde buscar por qué algo no se envía.
+ */
+function validarNotificacion(
+  c: Partial<Comunicacion>,
+  op: OpcionesValidacion,
+): Veredicto {
+  const errores: Hallazgo[] = []
+  const avisos: Hallazgo[] = []
+  const err = (campo: string, mensaje: string) => errores.push({ campo, nivel: "error", mensaje })
+  const avi = (campo: string, mensaje: string) => avisos.push({ campo, nivel: "aviso", mensaje })
+
+  // ── El título ───────────────────────────────────────────────────────────
+  const titulo = (c.subject || "").trim()
+  if (!titulo) {
+    err("subject", "Falta el título. Es la línea en negrita del aviso, y sin ella no se manda nada.")
+  } else if (titulo.length > TITULO_COMODO) {
+    avi("subject", `El título tiene ${titulo.length} caracteres; el teléfono corta cerca de los ${TITULO_COMODO} y el resto no se lee.`)
+  }
+
+  // ── El texto ────────────────────────────────────────────────────────────
+  const texto = (c.body || "").trim()
+  if (!texto) {
+    err("body", "El texto está vacío. Un aviso con solo título no dice a qué viene.")
+  } else if (texto.length > TEXTO_COMODO) {
+    // Un aviso, no un error: el envío recorta, así que lo que sobra no rompe
+    // nada. Pero conviene saber que se va a perder antes de mandarlo.
+    avi("body", `El texto tiene ${texto.length} caracteres; en el aviso se ven unos ${TEXTO_COMODO}. El resto se recorta al enviar.`)
+  }
+
+  // ── A dónde lleva ───────────────────────────────────────────────────────
+  const destino = (c.cta_url || "").trim()
+  if (destino && !destinoDeNotificacionValido(destino)) {
+    err(
+      "cta_url",
+      "El destino no es válido. Puede ser una ruta de la plataforma —/miembros/transmisiones— " +
+      "o una dirección completa que empiece por https://.",
+    )
+  }
+  if (!destino) {
+    avi("cta_url", "Sin destino, al tocar el aviso se abre la plataforma por el inicio. Se puede enviar así.")
+  }
+
+  // ── La audiencia ────────────────────────────────────────────────────────
+  const aud = c.audience as { kind?: string; temporadaMin?: number | null; roles?: string[] | null } | undefined
+  if (!aud?.kind) {
+    err("audience", "No hay audiencia elegida.")
+  } else if (aud.kind !== "todos") {
+    err("audience", "Esa audiencia no está disponible.")
+  }
+
+  // ── POR QUÉ UNA NOTIFICACIÓN NO SE PUEDE PROGRAMAR ──────────────────────
+  // El correo lo programa el proveedor: se le entrega y él lo suelta a su
+  // hora, aunque aquí no haya nadie. Las notificaciones las reparte esta
+  // plataforma, y nada despierta al servidor a las siete de la tarde.
+  //
+  // Antes que una programación que calladamente no se cumpliera, se dice.
+  if (op.programadoPara) {
+    err(
+      "scheduled_at",
+      "Las notificaciones no se pueden programar todavía: se envían en el momento. " +
+      "Quita la fecha para mandarla ahora.",
+    )
+  }
+
+  // Lo que es del correo y aquí no se usa. No es un error —son campos que la
+  // misma tabla guarda para las dos cosas— pero si alguien convirtió un
+  // borrador de correo en notificación, conviene que sepa qué se queda fuera.
+  const sobrantes: string[] = []
+  if ((c.heading || "").trim()) sobrantes.push("el titular")
+  if ((c.preheader || "").trim()) sobrantes.push("el preheader")
+  if (c.image_url) sobrantes.push("la imagen")
+  if (c.event_at) sobrantes.push("los datos del encuentro")
+  if (sobrantes.length) {
+    avi(
+      "canal",
+      `En una notificación no se ve ${sobrantes.join(", ")}. Solo salen el título, el texto y el destino.`,
+    )
+  }
+
+  return { puedeEnviar: errores.length === 0, errores, avisos }
+}
+
 export function validarComunicacion(
   c: Partial<Comunicacion>,
   op: OpcionesValidacion = {},
 ): Veredicto {
+  // Una notificación se comprueba con otras reglas: ver `validarNotificacion`.
+  if (c.canal === "push") return validarNotificacion(c, op)
+
   const errores: Hallazgo[] = []
   const avisos: Hallazgo[] = []
   const err = (campo: string, mensaje: string) => errores.push({ campo, nivel: "error", mensaje })

@@ -247,9 +247,21 @@ export type Audiencia = {
   insignias?: string[] | null
 }
 
+/**
+ * Por dónde sale una comunicación.
+ *
+ * Es lo mismo redactado igual y dirigido a la misma gente; lo único que
+ * cambia es la salida. Un correo tiene sitio para un titular, una imagen y
+ * varios párrafos. Una notificación tiene sitio para un título y dos líneas,
+ * y llega al bolsillo en el momento en que se manda.
+ */
+export type Canal = "email" | "push"
+
 export type Comunicacion = {
   id: string
   type: TipoComunicacion
+  /** Por dónde sale. Lo que ya existía es correo, por el valor por defecto. */
+  canal: Canal
   internal_title: string
   subject: string
   preheader: string

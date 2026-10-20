@@ -29,6 +29,8 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .from("communications")
     .insert({
       type: c.type,
+      // Una copia sale por donde salía la original.
+      canal: c.canal,
       internal_title: `${c.internal_title || c.subject} · copia`,
       subject: c.subject,
       preheader: c.preheader,

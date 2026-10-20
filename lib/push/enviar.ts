@@ -75,6 +75,30 @@ function unir(...partes: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
 //
 // `exp` NO puede ser muy largo: los servicios rechazan tokens con más de 24
 // horas de vida. Se usan 12, que da margen de sobra para un envío.
+
+/**
+ * El JWT firmado, guardado por servicio de push.
+ *
+ * ── POR QUÉ SE GUARDA ────────────────────────────────────────────────────
+ * El token no depende del dispositivo ni del aviso: solo de a qué servicio va
+ * —todos los Android pasan por el mismo, todos los iPhone por otro— y de
+ * cuándo caduca. Firmarlo otra vez para cada dispositivo es repetir la misma
+ * operación de criptografía con el mismo resultado.
+ *
+ * En un aviso suelto da igual. En una tanda de doscientos son doscientas
+ * firmas en lugar de dos, y el tiempo de proceso de un Worker no es infinito:
+ * esa diferencia es la que decide si un comunicado sale entero o se corta.
+ *
+ * ── POR QUÉ NO HACE FALTA LIMPIARLA ──────────────────────────────────────
+ * Son dos o tres entradas —hay tres servicios de push en el mundo— y el mapa
+ * vive lo que viva la instancia del Worker, que son minutos. Una caché con
+ * desalojo aquí sería más código que el problema que resuelve.
+ */
+const JWT_POR_SERVICIO = new Map<string, { cabecera: string; caduca: number }>()
+
+/** Margen antes de la caducidad: nunca se reutiliza un token a punto de morir. */
+const MARGEN_JWT_MS = 60 * 60 * 1000
+
 async function cabeceraVapid(endpoint: string): Promise<string> {
   const privada = process.env.VAPID_PRIVATE_KEY
   // ── POR QUÉ DOS NOMBRES PARA LA MISMA CLAVE ─────────────────────────────
@@ -98,10 +122,15 @@ async function cabeceraVapid(endpoint: string): Promise<string> {
   if (!publica) throw new Error("falta_VAPID_PUBLIC_KEY")
 
   const origen = new URL(endpoint).origin
+
+  const guardado = JWT_POR_SERVICIO.get(origen)
+  if (guardado && guardado.caduca - MARGEN_JWT_MS > Date.now()) return guardado.cabecera
+
+  const caducaEn = Date.now() + 12 * 60 * 60 * 1000
   const cabecera = { typ: "JWT", alg: "ES256" }
   const cuerpo = {
     aud: origen,
-    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
+    exp: Math.floor(caducaEn / 1000),
     sub: contacto,
   }
   const parte1 = datosAB64url(enc(JSON.stringify(cabecera)))
@@ -127,7 +156,9 @@ async function cabeceraVapid(endpoint: string): Promise<string> {
     { name: "ECDSA", hash: "SHA-256" }, clave, enc(sinFirmar),
   )
 
-  return `vapid t=${sinFirmar}.${datosAB64url(firma)}, k=${publica}`
+  const resultado = `vapid t=${sinFirmar}.${datosAB64url(firma)}, k=${publica}`
+  JWT_POR_SERVICIO.set(origen, { cabecera: resultado, caduca: caducaEn })
+  return resultado
 }
 
 // ── CIFRADO aes128gcm (RFC 8291) ───────────────────────────────────────────
@@ -215,6 +246,14 @@ export type Aviso = {
   tag?: string
   icon?: string
   id?: string
+  /**
+   * Si la aplicación está abierta y en primer plano, llega sin sonido.
+   *
+   * Para los logros, que ocurren mientras la persona está usando la
+   * plataforma y ya los ve en pantalla. Los mensajes NO lo llevan: se puede
+   * estar en otra sección y querer enterarse igual.
+   */
+  silenciarSiAbierta?: boolean
 }
 
 export type Resultado =
@@ -222,6 +261,46 @@ export type Resultado =
   /** La suscripción está muerta: hay que desactivarla, no reintentarla. */
   | { estado: "gone"; http: number }
   | { estado: "fallo"; http: number | null; error: string }
+
+/**
+ * Lo que cabe en un push, en bytes.
+ *
+ * Los servicios no aceptan paquetes mayores y responden 413. El cifrado añade
+ * 103 bytes fijos —la cabecera de 86, el delimitador y la etiqueta de AES—
+ * así que el texto que se puede mandar es lo que queda.
+ */
+const TOPE_PAQUETE = 4096
+const SOBRECARGA_CIFRADO = 103
+
+/** Cuántas veces se vuelve a intentar un fallo que puede ser pasajero. */
+const REINTENTOS = 1
+
+/** Lo máximo que se espera antes de reintentar, aunque el servicio pida más. */
+const ESPERA_MAXIMA_MS = 2000
+
+/**
+ * ¿Merece la pena volver a intentarlo?
+ *
+ * ── POR QUÉ SOLO ESTOS ─────────────────────────────────────────────────────
+ * Un 429 es el servicio diciendo «vas muy rápido», y un 5xx es un problema
+ * suyo: las dos cosas se arreglan solas en un segundo. Reintentarlos recupera
+ * avisos que si no se perderían sin que nadie se entere.
+ *
+ * Un 400 o un 403 NO se reintentan: significan que algo está mal en lo que
+ * mandamos —la firma, el formato— y repetirlo da exactamente el mismo error.
+ * Y un 404 o un 410 tampoco, porque esa suscripción ya no existe.
+ */
+function vuelveAIntentarse(http: number): boolean {
+  return http === 429 || (http >= 500 && http < 600)
+}
+
+/** Lo que pide esperar el servicio, acotado para no colgar la petición. */
+function esperaPedida(res: Response): number {
+  const cabecera = res.headers.get("retry-after")
+  const segundos = cabecera ? Number(cabecera) : NaN
+  if (!Number.isFinite(segundos) || segundos < 0) return 600
+  return Math.min(segundos * 1000, ESPERA_MAXIMA_MS)
+}
 
 /**
  * Manda un aviso a UN dispositivo. Nunca lanza.
@@ -241,30 +320,59 @@ export async function enviarAUnDispositivo(sub: Suscripcion, aviso: Aviso): Prom
       tag: aviso.tag,
       icon: aviso.icon,
       id: aviso.id,
+      silenciarSiAbierta: aviso.silenciarSiAbierta === true,
     })
+
+    // ── ANTES DE CIFRAR, QUE QUEPA ────────────────────────────────────────
+    // Un paquete de más vuelve como 413, que aquí se vería como un fallo
+    // cualquiera y mandaría a buscar el problema en la firma o en las claves.
+    // Decirlo con su nombre ahorra esa tarde.
+    //
+    // No se recorta por las bravas: lo que se manda lo decide quien llama, y
+    // un aviso cortado a la mitad por sorpresa es peor que uno que no sale y
+    // deja constancia de por qué.
+    const tamano = new TextEncoder().encode(cuerpo).length
+    if (tamano + SOBRECARGA_CIFRADO > TOPE_PAQUETE) {
+      return {
+        estado: "fallo",
+        http: null,
+        error: `aviso_demasiado_largo: ${tamano} bytes, caben ${TOPE_PAQUETE - SOBRECARGA_CIFRADO}`,
+      }
+    }
 
     const { datos } = await cifrar(sub.p256dh, sub.auth, cuerpo)
     const autorizacion = await cabeceraVapid(sub.endpoint)
 
-    const res = await fetch(sub.endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: autorizacion,
-        "Content-Encoding": "aes128gcm",
-        "Content-Type": "application/octet-stream",
-        // Cuánto guarda el servicio el aviso si el móvil está apagado.
-        TTL: "86400",
-        Urgency: "normal",
-      },
-      body: datos,
-    })
+    let ultimo: Resultado = { estado: "fallo", http: null, error: "sin_intentar" }
 
-    if (res.status === 404 || res.status === 410) return { estado: "gone", http: res.status }
-    if (!res.ok) {
+    for (let intento = 0; intento <= REINTENTOS; intento++) {
+      const res = await fetch(sub.endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: autorizacion,
+          "Content-Encoding": "aes128gcm",
+          "Content-Type": "application/octet-stream",
+          // Cuánto guarda el servicio el aviso si el móvil está apagado.
+          TTL: "86400",
+          Urgency: "normal",
+        },
+        body: datos,
+      })
+
+      if (res.status === 404 || res.status === 410) return { estado: "gone", http: res.status }
+      if (res.ok) return { estado: "ok", http: res.status }
+
       const txt = await res.text().catch(() => "")
-      return { estado: "fallo", http: res.status, error: txt.slice(0, 300) }
+      ultimo = { estado: "fallo", http: res.status, error: txt.slice(0, 300) }
+
+      if (intento < REINTENTOS && vuelveAIntentarse(res.status)) {
+        await new Promise((listo) => setTimeout(listo, esperaPedida(res)))
+        continue
+      }
+      return ultimo
     }
-    return { estado: "ok", http: res.status }
+
+    return ultimo
   } catch (e) {
     return { estado: "fallo", http: null, error: e instanceof Error ? e.message : "error" }
   }
