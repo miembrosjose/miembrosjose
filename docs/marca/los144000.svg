@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Los 144.000">
+  <!--
+    EL ICONO DE LOS 144.000
+
+    ── DE DÓNDE SALE EL DIBUJO ─────────────────────────────────────────────
+    Del emblema que ya abre la página de ventas: un círculo profundo con el
+    144 en violeta y una corona de marcas alrededor, como un sol o un reloj sin
+    agujas. No se inventa una identidad nueva para la pestaña; se reduce la
+    que ya existe hasta que quepa en dieciséis píxeles.
+
+    ── QUÉ SOBREVIVE A DIECISÉIS PÍXELES Y QUÉ NO ──────────────────────────
+    A ese tamaño no se lee ningún número —ningún icono se lee— así que lo que
+    tiene que funcionar es la SILUETA: un disco oscuro con un anillo violeta y
+    algo denso en el centro. Eso se reconoce entre veinte pestañas.
+    Por eso las marcas son gruesas y pocas, y el 144 es grande y pesado: a
+    tamaño pequeño se funden en una mancha violeta que sigue siendo la suya.
+
+    ── POR QUÉ UN SVG Y NO UN PNG ──────────────────────────────────────────
+    El proyecto apuntaba a /favicon.png, un archivo que no existía: daba 404
+    en cada carga y el manifiesto no podía leerlo, así que al guardar la web
+    en la pantalla de inicio salía sin icono. Un SVG se dibuja aquí mismo: no
+    hay archivo que perder y se ve nítido en cualquier tamaño.
+
+    Next.js lo recoge solo por estar en app/icon.svg. No hay que declararlo.
+  -->
+
+  <defs>
+    <!-- El fondo no es negro plano: lleva la misma gota de azul que la
+         plataforma, que es lo que hace que se vea profundo y no apagado. -->
+    <radialGradient id="fondo" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#1b1136"/>
+      <stop offset="62%" stop-color="#0d0820"/>
+      <stop offset="100%" stop-color="#050510"/>
+    </radialGradient>
+
+    <!-- El violeta de la plataforma, con algo de luz arriba para que el número
+         no parezca pegado con una capa de pintura.
+
+         OJO: en globals.css las variables que se llaman "color gold" NO son
+         doradas: valen #6D4A9B. Son nombres heredados de una identidad
+         anterior que se remapeó sin renombrar. Este icono estuvo en dorado
+         justamente por fiarse del nombre. -->
+    <linearGradient id="tinta" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f3ecfd"/>
+      <stop offset="55%" stop-color="#cbb6e6"/>
+      <stop offset="100%" stop-color="#a78bca"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#fondo)"/>
+
+  <!-- La corona. Veinticuatro marcas, una cada quince grados. Las de los
+       cuatro puntos cardinales van más largas: dan un eje que se intuye
+       incluso cuando el resto se ha convertido en textura. -->
+  <!-- Color plano, NO el degradado: un trazo vertical tiene caja de anchura
+       cero, y sobre una caja degenerada el degradado no pinta nada. La corona
+       llevaba meses sin dibujarse por eso, en silencio: el SVG es válido y
+       ningún renderizador se queja. -->
+  <g stroke="#cbb6e6" stroke-linecap="round" transform="translate(32 32)">
+    <g opacity="0.85" stroke-width="1.7">
+      <path d="M0 -27 V -23.5" transform="rotate(15)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(30)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(45)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(60)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(75)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(105)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(120)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(135)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(150)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(165)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(195)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(210)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(225)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(240)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(255)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(285)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(300)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(315)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(330)"/>
+      <path d="M0 -27 V -23.5" transform="rotate(345)"/>
+    </g>
+    <g stroke-width="2.1">
+      <path d="M0 -28 V -22.5"/>
+      <path d="M0 -28 V -22.5" transform="rotate(90)"/>
+      <path d="M0 -28 V -22.5" transform="rotate(180)"/>
+      <path d="M0 -28 V -22.5" transform="rotate(270)"/>
+    </g>
+  </g>
+
+  <!-- El disco interior y su anillo. Es lo que da la silueta reconocible. -->
+  <circle cx="32" cy="32" r="19.5" fill="#080816"/>
+  <circle cx="32" cy="32" r="19.5" fill="none" stroke="url(#tinta)" stroke-width="2.2"/>
+
+  <!-- El número. Serif, como los titulares de la plataforma.
+
+       ── POR QUÉ NO LLEVA dominant-baseline ─────────────────────────────
+       Lo llevaba, y por eso el 144 salía casi cuatro unidades por debajo del
+       centro del disco: esa propiedad la interpretan distinto el navegador
+       y el rasterizador que genera los PNG, así que el mismo archivo daba
+       dos resultados y el icono de la pantalla de inicio salía descentrado.
+
+       La línea base sí es inequívoca: todos la ponen en el mismo sitio. El
+       valor de `y` no es una cuenta de metáricas de fuente —que cambian con
+       la que acabe usando cada sistema— sino el que deja el número centrado
+       al medirlo sobre el PNG ya dibujado. Ver scripts/generar-iconos.mjs,
+       que lo comprueba en cada generación.
+
+       Tampoco lleva letter-spacing: con text-anchor="middle" desplazaba el
+       conjunto medio espacio a un lado. -->
+  <text
+    x="31.81" y="35.17"
+    text-anchor="middle"
+    font-family="Cinzel, Georgia, 'Times New Roman', serif"
+    font-size="17.5"
+    font-weight="700"
+    fill="url(#tinta)"
+  >144</text>
+</svg>
