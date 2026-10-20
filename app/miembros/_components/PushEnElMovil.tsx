@@ -18,8 +18,10 @@
 // no puede activarlo es peor que explicarle lo que le falta.
 
 import { useCallback, useEffect, useState } from "react"
-import { AlertTriangle, Bell, BellOff, Check, Share, Plus, Loader2 } from "lucide-react"
+import { AlertTriangle, Bell, BellOff, Check, Download, Share, Plus, Loader2 } from "lucide-react"
 import { useAuth } from "../_lib/auth-context"
+import { usePwa } from "../_lib/pwa-contexto"
+import { HojaInstalacionBajoPeticion } from "./InvitarAInstalar"
 import {
   estadoActual,
   activarNotificaciones,
@@ -34,7 +36,9 @@ const CLAVE = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""
 
 export function PushEnElMovil() {
   const { user } = useAuth()
+  const { instalada, aparato } = usePwa()
   const [estado, setEstado] = useState<EstadoPush | null>(null)
+  const [hojaAbierta, setHojaAbierta] = useState(false)
   const [ocupado, setOcupado] = useState(false)
   // Las instrucciones del iPad son otras: el botón de compartir está arriba a
   // la derecha, no abajo en el centro.
@@ -222,6 +226,28 @@ export function PushEnElMovil() {
           aplicación en iPhone.
         </p>
       )}
+
+      {/* ── CÓMO INSTALARLA, SIEMPRE A MANO ──────────────────────────────
+          Los plazos de la invitación existen para no insistir, no para
+          impedir que alguien la busque. Quien dijo «ahora no» y tres días
+          después cambia de idea tiene que poder encontrar las instrucciones
+          sin esperar tres semanas — y este es el sitio donde se viene a
+          buscar, porque es donde está todo lo de los avisos.
+
+          Se enseña siempre que la aplicación no esté instalada, pase lo que
+          pase con los plazos: pedirlo no es lo mismo que recibirlo sin
+          pedirlo. */}
+      {!instalada && aparato !== "escritorio" && (
+        <button
+          type="button"
+          onClick={() => setHojaAbierta(true)}
+          style={{ ...botonTenue, marginTop: estado === "activo" ? "0.5rem" : "0.8rem" }}
+        >
+          <Download size={12} /> Cómo instalarla en este dispositivo
+        </button>
+      )}
+
+      <HojaInstalacionBajoPeticion abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} />
     </div>
   )
 }

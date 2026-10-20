@@ -12,7 +12,12 @@
 .fondo {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  /* Por encima de todo, incluido el modal de la campana (9600): la hoja
+     también se abre DESDE ahí, y con un valor menor se dibujaría detrás
+     —visible el oscurecido, invisible la hoja— que es la clase de fallo
+     que parece que el botón no hace nada. La escala de este proyecto va en
+     miles: 9000 el de series, 9500 el de XP, 9600 el de la campana. */
+  z-index: 9700;
   display: flex;
   align-items: flex-end;
   justify-content: center;
