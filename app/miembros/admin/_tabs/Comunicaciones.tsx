@@ -1588,6 +1588,21 @@ function Audiencias({
       <div className="border-t border-[#14141e] pt-4">
         <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Va a</p>
         <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a, filtros)}</p>
+
+        {/* Lo que hay puesto, junto y con su equis. Antes, para quitar un
+            filtro había que acordarse de en qué bloque estaba y bajar a
+            buscarlo entre doce opciones. */}
+        <FiltrosPuestos
+          a={a}
+          filtros={filtros}
+          onQuitar={cambiar}
+          onQuitarTodo={() => cambiar({
+            temporadaMin: null, temporadaCompletada: null, empezoSinTerminar: null,
+            roles: null, insignias: null, inactivoDias: null, activoDias: null,
+            paises: null, ciudades: null, personas: null,
+          })}
+          editable={editable}
+        />
         {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
             entre mandar a doscientos y mandar a tres. */}
         {(a.temporadaMin || a.temporadaCompletada || a.empezoSinTerminar ||
@@ -1767,6 +1782,26 @@ function PersonasElegidas({
   )
 }
 
+/**
+ * Una opción de filtro.
+ *
+ * ── POR QUÉ LLEVA UNA MARCA Y NO SOLO OTRO COLOR ──────────────────────────
+ * Lo marcado se distinguía de lo no marcado por un borde algo más claro y un
+ * fondo violeta al 15 %. Sobre un panel oscuro eso es casi nada: había que
+ * comparar dos pastillas juntas para saber cuál estaba puesta, y con doce
+ * insignias en pantalla no se sabía qué se había elegido.
+ *
+ * Ahora lo marcado lleva fondo sólido, texto claro y una marca de verificado.
+ * La marca es lo que lo hace legible de un vistazo y sin comparar: o está o
+ * no está.
+ *
+ * ── Y POR QUÉ LA MARCA SE VUELVE UNA EQUIS AL PASAR POR ENCIMA ────────────
+ * Porque la otra queja era «no me deja quitar filtros», y sí dejaba: se
+ * vuelve a pulsar y se quita. Lo que faltaba era decirlo. Una equis donde
+ * estaba el verificado es la forma más corta de decir «esto se puede
+ * deshacer», y en el móvil —donde no hay pasar por encima— está además el
+ * resumen de abajo, con su equis por filtro.
+ */
 function Pastilla({
   children, activa, onClick, desactivada,
 }: {
@@ -1777,14 +1812,168 @@ function Pastilla({
       type="button"
       onClick={onClick}
       disabled={desactivada}
-      className={`border px-3 py-1.5 text-[11px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+      aria-pressed={activa}
+      className={`group inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         activa
-          ? "border-[#6D4A9B] bg-[#6D4A9B]/15 text-[#c3b2e0]"
-          : "border-[#1f1f2c] text-[#7a7a8a] hover:border-[#2f2f42]"
+          ? "border-[#8d6bc4] bg-[#6D4A9B] font-medium text-white"
+          : "border-[#2a2a3a] text-[#8a8fa8] hover:border-[#4a4a60] hover:text-[#c3b2e0]"
       }`}
     >
+      {activa && (
+        <>
+          <Check size={11} className="shrink-0 group-hover:hidden" />
+          <X size={11} className="hidden shrink-0 group-hover:block" />
+        </>
+      )}
       {children}
     </button>
+  )
+}
+
+/**
+ * Lo que hay puesto ahora mismo, con su equis para quitarlo.
+ *
+ * ── POR QUÉ HACE FALTA, SI LAS PASTILLAS YA SE DESMARCAN ──────────────────
+ * Porque para quitar un filtro había que acordarse de en qué bloque estaba y
+ * bajar a buscarlo entre doce opciones. Con cuatro filtros puestos en cuatro
+ * bloques distintos, deshacerlos era una expedición.
+ *
+ * Aquí están los cuatro juntos, cada uno con su equis, al lado de la frase
+ * que dice a quién va. Que es donde uno mira cuando el número no cuadra.
+ */
+function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
+  a: Audiencia
+  filtros: Filtros | null
+  onQuitar: (parcial: Partial<Audiencia>) => void
+  onQuitarTodo: () => void
+  editable: boolean
+}) {
+  const nombrePais = (c: string) => filtros?.paises?.find((p) => p.id === c)?.etiqueta ?? c
+  const nombreCiudad = (id: number) => filtros?.ciudades?.find((c) => c.id === id)?.etiqueta ?? `Ciudad ${id}`
+
+  const puestos: Array<{ clave: string; texto: string; quitar: () => void }> = []
+
+  if (a.temporadaMin) {
+    puestos.push({
+      clave: "tmin",
+      texto: `Llegaron a la Temporada ${a.temporadaMin}`,
+      quitar: () => onQuitar({ temporadaMin: null }),
+    })
+  }
+  if (a.temporadaCompletada) {
+    puestos.push({
+      clave: "tcomp",
+      texto: a.temporadaCompletada >= 4
+        ? "Completaron el camino"
+        : `Terminaron la Temporada ${a.temporadaCompletada}`,
+      quitar: () => onQuitar({ temporadaCompletada: null }),
+    })
+  }
+  if (a.empezoSinTerminar) {
+    puestos.push({
+      clave: "medias",
+      texto: `Dejaron la Temporada ${a.empezoSinTerminar} a medias`,
+      quitar: () => onQuitar({ empezoSinTerminar: null }),
+    })
+  }
+  if (a.inactivoDias) {
+    puestos.push({
+      clave: "inactivo",
+      texto: `Sin aparecer ${a.inactivoDias} días o más`,
+      quitar: () => onQuitar({ inactivoDias: null }),
+    })
+  }
+  if (a.activoDias) {
+    puestos.push({
+      clave: "activo",
+      texto: `Activos en los últimos ${a.activoDias} días`,
+      quitar: () => onQuitar({ activoDias: null }),
+    })
+  }
+  for (const r of a.roles ?? []) {
+    puestos.push({
+      clave: `rol-${r}`,
+      texto: ROLES.find((x) => x.id === r)?.etiqueta ?? r,
+      quitar: () => {
+        const quedan = (a.roles ?? []).filter((x) => x !== r)
+        onQuitar({ roles: quedan.length > 0 ? quedan : null })
+      },
+    })
+  }
+  for (const i of a.insignias ?? []) {
+    puestos.push({
+      clave: `ins-${i}`,
+      texto: nombreDeInsignia(i, filtros),
+      quitar: () => {
+        const quedan = (a.insignias ?? []).filter((x) => x !== i)
+        onQuitar({ insignias: quedan.length > 0 ? quedan : null })
+      },
+    })
+  }
+  for (const c of a.paises ?? []) {
+    puestos.push({
+      clave: `pais-${c}`,
+      texto: nombrePais(c),
+      quitar: () => {
+        const quedan = (a.paises ?? []).filter((x) => x !== c)
+        onQuitar({ paises: quedan.length > 0 ? quedan : null })
+      },
+    })
+  }
+  for (const c of a.ciudades ?? []) {
+    puestos.push({
+      clave: `ciu-${c}`,
+      texto: nombreCiudad(c),
+      quitar: () => {
+        const quedan = (a.ciudades ?? []).filter((x) => x !== c)
+        onQuitar({ ciudades: quedan.length > 0 ? quedan : null })
+      },
+    })
+  }
+  if ((a.personas?.length ?? 0) > 0) {
+    puestos.push({
+      clave: "personas",
+      texto: a.personas!.length === 1 ? "Una persona elegida" : `${a.personas!.length} personas elegidas`,
+      quitar: () => onQuitar({ personas: null }),
+    })
+  }
+
+  if (puestos.length === 0) {
+    return (
+      <p className="mt-2 text-[11px] text-[#6a6a7a]">
+        Sin filtros: va a todos los miembros activos.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {puestos.map((f) => (
+          <button
+            key={f.clave}
+            type="button"
+            onClick={f.quitar}
+            disabled={!editable}
+            title="Quitar este filtro"
+            className="inline-flex items-center gap-1.5 border border-[#6D4A9B] bg-[#6D4A9B]/25 px-2.5 py-1 text-[11px] text-[#d7c9ee] transition-colors hover:border-red-800 hover:bg-red-950/40 hover:text-red-200 disabled:opacity-40"
+          >
+            {f.texto} <X size={11} className="shrink-0" />
+          </button>
+        ))}
+      </div>
+
+      {puestos.length > 1 && (
+        <button
+          type="button"
+          onClick={onQuitarTodo}
+          disabled={!editable}
+          className="mt-2 text-[11px] text-[#7a7a8a] underline underline-offset-2 transition-colors hover:text-[#F3F6FA] disabled:opacity-40"
+        >
+          Quitar los {puestos.length} filtros
+        </button>
+      )}
+    </div>
   )
 }
 

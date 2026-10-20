@@ -49,6 +49,24 @@ console.log("\n— Las visitas —")
 comprobar("1ª visita: todavía no se invita", R.contarVisita(ANA) >= 2, false)
 comprobar("2ª visita: ya se puede", R.contarVisita(ANA) >= 2, true)
 
+console.log("\n— Recién instalada en el iPhone: cero visitas —")
+// En iOS, la aplicación añadida a la pantalla de inicio tiene su PROPIO
+// almacenamiento: al abrirla por primera vez desde el icono, la cuenta de
+// visitas empieza de cero. La tarjeta de los avisos TIENE que salir ahí
+// —es justo el momento en que más sentido tiene— y no salía, porque la
+// cuenta de visitas la frenaba igual que a la invitación a instalar.
+const RECIEN = "recien-instalada"
+comprobar(
+  "sin visitas, pero ya instalada → sale la tarjeta",
+  R.inviteQueToca({ userId: RECIEN, puedeInstalar: false, puedeActivarAvisos: true }),
+  "notificaciones",
+)
+comprobar(
+  "sin visitas y sin instalar → todavía no se invita a instalar",
+  R.inviteQueToca({ userId: RECIEN, puedeInstalar: true, puedeActivarAvisos: false }),
+  "ninguna",
+)
+
 console.log("\n— Prioridad: instalar va antes que los avisos —")
 comprobar(
   "las dos posibles → gana instalar",

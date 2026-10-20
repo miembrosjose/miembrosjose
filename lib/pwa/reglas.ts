@@ -205,9 +205,21 @@ export function inviteQueToca(opciones: {
 }): Invitacion {
   const { userId, puedeInstalar, puedeActivarAvisos } = opciones
 
-  if (!visitasSuficientes(userId)) return "ninguna"
-
-  if (puedeInstalar && !instalacionSilenciada(userId)) return "instalar"
+  // ── LA CUENTA DE VISITAS SOLO FRENA LA INSTALACIÓN ──────────────────────
+  // Existe para no abordar a alguien que acaba de entrar por primera vez y
+  // todavía está mirando qué es esto.
+  //
+  // Aplicarla también a la tarjeta de los avisos era un error, y uno que
+  // solo se ve en un iPhone: la aplicación añadida a la pantalla de inicio
+  // tiene su PROPIO almacenamiento, separado del de Safari. Al abrirla por
+  // primera vez desde su icono, la cuenta empieza de cero — y la tarjeta se
+  // callaba justo en el momento en que más sentido tiene, que es cuando
+  // alguien acaba de instalarla.
+  //
+  // Quien ha llegado a instalarla ya ha demostrado de sobra que usa esto.
+  if (puedeInstalar && !instalacionSilenciada(userId) && visitasSuficientes(userId)) {
+    return "instalar"
+  }
   if (puedeActivarAvisos && !tarjetaSilenciada(userId)) return "notificaciones"
 
   return "ninguna"
