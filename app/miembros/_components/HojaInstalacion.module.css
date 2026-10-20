@@ -85,7 +85,19 @@
   .asidero { display: none; }
 }
 
+.logo {
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 20%;
+  /* El mismo violeta del emblema, muy tenue: separa el icono del fondo
+     sin ponerle un marco encima. */
+  box-shadow: 0 0 0 1px rgba(167, 139, 202, 0.25), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
 .marca {
+  text-align: center;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.3em;
@@ -95,6 +107,7 @@
 
 .titulo {
   margin: 0.6rem 0 0;
+  text-align: center;
   font-size: 1.45rem;
   line-height: 1.2;
   color: #f3f6fa;
@@ -103,13 +116,18 @@
 
 .texto {
   margin: 0.7rem 0 0;
+  text-align: center;
   font-size: 0.86rem;
   line-height: 1.6;
   color: #a8a8c0;
 }
 
 .ventajas {
-  margin: 1.3rem 0 0;
+  /* La lista va alineada a la izquierda y es el BLOQUE el que se centra.
+     Cuatro lineas centradas una a una quedan con los bordes dentados y se
+     leen peor: el ojo pierde donde empieza la siguiente. */
+  max-width: 22rem;
+  margin: 1.3rem auto 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -134,7 +152,8 @@
 
 /* Los pasos, cuando hay que explicarlos a mano. */
 .pasos {
-  margin: 1.3rem 0 0;
+  max-width: 22rem;
+  margin: 1.3rem auto 0;
   padding: 1rem 1rem 1rem 2.1rem;
   border: 1px solid #1a1a24;
   border-radius: 12px;
@@ -145,6 +164,29 @@
 }
 
 .pasos li + li { margin-top: 0.35rem; }
+
+/* ── POR QUÉ HACE FALTA ESTO ─────────────────────────────────────────
+   Tailwind pone `display: block` a TODOS los svg. Con eso, el icono de
+   compartir que va dentro de la frase se iba a su propio renglón y el paso
+   se partía en tres líneas: «Toca», el icono, y «Compartir». */
+.pasos svg {
+  display: inline;
+  vertical-align: -0.15em;
+}
+
+/* Las teclas y botones que se nombran, con aspecto de tecla. Un «...»
+   escrito en medio de una frase no se distingue de unos puntos suspensivos. */
+.tecla {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid #2f2f42;
+  border-radius: 6px;
+  background: #12121c;
+  color: #f3f6fa;
+  font-size: 0.82em;
+  letter-spacing: 0.08em;
+  vertical-align: 0.05em;
+}
 
 .pasos strong { color: #f3f6fa; }
 

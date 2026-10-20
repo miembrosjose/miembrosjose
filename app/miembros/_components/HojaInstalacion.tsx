@@ -46,10 +46,20 @@ const VENTAJAS = [
  * es trabajo que puede hacer la plataforma. Y porque dos de las tres van a
  * estar mal para quien mira.
  *
- * ── Y POR QUÉ EL IPAD TIENE LAS SUYAS ──────────────────────────────────────
- * Porque el botón de compartir está en otro sitio: abajo en el centro en el
- * iPhone, arriba a la derecha en el iPad. Decirle a alguien que mire abajo
- * cuando está arriba es dejarlo buscando y concluir que esto no funciona.
+ * ── EL BOTÓN DE COMPARTIR SE MOVIÓ ─────────────────────────────────────────
+ * En las versiones recientes de Safari la barra de abajo es una sola píldora
+ * con la dirección, y compartir ya no está a la vista: hay que entrar primero
+ * en el menú de los tres puntos. Las instrucciones decían «toca Compartir,
+ * abajo en el centro», que es donde estaba hace dos versiones — y quien mira
+ * ahí y no lo encuentra concluye que esto no funciona en su teléfono.
+ *
+ * Se nombra el menú primero y el icono de compartir después, que es el orden
+ * real, y se menciona que en Safari antiguos está directo. Así vale para los
+ * dos sin pedirle a nadie que adivine cuál tiene.
+ *
+ * ── Y POR QUÉ EL IPAD TIENE LOS SUYOS ──────────────────────────────────────
+ * Porque allí la barra es ancha y el botón de compartir sigue estando a la
+ * vista, arriba a la derecha. No hay menú intermedio que atravesar.
  */
 function Pasos({ aparato }: { aparato: Aparato }) {
   if (aparato === "iphone") {
@@ -57,13 +67,16 @@ function Pasos({ aparato }: { aparato: Aparato }) {
       <ol className={estilos.pasos}>
         <li>Abre esta página en <strong>Safari</strong>, si no lo estás ya.</li>
         <li>
-          Toca <Share size={13} style={{ verticalAlign: "-2px" }} /> <strong>Compartir</strong>,
-          abajo en el centro.
+          Abajo, junto a la dirección, toca <span className={estilos.tecla}>•••</span>
         </li>
-        <li>Baja y elige <Plus size={13} style={{ verticalAlign: "-2px" }} /> <strong>Añadir a pantalla de inicio</strong>.</li>
-        <li>Si aparece <strong>Abrir como app web</strong>, déjalo activado.</li>
-        <li>Confirma con <strong>Añadir</strong>.</li>
-        <li>Abre Los 144.000 desde su nuevo icono.</li>
+        <li>
+          Elige <Share size={13} /> <strong>Compartir</strong>
+        </li>
+        <li>
+          Baja y elige <Plus size={13} /> <strong>Añadir a pantalla de inicio</strong>.
+          Si aparece <strong>Abrir como app web</strong>, déjalo activado.
+        </li>
+        <li>Confirma con <strong>Añadir</strong> y ábrela desde su nuevo icono.</li>
       </ol>
     )
   }
@@ -73,12 +86,12 @@ function Pasos({ aparato }: { aparato: Aparato }) {
       <ol className={estilos.pasos}>
         <li>Abre esta página en <strong>Safari</strong>, si no lo estás ya.</li>
         <li>
-          Toca <Share size={13} style={{ verticalAlign: "-2px" }} /> <strong>Compartir</strong>,
-          arriba a la derecha.
+          Arriba a la derecha, toca <Share size={13} /> <strong>Compartir</strong>
         </li>
-        <li>Elige <Plus size={13} style={{ verticalAlign: "-2px" }} /> <strong>Añadir a pantalla de inicio</strong>.</li>
-        <li>Confirma con <strong>Añadir</strong>.</li>
-        <li>Abre Los 144.000 desde su nuevo icono.</li>
+        <li>
+          Elige <Plus size={13} /> <strong>Añadir a pantalla de inicio</strong>
+        </li>
+        <li>Confirma con <strong>Añadir</strong> y ábrela desde su nuevo icono.</li>
       </ol>
     )
   }
@@ -86,10 +99,14 @@ function Pasos({ aparato }: { aparato: Aparato }) {
   if (aparato === "android") {
     return (
       <ol className={estilos.pasos}>
-        <li>Abre el <strong>menú</strong> de tu navegador, arriba a la derecha.</li>
-        <li>Elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</li>
-        <li>Confirma.</li>
-        <li>Abre Los 144.000 desde su nuevo icono.</li>
+        <li>
+          Arriba a la derecha, toca <span className={estilos.tecla}>⋮</span>
+        </li>
+        <li>
+          Elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>,
+          según cómo lo llame tu navegador.
+        </li>
+        <li>Confirma y ábrela desde su nuevo icono.</li>
       </ol>
     )
   }
@@ -105,7 +122,7 @@ function Pasos({ aparato }: { aparato: Aparato }) {
         Busca <strong>Instalar aplicación</strong>, <strong>Añadir a pantalla de inicio</strong> o
         algo parecido: cada navegador lo llama distinto.
       </li>
-      <li>Confirma y abre Los 144.000 desde su nuevo icono.</li>
+      <li>Confirma y ábrela desde su nuevo icono.</li>
     </ol>
   )
 }
@@ -159,11 +176,22 @@ export function HojaInstalacion({
       <div className={estilos.hoja}>
         <div className={estilos.asidero} />
 
+        {/* El icono de verdad, el mismo que quedará en la pantalla de inicio.
+            Enseñarlo no es decoración: es lo que va a buscar después entre sus
+            aplicaciones, y reconocerlo aquí hace que lo encuentre luego. */}
+        <img
+          src="/icon-192.png"
+          alt=""
+          width={72}
+          height={72}
+          className={estilos.logo}
+        />
+
         <p className={estilos.marca}>Los 144.000</p>
-        <h2 className={estilos.titulo}>Lleva la Red contigo.</h2>
+        <h2 className={estilos.titulo}>Instala la app de Los 144.000</h2>
         <p className={estilos.texto}>
-          Instala Los 144.000 en tu teléfono para acceder fácilmente a tu preparación,
-          explorar nuevos recursos y mantenerte conectado con nuestra comunidad.
+          Teníla en tu pantalla de inicio para acceder fácilmente a tu preparación,
+          explorar nuevos recursos y mantenerte conectado con la comunidad.
         </p>
 
         <ul className={estilos.ventajas}>
@@ -197,7 +225,8 @@ export function HojaInstalacion({
         <p className={estilos.nota}>
           No pierdes nada por no instalarla: todo funciona igual desde el navegador.
           {(aparato === "iphone" || aparato === "ipad") &&
-            " Lo único que necesita la aplicación son los avisos en el teléfono."}
+            " Lo único que hace falta instalar es para recibir avisos: en iPhone y " +
+            "iPad, Apple solo los entrega a la aplicación de la pantalla de inicio."}
         </p>
       </div>
     </div>

@@ -91,15 +91,28 @@
   <circle cx="32" cy="32" r="19.5" fill="#080816"/>
   <circle cx="32" cy="32" r="19.5" fill="none" stroke="url(#tinta)" stroke-width="2.2"/>
 
-  <!-- El número. Serif, como los titulares de la plataforma. -->
+  <!-- El número. Serif, como los titulares de la plataforma.
+
+       ── POR QUÉ NO LLEVA dominant-baseline ─────────────────────────────
+       Lo llevaba, y por eso el 144 salía casi cuatro unidades por debajo del
+       centro del disco: esa propiedad la interpretan distinto el navegador
+       y el rasterizador que genera los PNG, así que el mismo archivo daba
+       dos resultados y el icono de la pantalla de inicio salía descentrado.
+
+       La línea base sí es inequívoca: todos la ponen en el mismo sitio. El
+       valor de `y` no es una cuenta de metáricas de fuente —que cambian con
+       la que acabe usando cada sistema— sino el que deja el número centrado
+       al medirlo sobre el PNG ya dibujado. Ver scripts/generar-iconos.mjs,
+       que lo comprueba en cada generación.
+
+       Tampoco lleva letter-spacing: con text-anchor="middle" desplazaba el
+       conjunto medio espacio a un lado. -->
   <text
-    x="32" y="33"
+    x="31.81" y="35.17"
     text-anchor="middle"
-    dominant-baseline="central"
     font-family="Cinzel, Georgia, 'Times New Roman', serif"
     font-size="17.5"
     font-weight="700"
-    letter-spacing="0.4"
     fill="url(#tinta)"
   >144</text>
 </svg>
