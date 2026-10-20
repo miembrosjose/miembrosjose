@@ -14,10 +14,11 @@
 // los avisos llegan con el icono de la plataforma en vez del del navegador.
 //
 // ── LO QUE ESTO NO HACE, Y NO VA A HACER ───────────────────────────────────
-// No bloquea. Se cierra tocando fuera, con la tecla de escape o con el «ahora
-// no», que es texto subrayado y no un enlace escondido. Quien use la
-// plataforma desde el navegador del ordenador tiene que poder seguir
-// haciéndolo exactamente igual, hoy y siempre.
+// No bloquea, y no es una pantalla completa: queda margen por los cuatro
+// lados y se ve lo que hay detrás. Se cierra tocando fuera, con la tecla de
+// escape o con el «ahora no», que es texto subrayado y no un enlace
+// escondido. Quien use la plataforma desde el navegador del ordenador tiene
+// que poder seguir haciéndolo exactamente igual, hoy y siempre.
 //
 // ── POR QUÉ NO HAY BOTÓN DE INSTALAR EN IPHONE ─────────────────────────────
 // Porque esa capacidad no existe. iOS no tiene nada parecido a
@@ -141,7 +142,7 @@ export function HojaInstalacion({
   const [verPasos, setVerPasos] = useState(aparato === "iphone" || aparato === "ipad")
   const [instalando, setInstalando] = useState(false)
 
-  // Escape cierra. Es lo que espera cualquiera que haya usado una hoja así, y
+  // Escape cierra. Es lo que espera cualquiera que haya usado una ventana así, y
   // es también la salida de quien navega con teclado.
   useEffect(() => {
     const alPulsar = (e: KeyboardEvent) => { if (e.key === "Escape") onCerrar() }
@@ -155,7 +156,7 @@ export function HojaInstalacion({
       const acepto = await instalar()
       setInstalando(false)
       if (acepto) onInstalada?.()
-      // Si dijo que no en el diálogo del navegador, la hoja se queda: puede
+      // Si dijo que no en el diálogo del navegador, la ventana se queda: puede
       // que quiera leer los pasos. Cerrarla sería decidir por él.
       else setVerPasos(true)
       return
@@ -173,8 +174,7 @@ export function HojaInstalacion({
       // que arrastrar desde dentro hasta fuera no la cierre sin querer.
       onClick={(e) => { if (e.target === e.currentTarget) onCerrar() }}
     >
-      <div className={estilos.hoja}>
-        <div className={estilos.asidero} />
+      <div className={estilos.ventana}>
 
         {/* El icono de verdad, el mismo que quedará en la pantalla de inicio.
             Enseñarlo no es decoración: es lo que va a buscar después entre sus
@@ -190,7 +190,7 @@ export function HojaInstalacion({
         <p className={estilos.marca}>Los 144.000</p>
         <h2 className={estilos.titulo}>Instala la app de Los 144.000</h2>
         <p className={estilos.texto}>
-          Teníla en tu pantalla de inicio para acceder fácilmente a tu preparación,
+          Añádela a tu pantalla de inicio para acceder fácilmente a tu preparación,
           explorar nuevos recursos y mantenerte conectado con la comunidad.
         </p>
 

@@ -1,10 +1,18 @@
-/* LA HOJA DE INSTALACIÓN — colocación, entrada y áreas seguras.
+/* LA VENTANA DE INSTALACIÓN — colocación, entrada y áreas seguras.
  *
- * ── POR QUÉ UNA HOJA Y NO UNA PANTALLA COMPLETA ───────────────────────────
- * Una pantalla completa al entrar es un peaje: intercepta a alguien que
- * todavía no ha visto la plataforma y le pide que la instale. Una hoja que
- * sube desde abajo ocupa lo mismo donde importa —el móvil— pero deja ver que
- * hay algo detrás, y el «ahora no» queda a la vista sin tener que buscarlo.
+ * ── CENTRADA, NO PEGADA ABAJO ─────────────────────────────────────────────
+ * Empezó como una hoja que subía desde abajo, al estilo de las hojas de iOS.
+ * Se veía bien, pero pegada al borde inferior parece una barra de sistema más
+ * que algo que la plataforma te está diciendo: el ojo la lee como un control
+ * y no como un mensaje.
+ *
+ * Centrada tiene el peso que le corresponde, y en un móvil ocupa prácticamente
+ * lo mismo.
+ *
+ * ── LO QUE SIGUE SIN SER ──────────────────────────────────────────────────
+ * Una pantalla completa. Queda margen por los cuatro lados, se ve lo que hay
+ * detrás, y el «ahora no» está a la vista sin tener que buscarlo. Es una
+ * invitación, no un peaje.
  *
  * En escritorio no se enseña nunca, así que no hay versión de escritorio.
  */
@@ -12,15 +20,23 @@
 .fondo {
   position: fixed;
   inset: 0;
-  /* Por encima de todo, incluido el modal de la campana (9600): la hoja
+  /* Por encima de todo, incluido el modal de la campana (9600): la ventana
      también se abre DESDE ahí, y con un valor menor se dibujaría detrás
-     —visible el oscurecido, invisible la hoja— que es la clase de fallo
+     —visible el oscurecido, invisible la ventana— que es la clase de fallo
      que parece que el botón no hace nada. La escala de este proyecto va en
      miles: 9000 el de series, 9500 el de XP, 9600 el de la campana. */
   z-index: 9700;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+
+  /* El relleno del contenedor es lo que garantiza el margen: así la ventana
+     nunca toca los bordes, ni el redondeo de la pantalla, ni la barra de
+     estado del iPhone. Lo de arriba ya nos costó una vez. */
+  padding:
+    calc(1rem + env(safe-area-inset-top, 0px))
+    1rem
+    calc(1rem + env(safe-area-inset-bottom, 0px));
 
   /* Oscurece lo de detrás sin taparlo. Se sigue viendo que la plataforma
      está ahí, que es la diferencia entre una invitación y un muro. */
@@ -29,32 +45,27 @@
   animation: aparecer 200ms ease-out;
 }
 
-.hoja {
+.ventana {
   width: 100%;
-  max-width: 34rem;
-  max-height: 88vh;
+  max-width: 30rem;
+  /* Todo el alto disponible menos el relleno del contenedor: si el contenido
+     no cabe, se desplaza DENTRO de la ventana en vez de salirse por abajo y
+     dejar el botón fuera de la pantalla. */
+  max-height: 100%;
   overflow-y: auto;
 
   border: 1px solid rgba(167, 139, 202, 0.28);
-  border-bottom: 0;
-  border-radius: 20px 20px 0 0;
+  border-radius: 20px;
   background: #0b0b13;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
 
-  padding: 1.6rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  padding: 1.7rem 1.4rem 1.5rem;
 
-  animation: subir 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: asomar 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* En tabletas y pantallas anchas se centra y respira más: un iPad no es un
-   iPhone estirado, y una hoja pegada abajo en horizontal queda rarísima. */
 @media (min-width: 768px) {
-  .fondo { align-items: center; }
-  .hoja {
-    border-bottom: 1px solid rgba(167, 139, 202, 0.28);
-    border-radius: 20px;
-    padding: 2rem 2rem;
-    max-height: 86vh;
-  }
+  .ventana { padding: 2rem; }
 }
 
 @keyframes aparecer {
@@ -62,27 +73,16 @@
   to   { opacity: 1; }
 }
 
-@keyframes subir {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+/* Asoma desde su sitio, no desde abajo: una ventana centrada que llega
+   deslizando desde el borde inferior se lee como una hoja que se quedó
+   a medio camino. */
+@keyframes asomar {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fondo, .hoja { animation: none; }
-}
-
-/* El asidero de las hojas inferiores: dice «esto se puede cerrar» antes de
-   leer nada. En pantallas anchas sobra, porque ahí no se arrastra. */
-.asidero {
-  width: 2.5rem;
-  height: 0.25rem;
-  margin: 0 auto 1.2rem;
-  border-radius: 999px;
-  background: #2a2a3a;
-}
-
-@media (min-width: 768px) {
-  .asidero { display: none; }
+  .fondo, .ventana { animation: none; }
 }
 
 .logo {
