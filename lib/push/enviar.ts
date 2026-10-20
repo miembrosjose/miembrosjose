@@ -77,9 +77,25 @@ function unir(...partes: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
 // horas de vida. Se usan 12, que da margen de sobra para un envío.
 async function cabeceraVapid(endpoint: string): Promise<string> {
   const privada = process.env.VAPID_PRIVATE_KEY
-  const publica = process.env.VAPID_PUBLIC_KEY
+  // ── POR QUÉ DOS NOMBRES PARA LA MISMA CLAVE ─────────────────────────────
+  // La pública tiene que estar en los dos lados: el navegador la necesita
+  // para suscribirse —y ahí se llama NEXT_PUBLIC_…, que es como Next la
+  // incrusta en el paquete— y el servidor la necesita para firmar.
+  //
+  // Al configurarla solo con el nombre del navegador, esto encontraba la
+  // privada, no encontraba la pública, y respondía «VAPID no configurado».
+  // El mensaje señalaba al secreto de Cloudflare, que estaba perfecto, y
+  // mandaba a buscar el fallo justo donde no estaba.
+  //
+  // Se aceptan los dos nombres para que no vuelva a depender de cuál se
+  // configuró.
+  const publica = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   const contacto = process.env.VAPID_SUBJECT || "mailto:soporte@los144000.com"
-  if (!privada || !publica) throw new Error("VAPID_no_configurado")
+
+  // Se dice CUÁL falta. «VAPID_no_configurado» a secas obligaba a adivinar
+  // entre dos claves y un secreto de Cloudflare.
+  if (!privada) throw new Error("falta_VAPID_PRIVATE_KEY")
+  if (!publica) throw new Error("falta_VAPID_PUBLIC_KEY")
 
   const origen = new URL(endpoint).origin
   const cabecera = { typ: "JWT", alg: "ES256" }

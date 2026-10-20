@@ -27,6 +27,14 @@ export type ResumenEnvio = {
   fallidos: number
   /** Suscripciones muertas que se han desactivado en esta pasada. */
   retiradas: number
+  /**
+   * El primer error, tal cual, para que quien llame pueda enseñarlo.
+   *
+   * Sin esto el motivo solo quedaba en la tabla de envíos, y averiguar por
+   * qué no llegó un aviso costaba una consulta a mano cada vez. El mensaje no
+   * lleva nada privado: es la respuesta del servicio de push.
+   */
+  error?: string
 }
 
 /**
@@ -75,6 +83,7 @@ export async function avisarAPersona(
           .eq("id", s.id)
       } else {
         resumen.fallidos++
+        if (!resumen.error) resumen.error = r.error
       }
 
       // El registro guarda el título y el destino —que de todas formas se ven
