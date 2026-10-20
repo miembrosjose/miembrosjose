@@ -17,11 +17,11 @@
  * lado y un botón a 24px cae debajo de ella. */
 .fab {
   position: fixed;
-  left: calc(24px + env(safe-area-inset-left, 0px));
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--fab-margen) + env(safe-area-inset-left, 0px));
+  bottom: calc(var(--fab-margen) + env(safe-area-inset-bottom, 0px));
   z-index: 95;
-  width: 56px;
-  height: 56px;
+  width: var(--fab-tamano);
+  height: var(--fab-tamano);
   border-radius: 50%;
   background: linear-gradient(140deg, #8a63b8 0%, var(--accent-red) 50%, var(--accent-red-deep) 100%);
   border: none;
@@ -76,9 +76,9 @@
 
 .popover {
   position: fixed;
-  left: calc(24px + env(safe-area-inset-left, 0px));
-  /* 24 de margen + 56 del botón + 16 de aire. */
-  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--fab-margen) + env(safe-area-inset-left, 0px));
+  /* Colgado del botón: su margen, su alto y un poco de aire. */
+  bottom: calc(var(--fab-margen) + var(--fab-tamano) + 16px + env(safe-area-inset-bottom, 0px));
   z-index: 95;
   width: 360px;
   height: 520px;
@@ -490,19 +490,13 @@
 }
 
 @media (max-width: 600px) {
-  /* El añadido de la zona segura es lo que evita que el botón acabe debajo de
-     la barra del navegador en un iPhone, que es donde se quedaba fuera de
-     alcance: se veía el chat abierto y no había manera de cerrarlo. */
-  .fab {
-    left: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    width: 50px;
-    height: 50px;
-  }
+  /* El botón ya no se toca aquí: su tamaño y su margen salen de las
+     variables de tokens.css, que encogen solas en el móvil. Tenerlo en dos
+     sitios fue lo que acabó solapando los dos botones flotantes. */
   .popover {
     left: 8px;
     right: 8px;
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--fab-margen) + var(--fab-tamano) + 12px + env(safe-area-inset-bottom, 0px));
     width: auto;
     height: 70vh;
     max-height: calc(100dvh - 140px);

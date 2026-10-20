@@ -14,18 +14,14 @@
  * sitio sin tener que calcularle una posición aparte. */
 .zona {
   position: fixed;
-  left: calc(24px + env(safe-area-inset-left, 0px));
-  /* ── LA CUENTA, Y POR QUÉ CAMBIÓ ───────────────────────────────────
-     24 de margen + 56 del botón del chat + 20 de aire entre los dos.
-
-     El aire era de 14 y se veían pegados: dos círculos de 56 con catorce
-     píxeles en medio parecen un solo objeto partido, y el pulgar falla entre
-     uno y otro. Veinte es lo mínimo para que se lean como dos botones.
-
-     Y la zona segura: instalada en la pantalla de inicio, abajo está el
-     indicador de inicio del iPhone. Sin sumarlo, toda la columna baja hasta
-     él y el apilamiento se aprieta todavía más. Vale 0 donde no hay muesca. */
-  bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--fab-margen) + env(safe-area-inset-left, 0px));
+  /* Justo encima del botón del chat: su margen, su alto y el aire entre los
+     dos. La suma sale de las variables, no de números copiados aquí — que es
+     lo que los acabó solapando. */
+  bottom: calc(
+    var(--fab-margen) + var(--fab-tamano) + var(--fab-aire)
+    + env(safe-area-inset-bottom, 0px)
+  );
   z-index: 95;
   display: flex;
   flex-direction: column;
@@ -70,8 +66,8 @@
   cursor: pointer;
   padding: 0;
 
-  width: 56px;
-  height: 56px;
+  width: var(--fab-tamano);
+  height: var(--fab-tamano);
   border-radius: 50%;
 
   /* El azul de Telegram, que es el que la gente reconoce. Es el único sitio de
@@ -125,15 +121,9 @@
 }
 
 @media (max-width: 480px) {
-  .zona {
-    left: 16px;
-    /* 16 de margen + 52 del botón del chat + 12 de aire. */
-    bottom: 80px;
-  }
-  .fab {
-    width: 52px;
-    height: 52px;
-  }
+  /* Ni la posición ni el tamaño se tocan aquí: salen de las variables de
+     tokens.css y encogen a la vez que el botón del chat. Recolocarlos por
+     separado fue lo que los solapó en la aplicación instalada. */
   .error {
     /* En un teléfono, 220px al lado del borde izquierdo se sale. */
     max-width: calc(100vw - 48px);

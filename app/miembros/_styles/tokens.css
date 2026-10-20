@@ -78,6 +78,26 @@
   --font-body:      var(--font-geist-sans, 'Manrope'), sans-serif;
   --font-mono:      var(--font-jetbrains, 'JetBrains Mono'), monospace;
 
+  /* ── LA COLUMNA DE BOTONES FLOTANTES ────────────────────────────────────
+   * Las medidas del chat y de Telegram, en UN solo sitio.
+   *
+   * Estaban copiadas a mano de un archivo al otro, con un comentario que
+   * decía la cuenta: «16 de margen + 52 del botón del chat + 12 de aire». El
+   * chat medía 50 y su margen era 12, así que la cuenta ya era falsa; y
+   * cuando uno de los dos sumó la zona segura y el otro no, acabaron
+   * solapándose 16 píxeles en la aplicación instalada.
+   *
+   * Eso no se veía en el navegador —ahí la zona segura vale 0— sino solo en
+   * el iPhone con la aplicación en la pantalla de inicio.
+   *
+   * Ahora Telegram se coloca con una suma de estas variables. Cambiar el
+   * tamaño o el margen del botón del chat mueve el de arriba solo. */
+  --fab-margen: 24px;
+  --fab-tamano: 56px;
+  /* El aire entre los dos. Con menos de 20, dos círculos seguidos se leen
+   * como un solo objeto partido y el pulgar falla entre uno y otro. */
+  --fab-aire: 20px;
+
   /* Base do shell (equivalente ao body.) */
   background: var(--bg-deep);
   color: var(--text-primary);
@@ -86,6 +106,16 @@
   min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
+}
+
+/* En un teléfono todo encoge, pero encoge A LA VEZ: es la única forma de que
+ * la cuenta de arriba siga siendo cierta. */
+@media (max-width: 600px) {
+  .miembros-shell {
+    --fab-margen: 12px;
+    --fab-tamano: 50px;
+    --fab-aire: 16px;
+  }
 }
 
 /* Reset universal dentro do shell (margin/padding/box-sizing) */

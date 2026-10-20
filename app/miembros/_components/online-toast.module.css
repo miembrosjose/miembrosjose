@@ -8,16 +8,20 @@
  * conectaba el aviso entraba por debajo del botón y salía con el avatar
  * tapado. Se veía como un fallo de dibujo, no como un aviso.
  *
- * Ahora se apila encima de los dos botones flotantes: 24 de margen + 56 del
- * chat + 20 de aire + 56 de Telegram + 16 más. Sigue entrando deslizando
- * desde la izquierda, que es como se reconoce.
+ * Ahora se apila encima de los DOS botones, y la altura sale de las mismas
+ * variables que los coloca a ellos: dos botones, dos huecos de aire. Un
+ * número escrito a mano aquí volvería a quedarse viejo el día que cambien.
+ * Sigue entrando deslizando desde la izquierda, que es como se reconoce.
  *
  * Si algún día se quita el botón de Telegram, esto queda un hueco alto. Es
  * preferible a que vuelva a taparse. */
 .toast {
   position: fixed;
-  bottom: calc(172px + env(safe-area-inset-bottom, 0px));
-  left: calc(24px + env(safe-area-inset-left, 0px));
+  bottom: calc(
+    var(--fab-margen) + 2 * var(--fab-tamano) + 2 * var(--fab-aire)
+    + env(safe-area-inset-bottom, 0px)
+  );
+  left: calc(var(--fab-margen) + env(safe-area-inset-left, 0px));
   z-index: 90;
   display: flex;
   align-items: center;
