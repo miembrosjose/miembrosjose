@@ -179,6 +179,54 @@ export function olvidarApagado(userId: string): void {
   escribir("push_apagado", userId, 0)
 }
 
+// ── MIRAR SIN TOCAR ────────────────────────────────────────────────────────
+
+/**
+ * Todo lo guardado para esta persona en este navegador, tal cual.
+ *
+ * ── PARA QUÉ ────────────────────────────────────────────────────────────
+ * Para el diagnóstico de administración. Cuando alguien dice «no me sale la
+ * ventana», la respuesta está en estos cinco números, y hasta ahora la única
+ * forma de verlos era abrir la consola del navegador y conocer el formato de
+ * las claves.
+ *
+ * ── NO ESCRIBE NADA ────────────────────────────────────────────────────────
+ * Ni siquiera cuenta la visita. Un diagnóstico que cambia lo que mide no es
+ * un diagnóstico: abrir la pantalla para ver por qué no sale la ventana
+ * acabaría siendo el motivo de que salga.
+ */
+export type EstadoGuardado = {
+  visitas: number
+  /** Instante hasta el que la invitación a instalar está callada. 0 = nunca. */
+  instalarHasta: number
+  /** Cuántas veces se ha dicho «ahora no». */
+  negativas: number
+  tarjetaHasta: number
+  /** Instante en que apagó los avisos a propósito. 0 = no lo ha hecho. */
+  pushApagado: number
+}
+
+export function leerEstadoGuardado(userId: string): EstadoGuardado {
+  return {
+    visitas: leer("visitas", userId),
+    instalarHasta: leer("instalar_hasta", userId),
+    negativas: leer("instalar_negativas", userId),
+    tarjetaHasta: leer("tarjeta_hasta", userId),
+    pushApagado: leer("push_apagado", userId),
+  }
+}
+
+/**
+ * Las claves que usa todo esto, para poder enseñarlas y borrarlas desde el
+ * diagnóstico sin que nadie tenga que copiar el formato a mano.
+ */
+export function clavesDe(userId: string): string[] {
+  const marcas: Marca[] = [
+    "visitas", "instalar_hasta", "instalar_negativas", "tarjeta_hasta", "push_apagado",
+  ]
+  return marcas.map((m) => clave(m, userId))
+}
+
 // ── QUIÉN TIENE PRIORIDAD ──────────────────────────────────────────────────
 
 export type Invitacion = "instalar" | "notificaciones" | "ninguna"

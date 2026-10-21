@@ -15,7 +15,8 @@
     "manual:deploy": "node scripts/manual-deploy.mjs",
     "probar:pwa": "node scripts/probar-reglas-pwa.mjs",
     "iconos": "node scripts/generar-iconos.mjs",
-    "logo": "node scripts/exportar-logo.mjs"
+    "logo": "node scripts/exportar-logo.mjs",
+    "probar:navegadores": "node scripts/probar-navegadores.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",

@@ -30,6 +30,7 @@ import { useEffect, useState } from "react"
 import { ArrowUpFromLine, BookOpen, Check, Home, Plus, Share, Sparkles } from "lucide-react"
 import { usePwa } from "../_lib/pwa-contexto"
 import type { Aparato } from "../_lib/push-cliente"
+import { menuDe, queNavegador, type Navegador } from "../_lib/navegador"
 import estilos from "./HojaInstalacion.module.css"
 
 const VENTAJAS = [
@@ -40,72 +41,97 @@ const VENTAJAS = [
 ]
 
 /**
- * Los pasos, uno por aparato.
+ * Los pasos, por aparato Y por navegador.
  *
- * ── POR QUÉ NO SE ENSEÑAN LOS TRES ─────────────────────────────────────────
- * Porque leer instrucciones de iPhone, iPad y Android para encontrar la tuya
- * es trabajo que puede hacer la plataforma. Y porque dos de las tres van a
- * estar mal para quien mira.
+ * ── POR QUÉ NO BASTA CON SABER QUÉ APARATO ES ──────────────────────────────
+ * Porque el menú donde vive «añadir a pantalla de inicio» está en un sitio
+ * distinto en cada navegador del MISMO iPhone. Las instrucciones decían
+ * «toca ••• abajo, junto a la dirección», que es Safari; en Chrome para iOS
+ * ese menú es ⋮ y está abajo a la derecha. Quien entraba desde Chrome miraba
+ * donde no era.
  *
- * ── EL BOTÓN DE COMPARTIR SE MOVIÓ ─────────────────────────────────────────
- * En las versiones recientes de Safari la barra de abajo es una sola píldora
- * con la dirección, y compartir ya no está a la vista: hay que entrar primero
- * en el menú de los tres puntos. Las instrucciones decían «toca Compartir,
- * abajo en el centro», que es donde estaba hace dos versiones — y quien mira
- * ahí y no lo encuentra concluye que esto no funciona en su teléfono.
+ * ── Y POR QUÉ A CHROME iOS NO SE LE MANDA A SAFARI ─────────────────────────
+ * Porque no hace falta. Desde iOS 16.4 cualquier navegador puede añadir una
+ * web a la pantalla de inicio: lo hace la hoja de compartir del sistema, no
+ * el navegador. Mandarle a abrir Safari es un rodeo por nada, y además se
+ * pierde por el camino la mitad de la gente.
  *
- * Se nombra el menú primero y el icono de compartir después, que es el orden
- * real, y se menciona que en Safari antiguos está directo. Así vale para los
- * dos sin pedirle a nadie que adivine cuál tiene.
- *
- * ── Y POR QUÉ EL IPAD TIENE LOS SUYOS ──────────────────────────────────────
- * Porque allí la barra es ancha y el botón de compartir sigue estando a la
- * vista, arriba a la derecha. No hay menú intermedio que atravesar.
+ * ── POR QUÉ NO SE ENSEÑAN TODAS A LA VEZ ───────────────────────────────────
+ * Porque leer cinco juegos de instrucciones para encontrar el tuyo es trabajo
+ * que puede hacer la plataforma. Y porque cuatro de los cinco van a estar mal
+ * para quien mira.
  */
-function Pasos({ aparato }: { aparato: Aparato }) {
-  if (aparato === "iphone") {
+function Pasos({ aparato, navegador }: { aparato: Aparato; navegador: Navegador }) {
+  const menu = menuDe(navegador)
+
+  // ── iPHONE Y iPAD ────────────────────────────────────────────────────
+  // El camino es el mismo en todos: el menú del navegador, compartir, y
+  // añadir. Lo único que cambia es el símbolo del menú y dónde está — y eso
+  // ya viene resuelto en `menuDe`.
+  if (aparato === "iphone" || aparato === "ipad") {
+    // En el iPad la barra es ancha y compartir sigue estando a la vista,
+    // arriba a la derecha: no hay menú intermedio que atravesar.
+    const directo = aparato === "ipad" && navegador === "safari"
+
     return (
-      <ol className={estilos.pasos}>
-        <li>Abre esta página en <strong>Safari</strong>, si no lo estás ya.</li>
-        <li>
-          Abajo, junto a la dirección, toca <span className={estilos.tecla}>•••</span>
-        </li>
-        <li>
-          Elige <Share size={13} /> <strong>Compartir</strong>
-        </li>
-        <li>
-          Baja y elige <Plus size={13} /> <strong>Añadir a pantalla de inicio</strong>.
-          Si aparece <strong>Abrir como app web</strong>, déjalo activado.
-        </li>
-        <li>Confirma con <strong>Añadir</strong> y ábrela desde su nuevo icono.</li>
-      </ol>
+      <>
+        <ol className={estilos.pasos}>
+          {directo ? (
+            <li>
+              Arriba a la derecha, toca <Share size={13} /> <strong>Compartir</strong>
+            </li>
+          ) : (
+            <>
+              <li>
+                Toca <span className={estilos.tecla}>{menu.simbolo}</span> {menu.donde}
+              </li>
+              <li>
+                Elige <Share size={13} /> <strong>Compartir</strong>
+              </li>
+            </>
+          )}
+          <li>
+            Baja y elige <Plus size={13} /> <strong>Añadir a pantalla de inicio</strong>
+          </li>
+          <li>Confirma con <strong>Añadir</strong> y ábrela desde su nuevo icono.</li>
+        </ol>
+        {/* El nombre de esa opción cambia con el idioma y la versión del
+            sistema. Decirlo evita que quien ve «Agregar a inicio» piense que
+            no es lo mismo y se eche atrás. */}
+        <p className={estilos.variante}>
+          Según tu iPhone puede llamarse <strong>Agregar a inicio</strong>. Es lo mismo.
+        </p>
+      </>
     )
   }
 
-  if (aparato === "ipad") {
-    return (
-      <ol className={estilos.pasos}>
-        <li>Abre esta página en <strong>Safari</strong>, si no lo estás ya.</li>
-        <li>
-          Arriba a la derecha, toca <Share size={13} /> <strong>Compartir</strong>
-        </li>
-        <li>
-          Elige <Plus size={13} /> <strong>Añadir a pantalla de inicio</strong>
-        </li>
-        <li>Confirma con <strong>Añadir</strong> y ábrela desde su nuevo icono.</li>
-      </ol>
-    )
-  }
-
+  // ── ANDROID ──────────────────────────────────────────────────────────
+  // Estos pasos solo se ven cuando el navegador NO ha ofrecido instalar por
+  // su cuenta. Si lo ofreció, hay un botón de verdad y esto no aparece.
   if (aparato === "android") {
+    if (navegador === "samsung") {
+      return (
+        <ol className={estilos.pasos}>
+          <li>
+            Toca <span className={estilos.tecla}>{menu.simbolo}</span> {menu.donde}
+          </li>
+          <li>
+            Elige <strong>Agregar página a</strong> y luego{" "}
+            <strong>Pantalla de inicio</strong>
+          </li>
+          <li>Confirma y ábrela desde su nuevo icono.</li>
+        </ol>
+      )
+    }
+
     return (
       <ol className={estilos.pasos}>
         <li>
-          Arriba a la derecha, toca <span className={estilos.tecla}>⋮</span>
+          Toca <span className={estilos.tecla}>{menu.simbolo}</span> {menu.donde}
         </li>
         <li>
-          Elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>,
-          según cómo lo llame tu navegador.
+          Elige <strong>Instalar aplicación</strong> o{" "}
+          <strong>Añadir a pantalla de inicio</strong>, según cómo lo llame tu navegador.
         </li>
         <li>Confirma y ábrela desde su nuevo icono.</li>
       </ol>
@@ -137,6 +163,11 @@ export function HojaInstalacion({
   onInstalada?: () => void
 }) {
   const { aparato, puedeInstalarSola, instalar } = usePwa()
+  // Se mira en el cliente: en el servidor no hay navegador que identificar.
+  // Hasta que se sepa vale "otro", que da las instrucciones generales — y
+  // eso dura un instante, porque la ventana no se abre en el primer dibujo.
+  const [navegador, setNavegador] = useState<Navegador>("otro")
+  useEffect(() => { setNavegador(queNavegador()) }, [])
   // En iPhone y iPad no hay instalador: los pasos se enseñan desde el
   // principio, porque esconderlos tras un botón sería un clic de adorno.
   const [verPasos, setVerPasos] = useState(aparato === "iphone" || aparato === "ipad")
@@ -203,7 +234,7 @@ export function HojaInstalacion({
           ))}
         </ul>
 
-        {verPasos && <Pasos aparato={aparato} />}
+        {verPasos && <Pasos aparato={aparato} navegador={navegador} />}
 
         <div className={estilos.acciones}>
           {/* El botón dice lo que hace. Donde el navegador sabe instalar,

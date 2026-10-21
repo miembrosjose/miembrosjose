@@ -190,6 +190,20 @@
 
 .pasos strong { color: #f3f6fa; }
 
+/* La nota de que esa opción se llama distinto según el idioma del sistema.
+   Va pegada a los pasos, no al pie de la ventana: ahí abajo nadie la
+   relacionaría con el paso al que se refiere. */
+.variante {
+  max-width: 22rem;
+  margin: 0.6rem auto 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: center;
+  color: #7a7a8a;
+}
+
+.variante strong { color: #a8a8c0; font-weight: 500; }
+
 .acciones {
   margin-top: 1.5rem;
   display: flex;

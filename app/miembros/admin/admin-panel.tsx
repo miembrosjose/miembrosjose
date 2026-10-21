@@ -18,6 +18,7 @@ import {
   ChevronRight,
   RotateCcw,
   Network,
+  Smartphone,
 } from "lucide-react"
 
 type Tab =
@@ -31,10 +32,18 @@ type Tab =
   | "resetprogress"
   | "redroles"
   | "comms"
+  | "pwa"
 
 // El Centro de Comunicaciones trae su propio editor, su vista previa y sus
 // diálogos. Es el tab más pesado del panel, y es el que menos se abre: cargarlo
 // solo cuando se entra evita que todos los demás carguen más lento.
+// Solo lee el almacenamiento de este navegador y dibuja. Se carga aparte
+// porque casi nunca se abre: es una herramienta de diagnóstico.
+const DiagnosticoPwa = dynamic(
+  () => import("./_tabs/DiagnosticoPwa").then((m) => m.DiagnosticoPwa),
+  { ssr: false },
+)
+
 const Comunicaciones = dynamic(
   () => import("./_tabs/Comunicaciones").then((m) => m.Comunicaciones),
   { ssr: false, loading: () => <div className="py-10 text-center text-xs text-[#6a6a7a]">Cargando…</div> },
@@ -167,6 +176,12 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Textos do Site",
         description: "Editar textos e conteúdos do site",
         icon: FileText,
+      },
+      {
+        id: "pwa",
+        label: "App en el móvil",
+        description: "Por qué sale o no sale la ventana de instalación",
+        icon: Smartphone,
       },
     ],
   },
@@ -334,6 +349,7 @@ export function AdminPanel() {
           {tab === "resetprogress" && <ResetProgress />}
           {tab === "redroles" && <RedRoles />}
           {tab === "comms" && <Comunicaciones />}
+          {tab === "pwa" && <DiagnosticoPwa />}
         </div>
       </main>
     </div>
