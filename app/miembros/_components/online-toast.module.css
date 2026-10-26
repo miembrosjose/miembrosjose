@@ -88,11 +88,21 @@
   font-family: var(--font-mono);
 }
 
+/* ── AQUÍ NO SE RECOLOCA ──────────────────────────────────────────────
+ * Lo único que cambia en un teléfono es el ANCHO: el aviso ocupa de lado a
+ * lado en vez de ser una tarjeta corta.
+ *
+ * El `bottom` sale de las variables de tokens.css, como el de los dos
+ * botones flotantes, y por eso no se repite aquí. Había un `bottom: 80px`
+ * escrito a mano —de cuando el botón del chat era lo único que había abajo—
+ * y al añadirse el de Telegram el aviso le caía encima: se veía el avión de
+ * papel dibujado dentro de la caja verde.
+ *
+ * Es la TERCERA vez que un número suelto dentro de un @media deshace lo que
+ * la regla base dejaba bien. Por eso lo comprueba scripts/probar-flotantes.mjs. */
 @media (max-width: 600px) {
   .toast {
-    bottom: 80px; /* dá espaço pro botão flutuante de mensagens */
-    left: 12px;
-    right: 12px;
+    right: calc(var(--fab-margen) + env(safe-area-inset-right, 0px));
     max-width: none;
     min-width: 0;
   }
