@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { isAdmin } from "@/lib/admin"
+import { avisoDeOtroAdmin, esOtroAdmin, isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -40,6 +40,24 @@ export async function POST(req: NextRequest) {
   if (keys.length === 0) {
     return NextResponse.json({ error: "Selecciona al menos un producto" }, { status: 400 })
   }
+  // ── NO SOBRE OTRO ADMINISTRADOR ───────────────────────────────────────
+  // Esta ruta quita accesos a partir de un correo escrito a mano. Con dos
+  // administradores, un correo mal tecleado deja al otro sin sus productos.
+  //
+  // El DELETE de más abajo no lleva esta comprobación a propósito: ese
+  // DEVUELVE el acceso, y devolver nunca hace daño.
+  {
+    const admin = getSupabaseAdmin()
+    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const objetivo = (listed?.users || []).find((u) => u.email?.toLowerCase() === email)
+    if (esOtroAdmin(objetivo, user.id)) {
+      return NextResponse.json(
+        { error: avisoDeOtroAdmin("Revocar productos") },
+        { status: 403 },
+      )
+    }
+  }
+
   for (const k of keys) {
     if (!VALID_KEYS.has(k)) {
       return NextResponse.json({ error: `Invalid key: ${k}` }, { status: 400 })

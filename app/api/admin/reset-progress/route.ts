@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
+import { avisoDeOtroAdmin, esOtroAdmin } from "@/lib/admin"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export const runtime = "nodejs"
@@ -34,6 +35,15 @@ export async function POST(req: Request) {
   const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
   const target = listed?.users?.find((u) => u.email?.toLowerCase() === email)
   if (!target) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+
+  // Reiniciar el avance propio es lo que se hace para probar; el de otro
+  // administrador, no. Ver `esOtroAdmin`.
+  if (esOtroAdmin(target, auth.user.id)) {
+    return NextResponse.json(
+      { error: avisoDeOtroAdmin("Reiniciar el avance") },
+      { status: 403 },
+    )
+  }
 
   // Borrar avance en el servidor.
   const results: Record<string, string> = {}

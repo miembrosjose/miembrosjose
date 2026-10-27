@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { emitCommunityEvent } from "@/lib/notify"
-import { isAdmin } from "@/lib/admin"
+import { avisoDeOtroAdmin, esOtroAdmin, isAdmin } from "@/lib/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -139,6 +139,18 @@ export async function DELETE(req: NextRequest) {
   const targetUserId = (body.user_id || "").trim()
   if (!targetUserId) {
     return NextResponse.json({ error: "user_id requerido" }, { status: 400 })
+  }
+
+  // Solo al QUITAR. Conceder una insignia a otro administrador no hace
+  // daño a nadie; retirarla deshace algo suyo.
+  {
+    const { data: objetivo } = await getSupabaseAdmin().auth.admin.getUserById(targetUserId)
+    if (esOtroAdmin(objetivo?.user, user.id)) {
+      return NextResponse.json(
+        { error: avisoDeOtroAdmin("Quitar la insignia") },
+        { status: 403 },
+      )
+    }
   }
 
   const admin = getSupabaseAdmin()
