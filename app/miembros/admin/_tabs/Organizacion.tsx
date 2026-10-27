@@ -20,8 +20,10 @@
 // diría que todo va bien.
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import type { ReactNode } from "react"
 import {
-  AlertTriangle, Calendar, Check, ChevronLeft, ChevronRight, Loader2, Mail,
+  AlertTriangle, Calendar, Check, CheckSquare, ChevronLeft, ChevronRight, Loader2,
+  Mail,
   MessageSquare, Plus, Trash2, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
@@ -92,6 +94,27 @@ type Actividad = {
 
 type Miembro = { id: string; nombre: string }
 
+/**
+ * Una actividad que el generador del plan creó y nadie ha tocado todavía.
+ *
+ * ── POR QUÉ SE MIRAN SEIS COSAS Y NO SOLO EL TÍTULO ──────────────────────
+ * Porque el atajo «borrar las sin definir» tiene que ser seguro de pulsar
+ * sin leer la lista antes. Si bastara con el título, bastaría también con
+ * que alguien hubiese escrito las notas o asignado a una persona —trabajo
+ * de verdad— para que eso desapareciera sin aviso. En cuanto hay una sola
+ * señal de que alguien pasó por ahí, deja de contar como vacía.
+ */
+function sinDefinir(a: Actividad): boolean {
+  return (
+    a.titulo.trim() === "Por definir" &&
+    a.estado === "pendiente" &&
+    !a.responsable_id &&
+    !a.notas.trim() &&
+    a.checklist.length === 0 &&
+    a.enlaces.length === 0
+  )
+}
+
 // ── Fechas, sin librería ───────────────────────────────────────────────────
 //
 // ── POR QUÉ TODO VA EN TEXTO «AAAA-MM-DD» ─────────────────────────────────
@@ -153,6 +176,16 @@ export function Organizacion() {
   const [error, setError] = useState<string | null>(null)
   const [editando, setEditando] = useState<Actividad | "nueva" | null>(null)
 
+  // ── BORRAR VARIAS ─────────────────────────────────────────────────────
+  // El modo existe porque la casilla de la izquierda ya significa «hecha».
+  // Poner una segunda casilla al lado para «seleccionada» es la clase de
+  // pantalla en la que se acaba marcando lo que no era. Mientras se
+  // selecciona, la casilla cambia de significado y no hay dos cosas que
+  // marcar a la vez.
+  const [seleccionando, setSeleccionando] = useState(false)
+  const [marcadas, setMarcadas] = useState<string[]>([])
+  const [borrando, setBorrando] = useState(false)
+
   const [desde, hasta] = useMemo(() => {
     if (vista === "semana") return [ancla, sumarDias(ancla, 6)]
     const [a, m] = ancla.split("-").map(Number)
@@ -182,6 +215,11 @@ export function Organizacion() {
   }, [desde, hasta])
 
   useEffect(() => { void cargar() }, [cargar])
+
+  // Al cambiar de semana o de vista se suelta lo marcado. Si no, se puede
+  // acabar borrando lo de la semana pasada con la de esta en pantalla: el
+  // servidor obedecería, porque los identificadores siguen siendo válidos.
+  useEffect(() => { setMarcadas([]); setSeleccionando(false) }, [desde, hasta, vista])
 
   useEffect(() => {
     void (async () => {
@@ -217,6 +255,43 @@ export function Organizacion() {
     const [a, m] = ancla.split("-").map(Number)
     const f = new Date(Date.UTC(a, m - 1 + n, 1))
     setAncla(f.toISOString().slice(0, 10))
+  }
+
+  // Lo que se puede marcar son las tareas. Las efemérides van en su propia
+  // tira arriba y no son trabajo de nadie, así que «todas» no se las lleva.
+  const tareas = useMemo(() => actividades.filter((a) => !a.es_referencia), [actividades])
+  const vacias = useMemo(() => tareas.filter(sinDefinir), [tareas])
+
+  const alternar = (id: string) =>
+    setMarcadas((v) => (v.includes(id) ? v.filter((x) => x !== id) : [...v, id]))
+
+  const borrar = async (ids: string[], queSon: string) => {
+    if (ids.length === 0) return
+    if (!window.confirm(`¿Borrar ${ids.length === 1 ? "" : ids.length + " "}${queSon}?\n\nNo se puede deshacer.`)) return
+
+    setBorrando(true)
+    try {
+      const r = await fetch("/api/admin/marketing/actividades", {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo borrar")
+
+      // Se quitan de la pantalla sin volver a pedir la lista: ya sabemos
+      // cuáles eran, y recargarla entera para quitar tres filas parpadea.
+      const fuera = new Set(ids)
+      setActividades((v) => v.filter((a) => !fuera.has(a.id)))
+      setMarcadas((v) => v.filter((x) => !fuera.has(x)))
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo borrar")
+      void cargar()
+    } finally {
+      setBorrando(false)
+    }
   }
 
   const cambiar = async (id: string, cambios: Partial<Actividad>) => {
@@ -343,6 +418,80 @@ export function Organizacion() {
         </div>}
       </div>
 
+      {/* ── LIMPIAR ───────────────────────────────────────────────────────
+          El generador del plan deja la semana llena de «Por definir», y
+          hasta ahora quitarlos era abrir cada uno y borrarlo desde dentro:
+          tres clics por fila, veinte filas. Borrar ya se podía; lo que no
+          había era una forma razonable de llegar a ello. */}
+      {(vista === "semana" || vista === "mes") && !cargando && tareas.length > 0 && (
+        seleccionando ? (
+          <div className="flex flex-wrap items-center gap-2 border border-[#3a2a5a] bg-[#1a1228]/60 px-3 py-2.5">
+            <span className="mr-1 text-xs text-[#d7c9ee]">
+              <strong>{marcadas.length}</strong>{" "}
+              {marcadas.length === 1 ? "marcada" : "marcadas"}
+            </span>
+
+            <Atajo onClick={() => setMarcadas(tareas.map((a) => a.id))}>
+              Todas ({tareas.length})
+            </Atajo>
+            {/* El que de verdad se va a usar, y por eso dice cuántas son
+                ANTES de pulsarlo. */}
+            {vacias.length > 0 && (
+              <Atajo onClick={() => setMarcadas(vacias.map((a) => a.id))}>
+                Sin definir ({vacias.length})
+              </Atajo>
+            )}
+            {marcadas.length > 0 && (
+              <Atajo onClick={() => setMarcadas([])}>Ninguna</Atajo>
+            )}
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                disabled={marcadas.length === 0 || borrando}
+                onClick={() => void borrar(marcadas, marcadas.length === 1 ? "esta actividad" : "actividades")}
+                className="inline-flex items-center gap-2 border border-[#4a1f2a] bg-[#1a0d12]/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#e0a0b0] transition-colors hover:border-red-500/60 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {borrando ? (
+                  <><Loader2 size={12} className="animate-spin" /> Borrando…</>
+                ) : (
+                  <><Trash2 size={12} /> Borrar</>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSeleccionando(false); setMarcadas([]) }}
+                className="text-[11px] uppercase tracking-[0.15em] text-[#7a7a8a] underline underline-offset-2 hover:text-[#F3F6FA]"
+              >
+                salir
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSeleccionando(true)}
+              className="inline-flex items-center gap-2 border border-[#2a2a3a] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0]"
+            >
+              <CheckSquare size={12} /> Seleccionar para borrar
+            </button>
+            {/* El atajo de un solo golpe, fuera del modo: es justo lo que se
+                hace nada más generar un plan y ver la semana llena. */}
+            {vacias.length > 0 && (
+              <button
+                type="button"
+                disabled={borrando}
+                onClick={() => void borrar(vacias.map((a) => a.id), "actividades sin definir")}
+                className="text-[11px] text-[#7a7a8a] underline underline-offset-2 transition-colors hover:text-[#e0a0b0] disabled:opacity-40"
+              >
+                borrar las {vacias.length} sin definir
+              </button>
+            )}
+          </div>
+        )
+      )}
+
       {error && (
         <div className="flex items-start gap-3 border border-red-900 bg-red-950/20 p-3 text-xs text-red-300">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {error}
@@ -365,6 +514,10 @@ export function Organizacion() {
           equipo={equipo}
           onCambiar={cambiar}
           onAbrir={setEditando}
+          seleccionando={seleccionando}
+          marcadas={marcadas}
+          onAlternar={alternar}
+          onBorrarUna={(a) => void borrar([a.id], `«${a.titulo}»`)}
         />
       ) : (
         <VistaMes
@@ -388,6 +541,20 @@ export function Organizacion() {
   )
 }
 
+/** Los atajos de la barra de selección. Todos iguales, para que se lean
+    como lo que son: formas de marcar, no acciones que hagan nada. */
+function Atajo({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="border border-[#2a2a3a] px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0]"
+    >
+      {children}
+    </button>
+  )
+}
+
 function Cifra({ valor, etiqueta, destacada, alerta }: {
   valor: string; etiqueta: string; destacada?: boolean; alerta?: boolean
 }) {
@@ -405,11 +572,18 @@ function Cifra({ valor, etiqueta, destacada, alerta }: {
 
 // ── LA SEMANA ──────────────────────────────────────────────────────────────
 
-function VistaSemana({ actividades, equipo, onCambiar, onAbrir }: {
+function VistaSemana({
+  actividades, equipo, onCambiar, onAbrir,
+  seleccionando, marcadas, onAlternar, onBorrarUna,
+}: {
   actividades: Actividad[]
   equipo: Miembro[]
   onCambiar: (id: string, c: Partial<Actividad>) => void
   onAbrir: (a: Actividad) => void
+  seleccionando: boolean
+  marcadas: string[]
+  onAlternar: (id: string) => void
+  onBorrarUna: (a: Actividad) => void
 }) {
   const hoy = hoyISO()
   const nombre = (id: string | null) =>
@@ -453,29 +627,52 @@ function VistaSemana({ actividades, equipo, onCambiar, onAbrir }: {
               {suyas.map((a) => {
                 const hecha = a.estado === "hecha"
                 const atrasada = !hecha && a.estado !== "cancelada" && a.fecha < hoy
+                const marcada = marcadas.includes(a.id)
                 return (
                   <div
                     key={a.id}
-                    className="flex items-start gap-3 border border-[#14141e] bg-[#0d0d16]/40 px-3 py-2.5 transition-colors hover:border-[#2a2a3a]"
+                    className={`group flex items-start gap-3 border px-3 py-2.5 transition-colors ${
+                      marcada
+                        ? "border-[#6D4A9B] bg-[#1a1228]/60"
+                        : "border-[#14141e] bg-[#0d0d16]/40 hover:border-[#2a2a3a]"
+                    }`}
                   >
-                    {/* Marcar es lo que más se hace en esta pantalla, así que
-                        es lo más grande y lo primero que encuentra el dedo. */}
+                    {/* La misma casilla, dos significados según el modo.
+                        Marcar «hecha» es lo que más se hace en esta pantalla,
+                        así que es lo más grande y lo primero que encuentra el
+                        dedo; mientras se selecciona para borrar, pasa a ser
+                        la de seleccionar y no queda ninguna otra al lado con
+                        la que confundirla. */}
                     <button
                       type="button"
-                      onClick={() => onCambiar(a.id, { estado: hecha ? "pendiente" : "hecha" })}
-                      aria-label={hecha ? "Desmarcar" : "Marcar como hecha"}
+                      onClick={() =>
+                        seleccionando
+                          ? onAlternar(a.id)
+                          : onCambiar(a.id, { estado: hecha ? "pendiente" : "hecha" })
+                      }
+                      aria-label={
+                        seleccionando
+                          ? (marcada ? "Quitar de la selección" : "Seleccionar")
+                          : (hecha ? "Desmarcar" : "Marcar como hecha")
+                      }
                       className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center border transition-colors ${
-                        hecha
-                          ? "border-emerald-600 bg-emerald-600 text-white"
-                          : "border-[#3a3a4a] hover:border-[#6D4A9B]"
+                        seleccionando
+                          ? marcada
+                            ? "border-[#6D4A9B] bg-[#6D4A9B] text-white"
+                            : "border-[#3a3a4a] hover:border-[#6D4A9B]"
+                          : hecha
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-[#3a3a4a] hover:border-[#6D4A9B]"
                       }`}
                     >
-                      {hecha && <Check size={12} />}
+                      {(seleccionando ? marcada : hecha) && <Check size={12} />}
                     </button>
 
+                    {/* Seleccionando, tocar la fila la marca. Abrir el editor
+                        a media selección sería perderla. */}
                     <button
                       type="button"
-                      onClick={() => onAbrir(a)}
+                      onClick={() => (seleccionando ? onAlternar(a.id) : onAbrir(a))}
                       className="min-w-0 flex-1 text-left"
                     >
                       <p className={`truncate text-sm ${hecha ? "text-[#6a6a7a] line-through" : "text-[#F3F6FA]"}`}>
@@ -514,6 +711,23 @@ function VistaSemana({ actividades, equipo, onCambiar, onAbrir }: {
                       >
                         <Mail size={13} />
                       </span>
+                    )}
+
+                    {/* Borrar una suelta, sin abrirla.
+
+                        Se desvanece en el ratón y se queda fija en el móvil:
+                        en una pantalla táctil no hay «pasar por encima», y un
+                        botón que solo aparece al apuntar ahí no existe. */}
+                    {!seleccionando && (
+                      <button
+                        type="button"
+                        onClick={() => onBorrarUna(a)}
+                        aria-label={`Borrar ${a.titulo}`}
+                        title="Borrar"
+                        className="-my-1 -mr-1 mt-0 shrink-0 p-1.5 text-[#4a4a5a] opacity-100 transition-colors hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     )}
                   </div>
                 )
