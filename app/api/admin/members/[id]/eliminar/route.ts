@@ -61,7 +61,11 @@ const TABLAS_POR_CORREO: Array<{ tabla: string; columna: string }> = [
   { tabla: "email_send_log", columna: "email" },
   { tabla: "funnel_feedbacks", columna: "email" },
   // La copia local de las ventas. El original está en Stripe.
-  { tabla: "stripe_sales", columna: "email" },
+  //
+  // La columna es `customer_email` y NO `email`. Estuvo mal escrita, y
+  // como un error de columna se tragaba igual que una tabla ausente, cada
+  // borrado dejaba estas filas atrás sin que nadie se enterara.
+  { tabla: "stripe_sales", columna: "customer_email" },
 ]
 
 /**
@@ -194,10 +198,24 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
         .eq(columna, email)
         .select("*")
 
-      // Una tabla que no existe en este proyecto no es un fallo: se salta.
+      // ── UNA TABLA AUSENTE SE SALTA; UNA COLUMNA MAL ESCRITA NO ────────
+      // Que una tabla no exista en este proyecto es previsible y no pasa
+      // nada. Que una COLUMNA no exista significa que esta lista está mal
+      // escrita, y entonces ese barrido nunca ha limpiado nada.
+      //
+      // Los dos casos daban el mismo mensaje y se trataban igual, así que
+      // `stripe_sales` llevaba meses sin limpiarse en cada borrado y el
+      // resultado decía que todo había ido bien.
       if (error) {
-        if (/does not exist|schema cache/i.test(error.message)) continue
+        const columnaMal = /column .* does not exist/i.test(error.message)
+        if (!columnaMal && /does not exist|schema cache/i.test(error.message)) continue
+
         console.error("[admin/members/eliminar] tabla=%s %s", tabla, error.message)
+        // Se dice en la respuesta, no solo en el registro del servidor:
+        // quien borra tiene que saber que algo quedó sin limpiar.
+        resultado.conservado.push(
+          `${tabla} · NO se pudo limpiar (${columnaMal ? "columna mal escrita" : "error"})`,
+        )
         continue
       }
       const filas = Array.isArray(data) ? data.length : 0

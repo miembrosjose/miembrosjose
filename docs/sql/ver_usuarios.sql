@@ -72,7 +72,7 @@ left join lateral (
 left join lateral (
   select count(*) as compras
   from public.stripe_sales ss
-  where ss.user_id = u.id or lower(ss.email) = lower(u.email)
+  where ss.user_id = u.id or lower(ss.customer_email) = lower(u.email)
 ) v on true
 
 left join lateral (
@@ -115,6 +115,6 @@ where coalesce(p.is_admin, false) = false
   )
   and not exists (
     select 1 from public.stripe_sales ss
-    where ss.user_id = u.id or lower(ss.email) = lower(u.email)
+    where ss.user_id = u.id or lower(ss.customer_email) = lower(u.email)
   )
 order by u.created_at desc;
