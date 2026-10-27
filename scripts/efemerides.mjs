@@ -446,6 +446,27 @@ function sql(desde, hasta, zona) {
 -- categorías. Lo que hayas escrito tú no se toca: lo tuyo no es ninguna de
 -- esas categorías, o si lo es, vuelve a entrar igual al regenerar.
 
+-- ── ANTES QUE NADA: ¿SE PUEDE? ─────────────────────────────────────────────
+-- Este archivo mete categorías que crea \`marketing_05_categorias.sql\`. Si se
+-- corre al revés, Postgres contesta «violates check constraint
+-- mkt_actividades_categoria_check», que es verdad y no sirve de nada: no dice
+-- qué falta ni dónde está. Esto sí.
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.mkt_actividades'::regclass
+      and conname = 'mkt_actividades_categoria_check'
+      and pg_get_constraintdef(oid) like '%''luna''%'
+  ) then
+    raise exception
+      'Falta correr docs/sql/marketing_05_categorias.sql ANTES que este archivo. '
+      'Crea las categorías del cielo (luna, zodiaco, estacion, portal), que '
+      'todavía no existen. Córrelo y vuelve aquí.';
+  end if;
+end $$;
+
 begin;
 
 delete from public.mkt_actividades
@@ -453,8 +474,13 @@ where es_referencia
   and categoria in ('luna', 'zodiaco', 'estacion', 'portal')
   and fecha between '${desde}-01-01' and '${hasta}-12-31';
 
+-- El \`::date\` no sobra. Dentro de un \`values\` las cadenas son \`text\`, y
+-- Postgres no las convierte solo al meterlas en una columna \`date\`: contesta
+-- «column "fecha" is of type date but expression is of type text» y no
+-- inserta nada. En un \`insert ... values\` directo sí lo haría; en cuanto hay
+-- un \`select\` por medio, deja de hacerlo.
 insert into public.mkt_actividades (fecha, titulo, categoria, notas, es_referencia, ambito, estado)
-select f.fecha, f.titulo, f.categoria, f.notas, true, 'interno', 'pendiente'
+select f.fecha::date, f.titulo, f.categoria, f.notas, true, 'interno', 'pendiente'
 from (values
 ${filas.join(",\n")}
 ) as f(fecha, titulo, categoria, notas);
