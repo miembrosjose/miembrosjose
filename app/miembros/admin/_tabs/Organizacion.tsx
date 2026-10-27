@@ -22,9 +22,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import {
-  AlertTriangle, Calendar, Check, CheckSquare, ChevronLeft, ChevronRight, Loader2,
-  Mail,
-  MessageSquare, Plus, Trash2, X,
+  AlertTriangle, Calendar, Check, CheckSquare, ChevronLeft, ChevronRight,
+  LayoutGrid, List as ListIcon, Loader2, Mail, MessageSquare, Plus, Trash2, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
 import { OrganizacionGuiones } from "./OrganizacionGuiones"
@@ -93,6 +92,8 @@ type Actividad = {
 }
 
 type Miembro = { id: string; nombre: string }
+
+type Modo = "lista" | "calendario"
 
 /**
  * Una actividad que el generador del plan creó y nadie ha tocado todavía.
@@ -182,6 +183,17 @@ export function Organizacion() {
   // pantalla en la que se acaba marcando lo que no era. Mientras se
   // selecciona, la casilla cambia de significado y no hay dos cosas que
   // marcar a la vez.
+  // ── LISTA O CALENDARIO ────────────────────────────────────────────────
+  // Se recuerda por separado para cada vista porque se usan para cosas
+  // distintas: la semana se trabaja en lista —marcar, repartir, borrar— y
+  // el mes se mira en rejilla para ver cómo queda repartido. Un solo ajuste
+  // compartido obligaría a cambiarlo cada vez que se salta de una a otra.
+  const [modos, setModos] = useState<{ semana: Modo; mes: Modo }>({
+    semana: "lista",
+    mes: "calendario",
+  })
+  const modo: Modo = vista === "mes" ? modos.mes : modos.semana
+
   const [seleccionando, setSeleccionando] = useState(false)
   const [marcadas, setMarcadas] = useState<string[]>([])
   const [borrando, setBorrando] = useState(false)
@@ -415,6 +427,30 @@ export function Organizacion() {
           >
             hoy
           </button>
+
+          {/* Lista o rejilla, para las dos vistas. Antes la semana solo
+              existía en lista y el mes solo en rejilla, y eso dejaba fuera
+              las dos combinaciones útiles: repasar el mes entero como lista
+              —que es donde se puede marcar y borrar de verdad— y ver la
+              semana repartida por días. */}
+          <div className="ml-2 flex border border-[#1f1f2c]">
+            {(["lista", "calendario"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setModos((v) => ({ ...v, [vista === "mes" ? "mes" : "semana"]: m }))}
+                aria-pressed={modo === m}
+                title={m === "lista" ? "Ver como lista" : "Ver como calendario"}
+                className={`px-2 py-1.5 transition-colors ${
+                  modo === m
+                    ? "bg-[#6D4A9B]/25 text-[#c3b2e0]"
+                    : "text-[#6a6a7a] hover:text-[#a0a0b0]"
+                }`}
+              >
+                {m === "lista" ? <ListIcon size={14} /> : <LayoutGrid size={14} />}
+              </button>
+            ))}
+          </div>
         </div>}
       </div>
 
@@ -431,8 +467,10 @@ export function Organizacion() {
               {marcadas.length === 1 ? "marcada" : "marcadas"}
             </span>
 
+            {/* «Todas» son las de la semana o las del mes según dónde estés,
+                nunca las del calendario entero. Por eso lo dice. */}
             <Atajo onClick={() => setMarcadas(tareas.map((a) => a.id))}>
-              Todas ({tareas.length})
+              Todas las de {vista === "mes" ? "el mes" : "la semana"} ({tareas.length})
             </Atajo>
             {/* El que de verdad se va a usar, y por eso dice cuántas son
                 ANTES de pulsarlo. */}
@@ -485,7 +523,7 @@ export function Organizacion() {
                 onClick={() => void borrar(vacias.map((a) => a.id), "actividades sin definir")}
                 className="text-[11px] text-[#7a7a8a] underline underline-offset-2 transition-colors hover:text-[#e0a0b0] disabled:opacity-40"
               >
-                borrar las {vacias.length} sin definir
+                borrar las {vacias.length} sin definir de {vista === "mes" ? "este mes" : "esta semana"}
               </button>
             )}
           </div>
@@ -508,8 +546,8 @@ export function Organizacion() {
         <div className="flex items-center gap-2 py-12 text-sm text-[#7a7a8a]">
           <Loader2 size={15} className="animate-spin" /> Cargando…
         </div>
-      ) : vista === "semana" ? (
-        <VistaSemana
+      ) : modo === "lista" ? (
+        <VistaLista
           actividades={actividades}
           equipo={equipo}
           onCambiar={cambiar}
@@ -520,11 +558,15 @@ export function Organizacion() {
           onBorrarUna={(a) => void borrar([a.id], `«${a.titulo}»`)}
         />
       ) : (
-        <VistaMes
+        <VistaCalendario
           desde={desde}
           hasta={hasta}
           actividades={actividades}
           onAbrir={setEditando}
+          seleccionando={seleccionando}
+          marcadas={marcadas}
+          onAlternar={alternar}
+          onBorrarUna={(a) => void borrar([a.id], `«${a.titulo}»`)}
         />
       )}
 
@@ -572,7 +614,12 @@ function Cifra({ valor, etiqueta, destacada, alerta }: {
 
 // ── LA SEMANA ──────────────────────────────────────────────────────────────
 
-function VistaSemana({
+// ── LA LISTA ───────────────────────────────────────────────────────────────
+//
+// Sirve igual para siete días que para un mes: agrupa por bloques de trabajo
+// y no por fechas, así que el rango que le llegue no cambia cómo se lee.
+
+function VistaLista({
   actividades, equipo, onCambiar, onAbrir,
   seleccionando, marcadas, onAlternar, onBorrarUna,
 }: {
@@ -598,7 +645,7 @@ function VistaSemana({
       {referencias.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border border-[#1a1a24] bg-[#0d0d16]/40 px-4 py-3">
           <Calendar size={13} className="text-[#6a6a7a]" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Esta semana cae</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">En estas fechas cae</span>
           {referencias.map((r) => (
             <button
               key={r.id}
@@ -741,7 +788,7 @@ function VistaSemana({
         <div className="border border-dashed border-[#1f1f2c] px-6 py-14 text-center">
           <Calendar size={26} className="mx-auto text-[#3a3a50]" />
           <p className="mt-4 text-sm text-[#8a8fa8]">
-            Nada planificado para esta semana.
+            Nada planificado en estas fechas.
           </p>
         </div>
       )}
@@ -751,11 +798,18 @@ function VistaSemana({
 
 // ── EL MES ─────────────────────────────────────────────────────────────────
 
-function VistaMes({ desde, hasta, actividades, onAbrir }: {
+function VistaCalendario({
+  desde, hasta, actividades, onAbrir,
+  seleccionando, marcadas, onAlternar, onBorrarUna,
+}: {
   desde: string
   hasta: string
   actividades: Actividad[]
   onAbrir: (a: Actividad) => void
+  seleccionando: boolean
+  marcadas: string[]
+  onAlternar: (id: string) => void
+  onBorrarUna: (a: Actividad) => void
 }) {
   const hoy = hoyISO()
 
@@ -767,6 +821,13 @@ function VistaMes({ desde, hasta, actividades, onAbrir }: {
     dias.push(d)
     if (dias.length > 42) break
   }
+
+  // ── UNA SEMANA NO SE DIBUJA COMO UN MES ─────────────────────────────────
+  // Son siete casillas en vez de treinta y cinco, así que caben enteras: se
+  // les da altura y se enseña todo. En el mes hay que cortar por algún sitio
+  // o la rejilla se va de la pantalla.
+  const esSemana = dias.length <= 7
+  const TOPE = esSemana ? 99 : 4
 
   const delDia = (iso: string) => actividades.filter((a) => a.fecha === iso)
 
@@ -786,30 +847,56 @@ function VistaMes({ desde, hasta, actividades, onAbrir }: {
           return (
             <div
               key={d}
-              className={`min-h-[5.5rem] bg-[#0d0d16] p-1.5 text-left ${fuera ? "opacity-35" : ""}`}
+              className={`bg-[#0d0d16] p-1.5 text-left ${esSemana ? "min-h-[14rem]" : "min-h-[5.5rem]"} ${fuera ? "opacity-35" : ""}`}
             >
               <p className={`mb-1 text-[10px] ${esHoy ? "font-bold text-[#c3b2e0]" : "text-[#6a6a7a]"}`}>
                 {Number(d.slice(8, 10))}
               </p>
               <div className="space-y-0.5">
-                {suyas.slice(0, 4).map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => onAbrir(a)}
-                    title={a.titulo}
-                    className="block w-full truncate border-l-2 bg-[#12121c] px-1 py-0.5 text-left text-[10px] text-[#c8c8dc] hover:bg-[#1a1a2a]"
-                    style={{
-                      borderLeftColor: COLOR[a.categoria],
-                      opacity: a.estado === "hecha" ? 0.45 : 1,
-                      textDecoration: a.estado === "hecha" ? "line-through" : undefined,
-                    }}
-                  >
-                    {a.titulo}
-                  </button>
-                ))}
-                {suyas.length > 4 && (
-                  <p className="px-1 text-[10px] text-[#6a6a7a]">+{suyas.length - 4}</p>
+                {suyas.slice(0, TOPE).map((a) => {
+                  const marcada = marcadas.includes(a.id)
+                  return (
+                    <div key={a.id} className="group/c relative">
+                      <button
+                        type="button"
+                        onClick={() => (seleccionando ? onAlternar(a.id) : onAbrir(a))}
+                        title={a.titulo}
+                        className={`block w-full truncate border-l-2 px-1 py-0.5 text-left text-[10px] transition-colors ${
+                          marcada
+                            ? "bg-[#6D4A9B]/35 text-[#e8dcff]"
+                            : "bg-[#12121c] text-[#c8c8dc] hover:bg-[#1a1a2a]"
+                        }`}
+                        style={{
+                          borderLeftColor: COLOR[a.categoria],
+                          opacity: a.estado === "hecha" ? 0.45 : 1,
+                          textDecoration: a.estado === "hecha" ? "line-through" : undefined,
+                        }}
+                      >
+                        {/* Seleccionando, la marca va DENTRO de la pastilla:
+                            en una casilla de rejilla no hay sitio para una
+                            casilla de verificación al lado. */}
+                        {seleccionando && (marcada ? "✓ " : "· ")}
+                        {a.titulo}
+                      </button>
+
+                      {/* La equis de borrar una suelta. Tapa el final del
+                          título, que es texto cortado de todas formas. */}
+                      {!seleccionando && (
+                        <button
+                          type="button"
+                          onClick={() => onBorrarUna(a)}
+                          aria-label={`Borrar ${a.titulo}`}
+                          title="Borrar"
+                          className="absolute right-0 top-0 hidden h-full items-center bg-gradient-to-l from-[#1a1a2a] via-[#1a1a2a] to-transparent pl-3 pr-1 text-[#6a6a7a] hover:text-red-400 group-hover/c:flex"
+                        >
+                          <X size={11} />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+                {suyas.length > TOPE && (
+                  <p className="px-1 text-[10px] text-[#6a6a7a]">+{suyas.length - TOPE}</p>
                 )}
               </div>
             </div>
@@ -818,7 +905,9 @@ function VistaMes({ desde, hasta, actividades, onAbrir }: {
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-[#6a6a7a]">
-        Toca una actividad para abrirla. El color es la categoría; lo tachado está hecho.
+        {seleccionando
+          ? "Toca una actividad para marcarla o desmarcarla."
+          : "Toca una actividad para abrirla, o la equis para borrarla. El color es la categoría; lo tachado está hecho."}
       </p>
     </div>
   )
