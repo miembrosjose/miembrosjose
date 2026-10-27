@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
 import { OrganizacionGuiones } from "./OrganizacionGuiones"
+import { OrganizacionPlan, OrganizacionResultados } from "./OrganizacionPlan"
 
 // ── Vocabulario ────────────────────────────────────────────────────────────
 // Duplicado del servidor a propósito: importar lib/marketing arrastraría al
@@ -136,7 +137,10 @@ function mesLargo(iso: string): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function Organizacion() {
-  const [vista, setVista] = useState<"semana" | "mes" | "guiones">("semana")
+  const [vista, setVista] = useState<
+    "semana" | "mes" | "guiones" | "resultados" | "plan"
+  >("semana")
+  const [esPropietario, setEsPropietario] = useState(false)
   // Cuántos esperan revisión. Se pide aparte y en segundo plano: es un
   // número de la cabecera, no debe retrasar el calendario si tarda.
   const [porAprobar, setPorAprobar] = useState<number | null>(null)
@@ -168,6 +172,7 @@ export function Organizacion() {
       if (!r.ok) throw new Error(j?.error || "No se pudo cargar")
       setActividades(j.actividades || [])
       setEquipo(j.equipo || [])
+      setEsPropietario(j.esPropietario === true)
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar")
@@ -257,6 +262,10 @@ export function Organizacion() {
       {/* ── LAS CUATRO CIFRAS ─────────────────────────────────────────────
           Lo primero que se mira al abrir, y lo único que hace falta saber
           antes de entrar en detalle. */}
+      {/* Las cifras son del calendario. En resultados y en plan no
+          significan nada, y una cifra que no viene a cuento se acaba
+          leyendo mal. */}
+      {(vista === "semana" || vista === "mes") && (
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Cifra valor={cifras.pct === null ? "—" : `${cifras.pct}%`} etiqueta="cumplimiento" destacada />
         <Cifra valor={String(cifras.hechas)} etiqueta="completadas" />
@@ -267,6 +276,7 @@ export function Organizacion() {
           alerta={cifras.atrasadas > 0}
         />
       </section>
+      )}
 
       {/* La pregunta que trae al dueño a esta pantalla. Solo asoma cuando
           hay algo esperando: un cero permanente deja de leerse. */}
@@ -287,14 +297,17 @@ export function Organizacion() {
       {/* ── NAVEGACIÓN ────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[#14141e] py-3">
         <div className="flex items-center gap-1">
-          {(["semana", "mes", "guiones"] as const).map((v) => (
+          {(["semana", "mes", "guiones", "resultados", "plan"] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => {
                 setVista(v)
-                if (v !== "guiones") {
-                  setAncla(v === "semana" ? lunesDe(hoyISO()) : `${hoyISO().slice(0, 7)}-01`)
+                // Semana y resultados se anclan al lunes; mes y plan, al dia 1.
+                if (v === "semana" || v === "resultados") {
+                  setAncla(lunesDe(hoyISO()))
+                } else if (v === "mes" || v === "plan") {
+                  setAncla(`${hoyISO().slice(0, 7)}-01`)
                 }
               }}
               className={`border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors ${
@@ -338,6 +351,10 @@ export function Organizacion() {
 
       {vista === "guiones" ? (
         <OrganizacionGuiones equipo={equipo} />
+      ) : vista === "resultados" ? (
+        <OrganizacionResultados semana={ancla} />
+      ) : vista === "plan" ? (
+        <OrganizacionPlan mes={ancla} esPropietario={esPropietario} />
       ) : cargando ? (
         <div className="flex items-center gap-2 py-12 text-sm text-[#7a7a8a]">
           <Loader2 size={15} className="animate-spin" /> Cargando…

@@ -309,3 +309,162 @@ export function anadirComentario(
   // conservan las últimas, que son las que explican dónde está ahora.
   ].slice(-60)
 }
+
+// ── LOS NÚMEROS ────────────────────────────────────────────────────────────
+
+/** Los que son cuentas: enteros y nunca negativos. */
+const CIFRAS = [
+  "alcance", "visualizaciones", "me_gusta", "comentarios", "compartidos",
+  "guardados", "nuevos_seguidores", "contenidos_publicados", "interacciones",
+  "correos_enviados", "clics", "notificaciones_enviadas",
+] as const
+
+const TEXTOS_METRICA = [
+  "que_funciono", "que_interes", "que_repetir", "que_mejorar", "observaciones",
+] as const
+
+/**
+ * Los números de una semana, comprobados.
+ *
+ * ── VACÍO Y CERO NO SON LO MISMO ──────────────────────────────────────────
+ * Un campo que se deja en blanco se guarda como NULO: «no lo sé». Un cero es
+ * «lo miré y no pasó nada». Confundirlos estropea cualquier comparación
+ * posterior, porque el promedio de una semana sin datos no es cero.
+ *
+ * Por eso la cadena vacía se convierte en nulo y no en 0.
+ */
+export function limpiarMetricas(
+  body: Record<string, unknown>,
+): { error: string } | { campos: Record<string, unknown> } {
+  const c: Record<string, unknown> = {}
+
+  const periodo = String(body.periodo ?? "")
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(periodo)) {
+    return { error: "Falta la semana." }
+  }
+  c.periodo = periodo
+
+  if (body.actividad_id) {
+    if (!/^[0-9a-f-]{36}$/i.test(String(body.actividad_id))) {
+      return { error: "Esa publicación no es válida." }
+    }
+    c.actividad_id = body.actividad_id
+  } else {
+    c.actividad_id = null
+  }
+
+  for (const campo of CIFRAS) {
+    if (!(campo in body)) continue
+    const v = body[campo]
+    if (v === null || v === "" || v === undefined) { c[campo] = null; continue }
+    const n = Number(v)
+    if (!Number.isInteger(n) || n < 0) {
+      return { error: `«${campo.replace(/_/g, " ")}» tiene que ser un número entero y no negativo.` }
+    }
+    // Un tope alto pero finito: un dedo de más al teclear no debe quedar
+    // guardado como alcance de dos mil millones y descuadrar los gráficos.
+    if (n > 100_000_000) return { error: "Ese número es demasiado grande. ¿Sobra algún dígito?" }
+    c[campo] = n
+  }
+
+  if ("tasa_apertura" in body) {
+    const v = body.tasa_apertura
+    if (v === null || v === "" || v === undefined) {
+      c.tasa_apertura = null
+    } else {
+      const n = Number(v)
+      if (!Number.isFinite(n) || n < 0 || n > 100) {
+        return { error: "La tasa de apertura es un porcentaje: entre 0 y 100." }
+      }
+      c.tasa_apertura = Math.round(n * 100) / 100
+    }
+  }
+
+  for (const campo of TEXTOS_METRICA) {
+    if (campo in body) c[campo] = String(body[campo] ?? "").slice(0, 4000)
+  }
+
+  return { campos: c }
+}
+
+// ── EL PLAN DEL MES ────────────────────────────────────────────────────────
+
+const TEXTOS_PLAN = ["objetivos", "prioridades", "acuerdos", "observaciones"] as const
+
+/**
+ * El plan del mes, comprobado.
+ *
+ * ── LAS FRECUENCIAS SON DEL DUEÑO ─────────────────────────────────────────
+ * Cambiar «3 reels por semana» a 5 es cambiar lo que se le pide a alguien.
+ * Eso lo decide quien dirige, no quien ejecuta — es la segunda y última cosa
+ * que `es_propietario` gobierna.
+ *
+ * Los objetivos y los acuerdos los escriben los dos: son las notas de una
+ * reunión que tienen juntos.
+ */
+export function limpiarPlan(
+  body: Record<string, unknown>,
+  { esPropietario }: { esPropietario: boolean },
+): { error: string } | { campos: Record<string, unknown> } {
+  const c: Record<string, unknown> = {}
+
+  const mes = String(body.mes ?? "")
+  if (!/^\d{4}-\d{2}-01$/.test(mes)) {
+    return { error: "Falta el mes, como AAAA-MM-01." }
+  }
+  c.mes = mes
+
+  for (const campo of TEXTOS_PLAN) {
+    if (campo in body) c[campo] = String(body[campo] ?? "").slice(0, 8000)
+  }
+
+  if ("frecuencias" in body) {
+    if (!esPropietario) {
+      return { error: "Solo el propietario puede cambiar las frecuencias acordadas." }
+    }
+    if (!Array.isArray(body.frecuencias)) {
+      return { error: "Las frecuencias tienen que ser una lista." }
+    }
+
+    const limpias: Array<Record<string, unknown>> = []
+    for (const f of body.frecuencias as Array<Record<string, unknown>>) {
+      if (!f || typeof f !== "object") continue
+
+      const categoria = String(f.categoria ?? "")
+      if (!CATEGORIAS.includes(categoria as never)) {
+        return { error: `«${categoria}» no es una categoría que exista.` }
+      }
+
+      const cantidad = Number(f.cantidad)
+      if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 30) {
+        return { error: `La cantidad de «${categoria}» tiene que estar entre 1 y 30.` }
+      }
+
+      const cada = String(f.cada ?? "semana")
+      if (!["semana", "mes"].includes(cada)) {
+        return { error: "Una frecuencia es por semana o por mes." }
+      }
+
+      const responsable = f.responsable_id ?? null
+      if (responsable !== null && !/^[0-9a-f-]{36}$/i.test(String(responsable))) {
+        return { error: "Ese responsable no es válido." }
+      }
+
+      limpias.push({ categoria, cantidad, cada, responsable_id: responsable })
+    }
+
+    // Dos líneas de la misma categoría significarían dos metas distintas para
+    // lo mismo, y el generador no sabría a cuál hacer caso.
+    const vistas = new Set<string>()
+    for (const f of limpias) {
+      const k = String(f.categoria)
+      if (vistas.has(k)) return { error: `«${k}» está dos veces. Deja una sola línea por categoría.` }
+      vistas.add(k)
+    }
+
+    c.frecuencias = limpias
+  }
+
+  if (Object.keys(c).length <= 1) return { error: "No hay nada que guardar." }
+  return { campos: c }
+}

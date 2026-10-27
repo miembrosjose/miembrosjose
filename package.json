@@ -18,7 +18,7 @@
     "logo": "node scripts/exportar-logo.mjs",
     "probar:navegadores": "node scripts/probar-navegadores.mjs",
     "probar:flotantes": "node scripts/probar-flotantes.mjs",
-    "probar:guiones": "node scripts/probar-guiones.mjs"
+    "probar:marketing": "node scripts/probar-marketing.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",

@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  QUIÉN PUEDE APROBAR UN GUION · la prueba
+//  LAS REGLAS DEL CENTRO DE ORGANIZACIÓN · la prueba
 // ═══════════════════════════════════════════════════════════════════════════
 //
-//   npm run probar:guiones
+//   npm run probar:marketing
 //
 // ── POR QUÉ ESTO SE PRUEBA Y EL RESTO NO ───────────────────────────────────
 // Todo lo demás del centro de organización es trabajo compartido: escribir,
@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const aqui = dirname(fileURLToPath(import.meta.url))
-const { limpiarGuion, anadirComentario } = await import(
+const { limpiarGuion, anadirComentario, limpiarMetricas, limpiarPlan } = await import(
   "file:///" + join(aqui, "..", "lib", "marketing", "reglas.ts").replace(/\\/g, "/")
 )
 
@@ -105,6 +105,104 @@ for (let i = 0; i < 80; i++) {
 }
 comprobar("se conservan las últimas 60", muchas.length === 60, `salen ${muchas.length}`)
 comprobar("y las últimas son las recientes", muchas[muchas.length - 1].texto === "n79")
+
+
+// ── LOS NÚMEROS ───────────────────────────────────────────────────────────
+
+console.log("\n— Vacío y cero no son lo mismo —")
+
+const vacio = limpiarMetricas({ periodo: "2026-11-02", alcance: "", me_gusta: 0 })
+comprobar(
+  "un campo en blanco se guarda como NULO",
+  deja(vacio) && vacio.campos.alcance === null,
+  "un blanco guardado como 0 diría «lo miré y no pasó nada»",
+)
+comprobar("un cero escrito se guarda como 0", deja(vacio) && vacio.campos.me_gusta === 0)
+
+console.log("\n— Números imposibles —")
+
+comprobar("sin semana no se guarda", rechaza(limpiarMetricas({ alcance: 10 })))
+comprobar("alcance negativo", rechaza(limpiarMetricas({ periodo: "2026-11-02", alcance: -5 })))
+comprobar("alcance con decimales", rechaza(limpiarMetricas({ periodo: "2026-11-02", alcance: 3.5 })))
+comprobar("un dedo de más al teclear", rechaza(limpiarMetricas({ periodo: "2026-11-02", alcance: 999999999999 })))
+comprobar("apertura del 150 %", rechaza(limpiarMetricas({ periodo: "2026-11-02", tasa_apertura: 150 })))
+comprobar(
+  "apertura con decimales sí vale",
+  deja(limpiarMetricas({ periodo: "2026-11-02", tasa_apertura: 42.37 })),
+)
+
+// ── EL PLAN ───────────────────────────────────────────────────────────────
+
+console.log("\n— Las frecuencias son del dueño —")
+
+const unaFrec = [{ categoria: "reel", cantidad: 3, cada: "semana" }]
+
+comprobar(
+  "Regi NO puede cambiar las frecuencias",
+  rechaza(limpiarPlan({ mes: "2026-11-01", frecuencias: unaFrec }, { esPropietario: false })),
+)
+comprobar(
+  "el dueño sí puede",
+  deja(limpiarPlan({ mes: "2026-11-01", frecuencias: unaFrec }, { esPropietario: true })),
+)
+comprobar(
+  "pero Regi sí escribe los acuerdos de la reunión",
+  deja(limpiarPlan({ mes: "2026-11-01", acuerdos: "Subimos a 4 reels" }, { esPropietario: false })),
+)
+
+console.log("\n— Frecuencias que no tienen sentido —")
+
+comprobar(
+  "una categoría inventada",
+  rechaza(limpiarPlan(
+    { mes: "2026-11-01", frecuencias: [{ categoria: "tiktok", cantidad: 1, cada: "semana" }] },
+    { esPropietario: true },
+  )),
+)
+comprobar(
+  "cantidad cero",
+  rechaza(limpiarPlan(
+    { mes: "2026-11-01", frecuencias: [{ categoria: "reel", cantidad: 0, cada: "semana" }] },
+    { esPropietario: true },
+  )),
+)
+comprobar(
+  "la misma categoría dos veces",
+  rechaza(limpiarPlan({
+    mes: "2026-11-01",
+    frecuencias: [
+      { categoria: "reel", cantidad: 3, cada: "semana" },
+      { categoria: "reel", cantidad: 5, cada: "semana" },
+    ],
+  }, { esPropietario: true })),
+  "dos metas para lo mismo dejarían al generador sin saber a cuál hacer caso",
+)
+comprobar("un mes que no es día 1", rechaza(limpiarPlan({ mes: "2026-11-15" }, { esPropietario: true })))
+
+// ── LO QUE CUENTA EL GENERADOR ────────────────────────────────────────────
+//
+// La cuenta misma, recreada: el generador vive en una ruta y no se puede
+// importar sin Next, pero la aritmética sí se puede comprobar — y es donde
+// está el riesgo de duplicar.
+
+console.log("\n— El generador cuenta por semana, no por mes —")
+
+const faltan = (meta, yaHay) => Math.max(0, meta - yaHay)
+
+comprobar("semana vacía con meta 3 → crea 3", faltan(3, 0) === 3)
+comprobar("semana con 2 de 3 → crea 1", faltan(3, 2) === 1)
+comprobar("semana completa → no crea nada", faltan(3, 3) === 0)
+comprobar("semana con 4 de 3 → tampoco quita", faltan(3, 4) === 0)
+
+// Doce en la primera semana NO completan un mes de «3 por semana»: las otras
+// tres semanas siguen vacías. Contar por mes habría dicho que todo está bien.
+const semanas = [12, 0, 0, 0]
+const porSemana = semanas.reduce((t, hay) => t + faltan(3, hay), 0)
+comprobar(
+  "doce el primer lunes no completan el mes",
+  porSemana === 9,
+  `faltarían ${porSemana} y contando por mes habría dicho 0`,
+)
 
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} FALLOS\n`)
 process.exit(fallos === 0 ? 0 : 1)
