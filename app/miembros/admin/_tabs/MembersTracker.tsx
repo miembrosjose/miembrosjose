@@ -602,6 +602,40 @@ function MemberDetailModal({ memberId, onClose, onEliminado }: {
                 <p>Membro desde: {new Date(data.member.member_since).toLocaleDateString("pt-BR")}</p>
                 <p>Último login: {data.member.last_login_date || "—"}</p>
               </section>
+
+              {/* ── ELIMINAR ──────────────────────────────────────────────────
+                  El manejador estaba escrito entero —con su confirmación por
+                  correo y todo— y ningún botón lo llamaba. La capacidad existía
+                  en el servidor y en el cliente, y no había manera de llegar a
+                  ella: para borrar una cuenta había que ir a Supabase, que es
+                  justo lo que deja la suscripción de Stripe viva y cobrando.
+
+                  Va al final, en rojo y bajo su propio título: no es una acción
+                  más de la lista. */}
+              <section className="border-t border-[#2a1620] pt-4">
+                <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#fca5a5] [font-family:var(--font-geist-sans)]">
+                  Zona delicada
+                </h3>
+                <p className="mb-3 text-[11px] leading-relaxed text-[#8a8a9a] [font-family:var(--font-geist-sans)]">
+                  Cancela su suscripción en Stripe, limpia sus datos y borra la cuenta.
+                  No se puede deshacer. El historial de cobros se conserva en Stripe.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={eliminarMiembro}
+                    disabled={borrarBusy}
+                    className="border border-[#4a1f2a] bg-[#1a0d12]/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0a0b0] hover:border-red-500/60 hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed [font-family:var(--font-geist-sans)]"
+                  >
+                    {borrarBusy ? "Eliminando..." : "Eliminar miembro"}
+                  </button>
+                  {borrarMsg && (
+                    <span className={`text-[10px] uppercase tracking-[0.2em] [font-family:var(--font-geist-sans)] ${borrarMsg.kind === "ok" ? "text-[#009d68]" : "text-red-400"}`}>
+                      {borrarMsg.text}
+                    </span>
+                  )}
+                </div>
+              </section>
             </>
           )}
         </div>

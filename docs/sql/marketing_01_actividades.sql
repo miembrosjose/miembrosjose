@@ -157,7 +157,7 @@ update public.profiles p
 set es_propietario = true
 from auth.users u
 where u.id = p.id
-  and lower(u.email) = lower('jos.bacigalupo@gmail.com');
+  and lower(u.email) = lower('bacigalupojose@hotmail.com');
 
 -- ── COMPROBACIÓN ───────────────────────────────────────────────────────────
 select

@@ -39,9 +39,9 @@ order by u.email;
 --
 -- Falta en profiles:
 --   update public.profiles set is_admin = true
---    where id = (select id from auth.users where email = 'jos.bacigalupo@gmail.com');
+--    where id = (select id from auth.users where email = 'bacigalupojose@hotmail.com');
 --
 -- Falta en metadata:
 --   update auth.users
 --      set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"is_admin": true}'::jsonb
---    where email = 'jos.bacigalupo@gmail.com';
+--    where email = 'bacigalupojose@hotmail.com';

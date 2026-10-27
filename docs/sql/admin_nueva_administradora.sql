@@ -88,7 +88,7 @@ left join public.profiles p on p.id = u.id
 where lower(u.email) in (
   lower('regisaccagno21@gmail.com'),
   -- La tuya al lado, para comparar que quedan iguales.
-  lower('jos.bacigalupo@gmail.com')
+  lower('bacigalupojose@hotmail.com')
 )
 order by u.created_at;
 
