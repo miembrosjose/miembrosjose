@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
+import { esTituloDePartida } from "@/lib/marketing/reglas"
 import {
   AlertTriangle, Calendar, Check, CheckSquare, ChevronLeft, ChevronRight,
   LayoutGrid, List as ListIcon, Loader2, Mail, MessageSquare, Plus, Trash2, X,
@@ -35,9 +36,12 @@ import { OrganizacionPlan, OrganizacionResultados } from "./OrganizacionPlan"
 // valida sigue siendo el servidor.
 
 type Categoria =
-  | "reel" | "carrusel" | "historias" | "guion" | "contenido_miembros"
-  | "correo" | "notificacion" | "comunidad" | "transmision" | "protocolo"
-  | "reunion" | "resultados" | "efemeride" | "otra"
+  | "reel" | "carrusel" | "historias"
+  | "administracion"
+  | "correo" | "notificacion" | "telegram"
+  | "transmision" | "protocolo"
+  | "reunion" | "resultados" | "otra"
+  | "luna" | "zodiaco" | "estacion" | "portal" | "efemeride"
 
 /**
  * Las categorías, agrupadas como se habla de ellas en la reunión.
@@ -47,31 +51,65 @@ type Categoria =
  */
 const GRUPOS: Array<{ titulo: string; cats: Categoria[] }> = [
   { titulo: "Publicaciones", cats: ["reel", "carrusel", "historias"] },
-  { titulo: "Guiones", cats: ["guion"] },
-  { titulo: "Área de miembros", cats: ["contenido_miembros", "comunidad"] },
+  // Atender el área de miembros es UNA cosa. Antes eran dos —«contenido» y
+  // «comunidad»— y nadie sabía en cuál apuntar lo que estaba haciendo.
+  { titulo: "Área de miembros", cats: ["administracion"] },
   { titulo: "Experiencias en vivo", cats: ["transmision", "protocolo"] },
-  { titulo: "Comunicación", cats: ["correo", "notificacion"] },
+  // Telegram no es una notificación: una sale de Comunicaciones y la otra se
+  // escribe a mano en el grupo.
+  { titulo: "Comunicación", cats: ["correo", "notificacion", "telegram"] },
   { titulo: "Gestión", cats: ["reunion", "resultados", "otra"] },
 ]
 
+
 const ETIQUETA: Record<Categoria, string> = {
   reel: "Reel", carrusel: "Carrusel", historias: "Historias",
-  guion: "Guion", contenido_miembros: "Contenido de miembros",
-  correo: "Correo", notificacion: "Notificación", comunidad: "Comunidad",
+  administracion: "Administración",
+  correo: "Correo", notificacion: "Notificación", telegram: "Telegram",
   transmision: "Transmisión", protocolo: "Protocolo de contacto",
-  reunion: "Reunión", resultados: "Resultados", efemeride: "Efeméride",
-  otra: "Otra",
+  reunion: "Reunión", resultados: "Resultados", otra: "Otra",
+  luna: "Luna", zodiaco: "Zodiaco", estacion: "Estación",
+  portal: "Portal", efemeride: "Efeméride",
 }
 
-/** Un color por grupo, discreto. El violeta de la casa manda. */
+/**
+ * Un color por TIPO DE CONTENIDO, no por grupo.
+ *
+ * ── POR QUÉ CAMBIÓ ────────────────────────────────────────────────────────
+ * Antes el color era del grupo: reel, carrusel e historias compartían
+ * violeta. En la lista daba igual, porque el nombre de la categoría va
+ * escrito al lado. En el calendario no: ahí solo cabe el título, y una
+ * semana entera de pastillas del mismo violeta no dice nada de un vistazo.
+ *
+ * Las del cielo llevan su propia gama —plata, oro, magenta— para que nunca
+ * se confundan con trabajo pendiente.
+ */
 const COLOR: Record<Categoria, string> = {
-  reel: "#8d6bc4", carrusel: "#8d6bc4", historias: "#8d6bc4",
-  guion: "#c9a86b",
-  contenido_miembros: "#5fa8d3", comunidad: "#5fa8d3",
-  transmision: "#d98080", protocolo: "#d98080",
-  correo: "#7ec8a0", notificacion: "#7ec8a0",
+  // Lo que se publica fuera
+  reel: "#8d6bc4",            // violeta
+  carrusel: "#5fa8d3",        // azul
+  historias: "#e09ac0",       // rosa
+
+  administracion: "#9a8fd0",  // violeta apagado
+
+  // Lo que se envía
+  correo: "#7ec8a0",          // verde
+  notificacion: "#e6cf95",    // ámbar
+  telegram: "#6fb3e0",        // azul Telegram
+
+  // En vivo
+  transmision: "#d98080",     // rojo suave
+  protocolo: "#c98fb0",       // malva
+
+  // Interno: gris, porque no se publica
   reunion: "#8a8fa8", resultados: "#8a8fa8", otra: "#8a8fa8",
-  efemeride: "#5a5a6a",
+
+  // ── EL CIELO ────────────────────────────────────────────────────────────
+  luna: "#cfd6e6",            // plata
+  zodiaco: "#c9a86b",         // oro viejo
+  estacion: "#e8b85c",        // oro
+  portal: "#c77ad0",          // magenta
+  efemeride: "#7a7a8a",
 }
 
 type Actividad = {
@@ -107,7 +145,10 @@ type Modo = "lista" | "calendario"
  */
 function sinDefinir(a: Actividad): boolean {
   return (
-    a.titulo.trim() === "Por definir" &&
+    // El generador ya no llama «Por definir» a todo: cada actividad nace con
+    // el nombre que le toca por la semana tipo. La lista de nombres de
+    // partida vive junto a la plantilla, para que no puedan separarse.
+    esTituloDePartida(a.titulo) &&
     a.estado === "pendiente" &&
     !a.responsable_id &&
     !a.notas.trim() &&
@@ -651,8 +692,16 @@ function VistaLista({
               key={r.id}
               type="button"
               onClick={() => onAbrir(r)}
-              className="text-xs text-[#8a8fa8] underline underline-offset-2 hover:text-[#c3b2e0]"
+              title={ETIQUETA[r.categoria]}
+              className="inline-flex items-center gap-1.5 border border-[#1f1f2c] px-2 py-0.5 text-xs text-[#a0a0b4] transition-colors hover:border-[#3a3a4a] hover:text-[#F3F6FA]"
             >
+              {/* Un punto del color de su clase: de un vistazo se distingue
+                  una luna de un cambio de signo sin tener que leerlo. */}
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: COLOR[r.categoria] }}
+              />
               {r.titulo}
             </button>
           ))}

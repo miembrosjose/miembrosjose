@@ -23,7 +23,13 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { exigirMarketing, CATEGORIAS } from "@/lib/marketing/servidor"
+import {
+  exigirMarketing, CATEGORIAS, PLANTILLA_SEMANAL, TITULO_PROPUESTO,
+} from "@/lib/marketing/servidor"
+import type { Categoria, RanuraSemanal } from "@/lib/marketing/reglas"
+
+/** Las categorias que la semana tipo ya coloca, para no ponerlas dos veces. */
+const ENLA_PLANTILLA = new Set<string>(PLANTILLA_SEMANAL.map((r) => r.categoria))
 
 export const dynamic = "force-dynamic"
 
@@ -150,21 +156,68 @@ export async function POST(req: NextRequest) {
       for (let i = 0; i < faltan; i++) {
         // A mitad de mes: una transmisión mensual sin fecha decidida es más
         // fácil de mover desde el día 15 que desde el día 1.
-        nuevas.push(crear(categoria, diaISO(new Date(Date.UTC(a, m - 1, 15))), f))
+        nuevas.push(crear(
+          categoria,
+          diaISO(new Date(Date.UTC(a, m - 1, 15))),
+          TITULO_PROPUESTO[categoria as Categoria],
+          f,
+        ))
         creadasDeEsta++
       }
-    } else {
+    } else if (!ENLA_PLANTILLA.has(categoria)) {
+      // ── LAS QUE EL ACUERDO PIDE Y LA SEMANA TIPO NO TIENE ──────────────
+      // Si alguien añade una categoría a las frecuencias sin tocar la
+      // plantilla, se sigue creando: repartida de lunes a viernes y con el
+      // nombre de su categoría. Lo contrario sería aceptar un acuerdo en la
+      // pantalla y no cumplirlo sin decir nada.
       for (const l of lunes) {
         const faltan = Math.max(0, cantidad - (porSemana.get(`${categoria}|${l}`) || 0))
         for (let i = 0; i < faltan; i++) {
-          // Repartidas de lunes a viernes, sin amontonarlas el mismo día.
-          nuevas.push(crear(categoria, sumar(l, i % 5), f))
+          const fecha = sumar(l, i % 5)
+          if (fecha < mes || fecha > fin) continue
+          nuevas.push(crear(categoria, fecha, TITULO_PROPUESTO[categoria as Categoria], f))
           creadasDeEsta++
         }
       }
     }
 
     if (creadasDeEsta > 0) resumen.push({ categoria, crea: creadasDeEsta })
+  }
+
+  // ── LA SEMANA TIPO ────────────────────────────────────────────────────
+  //
+  // Se recorre cada lunes del mes y se pone lo que la plantilla dice para
+  // cada día, con su nombre. Antes esto repartía cantidades y todas las
+  // actividades nacían llamadas «Por definir»: un calendario de veinte filas
+  // idénticas en el que no se distinguía el reel del correo.
+  //
+  // ── POR QUÉ SE SIGUE CONTANDO LO QUE YA HAY ───────────────────────────
+  // Para que generar dos veces no duplique, y para no deshacer lo movido a
+  // mano. Si la semana ya tiene sus tres reels —aunque estén en otros días
+  // porque alguien los cambió—, no se añade un cuarto.
+  for (const l of lunes) {
+    const porCategoria = new Map<string, RanuraSemanal[]>()
+    for (const r of PLANTILLA_SEMANAL) {
+      const v = porCategoria.get(r.categoria) || []
+      v.push(r)
+      porCategoria.set(r.categoria, v)
+    }
+
+    for (const [categoria, ranuras] of porCategoria) {
+      const faltan = Math.max(0, ranuras.length - (porSemana.get(`${categoria}|${l}`) || 0))
+      // Se cogen las primeras de la semana: si falta una sola de tres, la que
+      // se repone es la del lunes, no la del sábado.
+      for (const r of ranuras.slice(0, faltan)) {
+        const fecha = sumar(l, r.dia - 1)
+        // Las semanas de los bordes asoman al mes de al lado. Generar octubre
+        // no debe escribir en noviembre: ese mes se genera cuando toque.
+        if (fecha < mes || fecha > fin) continue
+        nuevas.push(crear(categoria, fecha, r.titulo, null))
+        const y = resumen.find((x) => x.categoria === categoria)
+        if (y) y.crea++
+        else resumen.push({ categoria, crea: 1 })
+      }
+    }
   }
 
   if (nuevas.length > MAX_POR_TANDA) {
@@ -203,20 +256,29 @@ function sumar(iso: string, n: number): string {
 /**
  * Una actividad propuesta.
  *
- * Nace en `pendiente` y con el nombre de su categoría: es un hueco que hay
- * que llenar, no una tarea ya pensada. Ponerle un título inventado haría
- * creer que alguien decidió algo.
+ * Nace en `pendiente` y con el nombre que le toca por la semana tipo. Ese
+ * nombre no decide nada —se cambia escribiendo encima— pero dice de qué va
+ * el hueco, que es justo lo que «Por definir» no decía.
  */
-function crear(categoria: string, fecha: string, f: Frecuencia): Record<string, unknown> {
+function crear(
+  categoria: string,
+  fecha: string,
+  titulo: string,
+  f: Frecuencia | null,
+): Record<string, unknown> {
   const publico = ["reel", "carrusel", "historias"].includes(categoria)
-  const miembros = ["contenido_miembros", "comunidad", "transmision", "protocolo"].includes(categoria)
+  const miembros = [
+    "administracion", "transmision", "protocolo",
+    // Correo, notificación y Telegram se ven DENTRO: van a los miembros.
+    "correo", "notificacion", "telegram",
+  ].includes(categoria)
 
   return {
-    titulo: "Por definir",
+    titulo,
     categoria,
     ambito: publico ? "publico" : miembros ? "miembros" : "interno",
     fecha,
     estado: "pendiente",
-    responsable_id: f.responsable_id ?? null,
+    responsable_id: f?.responsable_id ?? null,
   }
 }

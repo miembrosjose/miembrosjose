@@ -20,17 +20,127 @@
 
 export const CATEGORIAS = [
   "reel", "carrusel", "historias",
-  "guion",
-  "contenido_miembros",
-  "correo", "notificacion",
-  "comunidad",
+  "administracion",
+  "correo", "notificacion", "telegram",
   "transmision", "protocolo",
   "reunion", "resultados",
-  "efemeride",
+  // ── EL CIELO ─────────────────────────────────────────────────────────────
+  // Van siempre con `es_referencia`: son el contexto del que se parte al
+  // planificar, no trabajo que nadie tenga que hacer.
+  "luna", "zodiaco", "estacion", "portal", "efemeride",
   "otra",
 ] as const
 
 export type Categoria = (typeof CATEGORIAS)[number]
+
+/** Las del cielo, que se dibujan aparte y no cuentan para el cumplimiento. */
+export const CATEGORIAS_DEL_CIELO: readonly Categoria[] = [
+  "luna", "zodiaco", "estacion", "portal", "efemeride",
+]
+
+// ── LA SEMANA TIPO ─────────────────────────────────────────────────────────
+//
+// ── POR QUÉ ESTO VIVE EN EL CÓDIGO Y NO EN LA BASE ─────────────────────────
+// Porque es una decisión editorial que cambia dos veces al año, no un dato
+// que se toque desde una pantalla. Guardarlo en la base obligaba a construir
+// un editor de plantillas —otra pantalla, otra API, otra forma de dejarlo a
+// medias— para algo que se ajusta antes editando cuatro líneas aquí.
+//
+// Lo que SÍ se edita libremente es lo que sale de aquí: cada actividad creada
+// se puede renombrar, mover, reasignar o borrar como cualquier otra.
+//
+// ── POR QUÉ CADA UNA NACE CON NOMBRE ───────────────────────────────────────
+// Antes nacían todas llamadas «Por definir». La intención era honesta —no
+// fingir que alguien había decidido algo— pero el resultado era un calendario
+// de veinte filas idénticas en el que no se distinguía el reel del correo, y
+// que había que rellenar a mano una por una. Un nombre de partida no decide
+// nada: dice de qué va el hueco.
+
+export type RanuraSemanal = {
+  /** 1 = lunes … 7 = domingo. */
+  dia: number
+  categoria: Categoria
+  titulo: string
+}
+
+export const PLANTILLA_SEMANAL: readonly RanuraSemanal[] = [
+  // Lunes — se abre la semana con lo que atrae y se avisa de ello.
+  { dia: 1, categoria: "reel", titulo: "Reel de atracción" },
+  { dia: 1, categoria: "administracion", titulo: "Publicar enseñanza exclusiva" },
+  { dia: 1, categoria: "notificacion", titulo: "Notificación de nuevo contenido" },
+
+  // Martes — conversación.
+  { dia: 2, categoria: "historias", titulo: "Historias interactivas" },
+  { dia: 2, categoria: "administracion", titulo: "Moderación y respuestas" },
+  { dia: 2, categoria: "telegram", titulo: "Participación en Telegram" },
+
+  // Miércoles — el día del correo semanal.
+  { dia: 3, categoria: "carrusel", titulo: "Carrusel de conocimiento" },
+  { dia: 3, categoria: "administracion", titulo: "Seguimiento de miembros" },
+  { dia: 3, categoria: "correo", titulo: "Email semanal" },
+
+  // Jueves — práctica.
+  { dia: 4, categoria: "reel", titulo: "Reel de misterio" },
+  { dia: 4, categoria: "protocolo", titulo: "Práctica o protocolo" },
+  { dia: 4, categoria: "telegram", titulo: "Activación en Telegram" },
+
+  // Viernes — comunidad y conversión.
+  { dia: 5, categoria: "carrusel", titulo: "Carrusel de comunidad" },
+  { dia: 5, categoria: "administracion", titulo: "Revisión de comentarios" },
+  { dia: 5, categoria: "historias", titulo: "Historias y conversión" },
+
+  // Sábado — pertenencia.
+  { dia: 6, categoria: "reel", titulo: "Reel de pertenencia" },
+  { dia: 6, categoria: "administracion", titulo: "Actividad comunitaria" },
+  { dia: 6, categoria: "telegram", titulo: "Participación en Telegram" },
+
+  // Domingo — se cierra y se prepara la siguiente.
+  { dia: 7, categoria: "historias", titulo: "Historias / resumen" },
+  { dia: 7, categoria: "resultados", titulo: "Revisión de resultados" },
+  { dia: 7, categoria: "reunion", titulo: "Planificar próxima semana" },
+]
+
+/**
+ * El nombre con el que nace lo que NO está en la plantilla: lo mensual, y
+ * cualquier categoría que se añada al acuerdo sin tocar la semana tipo.
+ */
+export const TITULO_PROPUESTO: Record<Categoria, string> = {
+  reel: "Reel",
+  carrusel: "Carrusel",
+  historias: "Historias",
+  administracion: "Atender el área de miembros",
+  correo: "Correo a la comunidad",
+  notificacion: "Notificación",
+  telegram: "Mensaje en Telegram",
+  transmision: "Transmisión de José María",
+  protocolo: "Práctica o protocolo",
+  reunion: "Reunión de equipo",
+  resultados: "Revisión de resultados",
+  luna: "Luna",
+  zodiaco: "Ingreso del Sol",
+  estacion: "Cambio de estación",
+  portal: "Día portal",
+  efemeride: "Efeméride",
+  otra: "Otra",
+}
+
+/**
+ * Si una actividad es un hueco recién creado que nadie ha tocado.
+ *
+ * Se mira el título contra los que pone el generador —más el «Por definir»
+ * de antes, que sigue habiendo en la base— y además que no haya ni una señal
+ * de trabajo encima. Lo usa el botón de «borrar las sin definir», que tiene
+ * que ser seguro de pulsar sin leer la lista entera antes.
+ */
+const TITULOS_DE_PARTIDA = new Set<string>([
+  "Por definir",
+  ...PLANTILLA_SEMANAL.map((r) => r.titulo),
+  ...Object.values(TITULO_PROPUESTO),
+])
+
+export function esTituloDePartida(titulo: string): boolean {
+  return TITULOS_DE_PARTIDA.has(titulo.trim())
+}
 
 export const ESTADOS = ["pendiente", "en_curso", "hecha", "cancelada"] as const
 export type Estado = (typeof ESTADOS)[number]

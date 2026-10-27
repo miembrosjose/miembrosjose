@@ -18,6 +18,10 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const aqui = dirname(fileURLToPath(import.meta.url))
+const {
+  PLANTILLA_SEMANAL, CATEGORIAS, CATEGORIAS_DEL_CIELO, esTituloDePartida,
+} = await import("file:///" + join(aqui, "..", "lib", "marketing", "reglas.ts").replace(/\\/g, "/"))
+
 const { limpiarGuion, anadirComentario, limpiarMetricas, limpiarPlan } = await import(
   "file:///" + join(aqui, "..", "lib", "marketing", "reglas.ts").replace(/\\/g, "/")
 )
@@ -202,6 +206,96 @@ comprobar(
   "doce el primer lunes no completan el mes",
   porSemana === 9,
   `faltarían ${porSemana} y contando por mes habría dicho 0`,
+)
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LA SEMANA TIPO
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ SE PRUEBA ──────────────────────────────────────────────────────
+// La plantilla es una lista escrita a mano, y lo que se escribe a mano se
+// descuadra: un día 8, una categoría que ya no existe, un título repetido
+// que luego hace creer que el generador duplicó algo. Nada de eso rompe la
+// compilación ni se ve en la pantalla hasta que alguien genera un mes.
+
+console.log("\n— La semana tipo —")
+
+comprobar(
+  "todas las ranuras caen de lunes a domingo",
+  PLANTILLA_SEMANAL.every((r) => Number.isInteger(r.dia) && r.dia >= 1 && r.dia <= 7),
+  "un día fuera de 1–7 crearía la actividad en la semana de al lado",
+)
+
+comprobar(
+  "todas las categorías existen",
+  PLANTILLA_SEMANAL.every((r) => CATEGORIAS.includes(r.categoria)),
+  PLANTILLA_SEMANAL.filter((r) => !CATEGORIAS.includes(r.categoria))
+    .map((r) => r.categoria).join(", "),
+)
+
+comprobar(
+  "ninguna nace del cielo",
+  PLANTILLA_SEMANAL.every((r) => !CATEGORIAS_DEL_CIELO.includes(r.categoria)),
+  "una luna no es trabajo que nadie tenga que hacer",
+)
+
+// Dos actividades iguales el mismo día son indistinguibles en el calendario,
+// y al regenerar no hay forma de saber si faltaba una o ya estaban las dos.
+const porDia = new Map()
+for (const r of PLANTILLA_SEMANAL) {
+  const k = `${r.dia}|${r.titulo}`
+  porDia.set(k, (porDia.get(k) || 0) + 1)
+}
+comprobar(
+  "ningún título se repite el mismo día",
+  [...porDia.values()].every((v) => v === 1),
+  [...porDia.entries()].filter(([, v]) => v > 1).map(([k]) => k).join(", "),
+)
+
+// Lo acordado con José: 3 reels, 2 carruseles, 3 historias, 1 correo,
+// 1 notificación y 1 revisión de resultados por semana. Si alguien toca la
+// plantilla y descuadra esto, el acuerdo deja de cumplirse en silencio.
+const cuenta = (cat) => PLANTILLA_SEMANAL.filter((r) => r.categoria === cat).length
+for (const [cat, esperado] of [
+  ["reel", 3], ["carrusel", 2], ["historias", 3],
+  ["correo", 1], ["notificacion", 1], ["resultados", 1], ["reunion", 1],
+]) {
+  comprobar(
+    `${esperado} de «${cat}» por semana`,
+    cuenta(cat) === esperado,
+    `hay ${cuenta(cat)}`,
+  )
+}
+
+comprobar(
+  "cada día tiene algo",
+  [1, 2, 3, 4, 5, 6, 7].every((d) => PLANTILLA_SEMANAL.some((r) => r.dia === d)),
+  "un día vacío en la plantilla es un día que el generador se salta",
+)
+
+console.log("\n— Los nombres de partida —")
+
+comprobar(
+  "los de la plantilla cuentan como sin definir",
+  PLANTILLA_SEMANAL.every((r) => esTituloDePartida(r.titulo)),
+  "si no, «borrar las sin definir» dejaría atrás lo que acaba de generarse",
+)
+
+comprobar(
+  "«Por definir» sigue contando",
+  esTituloDePartida("Por definir"),
+  "hay actividades viejas en la base que se llaman así",
+)
+
+comprobar(
+  "lo escrito por una persona NO cuenta",
+  !esTituloDePartida("Reel sobre el eclipse de marzo"),
+  "el atajo de borrado se lleva por delante trabajo de verdad",
+)
+
+comprobar(
+  "y los espacios de más no engañan",
+  esTituloDePartida("  Reel de atracción  "),
 )
 
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} FALLOS\n`)

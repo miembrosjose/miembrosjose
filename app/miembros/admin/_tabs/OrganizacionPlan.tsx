@@ -302,10 +302,12 @@ type Plan = {
 
 const NOMBRE_CAT: Record<string, string> = {
   reel: "Reels", carrusel: "Carruseles", historias: "Historias",
-  guion: "Guiones", contenido_miembros: "Contenido de miembros",
-  correo: "Correos", notificacion: "Notificaciones", comunidad: "Dinámicas",
-  transmision: "Transmisiones", protocolo: "Protocolos", reunion: "Reuniones",
-  resultados: "Revisión de resultados", efemeride: "Efemérides", otra: "Otras",
+  administracion: "Área de miembros",
+  correo: "Correos", notificacion: "Notificaciones", telegram: "Telegram",
+  transmision: "Transmisión de José María", protocolo: "Protocolos",
+  reunion: "Reuniones", resultados: "Revisión de resultados", otra: "Otras",
+  luna: "Lunas", zodiaco: "Zodiaco", estacion: "Estaciones",
+  portal: "Portales", efemeride: "Efemérides",
 }
 
 export function OrganizacionPlan({ mes, esPropietario }: { mes: string; esPropietario: boolean }) {
