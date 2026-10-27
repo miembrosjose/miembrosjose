@@ -22,9 +22,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   AlertTriangle, Calendar, Check, ChevronLeft, ChevronRight, Loader2, Mail,
-  Plus, Trash2, X,
+  MessageSquare, Plus, Trash2, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
+import { OrganizacionGuiones } from "./OrganizacionGuiones"
 
 // ── Vocabulario ────────────────────────────────────────────────────────────
 // Duplicado del servidor a propósito: importar lib/marketing arrastraría al
@@ -135,7 +136,10 @@ function mesLargo(iso: string): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function Organizacion() {
-  const [vista, setVista] = useState<"semana" | "mes">("semana")
+  const [vista, setVista] = useState<"semana" | "mes" | "guiones">("semana")
+  // Cuántos esperan revisión. Se pide aparte y en segundo plano: es un
+  // número de la cabecera, no debe retrasar el calendario si tarda.
+  const [porAprobar, setPorAprobar] = useState<number | null>(null)
   // El ancla: el lunes de la semana que se mira, o el día 1 del mes.
   const [ancla, setAncla] = useState(() => lunesDe(hoyISO()))
 
@@ -173,6 +177,17 @@ export function Organizacion() {
   }, [desde, hasta])
 
   useEffect(() => { void cargar() }, [cargar])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch("/api/admin/marketing/guiones?estado=revision", { credentials: "include" })
+        if (!r.ok) return   // sin la tabla todavía: la cifra se queda sin enseñar
+        const j = await r.json()
+        setPorAprobar((j.guiones || []).length)
+      } catch { /* el calendario funciona igual */ }
+    })()
+  }, [vista])
 
   // ── EL CUMPLIMIENTO ─────────────────────────────────────────────────────
   // Las referencias no cuentan: una luna llena no es una tarea que nadie
@@ -253,16 +268,34 @@ export function Organizacion() {
         />
       </section>
 
+      {/* La pregunta que trae al dueño a esta pantalla. Solo asoma cuando
+          hay algo esperando: un cero permanente deja de leerse. */}
+      {porAprobar !== null && porAprobar > 0 && vista !== "guiones" && (
+        <button
+          type="button"
+          onClick={() => setVista("guiones")}
+          className="flex w-full items-center gap-3 border border-[#3a2a5a] bg-[#1a1228]/60 p-4 text-left transition-colors hover:bg-[#1a1228]"
+        >
+          <MessageSquare size={16} className="shrink-0 text-[#c3b2e0]" />
+          <span className="text-sm text-[#d7c9ee]">
+            <strong>{porAprobar}</strong>{" "}
+            {porAprobar === 1 ? "guion espera" : "guiones esperan"} tu revisión.
+          </span>
+        </button>
+      )}
+
       {/* ── NAVEGACIÓN ────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[#14141e] py-3">
         <div className="flex items-center gap-1">
-          {(["semana", "mes"] as const).map((v) => (
+          {(["semana", "mes", "guiones"] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => {
                 setVista(v)
-                setAncla(v === "semana" ? lunesDe(hoyISO()) : `${hoyISO().slice(0, 7)}-01`)
+                if (v !== "guiones") {
+                  setAncla(v === "semana" ? lunesDe(hoyISO()) : `${hoyISO().slice(0, 7)}-01`)
+                }
               }}
               className={`border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors ${
                 vista === v
@@ -275,7 +308,7 @@ export function Organizacion() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        {vista !== "guiones" && <div className="flex items-center gap-3">
           <button type="button" onClick={() => mover(-1)} className="text-[#7a7a8a] hover:text-[#F3F6FA]" aria-label="Anterior">
             <ChevronLeft size={18} />
           </button>
@@ -294,7 +327,7 @@ export function Organizacion() {
           >
             hoy
           </button>
-        </div>
+        </div>}
       </div>
 
       {error && (
@@ -303,7 +336,9 @@ export function Organizacion() {
         </div>
       )}
 
-      {cargando ? (
+      {vista === "guiones" ? (
+        <OrganizacionGuiones equipo={equipo} />
+      ) : cargando ? (
         <div className="flex items-center gap-2 py-12 text-sm text-[#7a7a8a]">
           <Loader2 size={15} className="animate-spin" /> Cargando…
         </div>
