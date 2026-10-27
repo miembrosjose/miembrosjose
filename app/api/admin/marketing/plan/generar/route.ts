@@ -24,7 +24,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import {
-  exigirMarketing, CATEGORIAS, PLANTILLA_SEMANAL, TITULO_PROPUESTO,
+  exigirMarketing, CATEGORIAS, PLANTILLA_SEMANAL, tituloDe,
 } from "@/lib/marketing/servidor"
 import type { Categoria, RanuraSemanal } from "@/lib/marketing/reglas"
 
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
         nuevas.push(crear(
           categoria,
           diaISO(new Date(Date.UTC(a, m - 1, 15))),
-          TITULO_PROPUESTO[categoria as Categoria],
+          tituloDe(categoria as Categoria),
           f,
         ))
         creadasDeEsta++
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
         for (let i = 0; i < faltan; i++) {
           const fecha = sumar(l, i % 5)
           if (fecha < mes || fecha > fin) continue
-          nuevas.push(crear(categoria, fecha, TITULO_PROPUESTO[categoria as Categoria], f))
+          nuevas.push(crear(categoria, fecha, tituloDe(categoria as Categoria), f))
           creadasDeEsta++
         }
       }
@@ -212,7 +212,9 @@ export async function POST(req: NextRequest) {
         // Las semanas de los bordes asoman al mes de al lado. Generar octubre
         // no debe escribir en noviembre: ese mes se genera cuando toque.
         if (fecha < mes || fecha > fin) continue
-        nuevas.push(crear(categoria, fecha, r.titulo, null))
+        // El nombre es el de la categoría. No se inventa ninguno: un título
+        // propuesto se lee como una decisión tomada, y no lo es.
+        nuevas.push(crear(categoria, fecha, tituloDe(categoria as Categoria), null))
         const y = resumen.find((x) => x.categoria === categoria)
         if (y) y.crea++
         else resumen.push({ categoria, crea: 1 })
@@ -268,7 +270,7 @@ function crear(
 ): Record<string, unknown> {
   const publico = ["reel", "carrusel", "historias"].includes(categoria)
   const miembros = [
-    "administracion", "transmision", "protocolo",
+    "administracion", "transmision",
     // Correo, notificación y Telegram se ven DENTRO: van a los miembros.
     "correo", "notificacion", "telegram",
   ].includes(categoria)

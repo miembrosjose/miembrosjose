@@ -19,16 +19,25 @@
 // la base y devolver un error que no dice nada.
 
 export const CATEGORIAS = [
+  // ── LO QUE SE PLANIFICA ──────────────────────────────────────────────────
+  // Estas, y solo estas, son las que se eligen al crear una actividad y las
+  // que aparecen en el acuerdo del mes. Si una categoría no se planifica, no
+  // tiene por qué estorbar en un desplegable.
   "reel", "carrusel", "historias",
   "administracion",
   "correo", "notificacion", "telegram",
-  "transmision", "protocolo",
+  "transmision",
   "reunion", "resultados",
+
+  // El cajón de sastre. No se planifica, pero hace falta: sin él, lo que no
+  // encaja en ninguna se queda sin poder anotarse.
+  "otra",
+
   // ── EL CIELO ─────────────────────────────────────────────────────────────
   // Van siempre con `es_referencia`: son el contexto del que se parte al
-  // planificar, no trabajo que nadie tenga que hacer.
+  // planificar, no trabajo que nadie tenga que hacer. No se eligen a mano:
+  // las pone `npm run efemerides`.
   "luna", "zodiaco", "estacion", "portal", "efemeride",
-  "otra",
 ] as const
 
 export type Categoria = (typeof CATEGORIAS)[number]
@@ -38,104 +47,185 @@ export const CATEGORIAS_DEL_CIELO: readonly Categoria[] = [
   "luna", "zodiaco", "estacion", "portal", "efemeride",
 ]
 
+/**
+ * Las que se pueden elegir al crear o editar una actividad.
+ *
+ * ── POR QUÉ NO SON TODAS ──────────────────────────────────────────────────
+ * Un desplegable de diecisiete opciones donde cinco son lunas y signos no es
+ * más completo: es más difícil de usar. Las del cielo las pone el generador
+ * de efemérides y nadie las teclea nunca.
+ */
+export const CATEGORIAS_ELEGIBLES: readonly Categoria[] =
+  CATEGORIAS.filter((c) => !CATEGORIAS_DEL_CIELO.includes(c))
+
+/**
+ * Cómo se llama cada cosa, y qué es.
+ *
+ * ── POR QUÉ CADA UNA LLEVA UNA EXPLICACIÓN ────────────────────────────────
+ * Porque «Área de miembros» no dice qué hay que hacer. El nombre vale para
+ * quien escribió el plan; la frase de al lado vale para quien lo abre tres
+ * semanas después, o para quien entra por primera vez.
+ */
+export const CATALOGO: Record<Categoria, { nombre: string; plural: string; que: string }> = {
+  reel: {
+    nombre: "Reel",
+    plural: "Reels",
+    que: "Vídeo corto y vertical para redes. Lo que trae gente de fuera.",
+  },
+  carrusel: {
+    nombre: "Carrusel",
+    plural: "Carruseles",
+    que: "Varias imágenes seguidas que explican una idea. Para enseñar algo.",
+  },
+  historias: {
+    nombre: "Historias",
+    plural: "Historias",
+    que: "Lo del día que desaparece en 24 h. Para conversar y preguntar.",
+  },
+  administracion: {
+    nombre: "Área de miembros",
+    plural: "Área de miembros",
+    que: "Atender la plataforma por dentro: publicar lo exclusivo, moderar, "
+      + "responder comentarios y seguir a quien se está quedando atrás.",
+  },
+  correo: {
+    nombre: "Correo",
+    plural: "Correos electrónicos",
+    que: "El correo a la comunidad. Se escribe y se envía desde Comunicaciones.",
+  },
+  notificacion: {
+    nombre: "Notificación",
+    plural: "Notificaciones",
+    que: "El aviso que llega al móvil. También sale de Comunicaciones.",
+  },
+  telegram: {
+    nombre: "Telegram",
+    plural: "Telegram",
+    que: "Lo que se escribe a mano en el grupo. No se manda desde la "
+      + "plataforma: se entra y se escribe.",
+  },
+  transmision: {
+    nombre: "Transmisión",
+    plural: "Transmisión de José María",
+    que: "El directo del mes.",
+  },
+  reunion: {
+    nombre: "Reunión",
+    plural: "Reuniones",
+    que: "Sentarse a ver cómo va y decidir la semana que viene.",
+  },
+  resultados: {
+    nombre: "Revisión de resultados",
+    plural: "Revisión de resultados",
+    que: "Mirar los números de la semana y anotarlos en Resultados.",
+  },
+  otra: {
+    nombre: "Otra",
+    plural: "Otras",
+    que: "Lo que no encaja en ninguna de las anteriores.",
+  },
+
+  // ── EL CIELO ────────────────────────────────────────────────────────────
+  luna: { nombre: "Luna", plural: "Lunas", que: "Luna llena o luna nueva." },
+  zodiaco: {
+    nombre: "Zodiaco", plural: "Zodiaco",
+    que: "El Sol entrando en un signo.",
+  },
+  estacion: {
+    nombre: "Estación", plural: "Estaciones",
+    que: "Equinoccios y solsticios.",
+  },
+  portal: {
+    nombre: "Portal", plural: "Portales",
+    que: "Días de dígitos repetidos, como el 8·8. Es una convención, no un "
+      + "fenómeno astronómico.",
+  },
+  efemeride: {
+    nombre: "Efeméride", plural: "Efemérides",
+    que: "Cualquier otra fecha señalada, apuntada a mano.",
+  },
+}
+
 // ── LA SEMANA TIPO ─────────────────────────────────────────────────────────
 //
-// ── POR QUÉ ESTO VIVE EN EL CÓDIGO Y NO EN LA BASE ─────────────────────────
-// Porque es una decisión editorial que cambia dos veces al año, no un dato
-// que se toque desde una pantalla. Guardarlo en la base obligaba a construir
-// un editor de plantillas —otra pantalla, otra API, otra forma de dejarlo a
-// medias— para algo que se ajusta antes editando cuatro líneas aquí.
+// QUÉ se hace cada día. El NOMBRE no: lo pone la categoría.
 //
-// Lo que SÍ se edita libremente es lo que sale de aquí: cada actividad creada
-// se puede renombrar, mover, reasignar o borrar como cualquier otra.
+// ── POR QUÉ NO SE INVENTAN TÍTULOS ─────────────────────────────────────────
+// Se probó con nombres propuestos —«Reel de atracción», «Historias
+// interactivas»— y el efecto no era el que parecía. Un título inventado se
+// lee como una decisión tomada: quien abre el calendario cree que alguien
+// pensó ese reel, cuando no lo había pensado nadie. Y al editarlo quedaba la
+// duda de si se estaba cambiando algo acordado.
 //
-// ── POR QUÉ CADA UNA NACE CON NOMBRE ───────────────────────────────────────
-// Antes nacían todas llamadas «Por definir». La intención era honesta —no
-// fingir que alguien había decidido algo— pero el resultado era un calendario
-// de veinte filas idénticas en el que no se distinguía el reel del correo, y
-// que había que rellenar a mano una por una. Un nombre de partida no decide
-// nada: dice de qué va el hueco.
+// Poniendo el nombre de la categoría —«Reel», «Notificación»— la fila dice
+// exactamente lo que es: un hueco de esa clase, ese día. Cuando alguien
+// decide de qué va, escribe encima, y entonces el calendario enseña SU
+// nombre, que es el único que significa algo.
+//
+// ── POR QUÉ VIVE EN EL CÓDIGO ──────────────────────────────────────────────
+// Es una decisión editorial que cambia dos veces al año, no un dato de
+// pantalla. Guardarlo en la base pedía un editor de plantillas entero para
+// algo que se ajusta tocando cuatro líneas aquí.
 
 export type RanuraSemanal = {
   /** 1 = lunes … 7 = domingo. */
   dia: number
   categoria: Categoria
-  titulo: string
 }
 
 export const PLANTILLA_SEMANAL: readonly RanuraSemanal[] = [
-  // Lunes — se abre la semana con lo que atrae y se avisa de ello.
-  { dia: 1, categoria: "reel", titulo: "Reel de atracción" },
-  { dia: 1, categoria: "administracion", titulo: "Publicar enseñanza exclusiva" },
-  { dia: 1, categoria: "notificacion", titulo: "Notificación de nuevo contenido" },
+  // Lunes — se abre con lo que atrae, y se avisa de ello.
+  { dia: 1, categoria: "reel" },
+  { dia: 1, categoria: "administracion" },
+  { dia: 1, categoria: "notificacion" },
 
   // Martes — conversación.
-  { dia: 2, categoria: "historias", titulo: "Historias interactivas" },
-  { dia: 2, categoria: "administracion", titulo: "Moderación y respuestas" },
-  { dia: 2, categoria: "telegram", titulo: "Participación en Telegram" },
+  { dia: 2, categoria: "historias" },
+  { dia: 2, categoria: "administracion" },
+  { dia: 2, categoria: "telegram" },
 
   // Miércoles — el día del correo semanal.
-  { dia: 3, categoria: "carrusel", titulo: "Carrusel de conocimiento" },
-  { dia: 3, categoria: "administracion", titulo: "Seguimiento de miembros" },
-  { dia: 3, categoria: "correo", titulo: "Email semanal" },
+  { dia: 3, categoria: "carrusel" },
+  { dia: 3, categoria: "administracion" },
+  { dia: 3, categoria: "correo" },
 
-  // Jueves — práctica.
-  { dia: 4, categoria: "reel", titulo: "Reel de misterio" },
-  { dia: 4, categoria: "protocolo", titulo: "Práctica o protocolo" },
-  { dia: 4, categoria: "telegram", titulo: "Activación en Telegram" },
+  // Jueves.
+  { dia: 4, categoria: "reel" },
+  { dia: 4, categoria: "administracion" },
+  { dia: 4, categoria: "telegram" },
 
   // Viernes — comunidad y conversión.
-  { dia: 5, categoria: "carrusel", titulo: "Carrusel de comunidad" },
-  { dia: 5, categoria: "administracion", titulo: "Revisión de comentarios" },
-  { dia: 5, categoria: "historias", titulo: "Historias y conversión" },
+  { dia: 5, categoria: "carrusel" },
+  { dia: 5, categoria: "administracion" },
+  { dia: 5, categoria: "historias" },
 
   // Sábado — pertenencia.
-  { dia: 6, categoria: "reel", titulo: "Reel de pertenencia" },
-  { dia: 6, categoria: "administracion", titulo: "Actividad comunitaria" },
-  { dia: 6, categoria: "telegram", titulo: "Participación en Telegram" },
+  { dia: 6, categoria: "reel" },
+  { dia: 6, categoria: "administracion" },
+  { dia: 6, categoria: "telegram" },
 
   // Domingo — se cierra y se prepara la siguiente.
-  { dia: 7, categoria: "historias", titulo: "Historias / resumen" },
-  { dia: 7, categoria: "resultados", titulo: "Revisión de resultados" },
-  { dia: 7, categoria: "reunion", titulo: "Planificar próxima semana" },
+  { dia: 7, categoria: "historias" },
+  { dia: 7, categoria: "resultados" },
+  { dia: 7, categoria: "reunion" },
 ]
 
-/**
- * El nombre con el que nace lo que NO está en la plantilla: lo mensual, y
- * cualquier categoría que se añada al acuerdo sin tocar la semana tipo.
- */
-export const TITULO_PROPUESTO: Record<Categoria, string> = {
-  reel: "Reel",
-  carrusel: "Carrusel",
-  historias: "Historias",
-  administracion: "Atender el área de miembros",
-  correo: "Correo a la comunidad",
-  notificacion: "Notificación",
-  telegram: "Mensaje en Telegram",
-  transmision: "Transmisión de José María",
-  protocolo: "Práctica o protocolo",
-  reunion: "Reunión de equipo",
-  resultados: "Revisión de resultados",
-  luna: "Luna",
-  zodiaco: "Ingreso del Sol",
-  estacion: "Cambio de estación",
-  portal: "Día portal",
-  efemeride: "Efeméride",
-  otra: "Otra",
+/** Con qué nombre nace una actividad: el de su categoría, y nada más. */
+export function tituloDe(categoria: Categoria): string {
+  return CATALOGO[categoria]?.nombre ?? "Actividad"
 }
 
 /**
- * Si una actividad es un hueco recién creado que nadie ha tocado.
+ * Si una actividad sigue con el nombre con el que nació.
  *
- * Se mira el título contra los que pone el generador —más el «Por definir»
- * de antes, que sigue habiendo en la base— y además que no haya ni una señal
- * de trabajo encima. Lo usa el botón de «borrar las sin definir», que tiene
- * que ser seguro de pulsar sin leer la lista entera antes.
+ * Lo usa el botón de «borrar las sin definir», que tiene que ser seguro de
+ * pulsar sin leer la lista entera antes. Se mira contra los nombres de las
+ * categorías, más el «Por definir» de antes, que todavía hay en la base.
  */
 const TITULOS_DE_PARTIDA = new Set<string>([
   "Por definir",
-  ...PLANTILLA_SEMANAL.map((r) => r.titulo),
-  ...Object.values(TITULO_PROPUESTO),
+  ...Object.values(CATALOGO).map((c) => c.nombre),
+  ...Object.values(CATALOGO).map((c) => c.plural),
 ])
 
 export function esTituloDePartida(titulo: string): boolean {

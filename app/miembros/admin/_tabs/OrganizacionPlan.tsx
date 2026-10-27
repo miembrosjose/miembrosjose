@@ -18,6 +18,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { Check, Loader2, Sparkles, TrendingDown, TrendingUp } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
+import { CATALOGO } from "@/lib/marketing/reglas"
+import type { Categoria } from "@/lib/marketing/reglas"
 
 type Metrica = {
   id: string
@@ -300,15 +302,25 @@ type Plan = {
   frecuencias: Frecuencia[]
 }
 
-const NOMBRE_CAT: Record<string, string> = {
-  reel: "Reels", carrusel: "Carruseles", historias: "Historias",
-  administracion: "Área de miembros",
-  correo: "Correos", notificacion: "Notificaciones", telegram: "Telegram",
-  transmision: "Transmisión de José María", protocolo: "Protocolos",
-  reunion: "Reuniones", resultados: "Revisión de resultados", otra: "Otras",
-  luna: "Lunas", zodiaco: "Zodiaco", estacion: "Estaciones",
-  portal: "Portales", efemeride: "Efemérides",
+// Los nombres y las explicaciones salen del catálogo, que es el mismo que
+// usa el calendario. Tenerlos aquí aparte fue lo que dejó «Protocolos» vivo
+// en esta pantalla después de quitarlo de las otras.
+const NOMBRE_CAT = (c: string) => CATALOGO[c as Categoria]?.plural ?? c
+
+/** El mismo color que en el calendario, para que el acuerdo y el mes se lean
+    como la misma cosa. Si se escribiera aparte, se desincronizaría. */
+const COLOR_CAT = (c: string) => COLOR_POR_CATEGORIA[c] ?? "#8a8fa8"
+
+const COLOR_POR_CATEGORIA: Record<string, string> = {
+  reel: "#a888e8", carrusel: "#5fb0e8", historias: "#f08ac0",
+  administracion: "#59d1a8",
+  correo: "#f0b45c", notificacion: "#e8d45c", telegram: "#4ec8e0",
+  transmision: "#f07070",
+  reunion: "#9aa0b8", resultados: "#9aa0b8", otra: "#7a7a8a",
+  luna: "#d8dff0", zodiaco: "#d4a84a", estacion: "#f0c040",
+  portal: "#c77ad0", efemeride: "#8a8a9a",
 }
+const QUE_ES = (c: string) => CATALOGO[c as Categoria]?.que ?? ""
 
 export function OrganizacionPlan({ mes, esPropietario }: { mes: string; esPropietario: boolean }) {
   const [p, setP] = useState<Partial<Plan>>({ mes })
@@ -375,13 +387,14 @@ export function OrganizacionPlan({ mes, esPropietario }: { mes: string; esPropie
             ? "El mes ya está completo: no haría falta crear nada."
             : `Crearía ${j.crearia} actividades: `
               + j.resumen.map((x: { categoria: string; crea: number }) =>
-                  `${x.crea} ${NOMBRE_CAT[x.categoria] ?? x.categoria}`).join(", ") + ".",
+                  `${x.crea} ${NOMBRE_CAT(x.categoria)}`).join(", ") + ".",
         )
       } else {
         setAviso(
           j.creadas === 0
             ? "No hacía falta crear nada: el mes ya estaba completo."
-            : `Creadas ${j.creadas} actividades. Están en el calendario como «Por definir».`,
+            : `Creadas ${j.creadas} actividades. Están en el calendario con el `
+              + "nombre de su categoría, listas para que les pongas el suyo.",
         )
       }
     } catch (e) {
@@ -449,7 +462,26 @@ export function OrganizacionPlan({ mes, esPropietario }: { mes: string; esPropie
         <div className="mt-4 space-y-1.5">
           {(p.frecuencias ?? []).map((fr, i) => (
             <div key={fr.categoria} className="flex items-center gap-3 border border-[#14141e] px-3 py-2">
-              <span className="flex-1 text-xs text-[#F3F6FA]">{NOMBRE_CAT[fr.categoria] ?? fr.categoria}</span>
+              {/* ── POR QUÉ CADA UNO LLEVA UNA FRASE ────────────────────
+                  «Área de miembros» no dice qué hay que hacer. El nombre
+                  vale para quien escribió el acuerdo; la frase vale para
+                  quien lo abre tres semanas después, o para quien entra por
+                  primera vez y tiene que cumplirlo. */}
+              <span className="flex-1">
+                <span className="flex items-center gap-2 text-xs text-[#F3F6FA]">
+                  <span
+                    aria-hidden
+                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+                    style={{ backgroundColor: COLOR_CAT(fr.categoria) }}
+                  />
+                  {NOMBRE_CAT(fr.categoria)}
+                </span>
+                {QUE_ES(fr.categoria) && (
+                  <span className="mt-0.5 block pl-[1.125rem] text-[11px] leading-snug text-[#6a6a7a]">
+                    {QUE_ES(fr.categoria)}
+                  </span>
+                )}
+              </span>
               <input
                 type="number"
                 min={1}

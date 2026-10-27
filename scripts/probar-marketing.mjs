@@ -19,7 +19,8 @@ import { dirname, join } from "node:path"
 
 const aqui = dirname(fileURLToPath(import.meta.url))
 const {
-  PLANTILLA_SEMANAL, CATEGORIAS, CATEGORIAS_DEL_CIELO, esTituloDePartida,
+  PLANTILLA_SEMANAL, CATEGORIAS, CATEGORIAS_DEL_CIELO, CATEGORIAS_ELEGIBLES,
+  CATALOGO, tituloDe, esTituloDePartida,
 } = await import("file:///" + join(aqui, "..", "lib", "marketing", "reglas.ts").replace(/\\/g, "/"))
 
 const { limpiarGuion, anadirComentario, limpiarMetricas, limpiarPlan } = await import(
@@ -239,15 +240,17 @@ comprobar(
   "una luna no es trabajo que nadie tenga que hacer",
 )
 
-// Dos actividades iguales el mismo día son indistinguibles en el calendario,
-// y al regenerar no hay forma de saber si faltaba una o ya estaban las dos.
+// Como el nombre lo pone la categoría, dos ranuras de la misma categoría el
+// mismo día saldrían como dos filas idénticas: indistinguibles en el
+// calendario, y al regenerar no hay forma de saber si faltaba una o estaban
+// las dos.
 const porDia = new Map()
 for (const r of PLANTILLA_SEMANAL) {
-  const k = `${r.dia}|${r.titulo}`
+  const k = `${r.dia}|${r.categoria}`
   porDia.set(k, (porDia.get(k) || 0) + 1)
 }
 comprobar(
-  "ningún título se repite el mismo día",
+  "ninguna categoría se repite el mismo día",
   [...porDia.values()].every((v) => v === 1),
   [...porDia.entries()].filter(([, v]) => v > 1).map(([k]) => k).join(", "),
 )
@@ -259,6 +262,7 @@ const cuenta = (cat) => PLANTILLA_SEMANAL.filter((r) => r.categoria === cat).len
 for (const [cat, esperado] of [
   ["reel", 3], ["carrusel", 2], ["historias", 3],
   ["correo", 1], ["notificacion", 1], ["resultados", 1], ["reunion", 1],
+  ["telegram", 3], ["administracion", 6],
 ]) {
   comprobar(
     `${esperado} de «${cat}» por semana`,
@@ -277,7 +281,7 @@ console.log("\n— Los nombres de partida —")
 
 comprobar(
   "los de la plantilla cuentan como sin definir",
-  PLANTILLA_SEMANAL.every((r) => esTituloDePartida(r.titulo)),
+  PLANTILLA_SEMANAL.every((r) => esTituloDePartida(tituloDe(r.categoria))),
   "si no, «borrar las sin definir» dejaría atrás lo que acaba de generarse",
 )
 
@@ -295,7 +299,33 @@ comprobar(
 
 comprobar(
   "y los espacios de más no engañan",
-  esTituloDePartida("  Reel de atracción  "),
+  esTituloDePartida("  Reel  "),
+)
+
+console.log("\n— El catálogo —")
+
+comprobar(
+  "toda categoría tiene nombre, plural y explicación",
+  CATEGORIAS.every((c) => CATALOGO[c]?.nombre && CATALOGO[c]?.plural && CATALOGO[c]?.que),
+  CATEGORIAS.filter((c) => !CATALOGO[c]?.que).join(", "),
+)
+
+comprobar(
+  "las elegibles no incluyen ninguna del cielo",
+  CATEGORIAS_ELEGIBLES.every((c) => !CATEGORIAS_DEL_CIELO.includes(c)),
+  "un desplegable con lunas y signos no es más completo, es más difícil de usar",
+)
+
+comprobar(
+  "y están todas las que se planifican",
+  PLANTILLA_SEMANAL.every((r) => CATEGORIAS_ELEGIBLES.includes(r.categoria)),
+  "si la plantilla crea algo que luego no se puede elegir, no se puede corregir",
+)
+
+comprobar(
+  "«protocolo» ya no existe",
+  !CATEGORIAS.includes("protocolo"),
+  "José dijo que no sabía de qué hablaba, y tenía razón",
 )
 
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} FALLOS\n`)

@@ -21,7 +21,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
-import { esTituloDePartida } from "@/lib/marketing/reglas"
+import {
+  esTituloDePartida, CATALOGO, CATEGORIAS_ELEGIBLES, CATEGORIAS_DEL_CIELO,
+} from "@/lib/marketing/reglas"
+import type { Categoria as CategoriaDeReglas } from "@/lib/marketing/reglas"
 import {
   AlertTriangle, Calendar, Check, CheckSquare, ChevronLeft, ChevronRight,
   LayoutGrid, List as ListIcon, Loader2, Mail, MessageSquare, Plus, Trash2, X,
@@ -35,13 +38,10 @@ import { OrganizacionPlan, OrganizacionResultados } from "./OrganizacionPlan"
 // navegador el cliente de Supabase. Son dos listas de etiquetas, y quien
 // valida sigue siendo el servidor.
 
-type Categoria =
-  | "reel" | "carrusel" | "historias"
-  | "administracion"
-  | "correo" | "notificacion" | "telegram"
-  | "transmision" | "protocolo"
-  | "reunion" | "resultados" | "otra"
-  | "luna" | "zodiaco" | "estacion" | "portal" | "efemeride"
+// Las categorías, sus nombres y sus explicaciones viven en reglas.ts, junto
+// a la semana tipo. Tenerlas también aquí fue lo que dejó «protocolo» vivo en
+// tres archivos después de quitarlo del cuarto.
+type Categoria = CategoriaDeReglas
 
 /**
  * Las categorías, agrupadas como se habla de ellas en la reunión.
@@ -51,65 +51,79 @@ type Categoria =
  */
 const GRUPOS: Array<{ titulo: string; cats: Categoria[] }> = [
   { titulo: "Publicaciones", cats: ["reel", "carrusel", "historias"] },
-  // Atender el área de miembros es UNA cosa. Antes eran dos —«contenido» y
-  // «comunidad»— y nadie sabía en cuál apuntar lo que estaba haciendo.
+  // Atender el área de miembros es UNA cosa. Antes eran tres —«contenido»,
+  // «comunidad» y «protocolo»— y nadie sabía en cuál apuntar lo que hacía.
   { titulo: "Área de miembros", cats: ["administracion"] },
-  { titulo: "Experiencias en vivo", cats: ["transmision", "protocolo"] },
   // Telegram no es una notificación: una sale de Comunicaciones y la otra se
   // escribe a mano en el grupo.
   { titulo: "Comunicación", cats: ["correo", "notificacion", "telegram"] },
+  { titulo: "En vivo", cats: ["transmision"] },
   { titulo: "Gestión", cats: ["reunion", "resultados", "otra"] },
 ]
 
 
-const ETIQUETA: Record<Categoria, string> = {
-  reel: "Reel", carrusel: "Carrusel", historias: "Historias",
-  administracion: "Administración",
-  correo: "Correo", notificacion: "Notificación", telegram: "Telegram",
-  transmision: "Transmisión", protocolo: "Protocolo de contacto",
-  reunion: "Reunión", resultados: "Resultados", otra: "Otra",
-  luna: "Luna", zodiaco: "Zodiaco", estacion: "Estación",
-  portal: "Portal", efemeride: "Efeméride",
+const ETIQUETA = (c: Categoria) => CATALOGO[c]?.nombre ?? c
+
+/**
+ * Un color por categoría, y bien separados entre sí.
+ *
+ * ── POR QUÉ NO BASTA CON UNA RAYITA DE COLOR ──────────────────────────────
+ * Lo primero que se hizo fue pintar el borde izquierdo de cada pastilla. En
+ * una casilla de calendario eso son dos píxeles al lado de un texto blanco:
+ * la rejilla entera se sigue leyendo blanca, y hay que leer fila por fila
+ * para saber si el martes toca reel o correo.
+ *
+ * Así que el color va en el TEXTO y en el fondo. Lo que se reconoce de un
+ * vistazo es la mancha de color, no un filo.
+ *
+ * Los tonos están separados a propósito —violeta, azul, rosa, verde, ámbar,
+ * cian— y no en una gama: una gama es bonita y no distingue nada.
+ *
+ * El cielo va en plata, oro y magenta, que no se parecen a ninguno de los
+ * de trabajo: una luna llena nunca debe confundirse con algo que hacer.
+ */
+const COLOR: Record<Categoria, string> = {
+  // ── LO QUE SE PUBLICA FUERA ─────────────────────────────────────────────
+  reel: "#a888e8",            // violeta
+  carrusel: "#5fb0e8",        // azul
+  historias: "#f08ac0",       // rosa
+
+  // ── LA PLATAFORMA POR DENTRO ────────────────────────────────────────────
+  administracion: "#59d1a8",  // verde azulado
+
+  // ── LO QUE SE ENVÍA ─────────────────────────────────────────────────────
+  correo: "#f0b45c",          // naranja
+  notificacion: "#e8d45c",    // amarillo
+  telegram: "#4ec8e0",        // cian
+
+  // ── EN VIVO ─────────────────────────────────────────────────────────────
+  transmision: "#f07070",     // rojo
+
+  // ── INTERNO ─────────────────────────────────────────────────────────────
+  // Apagado a propósito: no se publica, y no debería competir por la vista
+  // con lo que sí sale fuera.
+  reunion: "#9aa0b8", resultados: "#9aa0b8", otra: "#7a7a8a",
+
+  // ── EL CIELO ────────────────────────────────────────────────────────────
+  luna: "#d8dff0",            // plata
+  zodiaco: "#d4a84a",         // oro viejo
+  estacion: "#f0c040",        // oro
+  portal: "#c77ad0",          // magenta
+  efemeride: "#8a8a9a",
 }
 
 /**
- * Un color por TIPO DE CONTENIDO, no por grupo.
+ * El mismo color, muy rebajado, para el fondo de la pastilla.
  *
- * ── POR QUÉ CAMBIÓ ────────────────────────────────────────────────────────
- * Antes el color era del grupo: reel, carrusel e historias compartían
- * violeta. En la lista daba igual, porque el nombre de la categoría va
- * escrito al lado. En el calendario no: ahí solo cabe el título, y una
- * semana entera de pastillas del mismo violeta no dice nada de un vistazo.
- *
- * Las del cielo llevan su propia gama —plata, oro, magenta— para que nunca
- * se confundan con trabajo pendiente.
+ * Se calcula en vez de escribirse a mano: dos listas de diecisiete colores
+ * se desincronizan a la primera vez que alguien cambia uno solo.
  */
-const COLOR: Record<Categoria, string> = {
-  // Lo que se publica fuera
-  reel: "#8d6bc4",            // violeta
-  carrusel: "#5fa8d3",        // azul
-  historias: "#e09ac0",       // rosa
-
-  administracion: "#9a8fd0",  // violeta apagado
-
-  // Lo que se envía
-  correo: "#7ec8a0",          // verde
-  notificacion: "#e6cf95",    // ámbar
-  telegram: "#6fb3e0",        // azul Telegram
-
-  // En vivo
-  transmision: "#d98080",     // rojo suave
-  protocolo: "#c98fb0",       // malva
-
-  // Interno: gris, porque no se publica
-  reunion: "#8a8fa8", resultados: "#8a8fa8", otra: "#8a8fa8",
-
-  // ── EL CIELO ────────────────────────────────────────────────────────────
-  luna: "#cfd6e6",            // plata
-  zodiaco: "#c9a86b",         // oro viejo
-  estacion: "#e8b85c",        // oro
-  portal: "#c77ad0",          // magenta
-  efemeride: "#7a7a8a",
+function fondoDe(c: Categoria, fuerza = 0.14): string {
+  const h = COLOR[c] || "#8a8fa8"
+  const r = parseInt(h.slice(1, 3), 16)
+  const g = parseInt(h.slice(3, 5), 16)
+  const b = parseInt(h.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${fuerza})`
 }
 
 type Actividad = {
@@ -580,9 +594,9 @@ export function Organizacion() {
       {vista === "guiones" ? (
         <OrganizacionGuiones equipo={equipo} />
       ) : vista === "resultados" ? (
-        <OrganizacionResultados semana={ancla} />
+        <OrganizacionResultados semana={lunesDe(ancla)} />
       ) : vista === "plan" ? (
-        <OrganizacionPlan mes={ancla} esPropietario={esPropietario} />
+        <OrganizacionPlan mes={`${ancla.slice(0, 7)}-01`} esPropietario={esPropietario} />
       ) : cargando ? (
         <div className="flex items-center gap-2 py-12 text-sm text-[#7a7a8a]">
           <Loader2 size={15} className="animate-spin" /> Cargando…
@@ -620,6 +634,34 @@ export function Organizacion() {
           onGuardado={() => { setEditando(null); void cargar() }}
         />
       )}
+    </div>
+  )
+}
+
+function Leyenda({ actividades }: { actividades: Actividad[] }) {
+  // En el orden de GRUPOS, no en el que aparezcan: así la leyenda se lee
+  // siempre igual aunque el mes cambie.
+  const orden = [...GRUPOS.flatMap((g) => g.cats), ...CATEGORIAS_DEL_CIELO]
+  const hay = new Set(actividades.map((a) => a.categoria))
+  const usadas = orden.filter((c) => hay.has(c))
+  if (usadas.length === 0) return null
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#14141e] pt-3">
+      {usadas.map((c) => (
+        <span
+          key={c}
+          title={CATALOGO[c]?.que}
+          className="inline-flex items-center gap-1.5 text-[10px] text-[#8a8fa8]"
+        >
+          <span
+            aria-hidden
+            className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+            style={{ backgroundColor: COLOR[c] }}
+          />
+          {ETIQUETA(c)}
+        </span>
+      ))}
     </div>
   )
 }
@@ -692,16 +734,14 @@ function VistaLista({
               key={r.id}
               type="button"
               onClick={() => onAbrir(r)}
-              title={ETIQUETA[r.categoria]}
-              className="inline-flex items-center gap-1.5 border border-[#1f1f2c] px-2 py-0.5 text-xs text-[#a0a0b4] transition-colors hover:border-[#3a3a4a] hover:text-[#F3F6FA]"
+              title={CATALOGO[r.categoria]?.que ?? ETIQUETA(r.categoria)}
+              className="inline-flex items-center gap-1.5 border px-2 py-0.5 text-xs transition-opacity hover:opacity-80"
+              style={{
+                color: COLOR[r.categoria],
+                backgroundColor: fondoDe(r.categoria),
+                borderColor: fondoDe(r.categoria, 0.35),
+              }}
             >
-              {/* Un punto del color de su clase: de un vistazo se distingue
-                  una luna de un cambio de signo sin tener que leerlo. */}
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: COLOR[r.categoria] }}
-              />
               {r.titulo}
             </button>
           ))}
@@ -775,7 +815,13 @@ function VistaLista({
                         {a.titulo}
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[#6a6a7a]">
-                        <span style={{ color: COLOR[a.categoria] }}>{ETIQUETA[a.categoria]}</span>
+                        <span
+                          className="font-medium"
+                          style={{ color: COLOR[a.categoria] }}
+                          title={CATALOGO[a.categoria]?.que}
+                        >
+                          {ETIQUETA(a.categoria)}
+                        </span>
                         <span>·</span>
                         <span className={atrasada ? "text-[#e6cf95]" : ""}>{dia(a.fecha)}</span>
                         {a.fecha_entrega && (
@@ -909,15 +955,18 @@ function VistaCalendario({
                       <button
                         type="button"
                         onClick={() => (seleccionando ? onAlternar(a.id) : onAbrir(a))}
-                        title={a.titulo}
-                        className={`block w-full truncate border-l-2 px-1 py-0.5 text-left text-[10px] transition-colors ${
-                          marcada
-                            ? "bg-[#6D4A9B]/35 text-[#e8dcff]"
-                            : "bg-[#12121c] text-[#c8c8dc] hover:bg-[#1a1a2a]"
+                        title={`${ETIQUETA(a.categoria)} — ${a.titulo}`}
+                        className={`block w-full truncate border-l-2 px-1 py-0.5 text-left text-[10px] transition-opacity hover:opacity-75 ${
+                          marcada ? "ring-1 ring-[#6D4A9B]" : ""
                         }`}
                         style={{
+                          // El color va en el texto y en el fondo, no solo en
+                          // un filo de dos píxeles: una rejilla de treinta
+                          // casillas con texto blanco se lee blanca.
+                          color: COLOR[a.categoria],
+                          backgroundColor: fondoDe(a.categoria, marcada ? 0.3 : 0.14),
                           borderLeftColor: COLOR[a.categoria],
-                          opacity: a.estado === "hecha" ? 0.45 : 1,
+                          opacity: a.estado === "hecha" ? 0.4 : 1,
                           textDecoration: a.estado === "hecha" ? "line-through" : undefined,
                         }}
                       >
@@ -956,8 +1005,17 @@ function VistaCalendario({
       <p className="mt-3 text-[11px] leading-relaxed text-[#6a6a7a]">
         {seleccionando
           ? "Toca una actividad para marcarla o desmarcarla."
-          : "Toca una actividad para abrirla, o la equis para borrarla. El color es la categoría; lo tachado está hecho."}
+          : "Toca una actividad para abrirla, o la equis para borrarla. Lo tachado está hecho."}
       </p>
+
+      {/* ── QUÉ SIGNIFICA CADA COLOR ──────────────────────────────────────
+          Un color sin leyenda hay que aprendérselo, y nadie se lo aprende:
+          se acaba abriendo las actividades una por una para saber qué son,
+          que es justo lo que el color venía a evitar.
+
+          Solo salen los colores que hay EN PANTALLA. Una leyenda con las
+          diecisiete categorías en un mes que tiene cuatro es ruido. */}
+      <Leyenda actividades={actividades} />
     </div>
   )
 }
@@ -1062,8 +1120,20 @@ function EditorActividad({ actividad, equipo, fechaPorDefecto, onCerrar, onGuard
                 onChange={(e) => setF({ ...f, categoria: e.target.value as Categoria })}
                 className={inputCls}
               >
-                {(Object.keys(ETIQUETA) as Categoria[]).map((c) => (
-                  <option key={c} value={c}>{ETIQUETA[c]}</option>
+                {/* Solo las que se planifican. Las del cielo las pone
+                    `npm run efemerides` y nadie las teclea nunca: tenerlas
+                    aquí eran cinco opciones más que estorbaban cada vez.
+
+                    Si lo que se está editando ES del cielo —porque se abrió
+                    una luna para cambiarle la fecha—, se añade la suya, o el
+                    desplegable enseñaría una categoría que no es la que tiene. */}
+                {[
+                  ...CATEGORIAS_ELEGIBLES,
+                  ...(f.categoria && CATEGORIAS_DEL_CIELO.includes(f.categoria)
+                    ? [f.categoria]
+                    : []),
+                ].map((c) => (
+                  <option key={c} value={c}>{ETIQUETA(c)}</option>
                 ))}
               </select>
             </div>
