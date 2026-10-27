@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Network,
   Smartphone,
+  CalendarDays,
 } from "lucide-react"
 
 type Tab =
@@ -33,12 +34,20 @@ type Tab =
   | "redroles"
   | "comms"
   | "pwa"
+  | "organizacion"
 
 // El Centro de Comunicaciones trae su propio editor, su vista previa y sus
 // diálogos. Es el tab más pesado del panel, y es el que menos se abre: cargarlo
 // solo cuando se entra evita que todos los demás carguen más lento.
 // Solo lee el almacenamiento de este navegador y dibuja. Se carga aparte
 // porque casi nunca se abre: es una herramienta de diagnóstico.
+// El calendario de trabajo. Se carga aparte porque trae su propio editor
+// y su rejilla del mes, y no hace falta mientras se mira otra cosa.
+const Organizacion = dynamic(
+  () => import("./_tabs/Organizacion").then((m) => m.Organizacion),
+  { ssr: false },
+)
+
 const DiagnosticoPwa = dynamic(
   () => import("./_tabs/DiagnosticoPwa").then((m) => m.DiagnosticoPwa),
   { ssr: false },
@@ -154,6 +163,12 @@ const TAB_GROUPS: TabGroup[] = [
   {
     title: "Comunicaciones",
     tabs: [
+      {
+        id: "organizacion",
+        label: "Organización",
+        description: "Calendario de trabajo, checklist semanal y cumplimiento",
+        icon: CalendarDays,
+      },
       {
         id: "comms",
         label: "Comunicaciones",
@@ -349,6 +364,7 @@ export function AdminPanel() {
           {tab === "resetprogress" && <ResetProgress />}
           {tab === "redroles" && <RedRoles />}
           {tab === "comms" && <Comunicaciones />}
+          {tab === "organizacion" && <Organizacion />}
           {tab === "pwa" && <DiagnosticoPwa />}
         </div>
       </main>
