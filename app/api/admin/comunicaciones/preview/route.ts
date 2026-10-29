@@ -61,10 +61,19 @@ export async function POST(req: NextRequest) {
     // pie no sirve para comprobar el pie.
     unsubscribeUrl: `${sitio()}/miembros/perfil#correo`,
     siteUrl: sitio(),
+
+    // El modo viaja con el resto: la vista previa del modo codigo tiene que
+    // pasar por el mismo dibujo que el envio, o deja de ser una vista previa
+    // y pasa a ser una aproximacion.
+    modo: body.email_modo === "codigo" ? "codigo" : "visual",
+    html: typeof body.email_html === "string" ? body.email_html : null,
   }
 
   return NextResponse.json({
     ok: true,
+    // Las dos salen de las MISMAS funciones que usa el envío. Esa es toda
+    // la garantía de que lo que se ve es lo que se manda: no hay un segundo
+    // camino que pueda quedarse atrás.
     html: renderCorreo(datos),
     texto: renderTexto(datos),
     // Lo que se ve encima del correo en la bandeja de entrada, para poder

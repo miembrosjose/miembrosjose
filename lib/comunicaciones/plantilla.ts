@@ -27,6 +27,7 @@
 // en el body: varios clientes ignoran el fondo del body y dejarían texto claro
 // sobre blanco, que es el peor fallo posible en un correo.
 
+import { limpiarHtmlCorreo } from "./html-correo"
 import type { Comunicacion, FamiliaPlantilla, TipoComunicacion } from "./tipos"
 import { TIPOS } from "./tipos"
 
@@ -101,6 +102,18 @@ export type DatosCorreo = {
   unsubscribeUrl?: string | null
   /** El sitio, para el logotipo y los enlaces del pie. */
   siteUrl: string
+
+  // ── EL CORREO ESCRITO A MANO ─────────────────────────────────────────────
+  //
+  //   "visual"  lo dibujan las piezas de aquí abajo con los campos del
+  //             formulario. Es lo de siempre y sigue siendo lo normal.
+  //
+  //   "codigo"  el cuerpo sale de `html`, limpiado. Sigue llevando el
+  //             preencabezado y el pie, que no son decoración: uno decide lo
+  //             que se lee en la bandeja y el otro lleva la baja.
+  modo?: "visual" | "codigo"
+  /** El HTML tal cual lo escribió administración. Se limpia AQUÍ, al dibujar. */
+  html?: string | null
 }
 
 // ── Utilidades ─────────────────────────────────────────────────────────────
@@ -533,6 +546,16 @@ function Pie(d: DatosCorreo): string {
  * del mismo sitio y quien las recibe tiene que reconocerlas sin leer.
  */
 export function renderCorreo(d: DatosCorreo): string {
+  // ── EL MODO CÓDIGO ─────────────────────────────────────────────────────
+  //
+  // Va aquí, en la MISMA función que dibuja todo lo demás, y no en una ruta
+  // paralela. Esa es la razón por la que la vista previa, el correo de
+  // prueba y el envío real siguen siendo el mismo HTML: los tres llaman a
+  // `renderCorreo`, y si el modo código tuviera su propio camino, cualquiera
+  // de los tres podría quedarse atrás sin que nadie lo notara hasta que un
+  // correo saliera distinto de como se vio.
+  if (d.modo === "codigo") return renderCorreoDeCodigo(d)
+
   const familia: FamiliaPlantilla = TIPOS[d.tipo].familia
   const acento = ACENTO[familia]
   // El saludo va SIEMPRE. No depende de que sepamos nada de nadie, que era
@@ -602,6 +625,84 @@ ${cuerpo}
 }
 
 /**
+ * El correo escrito a mano.
+ *
+ * ── LO QUE SE RESPETA Y LO QUE NO ─────────────────────────────────────────
+ * El cuerpo es de quien lo escribe: no se toca más allá de limpiarlo. Lo que
+ * NO es negociable son dos cosas que no son decoración:
+ *
+ *   El preencabezado. Decide lo que se lee en la bandeja de entrada, al lado
+ *   del asunto. Sin él, muchos clientes enseñan el principio del HTML, que
+ *   suele ser una tabla vacía.
+ *
+ *   El pie con la baja. Un correo editorial sin forma de darse de baja es un
+ *   problema legal y una razón para que lo marquen como spam. Si quien
+ *   escribe pone el suyo, el de abajo sobra pero no estorba.
+ *
+ * ── POR QUÉ NO SE ENVUELVE EN EL MARCO DE SIEMPRE ─────────────────────────
+ * Porque el motivo de escribir el correo a mano es justamente salirse del
+ * marco. Envolverlo haría que el modo código fuera «lo de siempre con un
+ * trozo distinto», que es lo que ya permite el modo visual.
+ */
+function renderCorreoDeCodigo(d: DatosCorreo): string {
+  const limpio = limpiarHtmlCorreo(d.html || "")
+
+  // Un documento completo —con su `<html>`— se deja como está salvo por el
+  // preencabezado y el pie, que se le inyectan. Un trozo suelto se envuelve
+  // en lo mínimo para que sea un correo válido: sin `<!doctype>` ni
+  // `<meta charset>`, los acentos salen rotos en Outlook.
+  const esDocumento = /<html\b/i.test(limpio)
+
+  const pie = PieDeCodigo(d)
+
+  if (esDocumento) {
+    // Se mete justo después de abrir el cuerpo, que es donde tiene que ir
+    // para que el cliente lo lea antes que nada.
+    const conPreheader = limpio.replace(
+      /<body\b[^>]*>/i,
+      (m) => m + Preheader(d.preheader),
+    )
+    // Y el pie justo antes de cerrarlo.
+    return conPreheader.replace(/<\/body\s*>/i, pie + "</body>")
+  }
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title></title>
+</head>
+<body style="margin:0;padding:0;background-color:${C.fondo};">
+${Preheader(d.preheader)}
+${limpio}
+${pie}
+</body>
+</html>`
+}
+
+/**
+ * El pie mínimo del modo código.
+ *
+ * No es el pie de la plantilla visual: aquí no se sabe nada del diseño que
+ * haya puesto quien escribe, así que se queda en lo imprescindible y
+ * discreto. Lo único que tiene que estar es la baja.
+ */
+function PieDeCodigo(d: DatosCorreo): string {
+  const baja = d.unsubscribeUrl
+    ? `<a href="${escapar(d.unsubscribeUrl)}" style="color:${C.textoTenue};text-decoration:underline;">Darse de baja</a>`
+    : "Darse de baja"
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.fondo};">
+<tr><td align="center" style="padding:24px 16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:${C.textoTenue};">
+Los 144.000<br>${baja}
+</td></tr>
+</table>`
+}
+
+/**
  * La versión en texto plano.
  *
  * No es un trámite. Algunos clientes la enseñan, los filtros de spam la
@@ -609,6 +710,31 @@ ${cuerpo}
  * contenido, así que nunca puede decir algo distinto.
  */
 export function renderTexto(d: DatosCorreo): string {
+  // ── POR QUÉ SE SACA DEL HTML Y NO SE DEJA VACÍO ────────────────────────
+  // Los filtros de spam comparan la versión de texto con la de HTML, y un
+  // correo cuyo texto plano está vacío puntúa peor. Se saca quitando
+  // etiquetas: no queda bonito, pero dice lo mismo, que es lo que importa.
+  if (d.modo === "codigo") {
+    const texto = limpiarHtmlCorreo(d.html || "")
+      // Lo que no es contenido se va con su contenido dentro.
+      .replace(/<(style|head|title)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      // Los saltos que el HTML marca como tales se conservan.
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|h[1-6]|li)\s*>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      // Tres saltos seguidos son una tabla que se quedó vacía, no un párrafo.
+      .replace(/\n{3,}/g, "\n\n")
+      .split("\n").map((l) => l.trim()).join("\n")
+      .trim()
+
+    return texto + (d.unsubscribeUrl ? `\n\n—\nDarse de baja: ${d.unsubscribeUrl}` : "")
+  }
+
   const lineas: string[] = ["LOS 144000", ""]
 
   if (d.eyebrow.trim()) lineas.push(d.eyebrow.toUpperCase(), "")
@@ -668,7 +794,12 @@ export function datosDesdeComunicacion(
     | "type" | "preheader" | "eyebrow" | "heading" | "body" | "image_url"
     | "cta_text" | "cta_url" | "event_title" | "event_at" | "event_timezone"
     | "event_location"
-  >,
+  > & {
+    // Opcionales: hasta que no se corre la migración estas columnas no
+    // llegan, y sin esto el correo dejaría de dibujarse en ese hueco.
+    email_modo?: string | null
+    email_html?: string | null
+  },
   extra: { unsubscribeUrl?: string | null; siteUrl: string },
 ): DatosCorreo {
   return {
@@ -686,5 +817,10 @@ export function datosDesdeComunicacion(
     eventLocation: c.event_location,
     unsubscribeUrl: extra.unsubscribeUrl ?? null,
     siteUrl: extra.siteUrl,
+    // Cualquier cosa que no sea exactamente "codigo" es el modo de siempre.
+    // Una columna que todavía no existe, un valor raro o un nulo caen a
+    // "visual", que es lo que han sido todas hasta hoy.
+    modo: c.email_modo === "codigo" ? "codigo" : "visual",
+    html: c.email_html ?? null,
   }
 }
