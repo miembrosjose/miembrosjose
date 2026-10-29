@@ -396,7 +396,18 @@ export type Audiencia = {
  * varios párrafos. Una notificación tiene sitio para un título y dos líneas,
  * y llega al bolsillo en el momento en que se manda.
  */
-export type Canal = "email" | "push"
+/**
+ * Las cuatro formas de comunicar.
+ *
+ *   email     a la bandeja de entrada
+ *   push      suena en el móvil
+ *   interno   espera dentro de la plataforma — UNA fila, muchos lectores
+ *   dm        mensaje privado — una conversación POR PERSONA
+ *
+ * Las tres primeras son avisos: se leen. La cuarta es correspondencia: se
+ * contesta, y la respuesta vuelve a la bandeja de quien escribió.
+ */
+export type Canal = "email" | "push" | "interno" | "dm"
 
 export type Comunicacion = {
   id: string

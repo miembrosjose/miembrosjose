@@ -431,6 +431,8 @@ export async function resolverAudiencia(
   tipo: TipoComunicacion,
   canal: Canal = "email",
 ): Promise<{ destinatarios: Destinatario[]; resumen: ResumenAudiencia }> {
+  // Para los dispositivos y los topes, un mensaje directo se parece más al
+  // push que al correo: va a una persona identificada, no a una dirección.
   const esPush = canal === "push"
   const admin = getSupabaseAdmin()
   const preferencia = preferenciaDe(tipo)
@@ -524,10 +526,24 @@ export async function resolverAudiencia(
   //
   // Escribirle a quien pidió no recibir nada no se deshace. Ante la duda, no
   // se envía.
-  const { data: prefs, error: errPrefs } = await admin
-    .from("email_preferences")
-    .select(`user_id, unsubscribed_all, ${preferencia}`)
-    .or(`unsubscribed_all.eq.true,${preferencia}.eq.false`)
+  // ── EL MENSAJE DIRECTO NO MIRA LAS PREFERENCIAS DE CORREO ─────────────
+  //
+  // Darse de baja de las novedades es decir «no me mandéis publicidad al
+  // correo». No es decir «no me escribáis». Un mensaje privado llega a la
+  // bandeja de mensajes de la plataforma, de persona a persona, y se puede
+  // contestar: aplicarle la baja del boletín dejaría sin respuesta a alguien
+  // que solo quería que no le llegaran novedades.
+  //
+  // Lo que sí lo frena es lo mismo que frena cualquier mensaje: el bloqueo
+  // entre dos personas, que se comprueba al enviarlo y no aquí.
+  const sinPreferencias = canal === "dm"
+
+  const { data: prefs, error: errPrefs } = sinPreferencias
+    ? { data: [], error: null }
+    : await admin
+      .from("email_preferences")
+      .select(`user_id, unsubscribed_all, ${preferencia}`)
+      .or(`unsubscribed_all.eq.true,${preferencia}.eq.false`)
 
   if (errPrefs) {
     throw new Error(

@@ -196,7 +196,7 @@ const ROLES = [
 ]
 
 /** Por dónde puede salir una comunicación. */
-type Canal = "email" | "push" | "interno"
+type Canal = "email" | "push" | "interno" | "dm"
 
 type Fila = {
   id: string
@@ -234,6 +234,10 @@ type Comunicacion = Fila & {
   interno_cta_text: string | null
   interno_cta_url: string | null
   interno_cta_accion: "telegram" | null
+  dm_texto: string | null
+  dm_enviado_at: string | null
+  dm_enviados: number | null
+
   display_mode: "feed" | "modal_once"
   audiencia_hasta: string | null
   published_at: string | null
@@ -255,6 +259,65 @@ type Comunicacion = Fila & {
   event_location: string | null
   provider_error: string | null
   recipients_excluded: number | null
+}
+
+/**
+ * Las cuatro formas de comunicar.
+ *
+ * ── POR QUÉ UNA SOLA, Y NO VARIAS A LA VEZ ────────────────────────────────
+ * Se probó con casillas combinables y no funcionaba. Correo y notificación
+ * escriben en las MISMAS columnas —`subject` es el asunto y también el
+ * título, `body` es el cuerpo y también el texto— así que marcar los dos
+ * dejaba dos formularios editando lo mismo sin decirlo: acortar el asunto
+ * para que quepa en el móvil y encontrarse el correo con cuatro palabras.
+ *
+ * Y un mensaje directo no se parece a ninguno de los otros tres: no se
+ * «publica» ni se «envía a una lista», se le escribe a alguien y contesta.
+ *
+ * Una comunicación, una forma. Si hay que decir lo mismo por dos sitios, se
+ * duplica —que ya existe el botón— y cada copia se escribe como toca.
+ */
+const CANALES: Array<{ id: Canal; nombre: string; que: string; largo: string }> = [
+  {
+    id: "email",
+    nombre: "Correo",
+    que: "A la bandeja de entrada.",
+    largo: "Llega a la bandeja de entrada. Admite titular, imagen y texto largo. "
+      + "Se puede programar para otro día. Respeta a quien se dio de baja.",
+  },
+  {
+    id: "push",
+    nombre: "Notificación",
+    que: "Suena en el móvil.",
+    largo: "Suena en el teléfono al momento, aunque la plataforma esté cerrada. "
+      + "Un título y dos líneas. Solo a quien los activó.",
+  },
+  {
+    id: "interno",
+    nombre: "Dentro de la plataforma",
+    que: "Espera a que entre.",
+    largo: "Espera dentro de Los 144000 hasta que la persona entra. No depende de "
+      + "nada: ni del correo, ni de que tenga los avisos activados. Puede quedarse "
+      + "esperando o interrumpir una vez.",
+  },
+  {
+    id: "dm",
+    nombre: "Mensaje directo",
+    que: "A su bandeja de mensajes.",
+    largo: "Un mensaje privado de verdad, en su bandeja, donde puede responderte. "
+      + "Abre una conversación con cada persona, así que no se deshace: avisa de "
+      + "cuántas va a abrir antes de hacerlo.",
+  },
+]
+
+const CANAL = (id: Canal) => CANALES.find((c) => c.id === id)
+
+/** El dibujo de cada canal. Aparte del catálogo: eso es texto, esto es React. */
+const ICONO_CANAL: Record<Canal, typeof Mail> = {
+  email: Mail,
+  push: Bell,
+  interno: MessageSquare,
+  dm: Send,
 }
 
 /**
@@ -578,6 +641,7 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
             const pinta = {
               push: { Icono: Bell, texto: "Notificación", cls: "border-[#6D4A9B] text-[#c3b2e0]" },
               interno: { Icono: MessageSquare, texto: "En la plataforma", cls: "border-[#3a5a4a] text-[#7ec8a0]" },
+              dm: { Icono: Send, texto: "Mensaje directo", cls: "border-[#4a3a5a] text-[#c3b2e0]" },
               email: { Icono: Mail, texto: "Correo", cls: "border-[#2a2a3a] text-[#8a8fa8]" },
             }[can]
             if (!pinta) return null
@@ -840,59 +904,31 @@ function ElegirTipo({ onElegir, onCerrar }: {
     return (
       <Modal titulo="¿Por dónde quieres que salga?" onCerrar={onCerrar}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setCanal("email")}
-            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
-          >
-            <Mail size={20} className="text-[#a78bca]" />
-            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Correo</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
-              Llega a la bandeja de entrada. Admite titular, imagen y texto
-              largo. Se puede programar para otro día.
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setCanal("push")}
-            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
-          >
-            <Bell size={20} className="text-[#a78bca]" />
-            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Notificación</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
-              Suena en el teléfono al momento, aunque la plataforma esté
-              cerrada. Un título y dos líneas. Solo a quien los activó.
-            </p>
-          </button>
-
-          {/* ── EL TERCER CANAL ────────────────────────────────────────────
-              Es el único que no depende de nada: ni de que el correo caiga
-              en la bandeja principal, ni de que el navegador tenga permiso
-              para notificar. Por eso la descripción lo dice tan claro: es
-              la razón para elegirlo. */}
-          {/* ── POR QUÉ ESTA NO LLEVA A LA LISTA DE TIPOS ────────────────
-              Porque los nueve tipos existen para el CORREO: deciden la
-              familia de plantilla y, sobre todo, qué preferencia del miembro
-              gobierna el envío. Una comunicación que se queda dentro de la
-              plataforma no respeta preferencias de correo —no es un correo—
-              así que elegir entre «Nuevo contenido» y «Sesión en vivo» sería
-              contestar una pregunta que no afecta a nada.
-
-              Nace como «especial», que es la neutra. Si más tarde se le marca
-              también el canal de correo, ahí sí se puede cambiar. */}
-          <button
-            type="button"
-            onClick={() => onElegir("especial", "interno")}
-            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B] sm:col-span-2"
-          >
-            <MessageSquare size={20} className="text-[#a78bca]" />
-            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Dentro de la plataforma</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
-              Espera dentro de Los 144000 hasta que la persona entra. No
-              depende de nada: ni del correo, ni de que tenga los avisos
-              activados. Puede quedarse esperando o interrumpir una vez.
-            </p>
-          </button>
+          {CANALES.map((op) => {
+            const Icono = ICONO_CANAL[op.id]
+            return (
+              <button
+                key={op.id}
+                type="button"
+                onClick={() => {
+                  // ── POR QUÉ ESTOS DOS NO PASAN POR LA LISTA DE TIPOS ────
+                  // Los nueve tipos existen para el CORREO: deciden la
+                  // plantilla y qué preferencia gobierna el envío. Un
+                  // comunicado interno y un mensaje directo no respetan
+                  // preferencias de correo, así que elegir entre «Nuevo
+                  // contenido» y «Sesión en vivo» sería contestar una
+                  // pregunta que no afecta a nada.
+                  if (op.id === "interno" || op.id === "dm") onElegir("especial", op.id)
+                  else setCanal(op.id)
+                }}
+                className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
+              >
+                <Icono size={20} className="text-[#a78bca]" />
+                <p className="mt-3 text-sm font-medium text-[#F3F6FA]">{op.nombre}</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">{op.largo}</p>
+              </button>
+            )
+          })}
         </div>
       </Modal>
     )
@@ -954,6 +990,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
   // publicar.
   const [publicando, setPublicando] = useState(false)
   const [errorPublicar, setErrorPublicar] = useState<string | null>(null)
+  const [ocupadoDm, setOcupadoDm] = useState(false)
 
   const cargar = useCallback(async () => {
     try {
@@ -996,6 +1033,66 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
       },
     }))
   }, [c])
+
+  // ── MANDAR COMO MENSAJE DIRECTO ────────────────────────────────────────
+  //
+  // Dos pasos a propósito: primero «ver a cuántos», después mandar. Es el
+  // único canal que abre una fila por persona y el único que no se puede
+  // retirar, así que saber que son setenta ANTES vale más aquí que en
+  // ningún otro sitio.
+  //
+  // La confirmación dice el número, no «¿seguro?». «¿Seguro?» se contesta
+  // que sí sin leer; «Abrir 68 conversaciones» hace pararse.
+  const mandarDm = useCallback(async (soloMirar: boolean) => {
+    setOcupadoDm(true)
+    setErrorPublicar(null)
+    try {
+      if (!soloMirar) {
+        const r = await fetch(`/api/admin/comunicaciones/${id}/enviar-dm`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ simular: true }),
+        })
+        const j = await r.json()
+        if (!r.ok) throw new Error(j?.error || "No se pudo comprobar")
+        if (!window.confirm(
+          `Abrir ${j.personas} ${j.personas === 1 ? "conversación" : "conversaciones"}.\n\n` +
+          "Cada persona recibe el mensaje en su bandeja y puede responderte.\n" +
+          "No se puede retirar.",
+        )) return
+      }
+
+      const r = await fetch(`/api/admin/comunicaciones/${id}/enviar-dm`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ simular: soloMirar }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo mandar")
+
+      if (soloMirar) {
+        window.alert(
+          `Son ${j.personas} ${j.personas === 1 ? "persona" : "personas"}.\n\n` +
+          "No se ha mandado nada todavía.",
+        )
+        return
+      }
+
+      // Se refleja sin recargar: lo único que cambia son dos columnas, y
+      // recargar perdería lo que se estuviera escribiendo.
+      setC((v) => (v ? {
+        ...v,
+        dm_enviado_at: new Date().toISOString(),
+        dm_enviados: j.enviados ?? null,
+      } : v))
+    } catch (e) {
+      setErrorPublicar(e instanceof Error ? e.message : "No se pudo mandar")
+    } finally {
+      setOcupadoDm(false)
+    }
+  }, [id])
 
   const publicarDentro = useCallback(async () => {
     setPublicando(true)
@@ -1131,6 +1228,9 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
             onPublicar={publicarDentro}
             onVistaPrevia={verComoLoVeran}
             publicando={publicando}
+            onEnviarDm={() => void mandarDm(false)}
+            onSimularDm={() => void mandarDm(true)}
+            ocupadoDm={ocupadoDm}
           />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
         </div>
@@ -1407,6 +1507,7 @@ function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: 
  */
 function CanalesYDentro({
   c, editar, editable, onPublicar, onVistaPrevia, publicando,
+  onEnviarDm, onSimularDm, ocupadoDm,
 }: {
   c: Comunicacion
   editar: (campo: string, v: unknown) => void
@@ -1414,25 +1515,32 @@ function CanalesYDentro({
   onPublicar: () => void
   onVistaPrevia: () => void
   publicando: boolean
+  onEnviarDm: () => void
+  onSimularDm: () => void
+  ocupadoDm: boolean
 }) {
   const canales = canalesDe(c)
   const dentro = canales.includes("interno")
   const yaPublicada = !!c.published_at
 
-  const alternar = (canal: Canal) => {
-    const nuevos = canales.includes(canal)
-      ? canales.filter((x) => x !== canal)
-      : [...canales, canal]
-    // Quitar el último dejaría una comunicación que no sale por ningún sitio.
-    // La base también lo rechaza, pero aquí se evita el viaje y el susto.
-    if (nuevos.length === 0) return
-    editar("canales", nuevos)
-    // ── Y TAMBIÉN `canal` ──────────────────────────────────────────────
-    // El servidor lo deriva solo, pero el navegador no lo sabe hasta que
-    // recarga. Sin esto, la pantalla se quedaba con las casillas diciendo
-    // una cosa y el formulario, el índice y la vista previa diciendo otra:
-    // marcar «Notificación» y seguir viendo el formulario del correo.
-    editar("canal", nuevos.includes("email") ? "email" : nuevos[0])
+  // ── UNA SOLA FORMA POR COMUNICACIÓN ───────────────────────────────────
+  //
+  // Esto empezó siendo casillas combinables y no funcionaba. Correo y
+  // notificación escriben en las MISMAS columnas —`subject` es el asunto y
+  // también el título, `body` es el cuerpo y también el texto— así que
+  // marcar los dos dejaba dos formularios editando lo mismo sin decirlo:
+  // acortar el asunto para que quepa en el móvil y encontrarse el correo con
+  // cuatro palabras.
+  //
+  // Si hay que decir lo mismo por dos sitios, se duplica la comunicación —el
+  // botón ya existe— y cada copia se escribe como le toca.
+  const elegir = (canal: Canal) => {
+    if (canales[0] === canal) return
+    editar("canales", [canal])
+    // También `canal`. El servidor lo deriva solo, pero el navegador no lo
+    // sabe hasta recargar, y es el navegador el que pinta el formulario, el
+    // índice y la vista previa.
+    editar("canal", canal)
   }
 
   const campo = (k: keyof Comunicacion) => ({
@@ -1448,21 +1556,18 @@ function CanalesYDentro({
       <Bloque
         id="canales"
         titulo="Por dónde sale"
-        nota="Se puede marcar más de uno. Lo que se escribe abajo sirve para todos."
+        nota="Una sola. Si hace falta decirlo por dos sitios, duplícala y escribe cada una como toca."
       >
-        <div className="grid gap-2 sm:grid-cols-3">
-          {([
-            { id: "email", nombre: "Correo", que: "A la bandeja de entrada." },
-            { id: "push", nombre: "Notificación", que: "Suena en el móvil. Solo a quien la activó." },
-            { id: "interno", nombre: "Dentro de la plataforma", que: "Espera a que entre. No depende de nada." },
-          ] as const).map((op) => {
-            const puesto = canales.includes(op.id)
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {CANALES.map((op) => {
+            const puesto = canales[0] === op.id
+            const Icono = ICONO_CANAL[op.id]
             return (
               <button
                 key={op.id}
                 type="button"
                 disabled={!editable}
-                onClick={() => alternar(op.id)}
+                onClick={() => elegir(op.id)}
                 aria-pressed={puesto}
                 className={`border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                   puesto
@@ -1471,17 +1576,10 @@ function CanalesYDentro({
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  <span
-                    aria-hidden
-                    className={`grid h-4 w-4 shrink-0 place-items-center border ${
-                      puesto ? "border-[#6D4A9B] bg-[#6D4A9B] text-white" : "border-[#3a3a4a]"
-                    }`}
-                  >
-                    {puesto && <Check size={11} />}
-                  </span>
+                  <Icono size={13} className={puesto ? "text-[#c3b2e0]" : "text-[#5a5a6a]"} />
                   <span className="text-xs font-medium text-[#F3F6FA]">{op.nombre}</span>
                 </span>
-                <span className="mt-1.5 block pl-6 text-[11px] leading-snug text-[#7a7a8a]">
+                <span className="mt-1.5 block text-[11px] leading-snug text-[#7a7a8a]">
                   {op.que}
                 </span>
               </button>
@@ -1489,6 +1587,76 @@ function CanalesYDentro({
           })}
         </div>
       </Bloque>
+
+      {/* A QUIEN. Va aqui y no dentro del formulario de correo porque
+          estos dos canales no tienen formulario de correo. Es el MISMO
+          componente: duplicarlo seria tener dos listas de filtros que se
+          desincronizan a la primera. */}
+      {(canales[0] === "dm" || canales[0] === "interno") && (
+        <Audiencias c={c} editar={editar} editable={editable} />
+      )}
+
+      {canales[0] === "dm" && (
+        <Bloque
+          id="mensaje"
+          titulo="El mensaje"
+          nota="Se lee en una burbuja de chat, no en un correo: sin titular, sin botón y sin pie."
+        >
+          <div>
+            <label className={labelCls}>Texto</label>
+            <textarea
+              rows={6}
+              placeholder="Hola. Te escribo para contarte…"
+              value={c.dm_texto ?? ""}
+              onChange={(e) => editar("dm_texto", e.target.value)}
+              disabled={!editable}
+              className={inputCls}
+            />
+          </div>
+
+          {/* ── LO QUE HAY QUE SABER ANTES DE PULSAR ────────────────────
+              Es el único canal que abre una fila por persona, y el único
+              que no se puede retirar: una vez en su bandeja, está en su
+              bandeja. Decirlo aquí, y no en un aviso al final, es lo que
+              hace que nadie lo descubra después. */}
+          <p className="border border-[#2a2420] bg-[#15120d]/50 p-3 text-[11px] leading-relaxed text-[#c8bfa8]">
+            Esto abre una conversación con cada persona, y cada una puede
+            responderte. No se puede retirar: una vez en su bandeja, está en su
+            bandeja. No respeta la baja de los correos —darse de baja de las
+            novedades no es decir «no me escribáis»— pero sí los bloqueos entre
+            personas.
+          </p>
+
+          <div className="border-t border-[#1a1a24] pt-4">
+            {c.dm_enviado_at ? (
+              <p className="text-[11px] text-[#009d68]">
+                Mandado el {new Date(c.dm_enviado_at).toLocaleString("es-ES")}
+                {typeof c.dm_enviados === "number" && <> · {c.dm_enviados} conversaciones</>}.
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onSimularDm}
+                  disabled={!editable || ocupadoDm}
+                  className="inline-flex items-center gap-2 border border-[#2a2a3a] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+                >
+                  <Users size={13} /> Ver a cuántos
+                </button>
+                <button
+                  type="button"
+                  onClick={onEnviarDm}
+                  disabled={!editable || ocupadoDm || !(c.dm_texto || "").trim()}
+                  className="inline-flex items-center gap-2 border border-[#6D4A9B] bg-[#6D4A9B]/15 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c3b2e0] transition-colors hover:bg-[#6D4A9B]/30 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {ocupadoDm ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                  {ocupadoDm ? "Mandando…" : "Mandar el mensaje"}
+                </button>
+              </div>
+            )}
+          </div>
+        </Bloque>
+      )}
 
       {dentro && (
         <Bloque
