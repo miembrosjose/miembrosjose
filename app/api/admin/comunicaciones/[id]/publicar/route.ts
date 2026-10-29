@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { exigirAdmin, registrarEvento } from "@/lib/comunicaciones/servidor"
+import { resolverAudiencia } from "@/lib/comunicaciones/audiencia"
 
 export const dynamic = "force-dynamic"
 
@@ -34,7 +35,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const { data: c, error: errLeer } = await admin
     .from("communications")
-    .select("id, canales, display_mode, published_at, interno_titulo, interno_cuerpo, heading, body, audiencia_hasta")
+    .select("id, type, audience, canales, display_mode, published_at, interno_titulo, interno_cuerpo, heading, body, audiencia_hasta")
     .eq("id", id)
     .maybeSingle()
 
@@ -88,9 +89,67 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   const esBloqueante = c.display_mode === "modal_once"
   const corte = c.audiencia_hasta ?? (esBloqueante ? new Date().toISOString() : null)
 
+  // ── A QUIÉN LLEGA, RESUELTO AQUÍ Y UNA SOLA VEZ ────────────────────────
+  //
+  // Sin esto, un comunicado con audiencia lo veía TODO EL MUNDO: la consulta
+  // que lo enseña al miembro no miraba la audiencia por ninguna parte.
+  //
+  // Se guarda la lista de identificadores en la propia comunicación. Sigue
+  // siendo UNA fila para todos: lo que se guarda es a quién, no una copia por
+  // cabeza.
+  //
+  // ── POR QUÉ SE CONGELA Y NO SE RECALCULA ─────────────────────────────
+  // Un comunicado publicado es un hecho con fecha. Si la audiencia se
+  // volviera a resolver en cada visita, quien terminara la temporada 2
+  // mañana empezaría a ver un aviso de hace un mes dirigido a quien ya la
+  // había terminado entonces. Y al revés: perder un rol borraría algo que sí
+  // llegó. Es la misma decisión que `audiencia_hasta`.
+  //
+  // ── NULL SIGNIFICA «A TODO EL MUNDO» ─────────────────────────────────
+  // Y es lo que se guarda cuando no hay ningún filtro. Guardar los setenta
+  // identificadores en ese caso sería repetir en una columna lo que ya dice
+  // la ausencia de filtros, y congelar una audiencia que debería crecer con
+  // quien llegue después.
+  const sinFiltros = !c.audience
+    || Object.keys(c.audience as Record<string, unknown>).length === 0
+    || ((c.audience as { kind?: string }).kind === "todos"
+        && Object.keys(c.audience as Record<string, unknown>).length === 1)
+
+  let destinatarios: string[] | null = null
+  if (!sinFiltros) {
+    try {
+      // Canal "interno": no aplica la baja de los correos. Un comunicado
+      // dentro de la plataforma no es un boletín.
+      const a = await resolverAudiencia(
+        c.audience as Parameters<typeof resolverAudiencia>[0],
+        (c.type as Parameters<typeof resolverAudiencia>[1]) || "especial",
+        "interno",
+      )
+      destinatarios = [...new Set(a.destinatarios.map((d) => d.userId))]
+    } catch (e) {
+      // Ante la duda NO se publica. Publicar con la lista vacía lo escondería
+      // de todos; publicar con null se lo enseñaría a todos. Las dos son
+      // peores que no publicar y decirlo.
+      return NextResponse.json({
+        error: "No se pudo calcular a quién llega, así que no se publica. "
+          + (e instanceof Error ? e.message : ""),
+      }, { status: 500 })
+    }
+
+    if (destinatarios.length === 0) {
+      return NextResponse.json({
+        error: "Con esa audiencia no llega a nadie. Revisa los filtros.",
+      }, { status: 400 })
+    }
+  }
+
   const { data, error } = await admin
     .from("communications")
-    .update({ published_at: new Date().toISOString(), audiencia_hasta: corte })
+    .update({
+      published_at: new Date().toISOString(),
+      audiencia_hasta: corte,
+      interno_destinatarios: destinatarios,
+    })
     .eq("id", id)
     // Que no se publique dos veces aunque lleguen dos peticiones a la vez:
     // la segunda no encuentra fila que cumpla y no hace nada.
@@ -111,7 +170,12 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     accion: "publicada_dentro",
     display_mode: c.display_mode,
     audiencia_hasta: data.audiencia_hasta,
+    llega_a: destinatarios ? destinatarios.length : "todos",
   })
 
-  return NextResponse.json({ ok: true, ...data })
+  return NextResponse.json({
+    ok: true,
+    ...data,
+    llegaA: destinatarios ? destinatarios.length : null,
+  })
 }

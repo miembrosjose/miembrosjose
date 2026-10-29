@@ -97,7 +97,7 @@ function aComunicacion(fila: Fila, leidas: Set<string>): ComunicacionInterna {
  * la plataforma sigue igual que antes de todo esto.
  */
 function faltaLaTabla(mensaje: string): boolean {
-  return /communication_reads|canales|display_mode|published_at|audiencia_hasta|interno_cta_accion|does not exist|schema cache/i
+  return /communication_reads|canales|display_mode|published_at|audiencia_hasta|interno_cta_accion|interno_destinatarios|does not exist|schema cache/i
     .test(mensaje)
 }
 
@@ -128,6 +128,13 @@ export async function internasDe(
     .contains("canales", ["interno"])
     .not("published_at", "is", null)
     .or(`audiencia_hasta.is.null,audiencia_hasta.gte.${creadaEn}`)
+    // ── A QUIÉN VA ──────────────────────────────────────────────────────
+    // Nulo = a todo el mundo. Una lista = solo a quien esté dentro.
+    //
+    // Esto FALTABA, y el efecto era que un comunicado dirigido a una persona
+    // lo veía la plataforma entera. La audiencia se elegía en el panel y
+    // aquí no se miraba por ninguna parte.
+    .or(`interno_destinatarios.is.null,interno_destinatarios.cs.{${userId}}`)
     .order("published_at", { ascending: false })
     .limit(limite)
 

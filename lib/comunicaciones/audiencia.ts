@@ -536,7 +536,10 @@ export async function resolverAudiencia(
   //
   // Lo que sí lo frena es lo mismo que frena cualquier mensaje: el bloqueo
   // entre dos personas, que se comprueba al enviarlo y no aquí.
-  const sinPreferencias = canal === "dm"
+  // Tampoco el comunicado interno: vive dentro de la plataforma, no en una
+  // bandeja de entrada. Darse de baja de las novedades por correo no puede
+  // esconderte lo que se publica dentro de donde ya pagas por entrar.
+  const sinPreferencias = canal === "dm" || canal === "interno"
 
   const { data: prefs, error: errPrefs } = sinPreferencias
     ? { data: [], error: null }
