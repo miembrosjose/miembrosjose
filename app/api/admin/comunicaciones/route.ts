@@ -158,6 +158,33 @@ export async function POST(req: NextRequest) {
 
   if (error || !data) {
     console.error("[comunicaciones] crear:", error?.message)
+
+    // ── POR QUÉ ESTE ERROR DICE DE QUÉ VA ────────────────────────────────
+    // Decía «No se pudo crear la comunicación», que es verdad y no sirve de
+    // nada: costó tres rondas averiguar que la columna `canal` tenía su
+    // propia restricción sin actualizar, mientras el motivo exacto estaba
+    // en un `console.error` que nadie puede leer desde el navegador.
+    //
+    // Un fallo de restricción no es un accidente del servidor: es una regla
+    // de la base que el código no está cumpliendo, y casi siempre significa
+    // que falta correr un SQL. Eso se puede decir.
+    const m = error?.message || ""
+    if (/violates check constraint/i.test(m)) {
+      const cual = m.match(/"([a-z0-9_]+)"/i)?.[1] || "una restricción"
+      return NextResponse.json({
+        error: `La base rechazó la fila por «${cual}». `
+          + "Suele significar que falta correr un SQL de docs/sql/. "
+          + "Si acabas de añadir una forma de comunicar, revisa que la "
+          + "restricción la acepte.",
+      }, { status: 500 })
+    }
+    if (/does not exist|schema cache/i.test(m)) {
+      return NextResponse.json({
+        error: "Falta una columna o una tabla. Revisa qué SQL de docs/sql/ "
+          + "queda por correr. Detalle: " + m,
+      }, { status: 503 })
+    }
+
     return NextResponse.json({ error: "No se pudo crear la comunicación" }, { status: 500 })
   }
 
