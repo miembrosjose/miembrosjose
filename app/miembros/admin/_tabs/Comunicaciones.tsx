@@ -22,7 +22,7 @@
 // cómodo hacerlo bien, no para impedir hacerlo mal.
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
+import { MessageSquare,
   AlertTriangle, Archive, ArrowLeft, Bell, Calendar, Check, Clock, Copy, ImagePlus,
   Bold, Heading2, Italic, Link2, List, Loader2, Mail, Minus, Monitor,
   MoreVertical, Plus, Quote, Search, Send, Smartphone, Sparkles, Trash2,
@@ -194,10 +194,22 @@ const ROLES = [
   { id: "instructor", etiqueta: "Instructor" },
 ]
 
+/** Por dónde puede salir una comunicación. */
+type Canal = "email" | "push" | "interno"
+
 type Fila = {
   id: string
   /** Por dónde sale. Lo que se creó antes de que existiera el push es correo. */
   canal: "email" | "push"
+  /**
+   * Todos los canales por los que va. `canal` es el primero de esta lista y
+   * se conserva porque alguna consulta vieja puede leerlo todavía.
+   *
+   * Puede llegar indefinida: entre desplegar y correr el SQL hay un hueco en
+   * el que la columna no existe. Se cae a `[canal]`, que es lo que la fila
+   * quería decir.
+   */
+  canales?: Canal[]
   type: string
   internal_title: string
   subject: string
@@ -212,6 +224,19 @@ type Fila = {
 }
 
 type Comunicacion = Fila & {
+  // ── DENTRO DE LA PLATAFORMA ──────────────────────────────────────────────
+  // Admiten nulo y caen a los del correo: marcar «también dentro» en algo ya
+  // escrito no obliga a reescribirlo.
+  interno_titulo: string | null
+  interno_cuerpo: string | null
+  interno_image_url: string | null
+  interno_cta_text: string | null
+  interno_cta_url: string | null
+  interno_cta_accion: "telegram" | null
+  display_mode: "feed" | "modal_once"
+  audiencia_hasta: string | null
+  published_at: string | null
+
   preheader: string
   eyebrow: string
   heading: string
@@ -225,6 +250,18 @@ type Comunicacion = Fila & {
   event_location: string | null
   provider_error: string | null
   recipients_excluded: number | null
+}
+
+/**
+ * Los canales de una comunicación, con el hueco cubierto.
+ *
+ * Entre desplegar este código y correr el SQL que crea `canales` hay horas
+ * o días. En ese hueco la columna no llega, y sin esto la pantalla diría que
+ * la comunicación no sale por ningún sitio.
+ */
+function canalesDe(c: { canal: "email" | "push"; canales?: Canal[] }): Canal[] {
+  const v = c.canales
+  return Array.isArray(v) && v.length > 0 ? v : [c.canal]
 }
 
 type Hallazgo = { campo: string; nivel: "error" | "aviso"; mensaje: string }
@@ -277,6 +314,18 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
 
   useEffect(() => { void cargar() }, [cargar])
 
+  // ── BORRAR VARIOS BORRADORES ──────────────────────────────────────────
+  // Solo en la pestaña de borradores. En las demás no hay nada que borrar
+  // en bloque: lo enviado es historial, y lo programado se cancela, no se
+  // borra.
+  const [marcados, setMarcados] = useState<string[]>([])
+  const [borrando, setBorrando] = useState(false)
+
+  // Al cambiar de pestaña o de búsqueda se suelta lo marcado. Si no, se
+  // podría acabar borrando lo que ya no se ve: los identificadores siguen
+  // siendo válidos y el servidor obedecería.
+  useEffect(() => { setMarcados([]) }, [pestana, busca])
+
   const q = busca.trim().toLowerCase()
   const filtradas = q
     ? filas.filter((f) =>
@@ -284,7 +333,46 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         (f.internal_title || "").toLowerCase().includes(q))
     : filas
 
-  const crear = async (tipo: string, canal: "email" | "push") => {
+  const borrarMarcados = async () => {
+    if (marcados.length === 0) return
+    const cuantos = marcados.length
+    if (!window.confirm(
+      `Eliminar ${cuantos} ${cuantos === 1 ? "borrador" : "borradores"}.\n\n` +
+      "Se eliminan de forma permanente. No se puede deshacer.",
+    )) return
+
+    setBorrando(true)
+    setError(null)
+    try {
+      // Una sola petición, no una por fila: catorce peticiones desde el
+      // navegador son catorce formas de quedarse a medias.
+      const r = await fetch("/api/admin/comunicaciones/borrar", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: marcados }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo borrar")
+
+      setMarcados([])
+      await cargar()
+
+      // Lo que NO se borró se dice, con su motivo. Sin esto la pantalla
+      // diría «14 borradas» habiendo borrado 13.
+      if (Array.isArray(j.conservadas) && j.conservadas.length > 0) {
+        setError(
+          `Se borraron ${j.borradas}. No se borraron: ${j.conservadas.join(" · ")}.`,
+        )
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo borrar")
+    } finally {
+      setBorrando(false)
+    }
+  }
+
+  const crear = async (tipo: string, canal: Canal) => {
     try {
       const r = await fetch("/api/admin/comunicaciones", {
         method: "POST",
@@ -354,6 +442,56 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         </div>
       )}
 
+      {/* ── SELECCIONAR PARA BORRAR ────────────────────────────────────
+          «Todos» son los que se ven AHORA, no todos los borradores que
+          existen. Con una búsqueda escrita eso es lo que cualquiera espera,
+          y la alternativa —seleccionar cosas que no están en pantalla— es
+          como se borra lo que no se quería. */}
+      {pestana === "borradores" && filtradas.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 border border-[#1f1f2c] bg-[#0d0d16]/60 px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() =>
+              setMarcados(
+                marcados.length === filtradas.length ? [] : filtradas.map((f) => f.id),
+              )
+            }
+            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] text-[#8a8fa8] transition-colors hover:text-[#c3b2e0]"
+          >
+            <span
+              aria-hidden
+              className={`grid h-4 w-4 place-items-center border ${
+                marcados.length === filtradas.length
+                  ? "border-[#6D4A9B] bg-[#6D4A9B] text-white"
+                  : "border-[#3a3a4a]"
+              }`}
+            >
+              {marcados.length === filtradas.length && <Check size={11} />}
+            </span>
+            {marcados.length === filtradas.length ? "Ninguno" : "Todos los visibles"}
+          </button>
+
+          <span className="text-[11px] text-[#6a6a7a]">
+            {marcados.length > 0
+              ? `${marcados.length} ${marcados.length === 1 ? "marcado" : "marcados"}`
+              : `${filtradas.length} en pantalla`}
+          </span>
+
+          {marcados.length > 0 && (
+            <button
+              type="button"
+              onClick={borrarMarcados}
+              disabled={borrando}
+              className="ml-auto inline-flex items-center gap-2 border border-[#4a1f2a] bg-[#1a0d12]/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#e0a0b0] transition-colors hover:border-red-500/60 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {borrando
+                ? <><Loader2 size={12} className="animate-spin" /> Eliminando…</>
+                : <><Trash2 size={12} /> Eliminar</>}
+            </button>
+          )}
+        </div>
+      )}
+
       {error && <Aviso tono="mal">{error}</Aviso>}
 
       {cargando ? (
@@ -370,7 +508,29 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
             </p>
           ) : (
             filtradas.map((f) => (
-              <FilaComunicacion key={f.id} f={f} onAbrir={onAbrir} onCambio={cargar} />
+              <div key={f.id} className="flex items-start gap-2">
+                {pestana === "borradores" && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMarcados((v) =>
+                        v.includes(f.id) ? v.filter((x) => x !== f.id) : [...v, f.id],
+                      )
+                    }
+                    aria-label={marcados.includes(f.id) ? "Quitar de la selección" : "Seleccionar"}
+                    className={`mt-4 grid h-4 w-4 shrink-0 place-items-center border transition-colors ${
+                      marcados.includes(f.id)
+                        ? "border-[#6D4A9B] bg-[#6D4A9B] text-white"
+                        : "border-[#3a3a4a] hover:border-[#6D4A9B]"
+                    }`}
+                  >
+                    {marcados.includes(f.id) && <Check size={11} />}
+                  </button>
+                )}
+                <div className="min-w-0 flex-1">
+                  <FilaComunicacion f={f} onAbrir={onAbrir} onCambio={cargar} />
+                </div>
+              </div>
             ))
           )}
         </div>
@@ -650,10 +810,10 @@ function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
  * no quiere que le suene una sesión en vivo, ni por correo ni por teléfono.
  */
 function ElegirTipo({ onElegir, onCerrar }: {
-  onElegir: (t: string, canal: "email" | "push") => void
+  onElegir: (t: string, canal: Canal) => void
   onCerrar: () => void
 }) {
-  const [canal, setCanal] = useState<"email" | "push" | null>(null)
+  const [canal, setCanal] = useState<Canal | null>(null)
 
   if (!canal) {
     return (
@@ -681,6 +841,25 @@ function ElegirTipo({ onElegir, onCerrar }: {
             <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
               Suena en el teléfono al momento, aunque la plataforma esté
               cerrada. Un título y dos líneas. Solo a quien los activó.
+            </p>
+          </button>
+
+          {/* ── EL TERCER CANAL ────────────────────────────────────────────
+              Es el único que no depende de nada: ni de que el correo caiga
+              en la bandeja principal, ni de que el navegador tenga permiso
+              para notificar. Por eso la descripción lo dice tan claro: es
+              la razón para elegirlo. */}
+          <button
+            type="button"
+            onClick={() => setCanal("interno")}
+            className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B] sm:col-span-2"
+          >
+            <MessageSquare size={20} className="text-[#a78bca]" />
+            <p className="mt-3 text-sm font-medium text-[#F3F6FA]">Dentro de la plataforma</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">
+              Espera dentro de Los 144000 hasta que la persona entra. No
+              depende de nada: ni del correo, ni de que tenga los avisos
+              activados. Puede quedarse esperando o interrumpir una vez.
             </p>
           </button>
         </div>
@@ -737,6 +916,14 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
   const [paso, setPaso] = useState<null | "audiencia" | "resumen">(null)
   const [ultimaPrueba, setUltimaPrueba] = useState<string | null>(null)
 
+  // ── PUBLICAR DENTRO DE LA PLATAFORMA ──────────────────────────────────
+  // Estado propio, separado del de enviar el correo. Son dos operaciones
+  // distintas que pueden fallar por motivos distintos, y compartir el
+  // mensaje de error haría que un fallo de Resend pareciera un fallo al
+  // publicar.
+  const [publicando, setPublicando] = useState(false)
+  const [errorPublicar, setErrorPublicar] = useState<string | null>(null)
+
   const cargar = useCallback(async () => {
     try {
       const r = await fetch(`/api/admin/comunicaciones/${id}`, { credentials: "include" })
@@ -759,6 +946,32 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
   // escribe media hora, se cambia de pestaña y se pierde.
   const pendiente = useRef<Record<string, unknown>>({})
   const reloj = useRef<number | null>(null)
+
+  const publicarDentro = useCallback(async () => {
+    setPublicando(true)
+    setErrorPublicar(null)
+    try {
+      const r = await fetch(`/api/admin/comunicaciones/${id}/publicar`, {
+        method: "POST",
+        credentials: "include",
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo publicar")
+
+      // Se refleja sin recargar la comunicación entera: lo único que cambia
+      // son estas dos columnas, y una recarga completa perdería lo que
+      // estuviera escribiéndose en ese momento.
+      setC((v) => (v ? {
+        ...v,
+        published_at: j.published_at ?? new Date().toISOString(),
+        audiencia_hasta: j.audiencia_hasta ?? v.audiencia_hasta,
+      } : v))
+    } catch (e) {
+      setErrorPublicar(e instanceof Error ? e.message : "No se pudo publicar")
+    } finally {
+      setPublicando(false)
+    }
+  }, [id])
 
   const editar = useCallback((campo: string, valor: unknown) => {
     setC((v) => (v ? { ...v, [campo]: valor } as Comunicacion : v))
@@ -842,6 +1055,8 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
         <ResultadosPush id={id} previstos={c.recipients_estimated} />
       )}
 
+      {errorPublicar && <Aviso tono="mal">{errorPublicar}</Aviso>}
+
       {/* ── EL LAYOUT ───────────────────────────────────────────────────────
           Dos columnas en escritorio: lo que se escribe a la izquierda, lo que
           va a llegar a la derecha. La derecha se queda pegada al desplazar,
@@ -854,6 +1069,16 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <div className="space-y-5">
+          {/* Los canales van ARRIBA del todo: es lo primero que hay que
+              saber de una comunicación, y lo que decide qué campos de abajo
+              significan algo. */}
+          <CanalesYDentro
+            c={c}
+            editar={editar}
+            editable={editable}
+            onPublicar={publicarDentro}
+            publicando={publicando}
+          />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
         </div>
         <div className="space-y-5 lg:sticky lg:top-4">
@@ -1085,6 +1310,240 @@ function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: 
       {largo} caracteres · {que} cerca de los {comodo}
       {pasado && " — lo de más no se lee"}
     </p>
+  )
+}
+
+
+/**
+ * Los canales por los que sale, y lo que se ve dentro de la plataforma.
+ *
+ * ── POR QUÉ LOS CANALES SE ELIGEN AQUÍ Y NO SOLO AL CREAR ─────────────────
+ * Porque al crear todavía no se sabe. Se empieza un correo, se escribe, y a
+ * mitad se ve que además debería quedarse dentro de la plataforma para quien
+ * no lo abra. Obligar a decidirlo antes de escribir una palabra lleva a
+ * crearla dos veces.
+ */
+function CanalesYDentro({
+  c, editar, editable, onPublicar, publicando,
+}: {
+  c: Comunicacion
+  editar: (campo: string, v: unknown) => void
+  editable: boolean
+  onPublicar: () => void
+  publicando: boolean
+}) {
+  const canales = canalesDe(c)
+  const dentro = canales.includes("interno")
+  const yaPublicada = !!c.published_at
+
+  const alternar = (canal: Canal) => {
+    const nuevos = canales.includes(canal)
+      ? canales.filter((x) => x !== canal)
+      : [...canales, canal]
+    // Quitar el último dejaría una comunicación que no sale por ningún sitio.
+    // La base también lo rechaza, pero aquí se evita el viaje y el susto.
+    if (nuevos.length === 0) return
+    editar("canales", nuevos)
+  }
+
+  const campo = (k: keyof Comunicacion) => ({
+    value: (c[k] as string) ?? "",
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      editar(k, e.target.value),
+    disabled: !editable,
+    className: inputCls,
+  })
+
+  return (
+    <>
+      <Bloque
+        id="canales"
+        titulo="Por dónde sale"
+        nota="Se puede marcar más de uno. Lo que se escribe abajo sirve para todos."
+      >
+        <div className="grid gap-2 sm:grid-cols-3">
+          {([
+            { id: "email", nombre: "Correo", que: "A la bandeja de entrada." },
+            { id: "push", nombre: "Notificación", que: "Suena en el móvil. Solo a quien la activó." },
+            { id: "interno", nombre: "Dentro de la plataforma", que: "Espera a que entre. No depende de nada." },
+          ] as const).map((op) => {
+            const puesto = canales.includes(op.id)
+            return (
+              <button
+                key={op.id}
+                type="button"
+                disabled={!editable}
+                onClick={() => alternar(op.id)}
+                aria-pressed={puesto}
+                className={`border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  puesto
+                    ? "border-[#6D4A9B] bg-[#6D4A9B]/15"
+                    : "border-[#1f1f2c] bg-[#0d0d16] hover:border-[#3a3a4a]"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className={`grid h-4 w-4 shrink-0 place-items-center border ${
+                      puesto ? "border-[#6D4A9B] bg-[#6D4A9B] text-white" : "border-[#3a3a4a]"
+                    }`}
+                  >
+                    {puesto && <Check size={11} />}
+                  </span>
+                  <span className="text-xs font-medium text-[#F3F6FA]">{op.nombre}</span>
+                </span>
+                <span className="mt-1.5 block pl-6 text-[11px] leading-snug text-[#7a7a8a]">
+                  {op.que}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </Bloque>
+
+      {dentro && (
+        <Bloque
+          id="dentro"
+          titulo="Dentro de la plataforma"
+          nota="Si lo dejas en blanco, se usa lo del correo."
+        >
+          <div>
+            <label className={labelCls}>Titular</label>
+            <input type="text" placeholder={c.heading || "Lo primero que se lee"} {...campo("interno_titulo")} />
+          </div>
+
+          <div>
+            <label className={labelCls}>Texto</label>
+            <textarea rows={5} placeholder="Deja una línea en blanco entre párrafos." {...campo("interno_cuerpo")} />
+          </div>
+
+          {/* ── CÓMO APARECE ────────────────────────────────────────────
+              Dos opciones y no un interruptor suelto, porque «importante»
+              no dice qué va a pasar. Esto sí: una espera, la otra
+              interrumpe. */}
+          <div>
+            <label className={labelCls}>Cómo aparece</label>
+            <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+              {([
+                {
+                  id: "feed",
+                  nombre: "Espera en los avisos",
+                  que: "Aparece sin leer y la abre cuando quiera.",
+                },
+                {
+                  id: "modal_once",
+                  nombre: "Interrumpe una vez",
+                  que: "Ventana que bloquea hasta cerrarla. No vuelve a salir nunca para esa persona.",
+                },
+              ] as const).map((op) => {
+                const puesto = (c.display_mode ?? "feed") === op.id
+                return (
+                  <button
+                    key={op.id}
+                    type="button"
+                    disabled={!editable}
+                    onClick={() => editar("display_mode", op.id)}
+                    aria-pressed={puesto}
+                    className={`border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      puesto ? "border-[#6D4A9B] bg-[#6D4A9B]/15" : "border-[#1f1f2c] bg-[#0d0d16] hover:border-[#3a3a4a]"
+                    }`}
+                  >
+                    <span className="text-xs font-medium text-[#F3F6FA]">{op.nombre}</span>
+                    <span className="mt-1 block text-[11px] leading-snug text-[#7a7a8a]">{op.que}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {c.display_mode === "modal_once" && (
+              <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
+                Al publicarla se guarda la hora. Quien se registre después no la verá:
+                un anuncio de hoy no debe salirle a quien llegue dentro de seis meses.
+              </p>
+            )}
+          </div>
+
+          {/* ── EL BOTÓN ────────────────────────────────────────────────
+              O lleva a una dirección, o hace algo aquí dentro. Las dos
+              cosas a la vez no: habría que decidir cuál gana, y quien
+              rellenara las dos no sabría cuál se usa. */}
+          <div>
+            <label className={labelCls}>Botón (opcional)</label>
+            <input type="text" placeholder="Unirme al canal de Telegram" {...campo("interno_cta_text")} />
+          </div>
+
+          {(c.interno_cta_text || "").trim() !== "" && (
+            <div>
+              <label className={labelCls}>Qué hace el botón</label>
+              <select
+                value={c.interno_cta_accion ?? "url"}
+                disabled={!editable}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === "telegram") {
+                    editar("interno_cta_accion", "telegram")
+                    // Se limpia la dirección: si quedara puesta, el día que
+                    // alguien cambiara la acción volvería a aparecer un
+                    // destino que nadie recuerda haber escrito.
+                    editar("interno_cta_url", "")
+                  } else {
+                    editar("interno_cta_accion", null)
+                  }
+                }}
+                className={inputCls}
+              >
+                <option value="url">Lleva a una dirección</option>
+                <option value="telegram">Abre Telegram (el mismo botón flotante)</option>
+              </select>
+
+              {c.interno_cta_accion === "telegram" ? (
+                <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
+                  No lleva ningún enlace. Hace lo mismo que el botón flotante de Telegram:
+                  pide una invitación personal, a nombre de quien la pulsa. Un enlace fijo
+                  se saltaría la comprobación de suscripción.
+                </p>
+              ) : (
+                <div className="mt-3">
+                  <label className={labelCls}>Dirección</label>
+                  <input type="url" placeholder="https://..." {...campo("interno_cta_url")} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PUBLICAR ────────────────────────────────────────────────
+              Es su propio botón, separado del de enviar el correo. Son dos
+              cosas distintas: una habla con Resend y puede fallar a medias,
+              la otra pone una fecha en una columna. */}
+          <div className="border-t border-[#1a1a24] pt-4">
+            {yaPublicada ? (
+              <p className="text-[11px] text-[#009d68]">
+                Publicada dentro de la plataforma el{" "}
+                {new Date(c.published_at!).toLocaleString("es-ES")}.
+                {c.audiencia_hasta && (
+                  <> Solo la ven las cuentas creadas antes de esa hora.</>
+                )}
+              </p>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onPublicar}
+                  disabled={!editable || publicando}
+                  className="inline-flex items-center gap-2 border border-[#6D4A9B] bg-[#6D4A9B]/15 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c3b2e0] transition-colors hover:bg-[#6D4A9B]/30 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {publicando ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  {publicando ? "Publicando…" : "Publicar dentro de la plataforma"}
+                </button>
+                <p className="mt-2 text-[11px] leading-relaxed text-[#7a7a8a]">
+                  Esto no manda ningún correo. Deja la comunicación dentro de Los 144000
+                  para quien entre a partir de ahora.
+                </p>
+              </>
+            )}
+          </div>
+        </Bloque>
+      )}
+    </>
   )
 }
 
