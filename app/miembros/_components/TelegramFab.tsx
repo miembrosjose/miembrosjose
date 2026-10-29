@@ -62,6 +62,23 @@ export function TelegramFab() {
   const [ocupado, setOcupado] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // ── EL MISMO GESTO, PEDIDO DESDE OTRO SITIO ───────────────────────────
+  // El aviso de bienvenida no puede llevar un enlace: el del grupo es
+  // personal y caduca. Así que pide que esto se abra, y esto hace lo que ya
+  // sabía hacer.
+  //
+  // ── POR QUÉ ESTO VA AQUÍ ARRIBA Y NO JUNTO AL `return` ────────────────
+  // Porque debajo hay un `return null`, y un hook declarado después de una
+  // salida solo se ejecuta cuando no se sale. React cuenta los hooks de cada
+  // pintado y espera siempre los mismos: en cuanto este componente pasaba de
+  // oculto a visible —entrar en mensajes y volver, o cargar antes de que
+  // llegue la sesión— el número cambiaba y se caía el árbol entero.
+  //
+  // Esa es la razón por la que la pantalla de miembros se rompió al
+  // desplegar: no fallaba el botón, fallaba el orden.
+  const abrirRef = useRef<() => Promise<void>>(async () => {})
+  useEffect(() => alPedirTelegram(() => { void abrirRef.current() }), [])
+
   // En la pantalla de mensajes se esconde, igual que la burbuja del chat
   // interno: ahí abajo a la izquierda está la lista de conversaciones.
   if (!user || view === "messages") return null
@@ -125,9 +142,9 @@ export function TelegramFab() {
   // Va por referencia y no directo porque `abrir` se vuelve a crear en cada
   // pintado: un oyente registrado una sola vez se quedaría llamando a la
   // versión de la primera vez, con su estado congelado.
-  const abrirRef = useRef(abrir)
+  // El oyente se registra arriba, antes del `return null`. Aquí solo se
+  // actualiza la referencia, que no es un hook.
   abrirRef.current = abrir
-  useEffect(() => alPedirTelegram(() => { void abrirRef.current() }), [])
 
   return (
     <div className={s.zona}>
