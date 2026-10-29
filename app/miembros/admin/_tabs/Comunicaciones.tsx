@@ -121,7 +121,7 @@ const TIPOS_PUSH = [
  * Red» donde eligió «Novedades y anuncios»— parecería que la plataforma
  * cambió su decisión por su cuenta.
  */
-function nombreDeTipo(tipo: string, canal: "email" | "push"): string {
+function nombreDeTipo(tipo: string, canal: string): string {
   if (canal === "push") {
     const grupo = TIPOS_PUSH.find((t) => t.id === tipo)
     if (grupo) return grupo.nombre
@@ -571,18 +571,34 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
               fila es si eso sonó en el teléfono de alguien o llegó a una
               bandeja. Se dibuja distinto porque se deshacen distinto: un
               correo se puede ignorar, un aviso ya interrumpió. */}
-          {f.canal === "push" ? (
-            <span className="inline-flex items-center gap-1 border border-[#6D4A9B] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#c3b2e0]">
-              <Bell size={9} /> Notificación
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 border border-[#2a2a3a] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#8a8fa8]">
-              <Mail size={9} /> Correo
+          {/* Una etiqueta por canal. Antes era un «o esto o lo otro»; ahora
+              una comunicación puede ir por dos sitios a la vez, y la fila
+              tiene que decirlo o no se sabe qué se mandó. */}
+          {canalesDe(f).map((can) => {
+            const pinta = {
+              push: { Icono: Bell, texto: "Notificación", cls: "border-[#6D4A9B] text-[#c3b2e0]" },
+              interno: { Icono: MessageSquare, texto: "En la plataforma", cls: "border-[#3a5a4a] text-[#7ec8a0]" },
+              email: { Icono: Mail, texto: "Correo", cls: "border-[#2a2a3a] text-[#8a8fa8]" },
+            }[can]
+            if (!pinta) return null
+            const { Icono } = pinta
+            return (
+              <span
+                key={can}
+                className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] ${pinta.cls}`}
+              >
+                <Icono size={9} /> {pinta.texto}
+              </span>
+            )
+          })}
+          {/* El tipo solo dice algo cuando hay correo: es lo que decide la
+              plantilla y la preferencia. En una interna pura no gobierna
+              nada, y enseñarlo haría pensar que sí. */}
+          {canalesDe(f).includes("email") && (
+            <span className="text-[10px] uppercase tracking-[0.15em] text-[#6a6a7a]">
+              {nombreTipo}
             </span>
           )}
-          <span className="text-[10px] uppercase tracking-[0.15em] text-[#6a6a7a]">
-            {nombreTipo}
-          </span>
         </div>
         <p className="mt-2 truncate text-[15px] font-medium text-[#F3F6FA]">
           {f.subject?.trim() || f.internal_title || "Sin asunto"}
@@ -854,9 +870,19 @@ function ElegirTipo({ onElegir, onCerrar }: {
               en la bandeja principal, ni de que el navegador tenga permiso
               para notificar. Por eso la descripción lo dice tan claro: es
               la razón para elegirlo. */}
+          {/* ── POR QUÉ ESTA NO LLEVA A LA LISTA DE TIPOS ────────────────
+              Porque los nueve tipos existen para el CORREO: deciden la
+              familia de plantilla y, sobre todo, qué preferencia del miembro
+              gobierna el envío. Una comunicación que se queda dentro de la
+              plataforma no respeta preferencias de correo —no es un correo—
+              así que elegir entre «Nuevo contenido» y «Sesión en vivo» sería
+              contestar una pregunta que no afecta a nada.
+
+              Nace como «especial», que es la neutra. Si más tarde se le marca
+              también el canal de correo, ahí sí se puede cambiar. */}
           <button
             type="button"
-            onClick={() => setCanal("interno")}
+            onClick={() => onElegir("especial", "interno")}
             className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B] sm:col-span-2"
           >
             <MessageSquare size={20} className="text-[#a78bca]" />
@@ -1106,12 +1132,18 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
           />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
         </div>
+        {/* La columna de la derecha es «cómo va a llegar». Una comunicación
+            que solo se queda dentro de la plataforma no llega a ninguna
+            bandeja ni a ningún teléfono: su vista previa es el botón «Ver
+            como lo verán», que está al lado de donde se escribe. */}
+        {(canalesDe(c).includes("email") || canalesDe(c).includes("push")) && (
         <div className="space-y-5 lg:sticky lg:top-4">
           {c.canal === "push" ? <VistaPreviaPush c={c} /> : <Previsualizacion c={c} />}
           {editable && (c.canal === "push"
             ? <PruebaPush id={id} titulo={c.subject} onEnviada={setUltimaPrueba} />
             : <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />)}
         </div>
+        )}
       </div>
 
       {veredicto && (veredicto.errores.length > 0 || veredicto.avisos.length > 0) && (
@@ -1120,6 +1152,10 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
 
       {editable && (
         <div className="flex flex-wrap items-center gap-3 border-t border-[#1a1a24] pt-6">
+          {/* Enviar habla con Resend. Una comunicación que solo va por
+              dentro no tiene nada que enviar: se publica, y eso tiene su
+              propio botón arriba. */}
+          {(canalesDe(c).includes("email") || canalesDe(c).includes("push")) && (
           <button
             type="button"
             disabled={!veredicto?.puedeEnviar}
@@ -1128,8 +1164,10 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
           >
             <Users size={14} /> Revisar audiencia y enviar
           </button>
+          )}
           <Secundarios id={id} onVolver={onVolver} puedeBorrar />
-          {!veredicto?.puedeEnviar && (
+          {(canalesDe(c).includes("email") || canalesDe(c).includes("push")) &&
+            !veredicto?.puedeEnviar && (
             <span className="text-xs text-[#7a7a8a]">Faltan cosas por resolver antes de poder enviarla.</span>
           )}
         </div>
@@ -1198,11 +1236,16 @@ const SECCIONES: Record<"email" | "push", Array<{ id: string; etiqueta: string }
   ],
 }
 
-function NavSecciones({ editable, canal }: { editable: boolean; canal: "email" | "push" }) {
-  if (!editable) return null
+function NavSecciones({ editable, canal }: { editable: boolean; canal: string }) {
+  // Una comunicación que solo va por dentro tiene dos bloques —los canales y
+  // lo que se ve— y no necesita índice para dos cosas. Sin esta salida,
+  // `SECCIONES["interno"]` devolvía undefined y el `.map` de abajo tiraba el
+  // editor entero.
+  const lista = SECCIONES[canal as "email" | "push"]
+  if (!editable || !lista) return null
   return (
     <nav className="sticky top-0 z-10 -mx-4 flex gap-1 overflow-x-auto border-b border-[#14141e] bg-[#000000]/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
-      {SECCIONES[canal].map((s) => (
+      {lista.map((s) => (
         <button
           key={s.id}
           type="button"
@@ -1600,6 +1643,16 @@ function Campos({
   // Una notificación se escribe en otra pantalla, no en esta con la mitad
   // de los campos ocultos. Ver `CamposPush`.
   if (c.canal === "push") return <CamposPush c={c} editar={editar} editable={editable} />
+
+  // ── SIN CORREO NO HAY CAMPOS DE CORREO ─────────────────────────────────
+  // El asunto, el preencabezado, el eyebrow y el botón del correo no se ven
+  // en ningún sitio si la comunicación no sale por correo. Enseñarlos haría
+  // creer que sirven para algo, y alguien acabaría escribiendo el titular en
+  // «Asunto» y preguntándose por qué no aparece.
+  //
+  // Lo que se ve dentro de la plataforma ya lo pinta `CanalesYDentro`, que
+  // se dibuja justo encima de esto.
+  if (!canalesDe(c).includes("email")) return null
 
   const enCodigo = c.email_modo === "codigo"
 
