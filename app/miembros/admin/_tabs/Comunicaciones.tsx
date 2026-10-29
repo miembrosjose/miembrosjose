@@ -952,6 +952,25 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
   const pendiente = useRef<Record<string, unknown>>({})
   const reloj = useRef<number | null>(null)
 
+  // ── VERLA COMO LA VERÁN ────────────────────────────────────────────────
+  // Se le pasa lo que hay escrito AHORA, sin guardar ni publicar nada. La
+  // ventana vive en el layout de miembros, así que ya está montada: basta
+  // con avisarla.
+  const verComoLoVeran = useCallback(() => {
+    if (!c) return
+    window.dispatchEvent(new CustomEvent("los144k:previsualizar-aviso", {
+      detail: {
+        id: c.id,
+        titulo: (c.interno_titulo || c.heading || c.subject || "Sin titular").trim(),
+        cuerpo: (c.interno_cuerpo || c.body || "").trim(),
+        imagen_url: c.interno_image_url || c.image_url || null,
+        cta_text: c.interno_cta_text || null,
+        cta_url: c.interno_cta_url || null,
+        cta_accion: c.interno_cta_accion || null,
+      },
+    }))
+  }, [c])
+
   const publicarDentro = useCallback(async () => {
     setPublicando(true)
     setErrorPublicar(null)
@@ -1082,6 +1101,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
             editar={editar}
             editable={editable}
             onPublicar={publicarDentro}
+            onVistaPrevia={verComoLoVeran}
             publicando={publicando}
           />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
@@ -1329,12 +1349,13 @@ function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: 
  * crearla dos veces.
  */
 function CanalesYDentro({
-  c, editar, editable, onPublicar, publicando,
+  c, editar, editable, onPublicar, onVistaPrevia, publicando,
 }: {
   c: Comunicacion
   editar: (campo: string, v: unknown) => void
   editable: boolean
   onPublicar: () => void
+  onVistaPrevia: () => void
   publicando: boolean
 }) {
   const canales = canalesDe(c)
@@ -1530,6 +1551,22 @@ function CanalesYDentro({
               </p>
             ) : (
               <>
+                {/* ── VERLA ANTES DE PUBLICARLA ────────────────────────
+                    Una ventana que interrumpe a setenta personas y no se
+                    puede volver a enseñar tiene que poder mirarse antes.
+
+                    La vista previa NO marca nada: se le pasa el contenido a
+                    mano y el componente, al ver que es de prueba, se salta
+                    la llamada que registra la lectura. Si marcara, quien la
+                    previsualizara se quedaria sin verla de verdad. */}
+                <button
+                  type="button"
+                  onClick={onVistaPrevia}
+                  className="mb-3 inline-flex items-center gap-2 border border-[#2a2a3a] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0]"
+                >
+                  <Smartphone size={13} /> Ver como lo veran
+                </button>
+
                 <button
                   type="button"
                   onClick={onPublicar}

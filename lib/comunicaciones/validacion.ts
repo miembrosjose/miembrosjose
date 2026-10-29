@@ -180,17 +180,46 @@ export function validarComunicacion(
     avi("preheader", `El preheader tiene ${preheader.length} caracteres; se corta cerca de los ${PREHEADER_COMODO}.`)
   }
 
-  // ── El contenido ────────────────────────────────────────────────────────
-  if (!(c.heading || "").trim()) {
-    err("heading", "Falta el titular. Es lo primero que se lee al abrir.")
-  }
-  if (!(c.body || "").trim()) {
-    err("body", "El cuerpo está vacío.")
+  // ── EL CONTENIDO ────────────────────────────────────────────────────────
+  //
+  // ── POR QUÉ EL MODO CÓDIGO SE REVISA APARTE ───────────────────────────
+  // Porque los campos del formulario están vacíos a propósito: el cuerpo sale
+  // del HTML. Revisarlo con las reglas de siempre pedía un titular que ese
+  // correo no tiene, y entonces no se podía enviar NUNCA. El modo código
+  // habría quedado como una pantalla bonita que no sirve para mandar nada.
+  //
+  // Lo que sí se exige es lo que de verdad falta si falta: que haya algo
+  // escrito. El resto —flex, hojas de estilo, imágenes sin texto
+  // alternativo— son avisos de revisarHtmlCorreo, y no bloquean: a veces se
+  // sabe perfectamente que ese correo va a una lista que usa Gmail.
+  const enCodigo = (c as { email_modo?: string | null }).email_modo === "codigo"
+
+  if (enCodigo) {
+    const html = ((c as { email_html?: string | null }).email_html || "").trim()
+    if (!html) {
+      err("email_html", "No hay nada escrito. Elige una plantilla de partida o escribe el HTML.")
+    } else if (!/<[a-z]/i.test(html)) {
+      // Texto pelado en un campo de HTML suele ser alguien que pegó el cuerpo
+      // sin darse cuenta de en qué modo estaba. Saldría como un solo párrafo
+      // sin formato, que no es lo que nadie quería.
+      avi("email_html", "No se ve ninguna etiqueta HTML. ¿Querías el modo formulario?")
+    }
+  } else {
+    if (!(c.heading || "").trim()) {
+      err("heading", "Falta el titular. Es lo primero que se lee al abrir.")
+    }
+    if (!(c.body || "").trim()) {
+      err("body", "El cuerpo está vacío.")
+    }
   }
 
   // ── Las direcciones ─────────────────────────────────────────────────────
-  const ctaTexto = (c.cta_text || "").trim()
-  const ctaUrl = (c.cta_url || "").trim()
+  //
+  // El botón del formulario no existe en modo código: ahí los enlaces van
+  // dentro del HTML. Comprobarlo igual avisaría de que «no lleva botón» a un
+  // correo lleno de enlaces.
+  const ctaTexto = enCodigo ? "" : (c.cta_text || "").trim()
+  const ctaUrl = enCodigo ? "" : (c.cta_url || "").trim()
 
   if (ctaTexto && !ctaUrl) {
     err("cta_url", "Hay texto de botón pero no hay dirección: el botón no llevaría a ninguna parte.")
@@ -201,17 +230,19 @@ export function validarComunicacion(
   if (ctaUrl && !esUrlValida(ctaUrl)) {
     err("cta_url", "La dirección del botón no es válida. Tiene que empezar por http:// o https://.")
   }
-  if (!ctaTexto && !ctaUrl) {
+  if (!enCodigo && !ctaTexto && !ctaUrl) {
     avi("cta_text", "Esta comunicación no lleva botón. Se puede enviar así, pero nadie tendrá adónde ir.")
   }
 
-  if (c.image_url && !esUrlValida(c.image_url)) {
+  if (!enCodigo && c.image_url && !esUrlValida(c.image_url)) {
     err("image_url", "La dirección de la imagen no es válida.")
   }
 
   // ── El bloque de fecha ──────────────────────────────────────────────────
+  // El bloque de fecha lo dibuja la plantilla del formulario. En modo
+  // codigo no existe: la fecha, si hace falta, va escrita dentro del HTML.
   const def = c.type ? TIPOS[c.type] : null
-  if (def?.llevaFecha) {
+  if (!enCodigo && def?.llevaFecha) {
     if (!c.event_at) {
       avi("event_at", `Una comunicación de tipo «${def.nombre}» suele llevar fecha y hora, y esta no la tiene.`)
     } else {

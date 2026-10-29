@@ -61,8 +61,10 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
   const [cerrando, setCerrando] = useState(false)
   const cerrarRef = useRef<HTMLButtonElement | null>(null)
 
-  // En vista previa no se pregunta al servidor: se enseña lo que llega.
-  const esPrueba = !!prueba
+  // Dos formas de ser «de prueba»: llegar por la propiedad, o llegar por el
+  // evento de administración. Las dos tienen que saltarse el registro, así
+  // que se mira el aviso que hay puesto y no solo de dónde vino.
+  const esPrueba = !!prueba || (aviso as AvisoDePrueba | null)?.deMentira === true
 
   useEffect(() => {
     if (prueba) { setAviso(prueba); return }
@@ -110,6 +112,24 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
     window.addEventListener("los144k:ver-comunicacion", oyente)
     return () => window.removeEventListener("los144k:ver-comunicacion", oyente)
   }, [prueba])
+
+  // ── LA VISTA PREVIA DE ADMINISTRACIÓN ──────────────────────────────────
+  //
+  // Una ventana que interrumpe a setenta personas y que no se puede volver a
+  // enseñar tiene que poder mirarse antes de publicarla.
+  //
+  // Llega con el contenido puesto —no se busca en la base, porque todavía no
+  // está publicada— y marcada como de mentira. Esa marca es lo que hace que
+  // `cerrar` se salte el registro: si lo marcara, quien la previsualizara
+  // sería justamente quien no llegara a verla de verdad.
+  useEffect(() => {
+    const oyente = (e: Event) => {
+      const d = (e as CustomEvent<Omit<AvisoDePrueba, "deMentira">>).detail
+      if (d) setAviso({ ...d, deMentira: true } as AvisoDePrueba)
+    }
+    window.addEventListener("los144k:previsualizar-aviso", oyente)
+    return () => window.removeEventListener("los144k:previsualizar-aviso", oyente)
+  }, [])
 
   // ── MARCAR Y CERRAR ──────────────────────────────────────────────────────
   // Se cierra en cuanto la persona lo pide, sin esperar al servidor. Si la
