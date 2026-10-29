@@ -137,5 +137,83 @@ comprobar(
   olvidadas.length === 0 ? "" : "faltan: " + olvidadas.join(", "),
 )
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Y QUE CADA LLAMADA USE UN MÉTODO QUE LA RUTA ACEPTE
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ ────────────────────────────────────────────────────────────────
+// El panel llamaba a `/audiencia` con POST y esa ruta solo exporta GET. Next
+// contesta 405 con el cuerpo VACÍO, y `r.json()` sobre un cuerpo vacío lanza
+// «Unexpected end of JSON input».
+//
+// Ese mensaje habla del FORMATO de la respuesta, no del problema, así que
+// manda a buscar al sitio equivocado: se mira el calculador de audiencias
+// cuando lo que falla es el verbo.
+//
+// No lo caza TypeScript —`fetch` acepta cualquier cadena— ni el build. Pero
+// se ve leyendo los dos lados.
+
+console.log("\n— Los métodos de cada llamada —\n")
+
+const RUTAS = path.join(raiz, "app", "api")
+
+/** Qué métodos exporta un `route.ts`. */
+function metodosDe(archivo) {
+  const src = fs.readFileSync(archivo, "utf8")
+  return new Set(
+    [...src.matchAll(/export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\b/g)].map((m) => m[1]),
+  )
+}
+
+/** De `/api/admin/x/${id}/y` al archivo, cambiando lo interpolado por [id]. */
+function archivoDe(ruta) {
+  const limpia = ruta
+    .replace(/^\/api\//, "")
+    .replace(/\$\{[^}]*\}/g, "[id]")
+    .replace(/\?.*$/, "")
+    .replace(/\/$/, "")
+  const p = path.join(RUTAS, ...limpia.split("/"), "route.ts")
+  return fs.existsSync(p) ? p : null
+}
+
+const llamadas = [...pantalla.matchAll(
+  /fetch\(\s*[`"']([^`"']*\/api\/[^`"']*)[`"']\s*(?:,\s*\{([\s\S]{0,200}?)\})?\s*\)/g,
+)]
+
+let revisadas = 0
+const malas = []
+
+for (const m of llamadas) {
+  const ruta = m[1]
+  const opciones = m[2] || ""
+  const metodo = opciones.match(/method:\s*"(\w+)"/)?.[1] || "GET"
+
+  const archivo = archivoDe(ruta)
+  // Una ruta que no se encuentra no es un fallo de esto: puede estar
+  // construida de una forma que este análisis no sabe leer. Se dice y se
+  // sigue, en vez de acusar.
+  if (!archivo) continue
+
+  revisadas++
+  const metodos = metodosDe(archivo)
+  if (!metodos.has(metodo)) {
+    malas.push({ ruta, metodo, tiene: [...metodos].join(", ") || "ninguno" })
+  }
+}
+
+comprobar(
+  `las ${revisadas} llamadas comprobables usan un método que existe`,
+  malas.length === 0,
+)
+
+for (const x of malas) {
+  console.log(`\n       ${x.ruta}`)
+  console.log(`       se llama con ${x.metodo} y la ruta solo exporta: ${x.tiene}.`)
+  console.log(`       Next contestará 405 con el cuerpo vacío, y el error que se vea`)
+  console.log(`       hablará del formato de la respuesta en vez de esto.`)
+}
+if (malas.length > 0) console.log("")
+
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} ${fallos === 1 ? "FALLO" : "FALLOS"}\n`)
 process.exit(fallos === 0 ? 0 : 1)

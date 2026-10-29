@@ -2007,6 +2007,35 @@ function CanalesYDentro({
 
 
 /**
+ * Lee una respuesta aunque venga vacía.
+ *
+ * ── POR QUÉ NO SE LLAMA A `r.json()` DIRECTAMENTE ────────────────────────
+ * Porque sobre una respuesta sin cuerpo lanza «Unexpected end of JSON
+ * input», que habla del FORMATO en vez de del problema. Y viene vacía más de
+ * lo que parece: un 405 por llamar con el método que no es, un 502 del
+ * proveedor, un Worker que se cae antes de escribir nada.
+ *
+ * Ese mensaje manda a buscar donde no es. Aquí se cambia por el código de
+ * estado, que al menos dice de qué lado está el fallo.
+ */
+async function leerRespuesta(r: Response): Promise<Record<string, unknown>> {
+  const texto = await r.text()
+  if (!texto.trim()) {
+    if (r.ok) return {}
+    throw new Error(
+      r.status === 405
+        ? "El servidor no acepta esa petición (405). Es un fallo del panel, no tuyo."
+        : `El servidor respondió ${r.status} sin decir nada más.`,
+    )
+  }
+  try {
+    return JSON.parse(texto) as Record<string, unknown>
+  } catch {
+    throw new Error(`El servidor respondió algo que no se entiende (${r.status}).`)
+  }
+}
+
+/**
  * A quién le va a llegar esto, con nombres.
  *
  * ── POR QUÉ NO BASTA CON EL NÚMERO ────────────────────────────────────────
@@ -2038,17 +2067,21 @@ function AQuienLlega({ id, canal }: { id: string; canal: Canal }) {
     setCargando(true)
     setError(null)
     try {
+      // La ruta es GET: calcular a quien llega no cambia nada, solo mira.
+      // Se llamaba con POST, y Next contesta 405 con el cuerpo VACIO: de ahi
+      // el «Unexpected end of JSON input», que no dice nada de lo que pasa.
       const r = await fetch(`/api/admin/comunicaciones/${id}/audiencia`, {
-        method: "POST",
         credentials: "include",
       })
-      const j = await r.json()
-      if (!r.ok) throw new Error(j?.error || "No se pudo calcular")
+      const j = await leerRespuesta(r)
+      if (!r.ok) throw new Error(String(j?.error || "No se pudo calcular"))
+      const personas = (j.personas as Array<{ userId: string; email: string; nombre: string | null }>) || []
+      const resumen = (j.resumen as { destinatarios?: number; excluidos?: number }) || {}
       setDatos({
-        personas: j.personas || [],
-        mas: j.mas || 0,
-        total: j.resumen?.destinatarios ?? (j.personas || []).length,
-        excluidos: j.resumen?.excluidos ?? 0,
+        personas,
+        mas: (j.mas as number) || 0,
+        total: resumen.destinatarios ?? personas.length,
+        excluidos: resumen.excluidos ?? 0,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo calcular")
