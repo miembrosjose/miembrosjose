@@ -57,12 +57,55 @@ update public.communications
 set canales = array[coalesce(nullif(canal, ''), 'email')]
 where canales = '{}' or canales is null;
 
+-- ── EL CÓDIGO VIEJO SIGUE INSERTANDO SIN `canales` ────────────────────────
+--
+-- Esto es lo que hace que correr este archivo sea seguro ANTES de desplegar.
+-- Lo que hay ahora mismo en producción escribe `canal` y no sabe que existe
+-- `canales`: sin este disparador, cada comunicación nueva nacería con la
+-- lista vacía, y con la restricción de abajo puesta dejaría de poder
+-- crearse ninguna.
+--
+-- El disparador la rellena desde `canal`, que es exactamente lo que el
+-- código viejo quería decir. Cuando se despliegue el nuevo, que sí manda la
+-- lista, el disparador ve que ya viene llena y no toca nada.
+--
+-- ── Y POR QUÉ NO BASTA CON EL `default` ───────────────────────────────────
+-- Porque un valor por defecto es el mismo para todas, y aquí depende de la
+-- fila: una comunicación de `canal = 'push'` tiene que nacer con ['push'],
+-- no con ['email']. El defecto no puede mirar las otras columnas.
+
+create or replace function public.mkt_canales_desde_canal()
+returns trigger
+language plpgsql
+-- `search_path` fijado: es la misma precaución que se tomó en la auditoría
+-- de seguridad para el resto de funciones del proyecto.
+set search_path = public, pg_temp
+as $$
+begin
+  if new.canales is null or array_length(new.canales, 1) is null then
+    new.canales := array[coalesce(nullif(new.canal, ''), 'email')];
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists communications_canales_trg on public.communications;
+create trigger communications_canales_trg
+  before insert or update on public.communications
+  for each row execute function public.mkt_canales_desde_canal();
+
 alter table public.communications
   drop constraint if exists communications_canales_validos;
 
+-- ── POR QUÉ `coalesce` Y NO `array_length(...) >= 1` A SECAS ──────────────
+-- Porque `array_length('{}', 1)` no devuelve 0: devuelve NULL. Y una
+-- restricción `check` que da NULL PASA — Postgres solo rechaza cuando da
+-- `false`. Escrita de la forma obvia, esta restricción habría dejado entrar
+-- justo lo único que pretendía impedir, y nadie se habría enterado hasta
+-- encontrar una comunicación que no se puede enviar por ningún sitio.
 alter table public.communications
   add constraint communications_canales_validos check (
-    array_length(canales, 1) >= 1
+    coalesce(array_length(canales, 1), 0) >= 1
     and canales <@ array['email', 'push', 'interno']::text[]
   );
 
@@ -342,6 +385,12 @@ select
   exists (select 1 from information_schema.columns
     where table_schema='public' and table_name='forum_replies'
       and column_name='parent_reply_id')                  as ok_respuestas,
+
+  -- El disparador que rellena `canales` cuando quien escribe no la manda.
+  -- Es lo que permite que esto se corra ANTES de desplegar el código nuevo.
+  exists (select 1 from pg_trigger
+    where tgname = 'communications_canales_trg'
+      and tgrelid = 'public.communications'::regclass)    as ok_disparador,
 
   -- Ninguna comunicación puede quedarse sin canal: si esto no da 0, el
   -- relleno de arriba no llegó a correr.
