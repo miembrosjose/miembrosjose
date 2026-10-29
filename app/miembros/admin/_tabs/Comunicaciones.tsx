@@ -29,6 +29,7 @@ import { MessageSquare,
   Undo2, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
+import { EditorCodigo, PLANTILLAS } from "./EditorCodigo"
 // La única cosa del servidor que se importa aquí: no toca la base, es un mapa
 // de países y una cuenta de horas. Tener dos copias sería tener dos verdades.
 import { avisoDeHora, type AvisoDeHora } from "@/lib/comunicaciones/horas"
@@ -236,6 +237,10 @@ type Comunicacion = Fila & {
   display_mode: "feed" | "modal_once"
   audiencia_hasta: string | null
   published_at: string | null
+
+  // ── EL CORREO ESCRITO A MANO ─────────────────────────────────────────────
+  email_modo: "visual" | "codigo"
+  email_html: string | null
 
   preheader: string
   eyebrow: string
@@ -1559,6 +1564,8 @@ function Campos({
   // de los campos ocultos. Ver `CamposPush`.
   if (c.canal === "push") return <CamposPush c={c} editar={editar} editable={editable} />
 
+  const enCodigo = c.email_modo === "codigo"
+
   const campo = (k: keyof Comunicacion) => ({
     value: (c[k] as string) ?? "",
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editar(k, e.target.value),
@@ -1568,6 +1575,11 @@ function Campos({
 
   return (
     <>
+      {/* ── LA BANDEJA VA EN LOS DOS MODOS ──────────────────────────────
+          El asunto y el preencabezado no son parte del diseño: son lo que
+          decide si alguien abre el correo. En modo código siguen haciendo
+          falta, y de hecho el preencabezado se inyecta igual aunque quien
+          escribe no se acuerde de él. */}
       <Bloque id="bandeja" titulo="En la bandeja de entrada" nota="Lo único que se ve antes de abrir el correo.">
         <div>
           <label className={labelCls}>Asunto</label>
@@ -1578,6 +1590,75 @@ function Campos({
           <input type="text" placeholder="La línea que Gmail enseña detrás del asunto" {...campo("preheader")} />
         </div>
       </Bloque>
+
+      {/* ── CÓMO SE ESCRIBE ─────────────────────────────────────────────
+          El conmutador NO borra nada al cambiar: lo del formulario y lo del
+          código se guardan en columnas distintas y conviven. Se puede ir y
+          volver sin perder ninguno de los dos, que es lo que hace que
+          probar el modo código no dé miedo. */}
+      <Bloque id="modo" titulo="Cómo se escribe">
+        <div className="flex border border-[#1f1f2c]">
+          {([
+            { id: "visual", nombre: "Formulario", que: "Titular, texto, imagen y botón." },
+            { id: "codigo", nombre: "Código", que: "HTML a mano, para diseños propios." },
+          ] as const).map((op) => (
+            <button
+              key={op.id}
+              type="button"
+              disabled={!editable}
+              onClick={() => editar("email_modo", op.id)}
+              aria-pressed={(c.email_modo ?? "visual") === op.id}
+              className={`flex-1 p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                (c.email_modo ?? "visual") === op.id
+                  ? "bg-[#6D4A9B]/20 text-[#F3F6FA]"
+                  : "text-[#7a7a8a] hover:text-[#a0a0b4]"
+              }`}
+            >
+              <span className="text-xs font-medium">{op.nombre}</span>
+              <span className="mt-0.5 block text-[11px] leading-snug text-[#6a6a7a]">{op.que}</span>
+            </button>
+          ))}
+        </div>
+
+        {enCodigo && (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.15em] text-[#5a5a6a]">
+                Partir de
+              </span>
+              {PLANTILLAS.map((pl) => (
+                <button
+                  key={pl.id}
+                  type="button"
+                  disabled={!editable}
+                  title={pl.que}
+                  onClick={() => {
+                    // Pisar lo escrito sin preguntar es la forma más rápida
+                    // de perder media hora de trabajo.
+                    if ((c.email_html || "").trim() &&
+                        !window.confirm("Esto reemplaza lo que hay escrito.\n\n¿Seguir?")) return
+                    editar("email_html", pl.html)
+                  }}
+                  className="border border-[#2a2a3a] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+                >
+                  {pl.nombre}
+                </button>
+              ))}
+            </div>
+
+            <EditorCodigo
+              valor={c.email_html ?? ""}
+              onCambio={(v) => editar("email_html", v)}
+              editable={editable}
+            />
+          </>
+        )}
+      </Bloque>
+
+      {/* En modo código, los campos del formulario no pintan nada: el cuerpo
+          sale del HTML. Enseñarlos igual haría creer que se usan. */}
+      {enCodigo ? null : (
+      <>
 
       <Bloque id="correo" titulo="El correo">
         <div>
@@ -1667,6 +1748,8 @@ function Campos({
           <input type="text" {...campo("internal_title")} />
         </div>
       </Bloque>
+      </>
+      )}
     </>
   )
 }
