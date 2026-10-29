@@ -54,6 +54,7 @@ export function NotificationsBell() {
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [filter, setFilter] = useState<Filter>("all")
   const [items, setItems] = useState<NotificationItem[]>([])
+  const [internas, setInternas] = useState<NotificationItem[]>([])
   const [redItems, setRedItems] = useState<CommunityEvent[]>([])
   const wrapRef = useRef<HTMLDivElement>(null)
   // Tracking de IDs ja vistos no boot — evita re-disparar broadcast quando
@@ -66,6 +67,40 @@ export function NotificationsBell() {
       const data = await api<{ events: CommunityEvent[] }>("/api/community-events")
       setRedItems(data.events || [])
     } catch { /* silencioso */ }
+  }, [])
+
+  // ── LAS COMUNICACIONES DE LA PLATAFORMA ───────────────────────────────
+  //
+  // Se mezclan con los avisos personales en la misma lista. No tienen una
+  // pestaña propia a propósito: quien entra mira la campana para ver «qué hay
+  // de nuevo», y repartir eso en dos sitios obliga a mirar dos veces.
+  //
+  // ── POR QUÉ EL IDENTIFICADOR LLEVA PREFIJO ──────────────────────────────
+  // Porque la lista mezcla dos tablas y cada una se marca como leída en su
+  // propia ruta. Sin el prefijo, marcar una comunicación mandaría su
+  // identificador a la ruta de notificaciones, que no encontraría nada y se
+  // callaría: el aviso se quedaría sin leer para siempre y nadie sabría por
+  // qué.
+  const fetchInternas = useCallback(async () => {
+    try {
+      const data = await api<{ lista: Array<{
+        id: string; titulo: string; cuerpo: string; published_at: string; leida: boolean
+        display_mode: "feed" | "modal_once"
+      }> }>("/api/comunicaciones/mias")
+
+      // Las que interrumpen no entran aquí: ya se enseñan en su ventana, y
+      // verlas además en la campana las haría parecer dos avisos distintos.
+      const soloFeed = (data.lista || []).filter((c) => c.display_mode === "feed")
+
+      setInternas(soloFeed.map((c) => ({
+        id: `com:${c.id}`,
+        type: "comunicacion",
+        title: c.titulo,
+        preview: c.cuerpo.slice(0, 140),
+        created_at: c.published_at,
+        read_at: c.leida ? c.published_at : null,
+      })))
+    } catch { /* silencioso: la campana sigue sirviendo sin esto */ }
   }, [])
 
   const fetchNotifs = useCallback(async (currentFilter: Filter) => {
@@ -119,6 +154,10 @@ export function NotificationsBell() {
   useEffect(() => {
     if (open && filter === "red") fetchRed()
   }, [open, filter, fetchRed])
+
+  // Van mezcladas con los avisos personales, asi que se piden siempre, no
+  // solo al abrir una pestaña concreta: el numero de la campana las cuenta.
+  useEffect(() => { void fetchInternas() }, [fetchInternas])
 
   // Realtime — notifs novas chegam via postgres_changes INSERT na tabela
   // notifications filtrada por user_id=me. Aqui SIM enfileira broadcast
@@ -188,13 +227,32 @@ export function NotificationsBell() {
     }
   }, [open])
 
-  const unreadCount = items.filter((n) => !n.read_at).length
+  // Las dos listas en una, por fecha. Se calcula al pintar y no se guarda:
+  // guardarla obligaría a mantenerla al día en los cinco sitios que tocan
+  // `items`, y el día que alguien olvidara uno la campana mentiría.
+  const todos = [...items, ...internas].sort((a, b) =>
+    a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0,
+  )
+
+  const unreadCount = todos.filter((n) => !n.read_at).length
 
   async function markRead(id: string) {
+    const ahora = new Date().toISOString()
+
+    // Cada tabla se marca en su propia ruta. El prefijo es lo que dice cuál.
+    if (id.startsWith("com:")) {
+      const real = id.slice(4)
+      setInternas((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: ahora } : n)))
+      try {
+        await api(`/api/comunicaciones/${real}/leida`, { method: "POST", body: { via: "abierta" } })
+      } catch { /* vuelve a salir sin leer; no se pierde nada */ }
+      return
+    }
+
     try {
       await api("/api/notifications/mark-read", { method: "POST", body: { id } })
       setItems((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
+        prev.map((n) => (n.id === id ? { ...n, read_at: ahora } : n)),
       )
     } catch {
       // silencioso
@@ -206,6 +264,15 @@ export function NotificationsBell() {
       await api("/api/notifications/mark-read", { method: "POST", body: { all: true } })
       const now = new Date().toISOString()
       setItems((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: now })))
+
+      // Las comunicaciones se marcan una por una: cada una es una fila que
+      // nace al leerla, y no hay «marcar todas» en el servidor porque no
+      // existen las filas que habría que marcar.
+      const pendientes = internas.filter((c) => !c.read_at)
+      setInternas((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: now })))
+      await Promise.allSettled(pendientes.map((c) =>
+        api(`/api/comunicaciones/${c.id.slice(4)}/leida`, { method: "POST", body: { via: "abierta" } }),
+      ))
     } catch {
       // silencioso
     }
@@ -213,6 +280,18 @@ export function NotificationsBell() {
 
   function handleItemClick(n: NotificationItem) {
     void markRead(n.id)
+
+    // ── UNA COMUNICACIÓN SE ABRE ENTERA ─────────────────────────────────
+    // Aquí solo caben el titular y dos líneas. Si lleva texto largo o un
+    // botón, desde la campana no se puede usar.
+    if (n.id.startsWith("com:")) {
+      window.dispatchEvent(
+        new CustomEvent("los144k:ver-comunicacion", { detail: n.id.slice(4) }),
+      )
+      setOpen(false)
+      return
+    }
+
     if (!n.source_user_id) return
 
     // ── UN MENSAJE ABRE LA CONVERSACIÓN, NO LA FICHA ────────────────────
@@ -318,10 +397,10 @@ export function NotificationsBell() {
                   </div>
                 ))
               )
-            ) : items.length === 0 ? (
+            ) : todos.length === 0 ? (
               <div className={styles.empty}>Sin notificaciones</div>
             ) : (
-              items.map((n) => (
+              todos.map((n) => (
                 <button
                   type="button"
                   key={n.id}

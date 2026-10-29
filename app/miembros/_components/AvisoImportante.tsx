@@ -82,6 +82,35 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
     return () => { vivo = false }
   }, [prueba])
 
+  // ── ABRIR UNA CONCRETA, DESDE LA CAMPANA ───────────────────────────────
+  //
+  // En la campana solo caben el titular y dos líneas. Una comunicación con
+  // texto largo o con botón ahí no se puede usar: hay que poder abrirla.
+  //
+  // Se reutiliza esta misma ventana en vez de escribir un lector aparte,
+  // porque ya sabe hacer todo lo que haría ese lector —pintar el cuerpo,
+  // el botón, la acción de Telegram, marcar como leída— y dos componentes
+  // que enseñan lo mismo acaban enseñándolo distinto.
+  //
+  // La única diferencia: esta no bloquea nada. Se abre porque alguien la
+  // pidió, así que cerrarla tocando fuera es lo que se espera.
+  useEffect(() => {
+    if (prueba) return
+    const oyente = async (e: Event) => {
+      const id = (e as CustomEvent<string>).detail
+      if (!id) return
+      try {
+        const r = await fetch("/api/comunicaciones/mias", { credentials: "include" })
+        if (!r.ok) return
+        const j = await r.json()
+        const uno = (j.lista as Aviso[] | undefined)?.find((c) => c.id === id)
+        if (uno) setAviso(uno)
+      } catch { /* silencioso: se queda en la campana */ }
+    }
+    window.addEventListener("los144k:ver-comunicacion", oyente)
+    return () => window.removeEventListener("los144k:ver-comunicacion", oyente)
+  }, [prueba])
+
   // ── MARCAR Y CERRAR ──────────────────────────────────────────────────────
   // Se cierra en cuanto la persona lo pide, sin esperar al servidor. Si la
   // petición falla, el aviso volverá la próxima vez: es molesto, pero es
