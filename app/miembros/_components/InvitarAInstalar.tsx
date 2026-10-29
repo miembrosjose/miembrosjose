@@ -29,6 +29,7 @@
 // navegador del ordenador tiene que poder seguir haciéndolo exactamente igual.
 
 import { useEffect, useState } from "react"
+import { alCambiarBloqueo } from "../_lib/bloqueo"
 import { useAuth } from "../_lib/auth-context"
 import { usePwa } from "../_lib/pwa-contexto"
 import { HojaInstalacion } from "./HojaInstalacion"
@@ -43,6 +44,9 @@ export function InvitarAInstalar() {
   // Una vez cerrada en esta sesión, no vuelve a asomar aunque pasen los
   // treinta segundos otra vez al cambiar de sección.
   const [yaSeVio, setYaSeVio] = useState(false)
+  const [bloqueado, setBloqueado] = useState(false)
+
+  useEffect(() => alCambiarBloqueo(setBloqueado), [])
 
   useEffect(() => {
     if (!listo || !user?.id || yaSeVio) return
@@ -65,6 +69,11 @@ export function InvitarAInstalar() {
     const reloj = window.setTimeout(() => setAbierta(true), PLAZOS.esperaDentroMs)
     return () => window.clearTimeout(reloj)
   }, [listo, user?.id, instalada, aparato, yaSeVio])
+
+  // Mientras haya un aviso que interrumpe, esto no sale. Volverá a
+  // intentarlo en la siguiente visita: su plazo no se gasta por no haberse
+  // llegado a enseñar.
+  if (bloqueado) return null
 
   if (!abierta || !user?.id) return null
 

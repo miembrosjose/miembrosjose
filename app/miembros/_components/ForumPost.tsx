@@ -3,7 +3,7 @@
 // Card de post do fórum + replies expandíveis inline.
 // Equivalente ao bloco renderForum().
 
-import { Heart, ThumbsDown, MessageCircle, Pencil, Trash2, AlertTriangle } from "lucide-react"
+import { CornerDownRight, Heart, ThumbsDown, MessageCircle, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import { useState, useEffect, memo } from "react"
 import { useAuth } from "../_lib/auth-context"
 import { api } from "../_lib/api"
@@ -44,6 +44,11 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
   const [likesCount, setLikesCount] = useState(post.likes_count)
   const [dislikesCount, setDislikesCount] = useState(post.dislikes_count ?? 0)
   const [repliesCount, setRepliesCount] = useState(post.replies_count)
+  // A qué comentario se responde, y cómo se llama quien lo escribió. El
+  // nombre se guarda aquí y no se busca al pintar: si ese comentario
+  // desaparece mientras alguien le responde, el formulario sigue sabiendo a
+  // quién iba en vez de quedarse en blanco.
+  const [respondiendoA, setRespondiendoA] = useState<{ id: string; nombre: string } | null>(null)
 
   // Sync estado local quando prop muda (ex: parent re-fetcha) —
   // sincroniza SÓ contadores. As flags liked/disliked do user logado
@@ -139,11 +144,12 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
     try {
       const data = await api<{ reply: ForumReply; bono_granted?: boolean }>(`/api/forum/posts/${post.id}/replies`, {
         method: "POST",
-        body: { body: text },
+        body: { body: text, parent_reply_id: respondiendoA?.id ?? null },
       })
       setReplies((prev) => [...(prev || []), data.reply])
       setRepliesCount((c) => c + 1)
       setReplyText("")
+      setRespondiendoA(null)
       // Auto-grant do bonus-ganchos disparou no servidor (post tinha tag BONO
       // e user ainda não tinha o bonus). Sinaliza pro useOwnedProducts hook
       // refetch o estado, que vai detectar o novo produto + chamar
@@ -356,23 +362,66 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
             ) : replies.length === 0 ? (
               <p className={styles.emptyMsg}>Sin respuestas aún. Sé el primero.</p>
             ) : (
-              replies.map((r) => (
-                <ReplyItem
-                  key={r.id}
-                  reply={r}
-                  postId={post.id}
-                  onEdit={onEditReply}
-                  onReport={onReportReply}
-                  onDeleted={(replyId) => {
+              // ── EL HILO, DE UN SOLO NIVEL ──────────────────────────
+              // Los comentarios en orden, y debajo de cada uno lo que cuelga
+              // de él. No hay respuestas de respuestas: el servidor las sube
+              // al mismo comentario, así que esto nunca anida más hondo.
+              //
+              // Se arma en el navegador y no en el servidor porque son
+              // doscientas filas como mucho y ya vienen ordenadas por fecha:
+              // ahorra una consulta y no cuesta nada.
+              replies
+                .filter((r) => !r.parent_reply_id)
+                .map((r) => {
+                  const suyas = replies.filter((x) => x.parent_reply_id === r.id)
+                  const quitar = (replyId: string) => {
                     setReplies((prev) => (prev || []).filter((x) => x.id !== replyId))
                     setRepliesCount((c) => Math.max(0, c - 1))
-                  }}
-                />
-              ))
+                  }
+                  return (
+                    <div key={r.id}>
+                      <ReplyItem
+                        reply={r}
+                        postId={post.id}
+                        onEdit={onEditReply}
+                        onReport={onReportReply}
+                        onDeleted={quitar}
+                        onResponder={() => setRespondiendoA({ id: r.id, nombre: r.author_name })}
+                      />
+                      {suyas.length > 0 && (
+                        <div className={styles.subRespuestas}>
+                          {suyas.map((sr) => (
+                            <ReplyItem
+                              key={sr.id}
+                              reply={sr}
+                              postId={post.id}
+                              onEdit={onEditReply}
+                              onReport={onReportReply}
+                              onDeleted={quitar}
+                              // Responder a una respuesta cuelga del MISMO
+                              // comentario: la conversación se queda donde
+                              // estaba en vez de abrir una rama que nadie va
+                              // a seguir.
+                              onResponder={() => setRespondiendoA({ id: r.id, nombre: sr.author_name })}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
             )}
             <div className={styles.replyForm}>
+              {respondiendoA && (
+                <p className={styles.respondiendoA}>
+                  Respondiendo a <strong>{respondiendoA.nombre}</strong>
+                  <button type="button" onClick={() => setRespondiendoA(null)}>
+                    cancelar
+                  </button>
+                </p>
+              )}
               <textarea
-                placeholder="Escribí tu respuesta..."
+                placeholder={respondiendoA ? `Responder a ${respondiendoA.nombre}...` : "Escribí tu respuesta..."}
                 maxLength={2000}
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
@@ -389,6 +438,8 @@ function ForumPostInner({ post, onEdit, onReport, onDelete, onDeleteAdmin, onEdi
 }
 
 type ReplyItemProps = {
+  /** Lo llama el botón «Responder». Sin él, el botón no se pinta. */
+  onResponder?: () => void
   reply: ForumReply
   postId: string
   onEdit?: (reply: ForumReply) => void
@@ -396,7 +447,7 @@ type ReplyItemProps = {
   onDeleted?: (replyId: string) => void
 }
 
-function ReplyItem({ reply, postId, onEdit, onReport, onDeleted }: ReplyItemProps) {
+function ReplyItem({ reply, postId, onEdit, onReport, onDeleted, onResponder }: ReplyItemProps) {
   // postId pode ser usado pra invalidar cache no futuro (não usado hoje, manter na assinatura por convenção do parent).
   void postId
   const { user, isAdmin } = useAuth()
@@ -527,6 +578,17 @@ function ReplyItem({ reply, postId, onEdit, onReport, onDeleted }: ReplyItemProp
               <span>{dislikesCount}</span>
             </button>
           </LikersHoverCard>
+          {onResponder && (
+            <button
+              type="button"
+              className={styles.responderBtn}
+              onClick={onResponder}
+              title="Responder"
+            >
+              <CornerDownRight size={12} />
+              <span>Responder</span>
+            </button>
+          )}
           {isOwn && onEdit && (
             <button
               type="button"

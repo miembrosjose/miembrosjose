@@ -30,7 +30,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("forum_replies")
-    .select("id, user_id, author_name, author_username, author_avatar, author_avatar_url, author_badge_id, author_star_id, author_flame_id, author_avatar_border, author_is_admin, body, created_at, edited_at, likes_count, dislikes_count")
+    // `parent_reply_id` dice de qué comentario cuelga cada respuesta. Nulo
+    // = es un comentario de primer nivel. El árbol lo arma el navegador: son
+    // doscientas filas como mucho y ya vienen ordenadas por fecha.
+    .select("id, user_id, parent_reply_id, author_name, author_username, author_avatar, author_avatar_url, author_badge_id, author_star_id, author_flame_id, author_avatar_border, author_is_admin, body, created_at, edited_at, likes_count, dislikes_count")
     .eq("post_id", id)
     .order("created_at", { ascending: true })
     .limit(200)
@@ -78,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
 
-  let body: { body?: string }
+  let body: { body?: string; parent_reply_id?: string | null }
   try { body = await req.json() } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) }
 
   const text = (body.body || "").trim()
@@ -88,6 +91,39 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Verifica que post existe e pega tags (auto-grant bono)
   const { data: post } = await supabase.from("forum_posts").select("id, tags").eq("id", id).limit(1).single()
   if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 })
+
+  // ── DE QUÉ COMENTARIO CUELGA ──────────────────────────────────────────
+  //
+  // ── POR QUÉ SOLO UN NIVEL ─────────────────────────────────────────────
+  // Si se respondiera a una respuesta, el hilo se hunde: a los cuatro
+  // niveles no cabe en un móvil y la conversación deja de leerse. Cuando
+  // alguien responde a una respuesta, su mensaje se cuelga del MISMO
+  // comentario de primer nivel. Se queda en la conversación donde estaba,
+  // en vez de abrir una rama nueva que nadie va a seguir.
+  //
+  // Esto no se comprueba en el navegador: se resuelve aquí, con la fila
+  // delante, porque es la única forma de que no dependa de que el cliente
+  // mande lo correcto.
+  let parentId: string | null = null
+  if (body.parent_reply_id) {
+    const { data: padre } = await supabase
+      .from("forum_replies")
+      .select("id, post_id, parent_reply_id, user_id, author_name")
+      .eq("id", body.parent_reply_id)
+      .limit(1)
+      .maybeSingle()
+
+    if (!padre) {
+      return NextResponse.json({ error: "Ese comentario ya no existe" }, { status: 404 })
+    }
+    // Y tiene que ser de ESTE post. Sin esto, un identificador de otro hilo
+    // colgaría una respuesta donde no toca.
+    if (padre.post_id !== id) {
+      return NextResponse.json({ error: "Ese comentario no es de esta publicación" }, { status: 400 })
+    }
+    // Si el padre ya era una respuesta, se sube al abuelo: un solo nivel.
+    parentId = (padre.parent_reply_id as string | null) ?? (padre.id as string)
+  }
 
   const meta = (user.user_metadata || {}) as {
     full_name?: string
@@ -124,8 +160,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       author_avatar_border: authorAvatarBorder,
       author_is_admin: isAdmin(user),
       body: text,
+      parent_reply_id: parentId,
     })
-    .select("id, user_id, author_name, author_avatar, author_avatar_url, author_badge_id, author_star_id, author_flame_id, author_avatar_border, author_is_admin, body, created_at")
+    .select("id, user_id, parent_reply_id, author_name, author_avatar, author_avatar_url, author_badge_id, author_star_id, author_flame_id, author_avatar_border, author_is_admin, body, created_at")
     .single()
 
   if (error) {
@@ -135,6 +172,54 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Detecta cruzamento de patente após reply (não bloqueia resposta)
   maybeBroadcastRankUp(user).catch(() => {})
+
+  // ── EL AVISO A QUIEN SE LE RESPONDE ───────────────────────────────────
+  //
+  // Va a `notifications`, que es la tabla de avisos personales que ya
+  // existe y que la campana ya lee. No se monta nada nuevo: la columna
+  // `source_forum_reply_id` llevaba ahí desde el principio, esperando
+  // justo esto.
+  //
+  // ── POR QUÉ NO MANDA UN CORREO ────────────────────────────────────────
+  // Porque una conversación viva genera respuestas cada pocos minutos, y
+  // un correo por cada una es la forma más rápida de que alguien se dé de
+  // baja de todo. Si algún día hace falta, va por el resumen, no por aviso
+  // inmediato.
+  //
+  // ── Y POR QUÉ NO BLOQUEA LA RESPUESTA ─────────────────────────────────
+  // Que falle el aviso no puede impedir que el comentario se publique. Se
+  // intenta, y si no sale se anota y se sigue.
+  if (parentId && data) {
+    void (async () => {
+      try {
+        const adminClient = getSupabaseAdmin()
+        const { data: padre } = await adminClient
+          .from("forum_replies")
+          .select("user_id")
+          .eq("id", parentId)
+          .limit(1)
+          .maybeSingle()
+
+        const destinatario = padre?.user_id as string | undefined
+        // Responderse a uno mismo no se avisa: ya sabe lo que ha escrito.
+        if (!destinatario || destinatario === user.id) return
+
+        await adminClient.from("notifications").insert({
+          user_id: destinatario,
+          type: "forum_reply_to_reply",
+          source_user_id: user.id,
+          source_user_name: authorName,
+          source_user_avatar_url: authorAvatarUrl,
+          source_forum_post_id: id,
+          source_forum_reply_id: data.id,
+          title: `${authorName} respondió a tu comentario`,
+          preview: text.slice(0, 140),
+        })
+      } catch (e) {
+        console.error("[forum] aviso de respuesta:", e)
+      }
+    })()
+  }
 
   // Auto-grant bonus-ganchos quando o post tem tag "bono".
   // SÍNCRONO (await) — em edge runtime fire-and-forget IIFE é abortada

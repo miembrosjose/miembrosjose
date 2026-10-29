@@ -21,6 +21,7 @@ import { MessengerWidget } from "./_components/MessengerWidget"
 import { TelegramFab } from "./_components/TelegramFab"
 import { InvitarAInstalar } from "./_components/InvitarAInstalar"
 import { PwaProvider } from "./_lib/pwa-contexto"
+import { AvisoImportante } from "./_components/AvisoImportante"
 import { SpaceBackground } from "./_components/SpaceBackground"
 import "./_styles/tokens.css"
 import "./_styles/episode-notes.css"
@@ -86,6 +87,12 @@ export default function MiembrosLayout({
                       los avisos— y se asegura de que nunca salgan las dos a la
                       vez. No bloquea nada: la hoja se cierra tocando fuera, con
                       Escape o con el «ahora no». Los plazos: lib/pwa/reglas.ts. */}
+                  {/* Lo que de verdad no puede pasarse por alto. Sale una
+                      sola vez por persona, y la marca de haberlo cerrado vive
+                      en el servidor: cambiar de móvil o limpiar el navegador
+                      no lo hace volver. Si no hay ninguno pendiente, no
+                      pinta nada. */}
+                  <AvisoImportante />
                   <InvitarAInstalar />
                 </ViewProvider>
               </UnreadDMProvider>

@@ -48,6 +48,9 @@ export type ForumPost = ForumAuthor & {
 }
 
 export type ForumReply = ForumAuthor & {
+  /** De qué comentario cuelga. Nulo = es de primer nivel. */
+  parent_reply_id?: string | null
+
   id: string
   body: string
   created_at: string

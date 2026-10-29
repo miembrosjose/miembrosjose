@@ -1,0 +1,163 @@
+/* EL AVISO QUE INTERRUMPE — colocación y respiración.
+ *
+ * ── POR QUÉ ESTÁ POR ENCIMA DE TODO ───────────────────────────────────────
+ * La escala de este proyecto va en miles: 9000 el de series, 9500 el de XP,
+ * 9600 la campana, 9700 la invitación a instalar. Este va a 9800 porque es
+ * lo único que de verdad bloquea: si saliera por debajo de cualquiera de los
+ * otros, se vería el oscurecido sin la ventana y parecería que la plataforma
+ * se ha colgado.
+ *
+ * ── Y POR QUÉ ESO NO CHOCA CON LA INVITACIÓN A INSTALAR ───────────────────
+ * Porque no coinciden. Mientras hay un aviso sin cerrar, la invitación no
+ * llega a pedirse: quien decide montarla mira primero si hay algo bloqueando.
+ */
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 9800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 2, 8, 0.86);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: aparecer 220ms ease-out;
+}
+
+.ventana {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  /* En un móvil apaisado, o con el teclado abierto, la ventana puede no
+     caber. Se le pone techo y se deja desplazar por dentro: lo que no puede
+     pasar es que el botón de cerrar quede fuera de la pantalla. */
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 32px 26px 26px;
+  background: #0b0b13;
+  border: 1px solid #2a2036;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  animation: subir 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.equis {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  /* 40px de lado: es el mínimo con el que un dedo acierta sin mirar. Más
+     pequeño y hay que apuntar, que en una ventana que bloquea se siente
+     como si no te dejaran salir. */
+  width: 40px;
+  height: 40px;
+  color: #7a7a8a;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+.equis:hover { color: #F3F6FA; }
+.equis:focus-visible {
+  outline: 2px solid #6D4A9B;
+  outline-offset: -2px;
+  color: #F3F6FA;
+}
+
+.prueba {
+  margin: 0 0 14px;
+  padding: 6px 10px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e6cf95;
+  background: rgba(230, 207, 149, 0.1);
+  border: 1px solid rgba(230, 207, 149, 0.3);
+}
+
+.kicker {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.titulo {
+  margin: 0 0 16px;
+  font-family: var(--font-cinzel, serif);
+  font-size: 24px;
+  line-height: 1.2;
+  color: #F3F6FA;
+}
+
+.imagen {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 18px;
+  border: 1px solid #1f1f2c;
+}
+
+.cuerpo p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #a8a8bc;
+}
+.cuerpo p:last-child { margin-bottom: 0; }
+
+.botones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.principal {
+  display: block;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  color: #e8dcff;
+  background: rgba(109, 74, 155, 0.3);
+  border: 1px solid #6D4A9B;
+  transition: background 160ms ease;
+}
+.principal:hover { background: rgba(109, 74, 155, 0.5); }
+
+.secundario {
+  padding: 12px 20px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7a7a8a;
+  background: none;
+  border: 1px solid #1f1f2c;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.secundario:hover { color: #F3F6FA; border-color: #3a3a4a; }
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Quien ha pedido que no se mueva nada, no quiere que esto se mueva tampoco.
+   Sigue apareciendo: lo que se quita es el recorrido, no el aviso. */
+@media (prefers-reduced-motion: reduce) {
+  .fondo, .ventana { animation: none; }
+}
