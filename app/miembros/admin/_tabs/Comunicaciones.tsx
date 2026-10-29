@@ -1100,8 +1100,10 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
           nada de eso —nadie informa de si se miró la pantalla de bloqueo—
           así que en vez de cuatro cifras en cero se dice lo que sí se sabe:
           a cuántos teléfonos llegó, que lo guarda la propia fila. */}
-      {c.status === "sent" && c.canal !== "push" && <Resultados id={id} previstos={c.recipients_estimated} />}
-      {c.status === "sent" && c.canal === "push" && (
+      {c.status === "sent" && canalesDe(c).includes("email") && (
+        <Resultados id={id} previstos={c.recipients_estimated} />
+      )}
+      {c.status === "sent" && canalesDe(c).includes("push") && (
         <ResultadosPush id={id} previstos={c.recipients_estimated} />
       )}
 
@@ -1115,7 +1117,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
 
           En móvil se apilan y el preview va primero de la lista de la derecha:
           ahí no cabe tenerlo siempre a la vista, pero sí que esté cerca. */}
-      <NavSecciones editable={editable} canal={c.canal} />
+      <NavSecciones editable={editable} canales={canalesDe(c)} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
         <div className="space-y-5">
@@ -1136,12 +1138,19 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
             que solo se queda dentro de la plataforma no llega a ninguna
             bandeja ni a ningún teléfono: su vista previa es el botón «Ver
             como lo verán», que está al lado de donde se escribe. */}
+        {/* Una vista previa por canal. Si va por los dos, se ven las dos:
+            la pregunta «¿cómo está quedando?» tiene dos respuestas y
+            enseñar solo una es enseñar media verdad. */}
         {(canalesDe(c).includes("email") || canalesDe(c).includes("push")) && (
         <div className="space-y-5 lg:sticky lg:top-4">
-          {c.canal === "push" ? <VistaPreviaPush c={c} /> : <Previsualizacion c={c} />}
-          {editable && (c.canal === "push"
-            ? <PruebaPush id={id} titulo={c.subject} onEnviada={setUltimaPrueba} />
-            : <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />)}
+          {canalesDe(c).includes("push") && <VistaPreviaPush c={c} />}
+          {canalesDe(c).includes("email") && <Previsualizacion c={c} />}
+          {editable && canalesDe(c).includes("push") && (
+            <PruebaPush id={id} titulo={c.subject} onEnviada={setUltimaPrueba} />
+          )}
+          {editable && canalesDe(c).includes("email") && (
+            <Prueba id={id} asunto={c.subject} onEnviada={setUltimaPrueba} />
+          )}
         </div>
         )}
       </div>
@@ -1236,13 +1245,18 @@ const SECCIONES: Record<"email" | "push", Array<{ id: string; etiqueta: string }
   ],
 }
 
-function NavSecciones({ editable, canal }: { editable: boolean; canal: string }) {
-  // Una comunicación que solo va por dentro tiene dos bloques —los canales y
-  // lo que se ve— y no necesita índice para dos cosas. Sin esta salida,
-  // `SECCIONES["interno"]` devolvía undefined y el `.map` de abajo tiraba el
-  // editor entero.
-  const lista = SECCIONES[canal as "email" | "push"]
-  if (!editable || !lista) return null
+function NavSecciones({ editable, canales }: { editable: boolean; canales: Canal[] }) {
+  // ── EL ÍNDICE ES LA SUMA DE LOS CANALES ────────────────────────────────
+  // Una comunicación que va por correo Y por notificación tiene los bloques
+  // de los dos, así que el índice tiene que llevar a los dos. Antes salía de
+  // un solo valor, y entonces la mitad de la pantalla no tenía entrada.
+  //
+  // Lo interno no pone secciones: son dos bloques y están arriba del todo.
+  const lista = [
+    ...(canales.includes("email") ? SECCIONES.email : []),
+    ...(canales.includes("push") ? SECCIONES.push : []),
+  ]
+  if (!editable || lista.length === 0) return null
   return (
     <nav className="sticky top-0 z-10 -mx-4 flex gap-1 overflow-x-auto border-b border-[#14141e] bg-[#000000]/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
       {lista.map((s) => (
@@ -1413,6 +1427,12 @@ function CanalesYDentro({
     // La base también lo rechaza, pero aquí se evita el viaje y el susto.
     if (nuevos.length === 0) return
     editar("canales", nuevos)
+    // ── Y TAMBIÉN `canal` ──────────────────────────────────────────────
+    // El servidor lo deriva solo, pero el navegador no lo sabe hasta que
+    // recarga. Sin esto, la pantalla se quedaba con las casillas diciendo
+    // una cosa y el formulario, el índice y la vista previa diciendo otra:
+    // marcar «Notificación» y seguir viendo el formulario del correo.
+    editar("canal", nuevos.includes("email") ? "email" : nuevos[0])
   }
 
   const campo = (k: keyof Comunicacion) => ({
@@ -1640,19 +1660,24 @@ function Campos({
   editable: boolean
   llevaFecha: boolean
 }) {
-  // Una notificación se escribe en otra pantalla, no en esta con la mitad
-  // de los campos ocultos. Ver `CamposPush`.
-  if (c.canal === "push") return <CamposPush c={c} editar={editar} editable={editable} />
-
-  // ── SIN CORREO NO HAY CAMPOS DE CORREO ─────────────────────────────────
-  // El asunto, el preencabezado, el eyebrow y el botón del correo no se ven
-  // en ningún sitio si la comunicación no sale por correo. Enseñarlos haría
-  // creer que sirven para algo, y alguien acabaría escribiendo el titular en
-  // «Asunto» y preguntándose por qué no aparece.
+  // ── CADA CANAL, SUS CAMPOS ─────────────────────────────────────────────
   //
-  // Lo que se ve dentro de la plataforma ya lo pinta `CanalesYDentro`, que
-  // se dibuja justo encima de esto.
-  if (!canalesDe(c).includes("email")) return null
+  // Un aviso al móvil no se escribe con los campos del correo a medias:
+  // «asunto» y «título» no se escriben igual —un asunto puede ser una frase
+  // entera porque hay un correo debajo que la explica; un título de
+  // notificación es lo único que mucha gente va a leer, con la pantalla
+  // apagándose. Ver `CamposPush`.
+  //
+  // Y si no sale por ninguno de los dos, no se enseña nada: el asunto, el
+  // preencabezado y el botón no se ven en ningún sitio, y tenerlos delante
+  // lleva a escribir el titular en «Asunto» y preguntarse por qué no sale.
+  // Lo que se ve dentro de la plataforma lo pinta `CanalesYDentro`, arriba.
+  const canales = canalesDe(c)
+  const hayCorreo = canales.includes("email")
+  const hayAviso = canales.includes("push")
+
+  if (!hayCorreo && !hayAviso) return null
+  if (hayAviso && !hayCorreo) return <CamposPush c={c} editar={editar} editable={editable} />
 
   const enCodigo = c.email_modo === "codigo"
 
@@ -3424,7 +3449,11 @@ function ResumenFinal({
   // Un aviso no se puede programar: lo reparte esta plataforma, y nada
   // despierta al servidor a las siete de la tarde. Ver `validarNotificacion`
   // en lib/comunicaciones/validacion.ts.
-  const esPush = c.canal === "push"
+  // Se mira la LISTA, no el valor viejo. Esta pantalla es la última que se
+  // ve antes de que algo salga a mil bandejas: si dijera «Correo» cuando
+  // además va al móvil, estaría pidiendo permiso para otra cosa.
+  const canales = canalesDe(c)
+  const esPush = canales.includes("push") && !canales.includes("email")
   const [modo, setModo] = useState<"ahora" | "programar">("ahora")
   const [fecha, setFecha] = useState("")
   const [hora, setHora] = useState("19:00")
@@ -3470,9 +3499,24 @@ function ResumenFinal({
     <Modal titulo="Confirmar comunicación" onCerrar={enviando ? undefined : onCerrar}>
       <div className="space-y-5">
         <dl className="space-y-3 border border-[#1f1f2c] bg-[#0d0d16] p-4 text-sm">
-          <Dato etiqueta="Canal" valor={esPush ? "Notificación en el teléfono" : "Correo"} />
+          <Dato
+            etiqueta={canales.length > 1 ? "Canales" : "Canal"}
+            valor={canales.map((x) => (
+              x === "push" ? "Notificación en el teléfono"
+                : x === "interno" ? "Dentro de la plataforma"
+                : "Correo"
+            )).join(" + ")}
+          />
           <Dato etiqueta={esPush ? "Título" : "Asunto"} valor={c.subject} />
-          <Dato etiqueta="Tipo" valor={nombreDeTipo(c.type, c.canal)} />
+          {canales.includes("email") && (
+            <Dato etiqueta="Tipo" valor={nombreDeTipo(c.type, "email")} />
+          )}
+          {canales.includes("interno") && (
+            <Dato
+              etiqueta="Dentro de la plataforma"
+              valor="No sale ahora: se publica aparte, con su propio botón."
+            />
+          )}
           <Dato etiqueta="Audiencia" valor={describir(c.audience, null)} />
           <Dato
             etiqueta="Envío"
