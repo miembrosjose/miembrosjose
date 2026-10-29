@@ -108,6 +108,16 @@ type TabConfig = {
   label: string
   description: string
   icon: typeof Unlock
+  /**
+   * Las pantallas que cuelgan de esta.
+   *
+   * ── POR QUÉ UN NIVEL Y NO UN ÁRBOL ──────────────────────────────────────
+   * Porque la única entrada que lo necesita es Comunicaciones, y un árbol
+   * general traería plegado, memoria de qué estaba abierto y navegación por
+   * teclado para un caso. Si algún día hay un segundo, se amplía; hasta
+   * entonces, esto es lo que hace falta y nada más.
+   */
+  hijas?: Array<{ id: Tab; label: string; description: string; icon: typeof Unlock }>
 }
 
 type TabGroup = {
@@ -179,27 +189,37 @@ const TAB_GROUPS: TabGroup[] = [
       },
       {
         id: "comms",
-        label: "Correos",
-        description: "A la bandeja de entrada. Titular, imagen y texto largo; se puede programar",
+        label: "Comunicaciones",
+        description: "Las cuatro formas de decir algo a La Red",
         icon: Mail,
-      },
-      {
-        id: "comms_push",
-        label: "Notificaciones",
-        description: "Suenan en el móvil al momento. Un título y dos líneas",
-        icon: Bell,
-      },
-      {
-        id: "comms_interno",
-        label: "Dentro de la plataforma",
-        description: "Espera a que entre. No depende del correo ni de los avisos",
-        icon: MessageSquare,
-      },
-      {
-        id: "comms_dm",
-        label: "Mensajes directos",
-        description: "A su bandeja de mensajes, donde puede responderte",
-        icon: Send,
+        // Al entrar en Comunicaciones se abre esto. La entrada de arriba no
+        // es una pantalla aparte: es la puerta, y lleva a la primera.
+        hijas: [
+          {
+            id: "comms",
+            label: "Correos",
+            description: "A la bandeja de entrada. Titular, imagen y texto largo; se puede programar",
+            icon: Mail,
+          },
+          {
+            id: "comms_push",
+            label: "Notificaciones",
+            description: "Suenan en el móvil al momento. Un título y dos líneas",
+            icon: Bell,
+          },
+          {
+            id: "comms_interno",
+            label: "Dentro de la plataforma",
+            description: "Espera a que entre. No depende del correo ni de los avisos",
+            icon: MessageSquare,
+          },
+          {
+            id: "comms_dm",
+            label: "Mensajes directos",
+            description: "A su bandeja de mensajes, donde puede responderte",
+            icon: Send,
+          },
+        ],
       },
     ],
   },
@@ -282,10 +302,10 @@ export function AdminPanel() {
               <div className="space-y-1">
                 {group.tabs.map((t) => {
                   const Icon = t.icon
-                  const isActive = tab === t.id
+                  const isActive = tab === t.id || !!t.hijas?.some((h) => h.id === tab)
                   return (
+                    <div key={t.id}>
                     <button
-                      key={t.id}
                       type="button"
                       onClick={() => {
                         setTab(t.id)
@@ -321,6 +341,47 @@ export function AdminPanel() {
                         <ChevronRight size={14} className="text-[#6D4A9B]" />
                       )}
                     </button>
+
+                    {/* ── LAS HIJAS ─────────────────────────────────────
+                        Solo se despliegan cuando se está DENTRO. Tenerlas
+                        siempre a la vista alargaría el menú con cuatro
+                        entradas que la mayoría de las veces no se usan, y
+                        plegarlas a mano obligaría a recordar cuál estaba
+                        abierta entre visitas. */}
+                    {t.hijas && t.hijas.some((h) => h.id === tab) && (
+                      <div className="ml-[1.4rem] space-y-0.5 border-l border-[#1f1f2c] pl-2">
+                        {t.hijas.map((h) => {
+                          const IconoHija = h.icon
+                          const activa = tab === h.id
+                          return (
+                            <button
+                              key={h.id}
+                              type="button"
+                              onClick={() => {
+                                setTab(h.id)
+                                setMobileNavOpen(false)
+                              }}
+                              className={`group flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors [font-family:var(--font-geist-sans)] ${
+                                activa ? "bg-[#6D4A9B]/10" : "hover:bg-[#12121a]/40"
+                              }`}
+                            >
+                              <IconoHija
+                                size={13}
+                                className={activa ? "text-[#6D4A9B]" : "text-[#5a5a6a] group-hover:text-[#a0a0b0]"}
+                              />
+                              <span
+                                className={`flex-1 text-[11px] ${
+                                  activa ? "font-semibold text-[#F3F6FA]" : "text-[#8a8fa8] group-hover:text-[#F3F6FA]"
+                                }`}
+                              >
+                                {h.label}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                   )
                 })}
               </div>

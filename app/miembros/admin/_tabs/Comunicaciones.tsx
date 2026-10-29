@@ -312,6 +312,14 @@ const CANALES: Array<{ id: Canal; nombre: string; que: string; largo: string }> 
 
 const CANAL = (id: Canal) => CANALES.find((c) => c.id === id)
 
+/** Cómo se llama lo que crea el botón de cada pantalla. */
+const NUEVA = (canal: Canal) => ({
+  email: "Nuevo correo",
+  push: "Nueva notificación",
+  interno: "Nuevo comunicado",
+  dm: "Nuevo mensaje directo",
+}[canal] ?? "Nueva comunicación")
+
 /** El dibujo de cada canal. Aparte del catálogo: eso es texto, esto es React. */
 const ICONO_CANAL: Record<Canal, typeof Mail> = {
   email: Mail,
@@ -423,6 +431,19 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
         (f.internal_title || "").toLowerCase().includes(q))
     : filas
 
+  /**
+   * El botón de «nueva».
+   *
+   * En correo y notificación abre el diálogo del tipo, que decide la
+   * plantilla y qué preferencia del miembro gobierna el envío. En los otros
+   * dos el tipo no gobierna nada, así que crea y entra directamente: una
+   * pregunta cuya respuesta da igual es una pregunta de más.
+   */
+  const nueva = () => {
+    if (canal === "email" || canal === "push") setEligiendoTipo(true)
+    else void crear("especial", canal)
+  }
+
   const borrarMarcados = async () => {
     if (marcados.length === 0) return
     const cuantos = marcados.length
@@ -462,18 +483,6 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
     }
   }
 
-  // Abrir «Nueva» en una pantalla que no es la del correo crea y entra
-  // directamente, sin diálogo de por medio.
-  useEffect(() => {
-    if (eligiendoTipo && canal !== "email" && canal !== "push") {
-      setEligiendoTipo(false)
-      void crear("especial", canal)
-    }
-    // `crear` se recrea en cada pintado y no se puede poner en las
-    // dependencias sin un bucle. Lo que importa es el gesto de abrir.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligiendoTipo, canal])
-
   const crear = async (tipo: string, canal: Canal) => {
     try {
       const r = await fetch("/api/admin/comunicaciones", {
@@ -504,10 +513,10 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
         </div>
         <button
           type="button"
-          onClick={() => setEligiendoTipo(true)}
+          onClick={nueva}
           className="inline-flex shrink-0 items-center justify-center gap-2 border border-[#6D4A9B] bg-[#6D4A9B]/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#c3b2e0] transition-colors hover:bg-[#6D4A9B]/30"
         >
-          <Plus size={14} /> Nueva comunicación
+          <Plus size={14} /> {NUEVA(canal)}
         </button>
       </header>
 
@@ -601,7 +610,7 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
           <Loader2 size={15} className="animate-spin" /> Cargando…
         </div>
       ) : filas.length === 0 ? (
-        <Vacio pestana={pestana} onCrear={() => setEligiendoTipo(true)} />
+        <Vacio pestana={pestana} onCrear={nueva} canal={canal} />
       ) : (
         <div className="space-y-2">
           {filtradas.length === 0 ? (
@@ -904,7 +913,9 @@ function Cifra({ valor, etiqueta }: { valor: number; etiqueta: string }) {
   )
 }
 
-function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
+function Vacio({ pestana, onCrear, canal }: {
+  canal: Canal; pestana: string; onCrear: () => void
+}) {
   const texto: Record<string, string> = {
     borradores: "No hay ningún borrador. Empieza uno cuando tengas algo que contar.",
     programadas: "No hay nada programado ahora mismo.",
@@ -921,7 +932,7 @@ function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
           onClick={onCrear}
           className="mt-5 inline-flex items-center gap-2 border border-[#2f2f42] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a0a0b0] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0]"
         >
-          <Plus size={13} /> Nueva comunicación
+          <Plus size={13} /> {NUEVA(canal)}
         </button>
       )}
     </div>

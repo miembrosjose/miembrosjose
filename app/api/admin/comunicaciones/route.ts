@@ -99,7 +99,25 @@ export async function POST(req: NextRequest) {
   // Por dónde va a salir se elige al crearla, y se puede cambiar mientras
   // sea borrador. Cualquier cosa que no sea "push" es correo: es lo que
   // eran todas las que ya existen.
-  const canal = body.canal === "push" ? "push" : body.canal === "interno" ? "interno" : "email"
+  const CANALES_VALIDOS = ["email", "push", "interno", "dm"] as const
+  type CanalValido = (typeof CANALES_VALIDOS)[number]
+
+  // ── POR QUÉ SE RECHAZA EN VEZ DE CAER A CORREO ───────────────────────
+  // Antes era una cadena de ternarios que terminaba en «cualquier otra cosa
+  // es correo». Al añadir el cuarto canal nadie tocó esa línea, y crear
+  // desde mensajes directos creaba un correo: se abría el editor
+  // equivocado y el borrador aparecía en la lista de otro.
+  //
+  // Un valor desconocido no es un correo. Es un error, y decirlo cuesta lo
+  // mismo que inventarse una respuesta.
+  const pedido = typeof body.canal === "string" ? body.canal : "email"
+  if (!CANALES_VALIDOS.includes(pedido as CanalValido)) {
+    return NextResponse.json(
+      { error: `«${pedido}» no es una forma de comunicar que exista.` },
+      { status: 400 },
+    )
+  }
+  const canal = pedido as CanalValido
 
   // ── LOS CANALES ─────────────────────────────────────────────────────────
   // Se nace con uno. Añadir el segundo —que una misma comunicación salga por
@@ -115,7 +133,6 @@ export async function POST(req: NextRequest) {
       type: tipo,
       canal,
       canales,
-      internal_title: `${def.nombre} · sin título`,
       // El eyebrow y el texto del botón son del correo: en una
       // notificación no se ven. Nacer con ellos no rompe nada, pero deja
       // dos campos rellenos que luego avisan de que no se usan.
@@ -124,6 +141,14 @@ export async function POST(req: NextRequest) {
       // falta: nacer con ellos dejaría dos campos rellenos que no se ven.
       eyebrow: canal === "email" ? def.eyebrowPorDefecto : "",
       cta_text: canal === "email" ? def.ctaPorDefecto : null,
+      // El nombre interno dice de qué pantalla salió. Sin esto, cuatro
+      // borradores recién creados se llaman los cuatro igual.
+      internal_title: `${
+        canal === "push" ? "Notificación"
+          : canal === "interno" ? "Comunicado"
+          : canal === "dm" ? "Mensaje directo"
+          : def.nombre
+      } · sin título`,
       audience: { kind: "todos" },
       status: "draft",
       created_by: g.user.id,
