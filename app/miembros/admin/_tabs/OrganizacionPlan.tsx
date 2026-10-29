@@ -335,7 +335,24 @@ export function OrganizacionPlan({ mes, esPropietario }: { mes: string; esPropie
       const r = await fetch(`/api/admin/marketing/plan?mes=${mes}`, { credentials: "include" })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || "No se pudo cargar")
-      setP(j.plan ?? { mes, frecuencias: j.frecuenciasHeredadas ?? [] })
+
+      // ── LAS CATEGORÍAS QUE YA NO EXISTEN ──────────────────────────────
+      // El acuerdo está guardado como JSON en la fila del mes, así que
+      // quitar una categoría del código no la quita de ahí: «protocolo»
+      // seguía saliendo en pantalla, sin nombre ni explicación porque el
+      // catálogo ya no la tenía.
+      //
+      // Y era peor que un renglón feo: al guardar se mandaba entera, el
+      // servidor la rechazaba por no existir, y el plan ENTERO dejaba de
+      // poder guardarse. Se cae aquí, al leer, y el primer guardado deja
+      // la fila limpia.
+      const plan = j.plan ?? { mes, frecuencias: j.frecuenciasHeredadas ?? [] }
+      setP({
+        ...plan,
+        frecuencias: (plan.frecuencias ?? []).filter(
+          (f: { categoria: string }) => CATALOGO[f.categoria as Categoria],
+        ),
+      })
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar")
