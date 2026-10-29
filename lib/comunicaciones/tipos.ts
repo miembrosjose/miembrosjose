@@ -412,6 +412,32 @@ export type Canal = "email" | "push" | "interno" | "dm"
 export type Comunicacion = {
   id: string
   type: TipoComunicacion
+
+  // ── LOS CUATRO CANALES ──────────────────────────────────────────
+  // Opcionales porque entre desplegar y correr el SQL hay un hueco en el
+  // que estas columnas no llegan. Quien las lea tiene que contar con eso.
+  canales?: Canal[]
+
+  // Lo que se ve dentro de la plataforma. Caen a los del correo si estan
+  // vacios, igual que al dibujarlos.
+  interno_titulo?: string | null
+  interno_cuerpo?: string | null
+  interno_image_url?: string | null
+  interno_cta_text?: string | null
+  interno_cta_url?: string | null
+  interno_cta_accion?: "telegram" | null
+  display_mode?: "feed" | "modal_once"
+  audiencia_hasta?: string | null
+  published_at?: string | null
+
+  // El mensaje directo
+  dm_texto?: string | null
+  dm_enviado_at?: string | null
+  dm_enviados?: number | null
+
+  // El correo escrito a mano
+  email_modo?: "visual" | "codigo" | null
+  email_html?: string | null
   /** Por dónde sale. Lo que ya existía es correo, por el valor por defecto. */
   canal: Canal
   internal_title: string

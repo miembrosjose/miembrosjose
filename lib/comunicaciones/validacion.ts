@@ -153,12 +153,109 @@ function validarNotificacion(
   return { puedeEnviar: errores.length === 0, errores, avisos }
 }
 
+/**
+ * Un comunicado dentro de la plataforma.
+ *
+ * ── LO QUE DE VERDAD HACE FALTA ───────────────────────────────────────────
+ * Un titular y un texto. Nada más: no hay bandeja de entrada que ganar, ni
+ * preencabezado, ni pie, ni baja. Quien lo lee ya está dentro y ya ha
+ * decidido abrirlo.
+ *
+ * ── Y POR QUÉ EL BOTÓN NO ES OBLIGATORIO ──────────────────────────────────
+ * Porque un aviso puede ser solo un aviso. En el correo se avisa de que sin
+ * botón «nadie tendrá adónde ir», y es cierto: un correo existe para sacarte
+ * de la bandeja. Esto no: ya estás donde tienes que estar.
+ */
+function validarComunicadoInterno(c: Partial<Comunicacion>): Veredicto {
+  const errores: Hallazgo[] = []
+  const avisos: Hallazgo[] = []
+  const err = (campo: string, mensaje: string) => errores.push({ campo, nivel: "error", mensaje })
+  const avi = (campo: string, mensaje: string) => avisos.push({ campo, nivel: "aviso", mensaje })
+
+  // Los campos de dentro caen a los del correo cuando están vacíos, igual que
+  // al dibujarlos. Si no, marcar «también dentro» en algo ya escrito pediría
+  // reescribirlo entero.
+  const titulo = (c.interno_titulo || c.heading || "").trim()
+  const cuerpo = (c.interno_cuerpo || c.body || "").trim()
+
+  if (!titulo) err("interno_titulo", "Falta el titular. Es lo primero que se lee.")
+  if (!cuerpo) err("interno_cuerpo", "Falta el texto.")
+
+  // El botón: o lleva a una dirección, o hace algo aquí dentro. Las dos no.
+  const textoBoton = (c.interno_cta_text || "").trim()
+  const destino = (c.interno_cta_url || "").trim()
+  const accion = c.interno_cta_accion || null
+
+  if (textoBoton && !destino && !accion) {
+    err("interno_cta_url", "El botón tiene texto pero no hace nada. Ponle una dirección o elige una acción.")
+  }
+  if (destino && !textoBoton) {
+    err("interno_cta_text", "Hay una dirección pero el botón no tiene texto.")
+  }
+  if (destino && !esUrlValida(destino)) {
+    err("interno_cta_url", "La dirección del botón no es válida. Tiene que empezar por http:// o https://.")
+  }
+
+  // ── EL QUE INTERRUMPE AVISA DE LO QUE NO SE DESHACE ───────────────────
+  // Una vez que alguien lo cierra, no vuelve a salirle nunca. Decirlo aquí,
+  // y no después, es lo que permite revisarlo antes en vez de descubrirlo.
+  if (c.display_mode === "modal_once") {
+    avi(
+      "display_mode",
+      "Interrumpe una vez: quien lo cierre no volverá a verlo nunca. "
+      + "Úsalo con «Ver como lo verán» antes de publicar.",
+    )
+  }
+
+  return { puedeEnviar: errores.length === 0, errores, avisos }
+}
+
+/**
+ * Un mensaje directo.
+ *
+ * ── SOLO HACE FALTA EL TEXTO ──────────────────────────────────────────────
+ * Es una burbuja de chat. No tiene asunto, ni titular, ni botón, ni pie: lo
+ * que se manda es lo que se escribe.
+ *
+ * ── LO QUE SÍ SE AVISA ────────────────────────────────────────────────────
+ * Que no se puede retirar. Es el único de los cuatro del que no hay vuelta
+ * atrás, y el aviso vale más aquí que en cualquier otro sitio.
+ */
+function validarMensajeDirecto(c: Partial<Comunicacion>): Veredicto {
+  const errores: Hallazgo[] = []
+  const avisos: Hallazgo[] = []
+
+  const texto = (c.dm_texto || c.body || "").trim()
+  if (!texto) {
+    errores.push({ campo: "dm_texto", nivel: "error", mensaje: "No hay nada escrito." })
+  } else if (texto.length > 4000) {
+    avisos.push({
+      campo: "dm_texto",
+      nivel: "aviso",
+      mensaje: `Son ${texto.length} caracteres. En una burbuja de chat eso es un muro: `
+        + "lo largo se lee mejor por correo.",
+    })
+  }
+
+  return { puedeEnviar: errores.length === 0, errores, avisos }
+}
+
 export function validarComunicacion(
   c: Partial<Comunicacion>,
   op: OpcionesValidacion = {},
 ): Veredicto {
-  // Una notificación se comprueba con otras reglas: ver `validarNotificacion`.
+  // ── CADA FORMA DE COMUNICAR SE COMPRUEBA CON SUS REGLAS ───────────────
+  //
+  // Lo de abajo son las reglas del CORREO: asunto, preencabezado, titular,
+  // botón con su dirección. Aplicarlas a los otros tres pide cosas que esa
+  // forma de comunicar no tiene, y deja el editor lleno de errores rojos que
+  // no se pueden resolver porque no hay campo donde resolverlos.
+  //
+  // Es justo lo que pasaba: un mensaje directo exigiendo un asunto y un
+  // preencabezado que nunca se van a ver en ningún sitio.
   if (c.canal === "push") return validarNotificacion(c, op)
+  if (c.canal === "interno") return validarComunicadoInterno(c)
+  if (c.canal === "dm") return validarMensajeDirecto(c)
 
   const errores: Hallazgo[] = []
   const avisos: Hallazgo[] = []
