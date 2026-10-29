@@ -720,6 +720,46 @@ export async function contarAudiencia(
   return resumen
 }
 
+/**
+ * Lo mismo, y además QUIÉNES son.
+ *
+ * ── POR QUÉ HACÍA FALTA ───────────────────────────────────────────────────
+ * Un número no se puede comprobar. «68 personas» es igual de creíble siendo
+ * correcto que estando mal: no hay forma de mirarlo y decir «falta fulana» o
+ * «esa no debería estar». Con los nombres delante, sí.
+ *
+ * ── POR QUÉ SE CORTA ──────────────────────────────────────────────────────
+ * Porque el objetivo es RECONOCER la audiencia, no auditarla. Con doscientos
+ * nombres ya no se lee: se desplaza. El número de arriba sigue siendo el
+ * total, y se dice cuántos quedan sin enseñar para que nadie crea que la
+ * lista es todo.
+ */
+export async function quienesSon(
+  audiencia: Audiencia,
+  tipo: TipoComunicacion,
+  canal: Canal = "email",
+  tope = 200,
+): Promise<{ resumen: ResumenAudiencia; personas: Destinatario[]; mas: number }> {
+  const { resumen, destinatarios } = await resolverAudiencia(audiencia, tipo, canal)
+
+  // Por nombre, y los que no tienen al final. Buscar a alguien en una lista
+  // sin orden es mirarla entera.
+  const ordenados = [...destinatarios].sort((a, b) => {
+    const x = (a.nombre || "").trim()
+    const y = (b.nombre || "").trim()
+    if (!x && !y) return a.email.localeCompare(b.email)
+    if (!x) return 1
+    if (!y) return -1
+    return x.localeCompare(y, "es")
+  })
+
+  return {
+    resumen,
+    personas: ordenados.slice(0, tope),
+    mas: Math.max(0, ordenados.length - tope),
+  }
+}
+
 export function etiquetaPreferencia(p: PreferenciaCorreo): string {
   return ETIQUETA_PREFERENCIA[p]
 }

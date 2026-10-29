@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { exigirAdmin, leerComunicacion, registrarEvento } from "@/lib/comunicaciones/servidor"
-import { contarAudiencia, etiquetaPreferencia } from "@/lib/comunicaciones/audiencia"
+import { quienesSon, etiquetaPreferencia } from "@/lib/comunicaciones/audiencia"
 
 export const dynamic = "force-dynamic"
 
@@ -32,7 +32,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (!c) return NextResponse.json({ error: "No existe" }, { status: 404 })
 
   try {
-    const resumen = await contarAudiencia(c.audience, c.type, c.canal)
+    // El canal importa: para un mensaje directo no se aplica la baja de
+    // los correos, así que la lista es distinta de la del correo con los
+    // mismos filtros. Enseñar la del correo sería enseñar otra audiencia.
+    const { resumen, personas, mas } = await quienesSon(c.audience, c.type, c.canal)
 
     // Se guarda lo calculado. Si el envío ocurre después, el resumen final
     // enseña esta misma cifra y no otra hecha en otro momento.
@@ -43,6 +46,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
     return NextResponse.json({
       ok: true,
+      personas,
+      mas,
       resumen: {
         ...resumen,
         // Qué interruptor del perfil gobierna este envío, dicho con las

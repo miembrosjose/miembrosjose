@@ -137,19 +137,40 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
   // mucho mejor que una ventana que se queda clavada porque la red va mal.
   const cerrar = useCallback(async (via: "cerrada" | "cta") => {
     if (!aviso || cerrando) return
+
+    // ── POR QUÉ SE GUARDAN ANTES DE LIMPIAR ────────────────────────────
+    // `aviso` se pone a null en la misma tanda, así que leerlo después del
+    // `await` daría el de la siguiente vez, o ninguno.
+    const id = aviso.id
+    const deMentira = esPrueba
+
     setCerrando(true)
     setAviso(null)
 
-    if (esPrueba) return   // una vista previa no marca nada
-
     try {
-      await fetch(`/api/comunicaciones/${aviso.id}/leida`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ via }),
-      })
-    } catch { /* volverá a salir; no se pierde nada */ }
+      // Una vista previa no marca nada: quien la mira sería justo quien se
+      // quedara sin verla de verdad.
+      if (!deMentira) {
+        await fetch(`/api/comunicaciones/${id}/leida`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ via }),
+        })
+      }
+    } catch {
+      // Volverá a salir la próxima vez; no se pierde nada.
+    } finally {
+      // ── ESTO FALTABA ──────────────────────────────────────────────────
+      // La vista previa salía por un `return` antes de llegar aquí, y
+      // `cerrando` se quedaba en true para siempre. La segunda vez que se
+      // abría, el guardia de arriba la bloqueaba: la ventana se quedaba
+      // puesta y no había forma de cerrarla.
+      //
+      // Es el precio de poner una bandera de «ocupado» y salir por el
+      // medio. Con `finally` no hay camino que se la salte.
+      setCerrando(false)
+    }
   }, [aviso, cerrando, esPrueba])
 
   // ── EL FOCO Y EL TECLADO ────────────────────────────────────────────────

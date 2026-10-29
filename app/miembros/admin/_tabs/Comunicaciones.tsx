@@ -1265,10 +1265,10 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
             onVistaPrevia={verComoLoVeran}
             publicando={publicando}
             onEnviarDm={() => void mandarDm(false)}
-            onSimularDm={() => void mandarDm(true)}
             ocupadoDm={ocupadoDm}
           />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
+          <AQuienLlega id={id} canal={canalesDe(c)[0]} />
         </div>
         {/* La columna de la derecha es «cómo va a llegar». Una comunicación
             que solo se queda dentro de la plataforma no llega a ninguna
@@ -1543,7 +1543,7 @@ function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: 
  */
 function CanalesYDentro({
   c, editar, editable, onPublicar, onVistaPrevia, publicando,
-  onEnviarDm, onSimularDm, ocupadoDm,
+  onEnviarDm, ocupadoDm,
 }: {
   c: Comunicacion
   editar: (campo: string, v: unknown) => void
@@ -1552,7 +1552,6 @@ function CanalesYDentro({
   onVistaPrevia: () => void
   publicando: boolean
   onEnviarDm: () => void
-  onSimularDm: () => void
   ocupadoDm: boolean
 }) {
   const canales = canalesDe(c)
@@ -1656,14 +1655,9 @@ function CanalesYDentro({
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onSimularDm}
-                  disabled={!editable || ocupadoDm}
-                  className="inline-flex items-center gap-2 border border-[#2a2a3a] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
-                >
-                  <Users size={13} /> Ver a cuántos
-                </button>
+                {/* Antes había aquí un «ver a cuántos» que contestaba con una
+                    ventana del navegador y un número. Lo contesta mejor el
+                    panel «A quién le llega», con nombres, justo debajo. */}
                 <button
                   type="button"
                   onClick={onEnviarDm}
@@ -1838,6 +1832,130 @@ function CanalesYDentro({
         </Bloque>
       )}
     </>
+  )
+}
+
+
+/**
+ * A quién le va a llegar esto, con nombres.
+ *
+ * ── POR QUÉ NO BASTA CON EL NÚMERO ────────────────────────────────────────
+ * Porque un número no se puede comprobar. «68 personas» es igual de creíble
+ * siendo correcto que estando mal: no hay forma de mirarlo y decir «falta
+ * fulana» o «esa no debería estar».
+ *
+ * Con los nombres delante sí, y esa comprobación es lo único que hay entre
+ * un filtro mal puesto y setenta personas recibiendo algo que no les tocaba.
+ *
+ * ── POR QUÉ SE PIDE Y NO SE CALCULA SOLO ──────────────────────────────────
+ * Resolver la audiencia recorre varias tablas. Hacerlo en cada tecla que se
+ * escribe en el cuerpo del correo sería gastar eso cien veces para una
+ * pregunta que se hace dos: al empezar y antes de mandar.
+ */
+function AQuienLlega({ id, canal }: { id: string; canal: Canal }) {
+  const [abierto, setAbierto] = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [datos, setDatos] = useState<{
+    personas: Array<{ userId: string; email: string; nombre: string | null }>
+    mas: number
+    total: number
+    excluidos: number
+  } | null>(null)
+
+  const pedir = async () => {
+    setAbierto(true)
+    setCargando(true)
+    setError(null)
+    try {
+      const r = await fetch(`/api/admin/comunicaciones/${id}/audiencia`, {
+        method: "POST",
+        credentials: "include",
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo calcular")
+      setDatos({
+        personas: j.personas || [],
+        mas: j.mas || 0,
+        total: j.resumen?.destinatarios ?? (j.personas || []).length,
+        excluidos: j.resumen?.excluidos ?? 0,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo calcular")
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0d0d16]/40">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#a78bca]">
+          A quién le llega
+        </h3>
+        <button
+          type="button"
+          onClick={pedir}
+          disabled={cargando}
+          className="inline-flex items-center gap-2 border border-[#2a2a3a] px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+        >
+          {cargando
+            ? <><Loader2 size={12} className="animate-spin" /> Calculando…</>
+            : <><Users size={12} /> {abierto ? "Volver a calcular" : "Ver la lista"}</>}
+        </button>
+      </div>
+
+      {error && (
+        <p className="border-t border-[#1a1a24] px-4 py-3 text-[11px] text-red-300">{error}</p>
+      )}
+
+      {datos && !cargando && (
+        <div className="border-t border-[#1a1a24]">
+          <p className="px-4 py-3 text-xs text-[#a0a0b4]">
+            <strong className="text-[#F3F6FA]">{datos.total}</strong>{" "}
+            {datos.total === 1 ? "persona" : "personas"}
+            {datos.excluidos > 0 && (
+              <span className="text-[#7a7a8a]">
+                {" "}· {datos.excluidos} fuera por sus preferencias
+              </span>
+            )}
+          </p>
+
+          {datos.personas.length === 0 ? (
+            <p className="border-t border-[#1a1a24] px-4 py-4 text-[11px] text-[#e0a0b0]">
+              No hay nadie. Con esta audiencia no sale nada.
+            </p>
+          ) : (
+            <>
+              {/* Se desplaza por dentro. Doscientos nombres empujando el
+                  botón de enviar fuera de la pantalla es peor que no
+                  enseñarlos. */}
+              <ul className="max-h-72 overflow-y-auto border-t border-[#1a1a24]">
+                {datos.personas.map((x) => (
+                  <li
+                    key={x.userId}
+                    className="flex flex-wrap items-baseline gap-x-2 border-b border-[#14141e] px-4 py-2 last:border-b-0"
+                  >
+                    <span className="text-xs text-[#F3F6FA]">
+                      {x.nombre?.trim() || "Sin nombre"}
+                    </span>
+                    {/* El correo también, porque dos personas pueden
+                        llamarse igual y la cuenta es lo que las distingue. */}
+                    <span className="text-[11px] text-[#6a6a7a]">{x.email}</span>
+                  </li>
+                ))}
+              </ul>
+              {datos.mas > 0 && (
+                <p className="border-t border-[#1a1a24] px-4 py-2.5 text-[11px] text-[#7a7a8a]">
+                  Y {datos.mas} más. Se enseñan las primeras {datos.personas.length} para
+                  poder reconocer la audiencia; el número de arriba es el total.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
 
