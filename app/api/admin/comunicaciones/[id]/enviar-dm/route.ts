@@ -89,8 +89,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     }, { status: 409 })
   }
 
+  // El texto solo hace falta para MANDAR. Para contar a cuántos va, no:
+  // esa pregunta es sobre la audiencia, y se hace antes de escribir.
   const texto = ((c.dm_texto as string | null) || (c.body as string | null) || "").trim()
-  if (!texto) {
+  if (!texto && !soloMirar) {
     return NextResponse.json({ error: "No hay texto que mandar." }, { status: 400 })
   }
 

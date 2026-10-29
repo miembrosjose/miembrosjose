@@ -109,6 +109,18 @@ export const CAMPOS_EDITABLES = [
   "interno_cta_text", "interno_cta_url", "interno_cta_accion",
   "display_mode", "audiencia_hasta",
 
+  // ── EL MENSAJE DIRECTO ───────────────────────────────────────────────
+  // Faltaba, y el efecto era desconcertante: se escribía el texto, el panel
+  // decía «guardado», y al mandar contestaba «no hay texto que mandar».
+  //
+  // Porque `soloEditable` descarta lo que no está en esta lista, y lo
+  // descarta EN SILENCIO. El texto no llegaba nunca a la base.
+  //
+  // `dm_enviado_at` y `dm_enviados` NO están aquí a propósito: los escribe
+  // la ruta de envío. Si se pudieran editar, marcar algo como ya mandado
+  // dejaría de ser lo que pasó y pasaría a ser lo que alguien escribió.
+  "dm_texto",
+
   // ── EL CORREO ESCRITO A MANO ─────────────────────────────────────────
   "email_modo", "email_html",
 ] as const

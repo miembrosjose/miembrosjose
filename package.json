@@ -22,7 +22,8 @@
     "probar:admin": "node scripts/probar-admin.mjs",
     "efemerides": "node scripts/efemerides.mjs",
     "probar:correo": "node scripts/probar-correo-codigo.mjs",
-    "probar:hooks": "node scripts/probar-hooks.mjs"
+    "probar:hooks": "node scripts/probar-hooks.mjs",
+    "probar:campos": "node scripts/probar-campos.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",
