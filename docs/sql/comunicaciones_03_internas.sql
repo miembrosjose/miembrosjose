@@ -282,22 +282,34 @@ create index if not exists forum_replies_post_raiz_idx
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
---  6 · EL ENLACE DEL CANAL DE TELEGRAM
+--  6 · UN BOTÓN QUE HACE ALGO AQUÍ DENTRO
 -- ═══════════════════════════════════════════════════════════════════════════
 --
--- ⚠ ESTO NO SE CONFIGURA AQUÍ. No hace falta SQL.
+-- ── POR QUÉ NO BASTA CON `interno_cta_url` ────────────────────────────────
+-- Para Telegram no hay ninguna dirección que se pueda escribir. La del grupo
+-- la fabrica la Edge Function `telegram-link-start` a nombre de quien la
+-- pide, y caduca: una fija saltaría la comprobación de suscripción, y una
+-- personal no cabe en una comunicación que leen setenta personas distintas.
 --
--- La clave `telegram.canal_url` está declarada en `lib/site-texts.ts` y sale
--- sola en Admin → Textos do Site, grupo «Telegram». Se escribe ahí.
+-- Así que el botón no lleva a ningún sitio. Le pide al botón flotante que ya
+-- existe que haga lo que ya sabe hacer.
 --
--- ── POR QUÉ NO SE SIEMBRA UNA FILA DESDE AQUÍ ─────────────────────────────
--- Porque entonces el valor tendría dos orígenes: el `default` del código y la
--- fila sembrada. El día que alguien cambiara el del código, seguiría mandando
--- la fila vieja y nadie entendería por qué. El catálogo manda; la tabla solo
--- guarda lo que administración escribe encima.
---
--- Nace vacío a propósito: sin enlace, el aviso no se puede publicar y la
--- ventana no sale. Un botón que lleva a ninguna parte es peor que nada.
+-- ── POR QUÉ UNA LISTA CERRADA Y NO TEXTO LIBRE ────────────────────────────
+-- Porque esto lo acaba rellenando una pantalla de administración, y un campo
+-- de texto libre que el navegador convierte en una llamada es la puerta por
+-- la que entra lo que nadie previó. Si algún día hay una segunda acción, se
+-- añade aquí y se añade en el componente: dos sitios, los dos a la vista.
+
+alter table public.communications
+  add column if not exists interno_cta_accion text;
+
+alter table public.communications
+  drop constraint if exists communications_interno_cta_accion_valida;
+
+alter table public.communications
+  add constraint communications_interno_cta_accion_valida check (
+    interno_cta_accion is null or interno_cta_accion in ('telegram')
+  );
 
 
 commit;

@@ -29,6 +29,14 @@ export type ComunicacionInterna = {
   imagen_url: string | null
   cta_text: string | null
   cta_url: string | null
+  /**
+   * Qué hace el botón cuando no es ir a una dirección.
+   *
+   * Para Telegram no hay ninguna que se pueda escribir: la del grupo es
+   * personal y caduca. El botón le pide al flotante que ya existe que haga
+   * lo que ya sabe hacer.
+   */
+  cta_accion: "telegram" | null
   /** 'feed' espera en el centro de avisos; 'modal_once' interrumpe una vez. */
   display_mode: "feed" | "modal_once"
   published_at: string
@@ -47,7 +55,8 @@ export type ComoSeLeyo = "abierta" | "cerrada" | "cta"
  */
 const CAMPOS = `
   id, display_mode, published_at, audiencia_hasta,
-  interno_titulo, interno_cuerpo, interno_cta_text, interno_cta_url, interno_image_url,
+  interno_titulo, interno_cuerpo, interno_cta_text, interno_cta_url, interno_cta_accion,
+  interno_image_url,
   heading, subject, body, cta_text, cta_url, image_url
 `
 
@@ -71,6 +80,7 @@ function aComunicacion(fila: Fila, leidas: Set<string>): ComunicacionInterna {
     imagen_url: texto(fila.interno_image_url) || texto(fila.image_url) || null,
     cta_text: texto(fila.interno_cta_text) || texto(fila.cta_text) || null,
     cta_url: texto(fila.interno_cta_url) || texto(fila.cta_url) || null,
+    cta_accion: fila.interno_cta_accion === "telegram" ? "telegram" : null,
     display_mode: fila.display_mode === "modal_once" ? "modal_once" : "feed",
     published_at: String(fila.published_at ?? ""),
     leida: leidas.has(id),
@@ -87,7 +97,7 @@ function aComunicacion(fila: Fila, leidas: Set<string>): ComunicacionInterna {
  * la plataforma sigue igual que antes de todo esto.
  */
 function faltaLaTabla(mensaje: string): boolean {
-  return /communication_reads|canales|display_mode|published_at|audiencia_hasta|does not exist|schema cache/i
+  return /communication_reads|canales|display_mode|published_at|audiencia_hasta|interno_cta_accion|does not exist|schema cache/i
     .test(mensaje)
 }
 

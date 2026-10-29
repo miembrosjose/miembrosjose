@@ -28,6 +28,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { marcarBloqueo } from "../_lib/bloqueo"
+import { pedirTelegram } from "../_lib/abrir-telegram"
 import s from "./aviso-importante.module.css"
 
 type Aviso = {
@@ -37,6 +38,19 @@ type Aviso = {
   imagen_url: string | null
   cta_text: string | null
   cta_url: string | null
+  /**
+   * Qué hace el botón, cuando no es ir a una dirección.
+   *
+   * ── POR QUÉ NO BASTA CON UNA URL ────────────────────────────────────────
+   * Para Telegram no hay ninguna que se pueda escribir: la del grupo es
+   * personal, se fabrica a nombre de quien la pide y caduca. Una fija
+   * saltaría la comprobación de suscripción, y una personal no cabe en una
+   * comunicación que leen setenta personas distintas.
+   *
+   * Así que el aviso no lleva a ningún sitio: pide que se abra lo que ya
+   * sabe abrirse.
+   */
+  cta_accion: "telegram" | null
 }
 
 /** Lo que la vista previa de administración pasa a mano, sin tocar la base. */
@@ -120,7 +134,8 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
 
   if (!aviso) return null
 
-  const hayBoton = !!(aviso.cta_text && aviso.cta_url)
+  const hayEnlace = !!(aviso.cta_text && aviso.cta_url)
+  const hayAccion = !!(aviso.cta_text && aviso.cta_accion)
 
   return (
     <div
@@ -163,7 +178,27 @@ export function AvisoImportante({ prueba }: { prueba?: AvisoDePrueba | null }) {
         </div>
 
         <div className={s.botones}>
-          {hayBoton && (
+          {/* ── EL BOTÓN QUE HACE ALGO AQUÍ DENTRO ────────────────────────
+              La petición sale ANTES de marcar nada. El botón flotante abre
+              una pestaña antes de ir a buscar el enlace, y una pestaña
+              abierta después de un `await` ya no cuenta como respuesta a un
+              clic: el navegador la bloquea. Marcar primero metería esa
+              espera por medio y el grupo se abriría en unos navegadores y en
+              otros no. */}
+          {hayAccion && (
+            <button
+              type="button"
+              onClick={() => {
+                if (aviso.cta_accion === "telegram") pedirTelegram()
+                void cerrar("cta")
+              }}
+              className={s.principal}
+            >
+              {aviso.cta_text}
+            </button>
+          )}
+
+          {hayEnlace && !hayAccion && (
             <a
               href={aviso.cta_url!}
               target="_blank"

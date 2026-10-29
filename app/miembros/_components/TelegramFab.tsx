@@ -13,7 +13,8 @@
 // que la dirección se pide en el momento de pulsar y no se guarda en ningún
 // sitio. Guardarla sería volver a tener un enlace fijo, solo que escondido.
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { alPedirTelegram } from "../_lib/abrir-telegram"
 import { useView } from "../_lib/view-context"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
@@ -115,6 +116,18 @@ export function TelegramFab() {
       setOcupado(false)
     }
   }
+
+  // ── EL MISMO GESTO, PEDIDO DESDE OTRO SITIO ───────────────────────────
+  // El aviso de bienvenida no puede llevar un enlace: el del grupo es
+  // personal y caduca. Así que pide que esto se abra, y esto hace lo que ya
+  // sabía hacer.
+  //
+  // Va por referencia y no directo porque `abrir` se vuelve a crear en cada
+  // pintado: un oyente registrado una sola vez se quedaría llamando a la
+  // versión de la primera vez, con su estado congelado.
+  const abrirRef = useRef(abrir)
+  abrirRef.current = abrir
+  useEffect(() => alPedirTelegram(() => { void abrirRef.current() }), [])
 
   return (
     <div className={s.zona}>

@@ -95,28 +95,6 @@ export const SITE_TEXTS: SiteTextEntry[] = [
   { key: "season.3.name", default: "Temporada 3", label: "Temporada 3 — Nombre", group: "Temporadas" },
   { key: "season.4.name", default: "Temporada 4", label: "Temporada 4 — Nombre", group: "Temporadas" },
   { key: "season.5.name", default: "Comunidad", label: "Temporada 5 — Nombre", group: "Temporadas" },
-
-  // ── TELEGRAM ──
-  //
-  // ── POR QUÉ AQUÍ Y NO EN LAS VARIABLES DE ENTORNO ─────────────────────
-  // No es un secreto: es una dirección que se reparte a propósito. Metida
-  // en el entorno haría falta un despliegue para cambiarla, y cambiarla es
-  // justo lo que pasa cuando se rehace el canal.
-  //
-  // ── NO ES EL MISMO ENLACE QUE EL DEL BOTÓN FLOTANTE ───────────────────
-  // Aquel lo fabrica la Edge Function `telegram-link-start`: es personal,
-  // caduca y da acceso al grupo de la suscripción. Este es el canal
-  // abierto de avisos, igual para todo el mundo.
-  //
-  // Vacío = el aviso no se puede publicar y el modal no sale. Es a
-  // propósito: enseñar un botón que lleva a ninguna parte es peor que no
-  // enseñar nada.
-  {
-    key: "telegram.canal_url",
-    default: "",
-    label: "Telegram — Enlace del canal de avisos",
-    group: "Telegram",
-  },
 ]
 
 export function getSiteTextDefault(key: string): string {
