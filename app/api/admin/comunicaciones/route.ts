@@ -20,7 +20,8 @@ export const dynamic = "force-dynamic"
 const CAMPOS_LISTA =
   "id, canal, type, internal_title, subject, status, audience, scheduled_at, scheduled_timezone, " +
   "recipients_estimated, recipients_excluded, sent_at, metrics, created_at, updated_at, " +
-  "provider_error"
+  "provider_error, canales, published_at, dm_enviado_at, dm_enviados, interno_titulo, " +
+  "interno_destinatarios"
 
 /**
  * Las tres pestañas del panel.
@@ -41,9 +42,24 @@ export async function GET(req: NextRequest) {
   const g = await exigirAdmin()
   if ("respuesta" in g) return g.respuesta
 
-  const estado = new URL(req.url).searchParams.get("estado") || "borradores"
-  const estados = POR_PESTANA[estado]
-  if (!estados) return NextResponse.json({ error: "Pestaña desconocida" }, { status: 400 })
+  // ── POR QUÉ YA NO SE FILTRA AQUÍ ───────────────────────────────────────
+  //
+  // Antes esta ruta filtraba por `status` y devolvía los contadores de las
+  // cuatro pestañas. Eso valía cuando solo había correo.
+  //
+  // `status` cuenta la vida del CORREO: borrador, programado, enviando,
+  // enviado. Un comunicado interno no pasa nunca por ahí —se publica, y eso
+  // es `published_at`— y un mensaje directo tampoco —se manda, y eso es
+  // `dm_enviado_at`. Los dos se quedaban en `draft` para siempre, así que
+  // todo caía en «Borradores» y «Enviadas» salía vacía aunque se acabara de
+  // publicar algo.
+  //
+  // Y los contadores eran de TODA la tabla, no de la pantalla: en mensajes
+  // directos ponía «Borradores 11» y enseñaba uno.
+  //
+  // Ahora se devuelve todo y el canal decide qué significa cada pestaña. Son
+  // cien filas como mucho: una consulta en vez de cinco.
+  const canal = new URL(req.url).searchParams.get("canal") || ""
 
   // ── ANTES DE ENSEÑAR NADA, PREGUNTAR ──────────────────────────────────
   // Una programada no cambia sola de estado: nadie la está mirando a las siete
@@ -55,31 +71,38 @@ export async function GET(req: NextRequest) {
   // costar cincuenta viajes al proveedor.
   await reconciliarPendientes()
 
-  const { data, error } = await getSupabaseAdmin()
+  let q = getSupabaseAdmin()
     .from("communications")
     .select(CAMPOS_LISTA)
-    .in("status", estados)
     .order("created_at", { ascending: false })
-    .limit(100)
+    .limit(200)
+
+  // El filtro por canal va en la base y no en el navegador: con el tope de
+  // 200, filtrar después dejaría fuera las de un canal poco usado en cuanto
+  // otro acumulara doscientas.
+  if (canal) q = q.contains("canales", [canal])
+
+  const { data, error } = await q
 
   if (error) {
+    // Entre desplegar y correr el SQL, `canales` puede no existir. Devolver
+    // la lista entera es peor que filtrarla y mejor que un error.
+    if (canal && /canales|does not exist|schema cache/i.test(error.message)) {
+      const { data: todo } = await getSupabaseAdmin()
+        .from("communications")
+        .select(CAMPOS_LISTA)
+        .order("created_at", { ascending: false })
+        .limit(200)
+      return NextResponse.json({ ok: true, comunicaciones: todo || [] })
+    }
     console.error("[comunicaciones] listar:", error.message)
     return NextResponse.json({ error: "No se pudo leer la lista" }, { status: 500 })
   }
 
-  // Los contadores de las pestañas, para no tener que pedir las tres listas.
-  const conteos: Record<string, number> = {}
-  await Promise.all(
-    Object.entries(POR_PESTANA).map(async ([nombre, ests]) => {
-      const { count } = await getSupabaseAdmin()
-        .from("communications")
-        .select("id", { count: "exact", head: true })
-        .in("status", ests)
-      conteos[nombre] = count ?? 0
-    }),
-  )
-
-  return NextResponse.json({ ok: true, comunicaciones: data || [], conteos })
+  // Los contadores los calcula quien pinta, que es quien sabe qué significa
+  // cada pestaña en su canal. Aquí se devolvían mal: cuatro consultas más por
+  // carga para dar un número que no era el de esta pantalla.
+  return NextResponse.json({ ok: true, comunicaciones: data || [] })
 }
 
 export async function POST(req: NextRequest) {

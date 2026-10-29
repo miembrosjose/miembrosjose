@@ -21,7 +21,7 @@
 // enviar es el servidor, que revalida lo mismo. Esta pantalla es para que sea
 // cómodo hacerlo bien, no para impedir hacerlo mal.
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MessageSquare,
   AlertTriangle, Archive, ArrowLeft, Bell, Calendar, Check, Clock, Copy, ImagePlus,
   Bold, Heading2, Italic, Link2, List, Loader2, Mail, Minus, Monitor,
@@ -200,6 +200,14 @@ type Canal = "email" | "push" | "interno" | "dm"
 
 type Fila = {
   id: string
+  // ── EL CICLO DE CADA CANAL ─────────────────────────────────────────────
+  // Tres columnas distintas porque son tres cosas distintas: un correo se
+  // envía, un comunicado se publica, un mensaje se manda. Ninguna sustituye a
+  // las otras y las tres pueden ser nulas a la vez.
+  published_at?: string | null
+  dm_enviado_at?: string | null
+  dm_enviados?: number | null
+  interno_destinatarios?: string[] | null
   /** Por dónde sale. Lo que se creó antes de que existiera el push es correo. */
   canal: "email" | "push"
   /**
@@ -235,8 +243,6 @@ type Comunicacion = Fila & {
   interno_cta_url: string | null
   interno_cta_accion: "telegram" | null
   dm_texto: string | null
-  dm_enviado_at: string | null
-  dm_enviados: number | null
 
   display_mode: "feed" | "modal_once"
   audiencia_hasta: string | null
@@ -312,6 +318,66 @@ const CANALES: Array<{ id: Canal; nombre: string; que: string; largo: string }> 
 
 const CANAL = (id: Canal) => CANALES.find((c) => c.id === id)
 
+/**
+ * El ciclo de vida, que NO es el mismo en los cuatro.
+ *
+ * ── POR QUÉ ESTO NO PODÍA SER UNA SOLA LISTA DE PESTAÑAS ──────────────────
+ * `status` —borrador, programado, enviando, enviado— cuenta la vida del
+ * CORREO. Un comunicado interno no pasa nunca por ahí: se publica, y eso es
+ * `published_at`. Un mensaje directo tampoco: se manda, y eso es
+ * `dm_enviado_at`.
+ *
+ * Con las cuatro pestañas del correo puestas en los cuatro canales, los dos
+ * nuevos se quedaban en `draft` para siempre: todo caía en «Borradores» y
+ * «Enviadas» salía vacía aunque se acabara de publicar algo. No había forma
+ * de ver qué estaba fuera, ni de retirarlo.
+ *
+ * Cada canal tiene las pestañas que le corresponden, y «salió» quiere decir
+ * cosas distintas en cada una.
+ */
+function salio(f: Fila, canal: Canal): boolean {
+  if (canal === "interno") return !!f.published_at
+  if (canal === "dm") return !!f.dm_enviado_at
+  return f.status === "sent"
+}
+
+const PESTANAS: Record<Canal, Array<{ id: string; etiqueta: string }>> = {
+  email: [
+    { id: "borradores", etiqueta: "Borradores" },
+    { id: "programadas", etiqueta: "Programadas" },
+    { id: "enviadas", etiqueta: "Enviadas" },
+    { id: "archivadas", etiqueta: "Archivadas" },
+  ],
+  push: [
+    { id: "borradores", etiqueta: "Borradores" },
+    { id: "enviadas", etiqueta: "Enviadas" },
+    { id: "archivadas", etiqueta: "Archivadas" },
+  ],
+  // Un comunicado no se programa —se publica cuando se publica— y tampoco se
+  // archiva: se retira, y entonces vuelve a ser borrador.
+  interno: [
+    { id: "borradores", etiqueta: "Sin publicar" },
+    { id: "enviadas", etiqueta: "Publicados" },
+  ],
+  // Un mensaje directo no se programa ni se archiva. O se mandó o no.
+  dm: [
+    { id: "borradores", etiqueta: "Sin mandar" },
+    { id: "enviadas", etiqueta: "Mandados" },
+  ],
+}
+
+/** Si una fila pertenece a una pestaña, según el canal. */
+function enPestana(f: Fila, pestana: string, canal: Canal): boolean {
+  if (canal === "interno" || canal === "dm") {
+    // Dos estados y nada más: o salió o no. `status` aquí no dice nada.
+    return pestana === "enviadas" ? salio(f, canal) : !salio(f, canal)
+  }
+  if (pestana === "borradores") return f.status === "draft" || f.status === "failed"
+  if (pestana === "programadas") return f.status === "scheduled" || f.status === "queued"
+  if (pestana === "enviadas") return f.status === "sent" || f.status === "sending"
+  return f.status === "cancelled"
+}
+
 /** Cómo se llama lo que crea el botón de cada pantalla. */
 const NUEVA = (canal: Canal) => ({
   email: "Nuevo correo",
@@ -385,7 +451,6 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
   const [pestana, setPestana] = useState<"borradores" | "programadas" | "enviadas" | "archivadas">("borradores")
   const [busca, setBusca] = useState("")
   const [filas, setFilas] = useState<Fila[]>([])
-  const [conteos, setConteos] = useState<Record<string, number>>({})
   const [cargando, setCargando] = useState(true)
   const [eligiendoTipo, setEligiendoTipo] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -393,15 +458,13 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const r = await fetch(`/api/admin/comunicaciones?estado=${pestana}`, { credentials: "include" })
+      // Todo lo del canal, de una vez. Las pestañas se reparten después:
+      // «salió» significa cosas distintas en cada canal, y eso lo sabe esta
+      // pantalla, no la base.
+      const r = await fetch(`/api/admin/comunicaciones?canal=${canal}`, { credentials: "include" })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || "No se pudo cargar")
-      // ── CADA PANTALLA, LO SUYO ──────────────────────────────────────
-      // Se filtra aquí y no en el servidor porque son cien filas como
-      // mucho y la consulta ya está hecha. Si algún día crecen, el filtro
-      // sube a la petición; hasta entonces, una ida y vuelta menos.
       setFilas((j.comunicaciones || []).filter((f: Fila) => canalesDe(f)[0] === canal))
-      setConteos(j.conteos || {})
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar")
@@ -424,12 +487,29 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
   // siendo válidos y el servidor obedecería.
   useEffect(() => { setMarcados([]) }, [pestana, busca])
 
+  // ── LOS RECUENTOS, DE LO QUE HAY DELANTE ──────────────────────────────
+  // Venían del servidor y eran de TODA la tabla: en mensajes directos ponía
+  // «Borradores 11» y enseñaba uno. Se calculan aquí, sobre las filas de
+  // este canal, que es lo único que esos números pueden querer decir.
+  const conteos = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const t of PESTANAS[canal]) c[t.id] = filas.filter((f) => enPestana(f, t.id, canal)).length
+    return c
+  }, [filas, canal])
+
+  // Si la pestaña en la que estás no existe en este canal —se cambió de
+  // pantalla estando en «Programadas»— se vuelve a la primera.
+  useEffect(() => {
+    if (!PESTANAS[canal].some((t) => t.id === pestana)) setPestana("borradores")
+  }, [canal, pestana])
+
   const q = busca.trim().toLowerCase()
+  const deLaPestana = filas.filter((f) => enPestana(f, pestana, canal))
   const filtradas = q
-    ? filas.filter((f) =>
+    ? deLaPestana.filter((f) =>
         (f.subject || "").toLowerCase().includes(q) ||
         (f.internal_title || "").toLowerCase().includes(q))
-    : filas
+    : deLaPestana
 
   /**
    * El botón de «nueva».
@@ -521,18 +601,18 @@ function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal
       </header>
 
       <div className="flex flex-wrap gap-2">
-        {(["borradores", "programadas", "enviadas", "archivadas"] as const).map((p) => (
+        {PESTANAS[canal].map((t) => (
           <button
-            key={p}
+            key={t.id}
             type="button"
-            onClick={() => setPestana(p)}
+            onClick={() => setPestana(t.id as typeof pestana)}
             className={`border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors ${
-              pestana === p
+              pestana === t.id
                 ? "border-[#6D4A9B] bg-[#6D4A9B]/10 text-[#c3b2e0]"
                 : "border-[#1f1f2c] text-[#7a7a8a] hover:border-[#2f2f42]"
             }`}
           >
-            {p} {conteos[p] != null && <span className="opacity-60">{conteos[p]}</span>}
+            {t.etiqueta} <span className="opacity-60">{conteos[t.id] ?? 0}</span>
           </button>
         ))}
       </div>
@@ -672,7 +752,23 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
   onAbrir: (id: string) => void
   onCambio: () => void
 }) {
-  const est = ESTADOS[f.status] ?? ESTADOS.draft
+  // El estado de cada canal, no el del correo. Un comunicado publicado se
+  // quedaba en `draft` y la fila ponía «Borrador» mientras le salía a
+  // setenta personas.
+  const canalDeLaFila = canalesDe(f)[0]
+  const est = (() => {
+    if (canalDeLaFila === "interno") {
+      return f.published_at
+        ? { etiqueta: "Publicado", cls: "border-[#3a5a4a] text-[#7ec8a0]" }
+        : { etiqueta: "Sin publicar", cls: "border-[#2a2a3a] text-[#9a9ab0]" }
+    }
+    if (canalDeLaFila === "dm") {
+      return f.dm_enviado_at
+        ? { etiqueta: "Mandado", cls: "border-[#3a5a4a] text-[#7ec8a0]" }
+        : { etiqueta: "Sin mandar", cls: "border-[#2a2a3a] text-[#9a9ab0]" }
+    }
+    return ESTADOS[f.status] ?? ESTADOS.draft
+  })()
   const nombreTipo = nombreDeTipo(f.type, f.canal)
 
   return (
@@ -725,6 +821,21 @@ function FilaComunicacion({ f, onAbrir, onCambio }: {
         <p className="mt-2 truncate text-[15px] font-medium text-[#F3F6FA]">
           {f.subject?.trim() || f.internal_title || "Sin asunto"}
         </p>
+        {canalDeLaFila === "interno" && f.published_at && (
+          <p className="mt-1.5 text-[11px] text-[#7ec8a0]">
+            Publicado el {new Date(f.published_at).toLocaleString("es-ES")}
+            {" · "}
+            {f.interno_destinatarios
+              ? `a ${f.interno_destinatarios.length} ${f.interno_destinatarios.length === 1 ? "persona" : "personas"}`
+              : "a todo el mundo"}
+          </p>
+        )}
+        {canalDeLaFila === "dm" && f.dm_enviado_at && (
+          <p className="mt-1.5 text-[11px] text-[#7ec8a0]">
+            Mandado el {new Date(f.dm_enviado_at).toLocaleString("es-ES")}
+            {typeof f.dm_enviados === "number" && <> · {f.dm_enviados} conversaciones</>}
+          </p>
+        )}
         <p className="mt-1 text-xs text-[#6a6a7a]">
           {f.status === "sent" && f.sent_at
             ? `Enviada el ${fechaCorta(f.sent_at)}`
@@ -797,7 +908,12 @@ function MenuFila({ f, onCambio }: { f: Fila; onCambio: () => void }) {
   }
 
   const base = `/api/admin/comunicaciones/${f.id}`
-  const esBorrador = f.status === "draft" || f.status === "failed"
+  const canalDeEsta = canalesDe(f)[0]
+  const publicado = canalDeEsta === "interno" && !!f.published_at
+
+  // Lo que ya salió no se borra desde aquí. Un comunicado publicado se
+  // RETIRA primero —deja de salir— y entonces vuelve a ser borrador.
+  const esBorrador = !publicado && (f.status === "draft" || f.status === "failed")
   const acabada = ["sent", "cancelled", "failed"].includes(f.status)
 
   return (
