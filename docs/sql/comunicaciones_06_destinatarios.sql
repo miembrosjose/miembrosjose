@@ -96,3 +96,40 @@ select
       and indexname='communications_interno_destinatarios_idx') as ok_indice;
 
 -- Las dos tienen que dar true.
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+--  ¿QUIÉN LLEGÓ A VERLO DE VERDAD?
+-- ════════════════════════════════════════════════════════════════════════════
+--
+-- «Visible para todos» no es «lo vieron todos». Solo lo vio quien entrara a
+-- la plataforma después de publicarlo, y eso queda registrado: cada vez que
+-- alguien abre o cierra un comunicado se escribe una fila en
+-- `communication_reads`.
+--
+-- Esto no cambia nada. Contesta quién lo abrió, quién pulsó el botón y quién
+-- cerró la ventana, por nombre.
+--
+-- ── CÓMO SE LEE LA COLUMNA `via` ───────────────────────────────────────────
+--   abierta   lo abrió desde el centro de avisos
+--   cerrada   cerró la ventana que interrumpe
+--   cta       pulsó el botón
+
+select
+  coalesce(nullif(c.interno_titulo, ''), c.heading, c.subject, '(sin título)') as comunicado,
+  to_char(c.published_at, 'DD/MM/YYYY HH24:MI')                               as publicado,
+  coalesce(p.full_name, u.email)                                              as quien,
+  r.via,
+  to_char(r.read_at, 'DD/MM/YYYY HH24:MI')                                    as cuando
+from public.communication_reads r
+join public.communications c on c.id = r.communication_id
+join auth.users u            on u.id = r.user_id
+left join public.profiles p  on p.id = r.user_id
+where 'interno' = any(c.canales)
+order by c.published_at desc, r.read_at;
+
+-- Sin filas = no lo abrió nadie. Estuvo visible y nadie entró a mirarlo.
+--
+-- ⚠ OJO: esto registra a quien lo ABRIÓ. Un comunicado que espera en los
+--   avisos y que nadie tocó no deja rastro, pero su titular SÍ se vio en la
+--   campana. Para esos, lo que estuvo a la vista es el título, no el texto.
