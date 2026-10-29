@@ -1130,6 +1130,33 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
     }
   }, [id])
 
+  const retirarDeDentro = useCallback(async () => {
+    if (!window.confirm(
+      "Dejará de salir a partir de ahora.\n\n" +
+      "El texto se conserva como borrador. Lo que ya pasó no se deshace: " +
+      "quien la abrió, la abrió.",
+    )) return
+
+    setPublicando(true)
+    setErrorPublicar(null)
+    try {
+      const r = await fetch(`/api/admin/comunicaciones/${id}/retirar`, {
+        method: "POST",
+        credentials: "include",
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || "No se pudo retirar")
+
+      // Vuelve a estado de borrador en la pantalla, sin recargar: lo único
+      // que cambia es esa columna.
+      setC((v) => (v ? { ...v, published_at: null } : v))
+    } catch (e) {
+      setErrorPublicar(e instanceof Error ? e.message : "No se pudo retirar")
+    } finally {
+      setPublicando(false)
+    }
+  }, [id])
+
   const publicarDentro = useCallback(async () => {
     setPublicando(true)
     setErrorPublicar(null)
@@ -1266,6 +1293,7 @@ function Editor({ id, onVolver }: { id: string; onVolver: () => void }) {
             publicando={publicando}
             onEnviarDm={() => void mandarDm(false)}
             ocupadoDm={ocupadoDm}
+            onRetirar={retirarDeDentro}
           />
           <Campos c={c} editar={editar} editable={editable} llevaFecha={Boolean(tipo?.fecha)} />
           <AQuienLlega id={id} canal={canalesDe(c)[0]} />
@@ -1543,7 +1571,7 @@ function Contador({ largo, comodo, que }: { largo: number; comodo: number; que: 
  */
 function CanalesYDentro({
   c, editar, editable, onPublicar, onVistaPrevia, publicando,
-  onEnviarDm, ocupadoDm,
+  onEnviarDm, ocupadoDm, onRetirar,
 }: {
   c: Comunicacion
   editar: (campo: string, v: unknown) => void
@@ -1553,6 +1581,7 @@ function CanalesYDentro({
   publicando: boolean
   onEnviarDm: () => void
   ocupadoDm: boolean
+  onRetirar: () => void
 }) {
   const canales = canalesDe(c)
   const dentro = canales.includes("interno")
@@ -1788,13 +1817,38 @@ function CanalesYDentro({
               la otra pone una fecha en una columna. */}
           <div className="border-t border-[#1a1a24] pt-4">
             {yaPublicada ? (
-              <p className="text-[11px] text-[#009d68]">
-                Publicada dentro de la plataforma el{" "}
-                {new Date(c.published_at!).toLocaleString("es-ES")}.
-                {c.audiencia_hasta && (
-                  <> Solo la ven las cuentas creadas antes de esa hora.</>
-                )}
-              </p>
+              <div className="space-y-3">
+                <p className="text-[11px] text-[#009d68]">
+                  Publicada dentro de la plataforma el{" "}
+                  {new Date(c.published_at!).toLocaleString("es-ES")}.
+                  {c.audiencia_hasta && (
+                    <> Solo la ven las cuentas creadas antes de esa hora.</>
+                  )}
+                </p>
+
+                {/* ── RETIRARLA ──────────────────────────────────────────
+                    Publicar era de ida y sin vuelta: una publicada por
+                    error —con la audiencia mal, con una falta en el
+                    titular, o de prueba— se quedaba saliéndole a todo el
+                    que entrara, y la única salida era borrarla entera y
+                    perder el texto.
+
+                    Retirar deja de enseñarla al momento y conserva lo
+                    escrito como borrador. */}
+                <button
+                  type="button"
+                  onClick={onRetirar}
+                  disabled={publicando}
+                  className="inline-flex items-center gap-2 border border-[#4a1f2a] bg-[#1a0d12]/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#e0a0b0] transition-colors hover:border-red-500/60 hover:text-red-400 disabled:opacity-40"
+                >
+                  <X size={12} /> Retirar
+                </button>
+                <p className="text-[11px] leading-relaxed text-[#7a7a8a]">
+                  Deja de salir al momento y vuelve a ser un borrador. No deshace
+                  lo que ya pasó: quien la abrió, la abrió, y si vuelves a
+                  publicarla no le saldrá otra vez a quien ya la cerró.
+                </p>
+              </div>
             ) : (
               <>
                 {/* ── VERLA ANTES DE PUBLICARLA ────────────────────────
