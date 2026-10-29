@@ -346,16 +346,34 @@ type ResumenAudiencia = {
 
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function Comunicaciones() {
+/**
+ * Una pantalla por forma de comunicar.
+ *
+ * ── POR QUÉ CUATRO PANTALLAS Y UN SOLO COMPONENTE ─────────────────────────
+ * Las cuatro comparten lo caro: el motor de audiencias con sus filtros, el
+ * ciclo de borrador, la lista con su búsqueda y su borrado en bloque, y el
+ * registro de quién hizo qué.
+ *
+ * Escribirlas cuatro veces sería tener cuatro listas de filtros que se
+ * separan: el día que se ajuste uno, quedará ajustado en una pantalla y mal
+ * en las otras tres. Eso ya pasó en este proyecto con las categorías, que
+ * vivían en cuatro archivos.
+ *
+ * Así que lo que cambia es el canal que se le pasa. La lista enseña solo lo
+ * suyo, el editor enseña solo los campos que ese canal usa, y «Nueva» crea
+ * directamente sin preguntar por dónde sale: ya se sabe, es la pantalla en la
+ * que estás.
+ */
+export function Comunicaciones({ canal = "email" }: { canal?: Canal }) {
   const [abierta, setAbierta] = useState<string | null>(null)
   return abierta
     ? <Editor id={abierta} onVolver={() => setAbierta(null)} />
-    : <Lista onAbrir={setAbierta} />
+    : <Lista onAbrir={setAbierta} canal={canal} />
 }
 
 // ── La lista ───────────────────────────────────────────────────────────────
 
-function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
+function Lista({ onAbrir, canal }: { onAbrir: (id: string) => void; canal: Canal }) {
   const [pestana, setPestana] = useState<"borradores" | "programadas" | "enviadas" | "archivadas">("borradores")
   const [busca, setBusca] = useState("")
   const [filas, setFilas] = useState<Fila[]>([])
@@ -370,7 +388,11 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
       const r = await fetch(`/api/admin/comunicaciones?estado=${pestana}`, { credentials: "include" })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || "No se pudo cargar")
-      setFilas(j.comunicaciones || [])
+      // ── CADA PANTALLA, LO SUYO ──────────────────────────────────────
+      // Se filtra aquí y no en el servidor porque son cien filas como
+      // mucho y la consulta ya está hecha. Si algún día crecen, el filtro
+      // sube a la petición; hasta entonces, una ida y vuelta menos.
+      setFilas((j.comunicaciones || []).filter((f: Fila) => canalesDe(f)[0] === canal))
       setConteos(j.conteos || {})
       setError(null)
     } catch (e) {
@@ -378,7 +400,7 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
     } finally {
       setCargando(false)
     }
-  }, [pestana])
+  }, [pestana, canal])
 
   useEffect(() => { void cargar() }, [cargar])
 
@@ -439,6 +461,18 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
       setBorrando(false)
     }
   }
+
+  // Abrir «Nueva» en una pantalla que no es la del correo crea y entra
+  // directamente, sin diálogo de por medio.
+  useEffect(() => {
+    if (eligiendoTipo && canal !== "email" && canal !== "push") {
+      setEligiendoTipo(false)
+      void crear("especial", canal)
+    }
+    // `crear` se recrea en cada pintado y no se puede poner en las
+    // dependencias sin un bucle. Lo que importa es el gesto de abrir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eligiendoTipo, canal])
 
   const crear = async (tipo: string, canal: Canal) => {
     try {
@@ -604,7 +638,22 @@ function Lista({ onAbrir }: { onAbrir: (id: string) => void }) {
         </div>
       )}
 
-      {eligiendoTipo && <ElegirTipo onElegir={crear} onCerrar={() => setEligiendoTipo(false)} />}
+      {/* El canal ya está decidido: es esta pantalla. Lo único que queda
+          por elegir es el TIPO, y solo cuando hay correo: es lo que decide
+          la plantilla y qué preferencia gobierna el envío. En los otros tres
+          canales no gobierna nada, así que se crea directamente. */}
+      {/* El canal ya está decidido: es esta pantalla. Lo que queda por
+          elegir es el TIPO, y solo en correo y notificación: ahí decide la
+          plantilla y qué preferencia del miembro gobierna el envío.
+
+          En los otros dos no gobierna nada, así que no se pregunta. */}
+      {eligiendoTipo && (canal === "email" || canal === "push") && (
+        <ElegirTipoDeCorreo
+          canal={canal}
+          onElegir={(t) => crear(t, canal)}
+          onCerrar={() => setEligiendoTipo(false)}
+        />
+      )}
     </div>
   )
 }
@@ -894,58 +943,34 @@ function Vacio({ pestana, onCrear }: { pestana: string; onCrear: () => void }) {
  * tipo es lo que dice de qué va: quien apagó los avisos de sesiones en vivo
  * no quiere que le suene una sesión en vivo, ni por correo ni por teléfono.
  */
-function ElegirTipo({ onElegir, onCerrar }: {
-  onElegir: (t: string, canal: Canal) => void
+/**
+ * Qué clase de correo.
+ *
+ * ── POR QUÉ YA NO PREGUNTA EL CANAL ───────────────────────────────────────
+ * Porque lo contesta la pantalla en la que estás. Entrar a «Correo» y que te
+ * pregunten si querías correo es pedir que repitas lo que acabas de elegir.
+ *
+ * ── Y POR QUÉ ESTO SÍ SE PREGUNTA ─────────────────────────────────────────
+ * Porque decide dos cosas de verdad: con qué plantilla se dibuja y qué
+ * preferencia del miembro gobierna el envío. Quien apaga «sesiones en vivo»
+ * deja de recibir sesiones, y eso sale de aquí.
+ *
+ * En los otros tres canales no gobierna nada, así que ahí no se pregunta: se
+ * crea directamente.
+ */
+function ElegirTipoDeCorreo({ canal, onElegir, onCerrar }: {
+  /** De dónde se abrió. Correo y notificación tienen listas distintas. */
+  canal: "email" | "push"
+  onElegir: (t: string) => void
   onCerrar: () => void
 }) {
-  const [canal, setCanal] = useState<Canal | null>(null)
 
-  if (!canal) {
-    return (
-      <Modal titulo="¿Por dónde quieres que salga?" onCerrar={onCerrar}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {CANALES.map((op) => {
-            const Icono = ICONO_CANAL[op.id]
-            return (
-              <button
-                key={op.id}
-                type="button"
-                onClick={() => {
-                  // ── POR QUÉ ESTOS DOS NO PASAN POR LA LISTA DE TIPOS ────
-                  // Los nueve tipos existen para el CORREO: deciden la
-                  // plantilla y qué preferencia gobierna el envío. Un
-                  // comunicado interno y un mensaje directo no respetan
-                  // preferencias de correo, así que elegir entre «Nuevo
-                  // contenido» y «Sesión en vivo» sería contestar una
-                  // pregunta que no afecta a nada.
-                  if (op.id === "interno" || op.id === "dm") onElegir("especial", op.id)
-                  else setCanal(op.id)
-                }}
-                className="border border-[#1f1f2c] bg-[#0d0d16] p-5 text-left transition-colors hover:border-[#6D4A9B]"
-              >
-                <Icono size={20} className="text-[#a78bca]" />
-                <p className="mt-3 text-sm font-medium text-[#F3F6FA]">{op.nombre}</p>
-                <p className="mt-1.5 text-xs leading-relaxed text-[#7a7a8a]">{op.largo}</p>
-              </button>
-            )
-          })}
-        </div>
-      </Modal>
-    )
-  }
 
   return (
     <Modal
       titulo={canal === "push" ? "¿De qué es el aviso?" : "¿Qué quieres comunicar?"}
       onCerrar={onCerrar}
     >
-      <button
-        type="button"
-        onClick={() => setCanal(null)}
-        className="mb-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] text-[#7a7a8a] transition-colors hover:text-[#c3b2e0]"
-      >
-        <ArrowLeft size={12} /> {canal === "push" ? "Notificación" : "Correo"}
-      </button>
       {canal === "push" && (
         <p className="mb-4 border-l-2 border-[#2f2f42] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
           Esto no se ve en el teléfono: decide a quién le llega. Son los mismos
@@ -960,7 +985,7 @@ function ElegirTipo({ onElegir, onCerrar }: {
           <button
             key={t.id}
             type="button"
-            onClick={() => onElegir(t.id, canal)}
+            onClick={() => onElegir(t.id)}
             className="border border-[#1f1f2c] bg-[#0d0d16] p-4 text-left transition-colors hover:border-[#6D4A9B]"
           >
             <p className="text-sm font-medium text-[#F3F6FA]">{t.nombre}</p>
@@ -1553,40 +1578,25 @@ function CanalesYDentro({
 
   return (
     <>
-      <Bloque
-        id="canales"
-        titulo="Por dónde sale"
-        nota="Una sola. Si hace falta decirlo por dos sitios, duplícala y escribe cada una como toca."
-      >
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {CANALES.map((op) => {
-            const puesto = canales[0] === op.id
-            const Icono = ICONO_CANAL[op.id]
-            return (
-              <button
-                key={op.id}
-                type="button"
-                disabled={!editable}
-                onClick={() => elegir(op.id)}
-                aria-pressed={puesto}
-                className={`border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                  puesto
-                    ? "border-[#6D4A9B] bg-[#6D4A9B]/15"
-                    : "border-[#1f1f2c] bg-[#0d0d16] hover:border-[#3a3a4a]"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Icono size={13} className={puesto ? "text-[#c3b2e0]" : "text-[#5a5a6a]"} />
-                  <span className="text-xs font-medium text-[#F3F6FA]">{op.nombre}</span>
-                </span>
-                <span className="mt-1.5 block text-[11px] leading-snug text-[#7a7a8a]">
-                  {op.que}
-                </span>
-              </button>
-            )
-          })}
+      {/* ── QUÉ ES ESTO ──────────────────────────────────────────────────
+          No es un control: el canal es la pantalla en la que estás, y
+          cambiarlo es cambiar de pantalla. Pero al abrir un borrador viejo
+          desde una búsqueda hay que poder saber qué se está mirando sin
+          deducirlo de qué campos aparecen. */}
+      <div className="flex items-center gap-2.5 border border-[#1f1f2c] bg-[#0d0d16]/60 px-4 py-3">
+        {(() => {
+          const Icono = ICONO_CANAL[canales[0]] ?? Mail
+          return <Icono size={15} className="shrink-0 text-[#a78bca]" />
+        })()}
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#F3F6FA]">
+            {CANAL(canales[0])?.nombre ?? "Correo"}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-[#7a7a8a]">
+            {CANAL(canales[0])?.largo ?? ""}
+          </p>
         </div>
-      </Bloque>
+      </div>
 
       {/* A QUIEN. Va aqui y no dentro del formulario de correo porque
           estos dos canales no tienen formulario de correo. Es el MISMO

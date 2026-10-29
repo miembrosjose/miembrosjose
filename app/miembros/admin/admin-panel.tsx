@@ -13,6 +13,8 @@ import {
   Flag,
   ShieldOff,
   MessageSquare,
+  Bell,
+  Send,
   Mail,
   CreditCard,
   ChevronRight,
@@ -32,7 +34,13 @@ type Tab =
   | "subs"
   | "resetprogress"
   | "redroles"
+  // Las cuatro formas de comunicar, cada una con su pantalla. Comparten el
+  // componente —y con él la audiencia, el ciclo de borrador y la lista— pero
+  // no se mezclan al usarlas: cada una enseña solo lo suyo.
   | "comms"
+  | "comms_push"
+  | "comms_interno"
+  | "comms_dm"
   | "pwa"
   | "organizacion"
 
@@ -171,9 +179,27 @@ const TAB_GROUPS: TabGroup[] = [
       },
       {
         id: "comms",
-        label: "Comunicaciones",
-        description: "Escribir, probar, programar y enviar correos a La Red",
+        label: "Correos",
+        description: "A la bandeja de entrada. Titular, imagen y texto largo; se puede programar",
         icon: Mail,
+      },
+      {
+        id: "comms_push",
+        label: "Notificaciones",
+        description: "Suenan en el móvil al momento. Un título y dos líneas",
+        icon: Bell,
+      },
+      {
+        id: "comms_interno",
+        label: "Dentro de la plataforma",
+        description: "Espera a que entre. No depende del correo ni de los avisos",
+        icon: MessageSquare,
+      },
+      {
+        id: "comms_dm",
+        label: "Mensajes directos",
+        description: "A su bandeja de mensajes, donde puede responderte",
+        icon: Send,
       },
     ],
   },
@@ -363,7 +389,14 @@ export function AdminPanel() {
           {tab === "messages" && <MessagesModeration />}
           {tab === "resetprogress" && <ResetProgress />}
           {tab === "redroles" && <RedRoles />}
-          {tab === "comms" && <Comunicaciones />}
+          {/* El mismo componente, cuatro veces. La `key` es lo que hace que
+              al saltar de una pantalla a otra se monte de cero en vez de
+              reaprovechar el estado: sin ella, abrir un correo y luego ir a
+              mensajes directos dejaría el editor del correo abierto. */}
+          {tab === "comms" && <Comunicaciones key="email" canal="email" />}
+          {tab === "comms_push" && <Comunicaciones key="push" canal="push" />}
+          {tab === "comms_interno" && <Comunicaciones key="interno" canal="interno" />}
+          {tab === "comms_dm" && <Comunicaciones key="dm" canal="dm" />}
           {tab === "organizacion" && <Organizacion />}
           {tab === "pwa" && <DiagnosticoPwa />}
         </div>
