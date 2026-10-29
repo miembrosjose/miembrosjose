@@ -1603,6 +1603,28 @@ function Campos({
 
   const enCodigo = c.email_modo === "codigo"
 
+  // ── LAS PLANTILLAS GUARDADAS ───────────────────────────────────────────
+  // Se piden solo al entrar en modo código: quien escribe con el formulario
+  // no las necesita, y una consulta de más en cada apertura del editor se
+  // nota en el móvil.
+  const [guardadas, setGuardadas] = useState<Array<{ id: string; nombre: string; que: string; html: string }>>([])
+
+  const cargarGuardadas = useCallback(async () => {
+    try {
+      const r = await fetch("/api/admin/comunicaciones/plantillas", { credentials: "include" })
+      if (!r.ok) return
+      const j = await r.json()
+      setGuardadas((j.plantillas || []).map((t: { id: string; nombre: string; descripcion: string; html: string }) => ({
+        id: t.id,
+        nombre: t.nombre,
+        que: t.descripcion || "Guardada por administración.",
+        html: t.html,
+      })))
+    } catch { /* se queda con las de fábrica, que es suficiente para empezar */ }
+  }, [])
+
+  useEffect(() => { if (enCodigo) void cargarGuardadas() }, [enCodigo, cargarGuardadas])
+
   const campo = (k: keyof Comunicacion) => ({
     value: (c[k] as string) ?? "",
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editar(k, e.target.value),
@@ -1663,7 +1685,7 @@ function Campos({
               <span className="text-[10px] uppercase tracking-[0.15em] text-[#5a5a6a]">
                 Partir de
               </span>
-              {PLANTILLAS.map((pl) => (
+              {[...PLANTILLAS, ...guardadas].map((pl) => (
                 <button
                   key={pl.id}
                   type="button"
@@ -1688,6 +1710,38 @@ function Campos({
               onCambio={(v) => editar("email_html", v)}
               editable={editable}
             />
+
+            {/* ── GUARDAR LO QUE SE ACABA DE DISEÑAR ──────────────────────
+                Sin esto, un diseño que costó una tarde se queda dentro de
+                un correo concreto y la siguiente vez se empieza de cero o
+                se duplica esa comunicación entera para heredarlo. */}
+            {editable && (c.email_html || "").trim() !== "" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const nombre = window.prompt(
+                    "¿Cómo se va a llamar?\n\nSi ya existe una con ese nombre, se reemplaza.",
+                  )
+                  if (!nombre?.trim()) return
+                  try {
+                    const r = await fetch("/api/admin/comunicaciones/plantillas", {
+                      method: "POST",
+                      credentials: "include",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ nombre, html: c.email_html }),
+                    })
+                    const j = await r.json()
+                    if (!r.ok) throw new Error(j?.error || "No se pudo guardar")
+                    await cargarGuardadas()
+                  } catch (e) {
+                    window.alert(e instanceof Error ? e.message : "No se pudo guardar")
+                  }
+                }}
+                className="text-[11px] text-[#7a7a8a] underline underline-offset-2 transition-colors hover:text-[#c3b2e0]"
+              >
+                Guardar este diseño como plantilla
+              </button>
+            )}
           </>
         )}
       </Bloque>

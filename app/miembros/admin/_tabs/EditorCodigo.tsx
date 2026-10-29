@@ -21,8 +21,8 @@
 // un segundo en un móvil con mala conexión, que es desde donde se revisa esto
 // la mitad de las veces.
 
-import { useMemo, useRef } from "react"
-import { AlertTriangle, Info } from "lucide-react"
+import { useMemo, useRef, useState } from "react"
+import { AlertTriangle, ImagePlus, Info, Loader2 } from "lucide-react"
 import { revisarHtmlCorreo } from "@/lib/comunicaciones/html-correo"
 
 export function EditorCodigo({
@@ -34,6 +34,9 @@ export function EditorCodigo({
 }) {
   const area = useRef<HTMLTextAreaElement | null>(null)
   const numeros = useRef<HTMLDivElement | null>(null)
+  const archivo = useRef<HTMLInputElement | null>(null)
+  const [subiendo, setSubiendo] = useState(false)
+  const [errorSubida, setErrorSubida] = useState<string | null>(null)
 
   const lineas = useMemo(() => valor.split("\n").length, [valor])
 
@@ -59,6 +62,59 @@ export function EditorCodigo({
     })
   }
 
+  // ── INSERTAR UNA IMAGEN SIN SALIR DE AQUÍ ───────────────────────────────
+  //
+  // Sin esto, meter una imagen en un correo escrito a mano es: salir del
+  // editor, subirla en otra pantalla, copiar la dirección, volver, encontrar
+  // el sitio y escribir la etiqueta a mano. Seis pasos para algo que se hace
+  // cuatro veces por correo.
+  //
+  // Se sube por la MISMA ruta que usa el formulario. No hay un segundo
+  // almacenamiento ni un segundo sitio donde buscar las imágenes luego.
+  const insertarImagen = async (f: File) => {
+    setSubiendo(true)
+    setErrorSubida(null)
+    try {
+      const fd = new FormData()
+      fd.append("file", f)
+      const r = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: fd })
+      const j = await r.json()
+      if (!r.ok || !j?.url) throw new Error(j?.error || "No se pudo subir")
+
+      // ── LA ETIQUETA QUE SE INSERTA, Y POR QUÉ ASÍ ──────────────────────
+      //   width="600"        Outlook necesita el atributo, no basta el CSS.
+      //   max-width:100%     para que en el móvil no se salga.
+      //   display:block      quita el hueco de tres píxeles que algunos
+      //                      clientes dejan debajo tratándola como texto.
+      //   border="0"         sin esto, una imagen dentro de un enlace sale
+      //                      con marco azul en Outlook.
+      //   alt=""             vacío Y a la vista, para que se note que falta
+      //                      escribirlo: muchos clientes no cargan imágenes.
+      const etiqueta =
+        `<img src="${j.url}" alt="" width="600" border="0" ` +
+        `style="display:block;width:100%;max-width:600px;height:auto;">`
+
+      const el = area.current
+      // Se inserta donde está el cursor, no al final: el final de un correo
+      // es el pie, y nadie quiere la imagen ahí.
+      const a = el?.selectionStart ?? valor.length
+      const b = el?.selectionEnd ?? valor.length
+      onCambio(valor.slice(0, a) + etiqueta + valor.slice(b))
+      requestAnimationFrame(() => {
+        if (!el) return
+        el.focus()
+        el.selectionStart = el.selectionEnd = a + etiqueta.length
+      })
+    } catch (e) {
+      setErrorSubida(e instanceof Error ? e.message : "No se pudo subir")
+    } finally {
+      setSubiendo(false)
+      // Se limpia para que subir DOS VECES la misma imagen vuelva a disparar
+      // el evento: sin esto, la segunda vez no pasa nada y parece que falla.
+      if (archivo.current) archivo.current.value = ""
+    }
+  }
+
   // Los números siguen al texto al desplazarse. Es la única manera de que
   // sirvan: una columna fija deja de corresponder en cuanto se baja.
   const alDesplazar = () => {
@@ -69,6 +125,36 @@ export function EditorCodigo({
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <input
+          ref={archivo}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void insertarImagen(f)
+          }}
+        />
+        <button
+          type="button"
+          disabled={!editable || subiendo}
+          onClick={() => archivo.current?.click()}
+          className="inline-flex items-center gap-2 border border-[#2a2a3a] px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] text-[#8a8fa8] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+        >
+          {subiendo
+            ? <><Loader2 size={12} className="animate-spin" /> Subiendo…</>
+            : <><ImagePlus size={12} /> Insertar imagen</>}
+        </button>
+        <span className="text-[10px] text-[#5a5a6a]">Se pega donde esté el cursor.</span>
+      </div>
+
+      {errorSubida && (
+        <p className="border border-red-900 bg-red-950/20 px-3 py-2 text-[11px] text-red-300">
+          {errorSubida}
+        </p>
+      )}
+
       <div className="flex overflow-hidden border border-[#1f1f2c] bg-[#08080f]">
         <div
           ref={numeros}
