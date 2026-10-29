@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   const g = await exigirAdmin()
   if ("respuesta" in g) return g.respuesta
 
-  let body: { type?: string; canal?: string }
+  let body: { type?: string; canal?: string; canales?: unknown }
   try { body = await req.json() } catch { body = {} }
 
   const tipo = body.type
@@ -99,7 +99,13 @@ export async function POST(req: NextRequest) {
   // Por dónde va a salir se elige al crearla, y se puede cambiar mientras
   // sea borrador. Cualquier cosa que no sea "push" es correo: es lo que
   // eran todas las que ya existen.
-  const canal = body.canal === "push" ? "push" : "email"
+  const canal = body.canal === "push" ? "push" : body.canal === "interno" ? "interno" : "email"
+
+  // ── LOS CANALES ─────────────────────────────────────────────────────────
+  // Se nace con uno. Añadir el segundo —que una misma comunicación salga por
+  // correo Y quede dentro de la plataforma— se hace después, desde la
+  // pantalla, porque hasta que no está escrita no se sabe si tiene sentido.
+  const canales = [canal]
 
   // Se nace con lo que el tipo ya sabe de sí mismo: el eyebrow y el texto del
   // botón. No es relleno, es no empezar delante de seis campos vacíos.
@@ -108,12 +114,16 @@ export async function POST(req: NextRequest) {
     .insert({
       type: tipo,
       canal,
+      canales,
       internal_title: `${def.nombre} · sin título`,
       // El eyebrow y el texto del botón son del correo: en una
       // notificación no se ven. Nacer con ellos no rompe nada, pero deja
       // dos campos rellenos que luego avisan de que no se usan.
-      eyebrow: canal === "push" ? "" : def.eyebrowPorDefecto,
-      cta_text: canal === "push" ? null : def.ctaPorDefecto,
+      // El eyebrow y el botón son del correo. Dentro de la plataforma el
+      // titular ya tiene la atención de quien lo lee, así que tampoco hacen
+      // falta: nacer con ellos dejaría dos campos rellenos que no se ven.
+      eyebrow: canal === "email" ? def.eyebrowPorDefecto : "",
+      cta_text: canal === "email" ? def.ctaPorDefecto : null,
       audience: { kind: "todos" },
       status: "draft",
       created_by: g.user.id,

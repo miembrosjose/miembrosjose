@@ -100,6 +100,17 @@ export const CAMPOS_EDITABLES = [
   "cta_text", "cta_url",
   "event_title", "event_at", "event_timezone", "event_location",
   "audience",
+
+  // ── LO QUE SE VE DENTRO DE LA PLATAFORMA ─────────────────────────────
+  // Admiten nulo y caen a los del correo: marcar «también dentro» en algo
+  // ya escrito no debe obligar a reescribirlo.
+  "canales",
+  "interno_titulo", "interno_cuerpo", "interno_image_url",
+  "interno_cta_text", "interno_cta_url", "interno_cta_accion",
+  "display_mode", "audiencia_hasta",
+
+  // ── EL CORREO ESCRITO A MANO ─────────────────────────────────────────
+  "email_modo", "email_html",
 ] as const
 
 export type CampoEditable = (typeof CAMPOS_EDITABLES)[number]
@@ -109,6 +120,46 @@ export function soloEditable(body: Record<string, unknown>): Record<string, unkn
   const limpio: Record<string, unknown> = {}
   for (const campo of CAMPOS_EDITABLES) {
     if (!(campo in body)) continue
+    // ── LOS CANALES ────────────────────────────────────────────────────
+    // Una lista, no un valor. Se filtra contra lo que existe y se quitan los
+    // repetidos: la base también lo rechazaría, pero allí el error sale como
+    // un fallo de base de datos y en pantalla no se entiende nada.
+    //
+    // Si llega vacía se deja como está. Una comunicación sin ningún canal no
+    // se puede enviar por ningún sitio, y un formulario a medio rellenar no
+    // debería poder dejarla así.
+    if (campo === "canales") {
+      const dados = Array.isArray(body.canales) ? body.canales : []
+      const validos = [...new Set(
+        dados.filter((c): c is string => typeof c === "string")
+          .filter((c) => c === "email" || c === "push" || c === "interno"),
+      )]
+      if (validos.length > 0) {
+        limpio.canales = validos
+        // `canal` se sigue rellenando con el primero. No se usa para decidir
+        // nada nuevo, pero puede quedar alguna consulta vieja que lo lea, y
+        // una columna desactualizada miente mejor que una vacía.
+        limpio.canal = validos.includes("email") ? "email" : validos[0]
+      }
+      continue
+    }
+
+    // Lista cerrada: esto lo rellena un desplegable, y un texto libre que el
+    // navegador convierte en una llamada es por donde entra lo que nadie
+    // previó.
+    if (campo === "interno_cta_accion") {
+      limpio.interno_cta_accion = body.interno_cta_accion === "telegram" ? "telegram" : null
+      continue
+    }
+    if (campo === "display_mode") {
+      limpio.display_mode = body.display_mode === "modal_once" ? "modal_once" : "feed"
+      continue
+    }
+    if (campo === "email_modo") {
+      limpio.email_modo = body.email_modo === "codigo" ? "codigo" : "visual"
+      continue
+    }
+
     if (campo === "canal") {
       // Un valor que no sea uno de los dos dejaría una comunicación que
       // nadie sabe enviar. La base también lo rechaza, pero allí el error
@@ -122,7 +173,12 @@ export function soloEditable(body: Record<string, unknown>): Record<string, unkn
       // Las direcciones y la fecha se guardan como null cuando están vacías:
       // una cadena vacía en una columna de URL obliga a comprobar dos casos en
       // todas partes.
-      const anulable = ["image_url", "cta_text", "cta_url", "event_title", "event_at", "event_timezone", "event_location"]
+      const anulable = [
+        "image_url", "cta_text", "cta_url",
+        "event_title", "event_at", "event_timezone", "event_location",
+        "interno_image_url", "interno_cta_text", "interno_cta_url",
+        "audiencia_hasta", "email_html",
+      ]
       limpio[campo] = s === "" && anulable.includes(campo) ? null : s
     } else if (v === null || typeof v === "object") {
       limpio[campo] = v
