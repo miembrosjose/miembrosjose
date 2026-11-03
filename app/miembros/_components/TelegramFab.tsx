@@ -14,6 +14,7 @@
 // sitio. Guardarla sería volver a tener un enlace fijo, solo que escondido.
 
 import { useEffect, useRef, useState } from "react"
+import { Info, X } from "lucide-react"
 import { alPedirTelegram } from "../_lib/abrir-telegram"
 import { useView } from "../_lib/view-context"
 import { useAuth } from "../_lib/auth-context"
@@ -125,10 +126,20 @@ export function TelegramFab() {
     } catch (e) {
       pestana?.close()
       console.error("[telegram] link-start:", e)
-      setError(await mensajeUtil(e))
-      // El aviso se va solo: es un botón flotante, no una pantalla, y un
-      // mensaje de error pegado ahí para siempre estorba más de lo que ayuda.
-      window.setTimeout(() => setError(null), 9000)
+      const msg = await mensajeUtil(e)
+      setError(msg)
+      const esPasajero = msg.startsWith("No se pudo abrir Telegram")
+      // ── CUÁNTO SE QUEDA, SEGÚN QUÉ DIGA ──────────────────────────────
+      // «No se pudo abrir, inténtalo en un momento» es ruido pasajero: se va
+      // solo y no hay nada que leer dos veces.
+      //
+      // «Tu membresía no está activa» NO es eso. Es la respuesta a por qué no
+      // pasa nada al pulsar, y desaparecer a los nueve segundos convierte una
+      // explicación en un parpadeo: la persona vuelve a pulsar, vuelve a
+      // aparecer, y acaba pensando que la plataforma está rota.
+      //
+      // Lo que explica algo se queda hasta que se cierre.
+      if (esPasajero) window.setTimeout(() => setError(null), 9000)
     } finally {
       setOcupado(false)
     }
@@ -148,7 +159,28 @@ export function TelegramFab() {
 
   return (
     <div className={s.zona}>
-      {error && <p className={s.error} role="status">{error}</p>}
+      {/* ── POR QUÉ LLEVA ICONO Y BOTÓN DE CERRAR ──────────────────────
+          Era un párrafo suelto encima del botón. Un texto sin nada alrededor,
+          apareciendo sobre el contenido, se lee como que algo se ha roto — y
+          la mayoría de las veces esto no informa de una avería sino de que
+          esa persona no tiene la suscripción al día.
+
+          Con el icono se entiende que es un mensaje; con la equis, que se
+          puede quitar de en medio sin tener que esperar. */}
+      {error && (
+        <div className={s.aviso} role="status">
+          <Info size={14} className={s.avisoIcono} aria-hidden />
+          <p className={s.avisoTexto}>{error}</p>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            aria-label="Cerrar el aviso"
+            className={s.avisoCerrar}
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
 
       <button
         type="button"

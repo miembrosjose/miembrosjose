@@ -144,3 +144,71 @@
     animation-duration: 1400ms;
   }
 }
+
+/* ── EL AVISO ───────────────────────────────────────────────────────────────
+ *
+ * Reemplaza a `.error`, que era un párrafo suelto con esquinas de 10px.
+ *
+ * ── POR QUÉ ESQUINAS RECTAS ───────────────────────────────────────────────
+ * Porque el otro aviso flotante de la plataforma —el de «fulano se conectó»—
+ * las lleva rectas, y dos avisos que salen en la misma esquina de la pantalla
+ * con formas distintas se leen como de dos sitios distintos.
+ *
+ * ── Y POR QUÉ NO ES ROJO ──────────────────────────────────────────────────
+ * Porque casi nunca informa de una avería. Lo más frecuente que dice es que
+ * esa persona no tiene la suscripción al día, y eso no es un error suyo ni
+ * nuestro: es un hecho que hay que contarle. El rojo lo convertía en un fallo
+ * de la plataforma a los ojos de quien lo leía.
+ */
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 260px;
+  padding: 10px 8px 10px 11px;
+  background: rgba(15, 18, 22, 0.96);
+  border: 1px solid rgba(109, 74, 155, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.avisoIcono {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #a78bca;
+}
+
+.avisoTexto {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #d8d8e8;
+}
+
+.avisoCerrar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  /* 28px es lo mínimo con lo que un pulgar acierta sin apuntar. Más pequeño,
+     y cerrar un aviso se convierte en pulsar el botón de Telegram por error,
+     que vuelve a lanzar la petición que acaba de fallar. */
+  width: 28px;
+  height: 28px;
+  margin: -4px -4px -4px 0;
+  color: #6a6a7a;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+.avisoCerrar:hover { color: #F3F6FA; }
+.avisoCerrar:focus-visible { outline: 1px solid #6D4A9B; color: #F3F6FA; }
+
+@media (max-width: 600px) {
+  .aviso {
+    /* Igual que antes: al lado del borde izquierdo, 260px se sale. */
+    max-width: calc(100vw - 48px);
+  }
+}
