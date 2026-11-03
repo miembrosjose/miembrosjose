@@ -10,32 +10,36 @@
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useAuth } from "../_lib/auth-context"
 import { UbicacionRed } from "./UbicacionRed"
+import { avatarCuadrado } from "../_lib/image-upload"
 
 type State = { type: "idle" } | { type: "saving" } | { type: "error"; msg: string }
 
 const MAX_AVATAR_SIZE = 10 * 1024 * 1024 // 10 MB
 
-// Mesmo helper do profile-form: converte File pra WebP quadrado 512x512
-async function convertToWebp(file: File): Promise<File> {
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image()
-    i.onload = () => resolve(i)
-    i.onerror = reject
-    i.src = URL.createObjectURL(file)
-  })
-  const canvas = document.createElement("canvas")
-  const size = 512
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext("2d")!
-  const ratio = Math.max(size / img.width, size / img.height)
-  const w = img.width * ratio
-  const h = img.height * ratio
-  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
-  const blob = await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b!), "image/webp", 0.9),
-  )
-  return new File([blob], "avatar.webp", { type: "image/webp" })
+// ── EL RECORTE DE LA FOTO VIVE EN _lib/image-upload ───────────────────────
+// Aquí había una copia propia que rechazaba con el Event del navegador en vez
+// de con un Error. El `catch` de abajo comprueba `instanceof Error`, así que
+// el motivo se perdía y quedaba «Error al guardar perfil» — una frase que no
+// dice nada y que además mentía: lo que falló fue la foto, no el perfil.
+
+/**
+ * Lo que dijo el servidor, o algo que se pueda leer.
+ *
+ * ── POR QUÉ NO VALE `(await r.json()).error` ──────────────────────────────
+ * Porque una respuesta sin cuerpo —un 405, un 502, un Worker que se cae antes
+ * de escribir nada— hace que `json()` lance «Unexpected end of JSON input», y
+ * ese mensaje habla del formato de la respuesta en vez de del problema.
+ */
+async function motivoDe(r: Response, reserva: string): Promise<string> {
+  let texto = ""
+  try { texto = await r.text() } catch { /* ni eso */ }
+  if (texto.trim()) {
+    try {
+      const j = JSON.parse(texto) as { error?: string }
+      if (j?.error) return j.error
+    } catch { /* no era JSON */ }
+  }
+  return `${reserva} (el servidor respondió ${r.status})`
 }
 
 export function ProfileOnboardingModal({
@@ -102,17 +106,17 @@ export function ProfileOnboardingModal({
 
   async function uploadPendingAvatar(): Promise<string | null> {
     if (!pendingFile) return avatar
-    const webp = await convertToWebp(pendingFile)
+    const preparada = await avatarCuadrado(pendingFile)
     const fd = new FormData()
-    fd.append("file", webp)
+    fd.append("file", preparada)
     const res = await fetch("/api/profile/avatar", {
       method: "POST",
       body: fd,
       credentials: "include",
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || "Error al subir foto")
-    return data.avatar_url as string
+    if (!res.ok) throw new Error(await motivoDe(res, "No se pudo subir la foto"))
+    const data = (await res.json()) as { avatar_url?: string }
+    return data.avatar_url ?? null
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -148,6 +152,13 @@ export function ProfileOnboardingModal({
       return
     }
 
+    // ── EN QUÉ PASO VA ────────────────────────────────────────────────
+    // Esto son tres peticiones seguidas y antes todas fallaban con la misma
+    // frase. Saber cuál de las tres murió es la diferencia entre arreglarlo y
+    // adivinar: la vez que pasó de verdad, el fallo estaba en la foto y el
+    // mensaje hablaba del perfil.
+    let paso = "la foto"
+
     startTransition(async () => {
       try {
         setState({ type: "saving" })
@@ -157,18 +168,17 @@ export function ProfileOnboardingModal({
         if (finalAvatarUrl) setAvatar(finalAvatarUrl)
 
         // 2) Update name (endpoint específico)
+        paso = "el nombre"
         const resName = await fetch("/api/profile/update", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ full_name: cleanName }),
         })
-        if (!resName.ok) {
-          const d = await resName.json()
-          throw new Error(d.error || "Error al guardar nombre")
-        }
+        if (!resName.ok) throw new Error(await motivoDe(resName, "No se pudo guardar el nombre"))
 
         // 3) Update about (username, bio, instagram)
+        paso = "el @usuario"
         const resAbout = await fetch("/api/profile/update", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -179,10 +189,7 @@ export function ProfileOnboardingModal({
             instagram: cleanInstagram,
           }),
         })
-        if (!resAbout.ok) {
-          const d = await resAbout.json()
-          throw new Error(d.error || "Error al guardar perfil")
-        }
+        if (!resAbout.ok) throw new Error(await motivoDe(resAbout, "No se pudo guardar el perfil"))
 
         // 3b) La ubicación, si eligió alguna. Va con el mismo botón que todo
         // lo demás. Si falla, NO se corta el alta: la persona entra igual y
@@ -199,10 +206,20 @@ export function ProfileOnboardingModal({
         // 4) Refresh auth — gate fecha sozinho quando isProfileComplete passa
         await refreshAuth()
       } catch (err) {
-        setState({
-          type: "error",
-          msg: err instanceof Error ? err.message : "Error al guardar perfil",
-        })
+        // ── LO QUE SEA QUE HAYA LLEGADO, DICHO ──────────────────────────
+        // Lo que no es un Error ya no se traga en silencio: se enseña su
+        // forma. Un texto raro delante de alguien es feo; un texto que no
+        // dice nada deja a esa persona sin poder entrar y a nosotros sin
+        // saber por qué.
+        const detalle =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : `fallo inesperado (${Object.prototype.toString.call(err)})`
+
+        setState({ type: "error", msg: `${detalle} — falló ${paso}.` })
+        console.error("[alta de perfil] falló", paso, err)
       }
     })
   }

@@ -15,7 +15,22 @@ import { getCloudflareContext } from "@opennextjs/cloudflare"
 export const dynamic = "force-dynamic"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
-const ALLOWED_TYPES = ["image/webp"] // cliente converte tudo pra webp
+
+// ── POR QUÉ TAMBIÉN JPEG Y PNG ────────────────────────────────────────────
+// El cliente convierte a WebP antes de subir, y mientras eso funcione aquí
+// solo llega WebP. Pero `canvas.toBlob("image/webp")` devuelve null en los
+// navegadores que no saben escribirlo, y entonces el cliente manda JPEG como
+// repuesto. Aceptar solo WebP convertía ese repuesto en otro callejón sin
+// salida: la persona cambiaba de foto una y otra vez sin que ninguna valiera.
+//
+// No abre nada: siguen siendo imágenes, con el mismo límite de tamaño, y el
+// tipo se vuelve a escribir abajo en vez de creerse el que venga.
+const ALLOWED_TYPES = ["image/webp", "image/jpeg", "image/png"]
+const EXTENSION: Record<string, string> = {
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+}
 const PUBLIC_URL_BASE = process.env.R2_PUBLIC_URL || ""
 
 export async function POST(req: NextRequest) {
@@ -38,11 +53,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File exceeds 2MB" }, { status: 400 })
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: "Only WebP allowed" }, { status: 400 })
+    return NextResponse.json(
+      { error: `Formato no admitido (${file.type || "desconocido"}). Usa JPG, PNG o WebP.` },
+      { status: 400 },
+    )
   }
 
   // Filename: user_id + timestamp pra invalidar cache de browser entre uploads
-  const filename = `${user.id}/${Date.now()}.webp`
+  const extension = EXTENSION[file.type]
+  const filename = `${user.id}/${Date.now()}.${extension}`
 
   // R2Bucket type minimal (sem dep @cloudflare/workers-types)
   type R2BucketLike = {
@@ -63,7 +82,7 @@ export async function POST(req: NextRequest) {
   try {
     const arrayBuffer = await file.arrayBuffer()
     await bucket.put(filename, arrayBuffer, {
-      httpMetadata: { contentType: "image/webp" },
+      httpMetadata: { contentType: file.type },
     })
   } catch (e) {
     console.error("[/api/profile/avatar] R2 upload error:", e)

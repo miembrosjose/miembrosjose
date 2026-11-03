@@ -7,6 +7,7 @@ import { ACHIEVEMENTS_VISIBLES, getAura, ACHIEVEMENTS, getAchievementById, getTi
 import { getAchievementSvg } from "@/lib/achievement-svg"
 import { useAuth } from "../_lib/auth-context"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
+import { avatarCuadrado } from "../_lib/image-upload"
 import { LegalLinks } from "@/components/legal/legal-links"
 
 // ── POR QUÉ AQUÍ YA NO SE LEE EL NAVEGADOR ─────────────────────────────────
@@ -22,45 +23,11 @@ import { LegalLinks } from "@/components/legal/legal-links"
 // demostrar. Y los tres endpoints de insignia destacada lo comprueban otra
 // vez al guardar, por si esta pantalla se equivoca.
 
-/**
- * Converte File de imagem (qualquer formato suportado pelo browser) pra
- * WebP via Canvas API. Tamanho final reduzido pra max 512x512 (avatar)
- * e qualidade 0.85.
- */
-async function convertToWebp(file: File): Promise<File> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = () => reject(new Error("Failed to read file"))
-    reader.readAsDataURL(file)
-  })
-
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image()
-    i.onload = () => resolve(i)
-    i.onerror = () => reject(new Error("Failed to load image"))
-    i.src = dataUrl
-  })
-
-  // Crop quadrado center + resize pra max 512px lado
-  const size = Math.min(img.width, img.height)
-  const cropX = (img.width - size) / 2
-  const cropY = (img.height - size) / 2
-  const targetSize = Math.min(512, size)
-
-  const canvas = document.createElement("canvas")
-  canvas.width = targetSize
-  canvas.height = targetSize
-  const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("Canvas not supported")
-  ctx.drawImage(img, cropX, cropY, size, size, 0, 0, targetSize, targetSize)
-
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob((b) => resolve(b), "image/webp", 0.85)
-  })
-  if (!blob) throw new Error("WebP conversion failed")
-  return new File([blob], "avatar.webp", { type: "image/webp" })
-}
+// ── EL RECORTE DE LA FOTO VIVE EN _lib/image-upload ───────────────────────
+// Esta pantalla y la del alta tenían cada una su copia, y no eran iguales: la
+// del alta rechazaba con el Event del navegador en vez de con un Error, y por
+// eso un fallo de la foto salía como «Error al guardar perfil». Una sola
+// definición no puede volver a desincronizarse.
 
 type State = { type: "idle" } | { type: "saving" } | { type: "success"; msg: string } | { type: "error"; msg: string }
 
@@ -298,7 +265,7 @@ export function ProfileForm({
     startAvatar(async () => {
       try {
         setAvatarState({ type: "saving" })
-        const webp = await convertToWebp(file)
+        const webp = await avatarCuadrado(file)
         const fd = new FormData()
         fd.append("file", webp)
         const res = await fetch("/api/profile/avatar", { method: "POST", body: fd, credentials: "include" })
