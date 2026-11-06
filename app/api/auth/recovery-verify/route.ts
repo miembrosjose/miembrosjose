@@ -41,7 +41,18 @@ export async function POST(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!url || !anon || !tokenHash || type !== "recovery") {
+  // ── POR QUÉ MÁS DE UN TIPO ────────────────────────────────────────────
+  // Esto solo aceptaba "recovery", y por eso la protección contra escáneres
+  // servía para las contraseñas olvidadas y no para las invitaciones — que
+  // se gastan igual, y de hecho fue una invitación gastada la que dejó a una
+  // persona fuera el 6 de noviembre de 2026.
+  //
+  // La lista es explícita a propósito: `verifyOtp` acepta tipos que aquí no
+  // pintan nada, como el cambio de correo, y dejar pasar cualquier cosa que
+  // venga en la URL sería dejar que la elija quien manda el enlace.
+  const ACEPTADOS: EmailOtpType[] = ["recovery", "invite", "magiclink", "signup"]
+
+  if (!url || !anon || !tokenHash || !ACEPTADOS.includes(type)) {
     return noStore(NextResponse.redirect(failDest, { status: 303 }))
   }
 
@@ -63,7 +74,7 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" })
+  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
 
   if (error) {
     // No revelamos detalle ni el token; mensaje humano en la pantalla destino.

@@ -43,6 +43,15 @@ export function RecoverForm() {
         <p className="mt-3 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
           Revisa tu bandeja de entrada y la carpeta de spam.
         </p>
+        {/* ── POR QUÉ SE AVISA AQUÍ ──────────────────────────────────────
+            El enlace es de un solo uso y caduca. Quien no lo sabe lo deja
+            para después, lo abre por la noche, y se encuentra con que no
+            funciona — y entonces no piensa «caducó», piensa «esto está
+            roto». Decirlo cuesta una línea; no decirlo costó dos tardes. */}
+        <p className="mt-3 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Ábrelo en cuanto llegue: es de un solo uso. Si ya no funciona, puedes
+          pedir otro desde aquí mismo.
+        </p>
       </div>
     )
   }

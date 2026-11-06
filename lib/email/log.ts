@@ -12,6 +12,10 @@ export type EmailSource =
   | "hotmart"
   | "manual_grant"
   | "admin_resend"
+  // Quien pide recuperar su contraseña desde la pantalla de acceso. La
+  // columna `source` no tiene restricción en la base, así que añadir un valor
+  // aquí no necesita migración.
+  | "password_reset"
 
 export type EmailLogEntry = {
   email: string
