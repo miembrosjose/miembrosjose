@@ -29,7 +29,8 @@ import {
 } from "react"
 import { useAuth } from "./auth-context"
 import { contarVisita, instalacionHecha } from "@/lib/pwa/reglas"
-import { estaInstalada, queAparato, type Aparato } from "./push-cliente"
+import { activarNotificaciones, estaInstalada, queAparato, type Aparato } from "./push-cliente"
+import { apagadoAdrede } from "@/lib/pwa/reglas"
 
 /**
  * El evento de instalación de Chrome.
@@ -66,7 +67,7 @@ type Pwa = {
 const Ctx = createContext<Pwa | null>(null)
 
 export function PwaProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, patchMetadata } = useAuth()
   const [evento, setEvento] = useState<EventoInstalacion | null>(null)
   const [instalada, setInstalada] = useState(false)
   const [aparato, setAparato] = useState<Aparato>("desconocido")
@@ -76,12 +77,67 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   // La visita se cuenta una sola vez por carga, aunque el proveedor se vuelva
   // a renderizar. Sin esto, cada cambio de sección sumaría una.
   const contada = useRef(false)
+  const anotada = useRef(false)
+  const recuperada = useRef(false)
 
   useEffect(() => {
     setAparato(queAparato())
     setInstalada(estaInstalada())
     setListo(true)
   }, [])
+
+  // ── QUE LA CUENTA SEPA QUE YA TIENE LA APLICACIÓN ─────────────────────
+  //
+  // `estaInstalada()` solo sabe de ESTE navegador, y en iPhone la aplicación
+  // de la pantalla de inicio tiene su propio almacenamiento, separado del de
+  // Safari. Por eso alguien que la usa a diario desde el icono recibe, al
+  // entrar una vez por Safari, la invitación a instalar lo que ya tiene.
+  //
+  // Se anota en la cuenta la primera vez que se abre desde el icono. A partir
+  // de ahí la plataforma lo sabe entre desde donde entre.
+  useEffect(() => {
+    if (!user?.id || anotada.current) return
+    if (!estaInstalada()) return
+    if ((user.user_metadata as { app_instalada_at?: string } | null)?.app_instalada_at) return
+    anotada.current = true
+    void fetch("/api/profile/app-instalada", { method: "POST", credentials: "include" })
+      .then(() => patchMetadata({ app_instalada_at: new Date().toISOString() }))
+      .catch(() => { /* se reintenta en el siguiente arranque */ })
+  }, [user?.id, user?.user_metadata, patchMetadata])
+
+  // ── VOLVER A SUSCRIBIR LO QUE SE CAYÓ SOLO ────────────────────────────
+  //
+  // Una suscripción de avisos muere por su cuenta: al reinstalar la
+  // aplicación, al limpiar los datos del navegador, o porque el servicio de
+  // Apple o Google decide que ese registro caducó. Entonces el servidor la
+  // marca como muerta y esa persona deja de recibir nada.
+  //
+  // Nadie se entera. No hay aviso que avise de que no hay avisos: el móvil
+  // sigue teniendo el permiso concedido, la pantalla sigue diciendo que todo
+  // está bien, y simplemente no suena nunca más. El 12 de noviembre de 2026
+  // había veinte dispositivos así, y una administradora entre ellos: mandó
+  // una notificación a toda la plataforma y no le llegó ni a ella.
+  //
+  // Con el permiso ya concedido, volver a suscribirse NO pregunta nada: el
+  // navegador contesta «granted» al instante. Así que se repara en silencio
+  // al abrir la aplicación, que es exactamente cuando debe hacerse.
+  //
+  // Solo si el permiso está concedido y no se apagaron a propósito: quien
+  // dijo que no, dijo que no.
+  useEffect(() => {
+    if (!user?.id || recuperada.current) return
+    if (typeof window === "undefined" || !("Notification" in window)) return
+    if (Notification.permission !== "granted") return
+    if (apagadoAdrede(user.id)) return
+
+    const clave = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!clave) return
+
+    recuperada.current = true
+    void activarNotificaciones(clave, user.id).catch(() => {
+      /* si no se puede, la tarjeta de siempre sigue ofreciéndolo */
+    })
+  }, [user?.id])
 
   useEffect(() => {
     if (!user?.id || contada.current) return
@@ -128,14 +184,22 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [evento, user?.id])
 
+  // ── «INSTALADA» ES DE LA CUENTA, NO DE ESTE NAVEGADOR ─────────────────
+  // `estaInstalada()` solo ve este navegador. Si la cuenta ya la instaló
+  // alguna vez —en el móvil, desde el icono— no hay por qué volver a
+  // ofrecérsela aquí: es la misma persona y ya la tiene.
+  const instaladaEnLaCuenta =
+    instalada ||
+    Boolean((user?.user_metadata as { app_instalada_at?: string } | null)?.app_instalada_at)
+
   const valor = useMemo<Pwa>(() => ({
     aparato,
-    instalada,
+    instalada: instaladaEnLaCuenta,
     puedeInstalarSola: evento !== null,
     instalar,
     visitas,
     listo,
-  }), [aparato, instalada, evento, instalar, visitas, listo])
+  }), [aparato, instaladaEnLaCuenta, evento, instalar, visitas, listo])
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>
 }
