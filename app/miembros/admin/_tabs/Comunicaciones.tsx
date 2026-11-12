@@ -172,6 +172,8 @@ type Audiencia = {
   personas?: string[] | null
   /** Todos MENOS estas. Manda sobre cualquier otro filtro. */
   excluidas?: string[] | null
+  /** Dentro o fuera del grupo de Telegram. «dentro» es estar en el grupo. */
+  telegram?: "dentro" | "fuera" | null
 }
 
 /** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
@@ -2726,6 +2728,44 @@ function Audiencias({
           </div>
         </div>
       )}
+
+      {/* ── DENTRO O FUERA DEL TELEGRAM ───────────────────────────────────
+          Para dejar de invitar al grupo a quien ya está dentro. Hasta ahora
+          la invitación salía a todos, y quien ya se había unido la recibía
+          igual — la forma más rápida de que alguien deje de leerte.
+
+          «Dentro» es estar EN EL GRUPO, no haber vinculado la cuenta con el
+          bot. Mucha gente pulsa el botón, se identifica y se queda a medio
+          camino: a esa hay que seguir invitándola. */}
+      <div>
+        <label className={labelCls}>Según el Telegram</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Estar dentro es estar en el grupo, no haber pulsado el botón.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla
+            activa={!a.telegram}
+            onClick={() => cambiar({ telegram: null })}
+            desactivada={!editable}
+          >
+            Da igual
+          </Pastilla>
+          <Pastilla
+            activa={a.telegram === "fuera"}
+            onClick={() => cambiar({ telegram: a.telegram === "fuera" ? null : "fuera" })}
+            desactivada={!editable}
+          >
+            Todavía no está dentro
+          </Pastilla>
+          <Pastilla
+            activa={a.telegram === "dentro"}
+            onClick={() => cambiar({ telegram: a.telegram === "dentro" ? null : "dentro" })}
+            desactivada={!editable}
+          >
+            Ya está dentro
+          </Pastilla>
+        </div>
+      </div>
 
       <PersonasElegidas
         elegidas={a.personas ?? []}

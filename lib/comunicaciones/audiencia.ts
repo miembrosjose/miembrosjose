@@ -43,6 +43,8 @@ export type MotivoExclusion =
   | "otra_ciudad"
   | "no_en_la_lista"
   | "excluida_a_mano"
+  | "ya_en_telegram"
+  | "no_en_telegram"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -77,6 +79,8 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   otra_ciudad: "Está en otra ciudad, o no la ha puesto",
   no_en_la_lista: "No está entre las personas elegidas",
   excluida_a_mano: "La quitaste de este envío",
+  ya_en_telegram: "Ya está en el grupo de Telegram",
+  no_en_telegram: "Todavía no está en el grupo de Telegram",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -272,6 +276,40 @@ async function insigniasPorMiembro(): Promise<Map<string, Set<string>>> {
   return mapa
 }
 
+/**
+ * Quién está DENTRO del grupo general de Telegram.
+ *
+ * ── POR QUÉ ESTA TABLA Y NO `telegram_memberships` ───────────────────────
+ * Porque son dos hechos distintos y se confunden con facilidad:
+ *
+ *   telegram_memberships        → vinculó su cuenta con el bot
+ *   telegram_group_memberships  → el bot le dejó ENTRAR al grupo
+ *
+ * Mucha gente pulsa el botón, se identifica, y se queda a medio camino sin
+ * llegar a entrar. Si se filtrara por la primera, a esas personas se les
+ * dejaría de invitar justo cuando más falta les hace.
+ *
+ * Y esta es además la que mantiene al día el barrido diario: quien sale del
+ * grupo deja de contar como dentro.
+ */
+async function quienesEstanEnTelegram(): Promise<Set<string>> {
+  const admin = getSupabaseAdmin()
+  const dentro = new Set<string>()
+  for (let desde = 0; ; desde += 1000) {
+    const { data, error } = await admin
+      .from("telegram_group_memberships")
+      .select("user_id")
+      .eq("group_key", "general")
+      .eq("is_member", true)
+      .range(desde, desde + 999)
+    if (error) break
+    const lote = (data || []) as Array<{ user_id: string }>
+    for (const f of lote) dentro.add(f.user_id)
+    if (lote.length < 1000) break
+  }
+  return dentro
+}
+
 /** Quién tiene qué rol vigente en La Red. */
 async function rolesPorMiembro(): Promise<Map<string, Set<string>>> {
   const admin = getSupabaseAdmin()
@@ -406,6 +444,9 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.paises?.length) {
     partes.push("de " + a.paises.map((c) => nombrePais(c)).join(" o "))
   }
+  if (a.telegram === "fuera") partes.push("que todavía no están en el Telegram")
+  if (a.telegram === "dentro") partes.push("que ya están en el Telegram")
+
   if (a.ciudades?.length) {
     partes.push(a.ciudades.length === 1 ? "de una ciudad concreta" : "de " + a.ciudades.length + " ciudades")
   }
@@ -478,6 +519,13 @@ export async function resolverAudiencia(
   const ciudadesPedidas = (audiencia.ciudades || []).filter((n) => Number.isFinite(Number(n))).map(Number)
   const pideCiudad = ciudadesPedidas.length > 0
 
+  // ── DENTRO O FUERA DEL TELEGRAM ─────────────────────────────────────────
+  // «dentro» es estar EN EL GRUPO, no haber vinculado la cuenta. Son dos
+  // cosas distintas: mucha gente pulsa el botón, se identifica con el bot y
+  // se queda a medio camino sin llegar a entrar. A esa hay que invitarla
+  // igual que a quien no hizo nada.
+  const pideTelegram = audiencia.telegram === "dentro" || audiencia.telegram === "fuera"
+
   const elegidas = new Set((audiencia.personas || []).filter(Boolean))
   const pidePersonas = elegidas.size > 0
 
@@ -494,11 +542,12 @@ export async function resolverAudiencia(
   // Porque son independientes entre sí y cada uno es una ida y vuelta a la
   // base. Esperar a uno para empezar el otro sería sumar dos esperas donde
   // cabe una sola.
-  const [actividad, ubicacion, roles, insignias] = await Promise.all([
+  const [actividad, ubicacion, roles, insignias, enTelegram] = await Promise.all([
     (pideInactivo || pideActivo) ? actividadDeTodos() : Promise.resolve(new Map<string, number>()),
     (pidePais || pideCiudad) ? ubicacionDeTodos() : Promise.resolve(new Map<string, { pais: string; ciudad: number | null }>()),
     pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
     pideInsignia ? insigniasPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
+    pideTelegram ? quienesEstanEnTelegram() : Promise.resolve(new Set<string>()),
   ])
   const avance = avanceCompleto.alcanzada
   const completadas = avanceCompleto.completadas
@@ -585,6 +634,7 @@ export async function resolverAudiencia(
     aun_activo: 0, inactivo_hace_mucho: 0, sin_senal: 0,
     ya_la_termino: 0, no_la_empezo: 0,
     otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0, excluida_a_mano: 0,
+    ya_en_telegram: 0, no_en_telegram: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -687,6 +737,18 @@ export async function resolverAudiencia(
       }
       if (pideCiudad && (!donde || donde.ciudad == null || !ciudadesPedidas.includes(donde.ciudad))) {
         cuenta.otra_ciudad++
+        continue
+      }
+    }
+
+    if (pideTelegram) {
+      const dentro = enTelegram.has(f.id)
+      if (audiencia.telegram === "fuera" && dentro) {
+        cuenta.ya_en_telegram++
+        continue
+      }
+      if (audiencia.telegram === "dentro" && !dentro) {
+        cuenta.no_en_telegram++
         continue
       }
     }

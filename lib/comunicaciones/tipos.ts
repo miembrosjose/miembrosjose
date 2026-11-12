@@ -406,6 +406,20 @@ export type Audiencia = {
    * seguro de que a esa persona no le llega.
    */
   excluidas?: string[] | null
+  /**
+   * Según estén o no DENTRO del grupo de Telegram.
+   *
+   * ── POR QUÉ HACÍA FALTA ─────────────────────────────────────────────────
+   * Para dejar de invitar al Telegram a quien ya está dentro. Hasta ahora la
+   * invitación salía a todo el mundo, y quien ya se había unido la recibía
+   * igual — que es la forma más rápida de que alguien deje de leer lo que
+   * mandas.
+   *
+   * ── «DENTRO» ES ESTAR EN EL GRUPO, NO HABER VINCULADO ───────────────────
+   * Mucha gente pulsa el botón, se identifica con el bot y se queda a medio
+   * camino. A esa hay que seguir invitándola: no está dentro.
+   */
+  telegram?: "dentro" | "fuera" | null
 }
 
 /**
