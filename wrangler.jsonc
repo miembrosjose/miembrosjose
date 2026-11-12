@@ -32,7 +32,16 @@
     // El dominio verificado en Resend es auth.los144000.com, NO los144000.com.
     // Enviar desde un dominio sin verificar lo rechaza el proveedor entero: no
     // es que llegue a spam, es que no sale.
-    "EMAIL_FROM": "Los 144000 <noreply@auth.los144000.com>",
+    // ── POR QUÉ YA NO DICE «noreply» ────────────────────────────────────
+    // Resend lo marca como problema de entrega y Microsoft penaliza a los
+    // remitentes que no admiten respuesta. Pero el motivo de verdad es otro:
+    // los correos de la plataforma dicen «responde a este correo y te
+    // contesto yo», y con un noreply esa frase era mentira — quien
+    // respondiera escribía al vacío.
+    //
+    // El buzón sigue siendo el del subdominio verificado en Resend. Las
+    // respuestas de verdad las recoge EMAIL_REPLY_TO.
+    "EMAIL_FROM": "Los 144000 <hola@auth.los144000.com>",
     "NEXT_PUBLIC_SUPABASE_URL": "https://kjozrcugsywykpuvuqzu.supabase.co",
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51RQ8vaIwAkyNHR0CERYYwfFvt2z9zpgyfqVGe62DabtneJeAVe5rSgPZSs60xtjyPlU6MUvgYEG33b3PvBuc3mAG00W3Nswl15",
     "NEXT_PUBLIC_MIEMBROS_URL": "https://los144000.com",
