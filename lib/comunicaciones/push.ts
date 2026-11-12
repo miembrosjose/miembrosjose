@@ -139,6 +139,25 @@ export function interruptorDePush(tipo: TipoComunicacion): "comunicados" | "reco
  * de verdad, que no es cuántas notificaciones hubo sino cuántas veces se le
  * interrumpió la semana.
  */
+// ── EL FRENO ESTÁ APAGADO ─────────────────────────────────────────────────
+//
+// Lo apagó la administración el 12 de noviembre de 2026, sabiendo lo que
+// hacía: se le explicó para qué servía y decidió que prefiere mandar sin
+// tope. Es su plataforma y su gente.
+//
+// Queda aquí entero, con sus límites intactos, porque lo que se borra no se
+// puede volver a encender: basta con poner esto en `true`.
+//
+// ── LO QUE PROTEGÍA ───────────────────────────────────────────────────────
+// No protegía de un error. Protegía a quien recibe de la SUMA de campañas
+// razonables: la plataforma segmenta por inactividad, por temporada a medias
+// y por recurso nuevo, y la misma persona puede caer en tres la misma
+// semana. Cada una está bien pensada. Las tres juntas son spam.
+//
+// Y cuando alguien se cansa de los avisos no se queja: los apaga. Eso no se
+// ve en ninguna pantalla y no se recupera.
+const FRENO_ACTIVO = false
+
 const DIAS_CON_AVISO_POR_SEMANA = 3
 const HORAS_ENTRE_AVISOS = 20
 
@@ -162,6 +181,7 @@ async function aQuienNoLeToca(
   categoria: string,
 ): Promise<{ frenados: Set<string>; aviso?: string }> {
   const frenados = new Set<string>()
+  if (!FRENO_ACTIVO) return { frenados }
   if (!CATEGORIAS_DE_CAMPANA.includes(categoria)) return { frenados }
 
   const admin = getSupabaseAdmin()
