@@ -27,22 +27,17 @@
 // sido él quien lo consiguió. Eso es lo que hace que un reintento sea seguro.
 //
 // ── POR QUÉ CREAR Y ENVIAR SON DOS PASOS ───────────────────────────────────
-// `crearBroadcast` no manda nada. Si esa llamada se reintenta, lo peor que
-// queda es un borrador de más en el proveedor. Solo `enviarBroadcast` mueve
-// correo, y para cuando se llega ahí la llave ya está reservada.
+// Para cuando se llega al envío, la llave contra el doble clic ya está
+// reservada: nada de lo de antes mueve correo.
 
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { exigirAdmin, leerComunicacion, registrarEvento } from "@/lib/comunicaciones/servidor"
-import {
-  guardarContactosSincronizados, leerContactosSincronizados,
-} from "@/lib/comunicaciones/servidor"
 import { resolverAudiencia } from "@/lib/comunicaciones/audiencia"
 import { validarComunicacion, instanteEnZona, zonaConocida } from "@/lib/comunicaciones/validacion"
 import { renderCorreo, renderTexto, datosDesdeComunicacion } from "@/lib/comunicaciones/plantilla"
 import {
-  audienciaPrincipal, crearBroadcast, enviarBroadcast, hayProveedor,
-  mensajeDeError, sincronizarContactos, sitio,
+  enviarUnoAUno, hayProveedor, mensajeDeError, sitio,
 } from "@/lib/comunicaciones/proveedor"
 import { enviarComunicacionPush } from "@/lib/comunicaciones/push"
 import type { Comunicacion } from "@/lib/comunicaciones/tipos"
@@ -256,58 +251,63 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       return NextResponse.json({ ok: true, comunicacion: final, resumen, push: r })
     }
 
-    // ── La lista del proveedor, al día ────────────────────────────────────
-    // Se sincroniza justo antes de enviar y no en un proceso aparte: así lo
-    // que sale coincide con lo que se acaba de contar, y nadie que se dio de
-    // baja hace diez minutos recibe el correo.
-    const audienceId = await audienciaPrincipal()
-    const yaSincronizados = await leerContactosSincronizados()
-    const aGuardar: Array<{ userId: string; contactId: string | null; email: string; unsubscribed: boolean; error?: string }> = []
-
-    const sync = await sincronizarContactos(
-      audienceId,
-      destinatarios.map((d) => ({ ...d, dadoDeBaja: false })),
-      yaSincronizados,
-      (userId, datos) => aGuardar.push({ userId, ...datos }),
-    )
-    await guardarContactosSincronizados(audienceId, aGuardar)
-
-    if (sync.fallidos > 0) {
-      console.warn(`[comunicaciones] ${sync.fallidos} contactos no se pudieron sincronizar`)
-    }
-
-    // ── El correo ─────────────────────────────────────────────────────────
-    // Sin nombre: en un Broadcast el saludo tendría que ser una etiqueta de
-    // combinación del proveedor, y una etiqueta mal escrita sale impresa tal
-    // cual en mil bandejas. Se prefiere un correo sin saludo personal antes que
-    // un «Hola {{FIRST_NAME}}».
+    // ── EL CORREO SALE A LA LISTA QUE SE ACABA DE CALCULAR ────────────────
+    //
+    // Y no a una audiencia del proveedor. Esa distinción es TODO el arreglo
+    // del 12 de noviembre de 2026.
+    //
+    // Antes esto creaba un Broadcast sobre `audienciaPrincipal()` —la lista
+    // de todo el mundo— después de haber calculado los destinatarios. El
+    // cálculo servía para enseñar «2 personas» en pantalla y para refrescar
+    // los contactos; el envío iba por su cuenta a la audiencia entera. Un
+    // correo dirigido a dos personas llegó a toda la plataforma, y el panel
+    // había dicho dos.
+    //
+    // Ahora se manda a `destinatarios`, que es el mismo array que se contó
+    // tres líneas más arriba. No hay dos listas que puedan separarse.
+    //
+    // El enlace de baja también cambia de dueño: lo ponía el proveedor en sus
+    // Broadcasts, y ahora apunta a las preferencias de correo del perfil, que
+    // es donde cada persona ya decide qué quiere recibir.
     const datos = datosDesdeComunicacion(c as Comunicacion, {
-      unsubscribeUrl: null, // lo pone el proveedor, con su propia etiqueta
+      unsubscribeUrl: `${sitio()}/miembros/perfil#correo`,
       siteUrl: sitio(),
     })
 
-    const broadcastId = await crearBroadcast({
-      audienceId,
-      nombre: c.internal_title || c.subject,
+    const envio = await enviarUnoAUno({
+      destinatarios,
       asunto: c.subject,
-      preheader: c.preheader,
       html: renderCorreo(datos),
       texto: renderTexto(datos),
+      programadoPara,
     })
 
-    // ── Y sale ────────────────────────────────────────────────────────────
-    await enviarBroadcast(broadcastId, programadoPara)
+    // Si no salió ni uno, esto no es un envío con incidencias: es un envío
+    // que no ocurrió, y marcarlo como enviado sería mentir en el historial.
+    if (envio.enviados === 0) {
+      return await fallar(
+        envio.primerError || "No se pudo enviar a nadie.",
+        "no salió ni un correo",
+      )
+    }
+
+    if (envio.fallidos > 0) {
+      console.warn(`[comunicaciones] ${envio.fallidos} de ${envio.enviados + envio.fallidos} no salieron: ${envio.primerError}`)
+    }
 
     const estadoFinal = programadoPara ? "scheduled" : "queued"
     const { data: final } = await admin
       .from("communications")
       .update({
         status: estadoFinal,
-        provider_broadcast_id: broadcastId,
-        provider_audience_id: audienceId,
+        // Ya no hay Broadcast ni audiencia: hay una lista de correos. Los
+        // identificadores se guardan para poder cancelar lo programado.
+        provider_broadcast_id: null,
+        provider_audience_id: null,
+        provider_email_ids: envio.ids.length > 0 ? envio.ids : null,
         scheduled_at: programadoPara,
         scheduled_timezone: programadoPara ? zona : null,
-        recipients_estimated: resumen.destinatarios,
+        recipients_estimated: envio.enviados,
         recipients_excluded: resumen.excluidos,
         sent_at: programadoPara ? null : new Date().toISOString(),
       })
@@ -315,15 +315,23 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       .select("*")
       .single()
 
+    // En el historial se guarda lo que SALIÓ, no lo que se había calculado.
+    // Eran el mismo número en teoría y resultaron no serlo; a partir de ahora
+    // el registro cuenta los correos, uno por uno.
     await registrarEvento(id, g.user.id, programadoPara ? "scheduled" : "sent", {
-      destinatarios: resumen.destinatarios,
+      destinatarios: envio.enviados,
+      calculados: resumen.destinatarios,
       excluidos: resumen.excluidos,
-      broadcast_id: broadcastId,
+      fallidos: envio.fallidos,
       programado_para: programadoPara,
       zona: programadoPara ? zona : null,
     })
 
-    return NextResponse.json({ ok: true, comunicacion: final, resumen })
+    return NextResponse.json({
+      ok: true,
+      comunicacion: final,
+      resumen: { ...resumen, destinatarios: envio.enviados, fallidos: envio.fallidos },
+    })
   } catch (e) {
     console.error("[comunicaciones] enviar:", e instanceof Error ? e.message : e)
     return await fallar(mensajeDeError(e), e instanceof Error ? e.message : String(e))

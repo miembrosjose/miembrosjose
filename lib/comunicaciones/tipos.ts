@@ -458,6 +458,14 @@ export type Comunicacion = {
   scheduled_at: string | null
   scheduled_timezone: string | null
   provider_broadcast_id: string | null
+  /**
+   * Un identificador por correo enviado.
+   *
+   * Desde que los correos salen uno a uno en vez de como Broadcast, cancelar
+   * lo programado significa cancelar doscientos correos, no uno. Queda en
+   * null en los envíos inmediatos: no hay nada que cancelar.
+   */
+  provider_email_ids: string[] | null
   provider_audience_id: string | null
   provider_topic_id: string | null
   provider_error: string | null

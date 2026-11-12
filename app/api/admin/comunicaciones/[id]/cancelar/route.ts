@@ -16,7 +16,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { exigirAdmin, leerComunicacion, registrarEvento } from "@/lib/comunicaciones/servidor"
 import { esCancelable } from "@/lib/comunicaciones/tipos"
 import {
-  cancelarBroadcast, estadoBroadcast, hayProveedor, mensajeDeError,
+  cancelarBroadcast, cancelarProgramados, estadoBroadcast, hayProveedor, mensajeDeError,
 } from "@/lib/comunicaciones/proveedor"
 
 export const dynamic = "force-dynamic"
@@ -35,7 +35,14 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       { status: 409 },
     )
   }
-  if (!c.provider_broadcast_id) {
+  // ── DOS FORMAS DE HABER SALIDO ────────────────────────────────────────
+  // Lo programado desde el 12 de noviembre de 2026 son correos sueltos, uno
+  // por persona, y se cancelan uno por uno. Lo de antes era un Broadcast.
+  // Mientras quede alguno programado de los viejos, hacen falta los dos
+  // caminos.
+  const idsProgramados: string[] = Array.isArray(c.provider_email_ids) ? c.provider_email_ids : []
+
+  if (!c.provider_broadcast_id && idsProgramados.length === 0) {
     return NextResponse.json({ error: "Esta comunicación no llegó al proveedor." }, { status: 409 })
   }
   if (!hayProveedor()) {
@@ -48,8 +55,43 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   const admin = getSupabaseAdmin()
 
   try {
+    // ── El camino nuevo: correos sueltos ──────────────────────────────────
+    if (idsProgramados.length > 0) {
+      const cancelados = await cancelarProgramados(idsProgramados)
+
+      const { data } = await admin
+        .from("communications")
+        .update({
+          status: "cancelled",
+          scheduled_at: null,
+          send_idempotency_key: null,
+          provider_email_ids: null,
+        })
+        .eq("id", id)
+        .select("*")
+        .single()
+
+      await registrarEvento(id, g.user.id, "cancelled", {
+        cancelados,
+        de: idsProgramados.length,
+        estaba_programada_para: c.scheduled_at,
+      })
+
+      // Si alguno ya había salido, se dice. Cancelar «casi todo» y callarlo
+      // deja a quien lo hizo creyendo que no lo recibió nadie.
+      return NextResponse.json({
+        ok: true,
+        comunicacion: data,
+        aviso:
+          cancelados < idsProgramados.length
+            ? `Se cancelaron ${cancelados} de ${idsProgramados.length}. El resto ya había salido.`
+            : null,
+      })
+    }
+
+    // ── El camino viejo: un Broadcast ─────────────────────────────────────
     // Primero la verdad, y solo después la acción.
-    const enProveedor = await estadoBroadcast(c.provider_broadcast_id)
+    const enProveedor = await estadoBroadcast(c.provider_broadcast_id!)
 
     if (enProveedor.status === "sent") {
       // Ya salió. Se corrige nuestra base para que deje de decir lo contrario:
@@ -65,7 +107,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       )
     }
 
-    await cancelarBroadcast(c.provider_broadcast_id)
+    await cancelarBroadcast(c.provider_broadcast_id!)
 
     const { data } = await admin
       .from("communications")

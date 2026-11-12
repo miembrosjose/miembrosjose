@@ -239,6 +239,139 @@ export type BorradorProveedor = {
   texto: string
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  EL ENVÍO DE VERDAD · uno a uno, a la lista que se calculó
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ YA NO SE USAN LOS BROADCASTS ──────────────────────────────────
+// Un Broadcast se manda a una AUDIENCIA del proveedor, no a una lista de
+// direcciones. Y la plataforma tenía una sola audiencia: la de todo el mundo.
+//
+// El envío calculaba bien a quién le tocaba —dos personas, un país, una
+// temporada—, sincronizaba a esa gente en la audiencia… y después mandaba el
+// Broadcast a la audiencia ENTERA. El panel decía «2 personas» porque ese
+// número venía del cálculo; el correo salía a cientos porque venía de otro
+// sitio. Las dos cifras no se habían mirado nunca juntas.
+//
+// El 12 de noviembre de 2026 un correo dirigido a dos personas llegó a toda
+// la plataforma. No fue un descuido de quien lo mandó: el filtro funcionaba y
+// el envío no lo miraba.
+//
+// Aquí se manda a la lista. Lo que se cuenta y lo que sale son el mismo
+// array, y eso ya no se puede desincronizar.
+//
+// ── LO QUE SE PIERDE ──────────────────────────────────────────────────────
+// Las estadísticas agregadas por campaña del proveedor. A cambio, el envío
+// hace lo que dice. No es un intercambio difícil.
+
+/** El lote del proveedor admite 100 por llamada. */
+const POR_TANDA = 100
+
+export type ResultadoEnvio = {
+  enviados: number
+  fallidos: number
+  ids: string[]
+  primerError: string | null
+}
+
+/**
+ * Manda el correo a cada dirección de la lista.
+ *
+ * ── POR QUÉ DOS CAMINOS ───────────────────────────────────────────────────
+ * El envío por lotes del proveedor no admite programación —lo dice su propia
+ * documentación—, así que lo programado va de uno en uno. Es más lento y pasa
+ * pocas veces; lo inmediato, que es casi todo, va en tandas de cien.
+ *
+ * ── POR QUÉ NO SE CORTA AL PRIMER FALLO ───────────────────────────────────
+ * Porque una dirección mal escrita entre doscientas dejaría sin correo a las
+ * ciento noventa y nueve siguientes. Se sigue, se cuentan los fallos y se
+ * devuelve el primer motivo, que es el que sirve para entender qué pasó.
+ */
+export async function enviarUnoAUno(p: {
+  destinatarios: Array<{ email: string }>
+  asunto: string
+  html: string
+  texto: string
+  programadoPara?: string | null
+}): Promise<ResultadoEnvio> {
+  const r = resend()
+  const out: ResultadoEnvio = { enviados: 0, fallidos: 0, ids: [], primerError: null }
+
+  // Direcciones repetidas = correos repetidos en la misma bandeja. Pasa en
+  // cuanto dos cuentas comparten correo, que no debería ocurrir pero ocurre.
+  const direcciones = [...new Set(p.destinatarios.map((d) => d.email.trim().toLowerCase()).filter(Boolean))]
+
+  // ── QUE PUEDAN DARSE DE BAJA SIN RESPONDER AL CORREO ──────────────────
+  // En los Broadcasts esta cabecera la ponía el proveedor. Enviando uno a uno
+  // hay que ponerla, y sin ella Gmail penaliza al remitente entero: el correo
+  // de todos acaba en spam por no haber ofrecido la salida.
+  const cabeceras = {
+    "List-Unsubscribe": `<${sitio()}/miembros/perfil#correo>`,
+  }
+
+  const base = {
+    from: remitente(),
+    replyTo: responderA(),
+    subject: p.asunto,
+    html: p.html,
+    text: p.texto,
+    headers: cabeceras,
+  }
+
+  if (p.programadoPara) {
+    for (const email of direcciones) {
+      try {
+        const e = await r.emails.send({ ...base, to: [email], scheduledAt: p.programadoPara })
+        if (e.error) throw new Error(e.error.message)
+        out.enviados++
+        if (e.data?.id) out.ids.push(e.data.id)
+      } catch (e) {
+        out.fallidos++
+        if (!out.primerError) out.primerError = mensajeDeError(e)
+      }
+    }
+    return out
+  }
+
+  for (let i = 0; i < direcciones.length; i += POR_TANDA) {
+    const tanda = direcciones.slice(i, i + POR_TANDA)
+    try {
+      const envio = await r.batch.send(tanda.map((email) => ({ ...base, to: [email] })))
+      if (envio.error) throw new Error(envio.error.message)
+      out.enviados += tanda.length
+      for (const d of envio.data?.data ?? []) if (d?.id) out.ids.push(d.id)
+    } catch (e) {
+      // La tanda entera. No hay forma de saber cuál de las cien falló desde
+      // aquí, y decir «fallaron cien» es más honesto que decir «falló una».
+      out.fallidos += tanda.length
+      if (!out.primerError) out.primerError = mensajeDeError(e)
+    }
+  }
+
+  return out
+}
+
+/**
+ * Cancela correos programados, uno por uno.
+ *
+ * Devuelve cuántos se pudieron cancelar. Uno que ya salió no se puede parar,
+ * y eso no es un error del que haya que avisar: es lo que pasa cuando se
+ * cancela tarde.
+ */
+export async function cancelarProgramados(ids: string[]): Promise<number> {
+  const r = resend()
+  let cancelados = 0
+  for (const id of ids) {
+    try {
+      const c = await r.emails.cancel(id)
+      if (!c.error) cancelados++
+    } catch {
+      // Ya salió, o ya no existe. Se sigue con los demás.
+    }
+  }
+  return cancelados
+}
+
 /**
  * Crea la comunicación en el proveedor SIN enviarla.
  *

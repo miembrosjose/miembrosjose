@@ -24,6 +24,7 @@
     "probar:correo": "node scripts/probar-correo-codigo.mjs",
     "probar:hooks": "node scripts/probar-hooks.mjs",
     "probar:campos": "node scripts/probar-campos.mjs",
+    "probar:envio": "node scripts/probar-envio.mjs",
     "probar:audiencia": "node scripts/probar-audiencia-interna.mjs"
   },
   "dependencies": {
