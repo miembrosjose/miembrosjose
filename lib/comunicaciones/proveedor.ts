@@ -305,8 +305,22 @@ export async function enviarUnoAUno(p: {
   // En los Broadcasts esta cabecera la ponía el proveedor. Enviando uno a uno
   // hay que ponerla, y sin ella Gmail penaliza al remitente entero: el correo
   // de todos acaba en spam por no haber ofrecido la salida.
+  //
+  // ── SIN ALMOHADILLA ───────────────────────────────────────────────────
+  // Llevaba `#correo` al final, para abrir el perfil ya en esa sección. En un
+  // enlace normal eso es un detalle amable; aquí es un error: la parte de
+  // después de la almohadilla NO viaja al servidor, así que lo que el buzón
+  // recibe es una dirección de baja que no es la que creíamos.
+  //
+  // Microsoft es mucho más estricto que Gmail leyendo esta cabecera. El 12 de
+  // noviembre de 2026, el primer correo que salió por este camino llegó a
+  // Gmail sin problema y a Hotmail no llegó nunca — ni rebotado ni en la
+  // bandeja: apartado en silencio, que es lo que hace Microsoft cuando algo
+  // no le cuadra.
+  //
+  // La almohadilla se queda donde sí sirve: en el enlace visible del pie.
   const cabeceras = {
-    "List-Unsubscribe": `<${sitio()}/miembros/perfil#correo>`,
+    "List-Unsubscribe": `<${sitio()}/miembros/perfil>`,
   }
 
   const base = {
