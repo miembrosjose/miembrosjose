@@ -124,5 +124,44 @@ comprobar(
   /envio\.enviados\s*===\s*0/.test(ruta),
 )
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Y QUE SE PUEDA ELEGIR A QUIÉN, SE ESCRIBA COMO SE ESCRIBA
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ ────────────────────────────────────────────────────────────────
+// El selector de audiencia estaba DENTRO del `enCodigo ? null :` que esconde
+// los campos del formulario. En modo código desaparecía, y sin elegir a nadie
+// la audiencia se queda en «todos».
+//
+// Nadie lo vio porque la pantalla no decía nada: el bloque simplemente no
+// estaba, y lo que no está no se echa de menos.
+
+console.log("")
+console.log("— La audiencia, en los dos modos —")
+console.log("")
+
+const panel = leer("app", "miembros", "admin", "_tabs", "Comunicaciones.tsx").split(SALTO)
+
+const iCondicion = panel.findIndex((l) => l.includes("enCodigo ? null"))
+// El condicional se cierra con un `</>` y, justo debajo, un `)}`. Buscar el
+// `)}` a secas no vale: dentro del bloque hay otros condicionales que
+// terminan igual, y la prueba acusaba a un código que ya estaba bien.
+const iCierre = panel.findIndex(
+  (l, i) => i > iCondicion && l.trim() === "</>" && (panel[i + 1] || "").trim() === ")}",
+)
+// El de ESTE editor, no el primero del archivo: hay otros canales con su
+// propio selector más arriba, y comparar contra uno de ellos decía que el
+// bloque estaba escondido cuando no lo estaba.
+const iAudiencia = panel.findIndex((l, i) => i > iCondicion && l.includes("<Audiencias"))
+
+comprobar(
+  "el selector de audiencia está fuera del modo código",
+  iCondicion >= 0 && iCierre >= 0 && iAudiencia > iCierre,
+  iAudiencia > 0 && iAudiencia < iCierre
+    ? "vuelve a estar escondido en modo código"
+    : "no encuentro el bloque",
+)
+
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} ${fallos === 1 ? "FALLO" : "FALLOS"}\n`)
 process.exit(fallos === 0 ? 0 : 1)

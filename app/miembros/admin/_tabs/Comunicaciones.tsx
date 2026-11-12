@@ -2419,6 +2419,25 @@ function Campos({
         </Bloque>
       )}
 
+      </>
+      )}
+
+      {/* ── A QUIÉN LE LLEGA, SE ESCRIBA COMO SE ESCRIBA ─────────────────
+          Esto estaba DENTRO del `enCodigo ? null :`, junto a los campos del
+          formulario. La intención era esconder los campos que en modo código
+          no pintan nada —el titular, el cuerpo— y por el camino se llevó por
+          delante la audiencia, que no tiene nada que ver con cómo se escriba
+          el correo.
+
+          El resultado: en modo código no había forma de elegir a quién se lo
+          mandabas. La pantalla no lo decía; simplemente no estaba. Y sin
+          elegir a nadie, la audiencia se queda en «todos».
+
+          Pasó el 12 de noviembre de 2026, el mismo día que el envío ignoraba
+          la lista. Dos fallos distintos apuntando al mismo sitio.
+
+          Va fuera del condicional, y el título interno con él: tampoco sale
+          en el correo, y hace falta para reconocerlo en la lista. */}
       <Audiencias c={c} editar={editar} editable={editable} />
 
       <Bloque titulo="Para administración" nota="No sale en el correo. Es cómo la reconoces en la lista.">
@@ -2427,8 +2446,6 @@ function Campos({
           <input type="text" {...campo("internal_title")} />
         </div>
       </Bloque>
-      </>
-      )}
     </>
   )
 }
