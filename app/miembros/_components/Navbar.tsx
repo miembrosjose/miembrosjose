@@ -163,6 +163,33 @@ export function Navbar() {
             </a>
           </li>
         ))}
+
+        {/* ── ADMINISTRACIÓN, TAMBIÉN AQUÍ ────────────────────────────────
+            El botón ADMIN de la derecha se esconde por debajo de 968px —lo
+            hace el CSS, para que quepan el resto de iconos— y este menú solo
+            pintaba NAV_ITEMS, donde administración no está.
+
+            En el navegador eso se salvaba escribiendo la dirección a mano. En
+            la aplicación instalada no hay barra de direcciones: administración
+            quedaba sencillamente inalcanzable desde el móvil.
+
+            Se pinta solo aquí dentro: en pantallas grandes este menú está
+            oculto y sigue mandando el botón de la derecha, así que no salen
+            dos. */}
+        {isAdmin && (
+          <li className={styles.soloMenu}>
+            <a
+              href="/miembros/admin"
+              onClick={(e) => {
+                e.preventDefault()
+                setView("admin")
+              }}
+              className={view === "admin" ? styles.active : undefined}
+            >
+              Administración
+            </a>
+          </li>
+        )}
       </ul>
 
       <div className={styles.actions}>

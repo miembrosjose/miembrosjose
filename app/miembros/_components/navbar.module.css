@@ -444,3 +444,19 @@
     .navbar.scrolled { padding-top: calc(0.6rem  + env(safe-area-inset-top, 0px)); }
   }
 }
+
+/* ── LA ENTRADA DE ADMINISTRACIÓN DEL MENÚ ─────────────────────────────────
+ *
+ * Solo existe dentro del menú desplegable, que es cosa de móvil. En pantallas
+ * grandes ese menú no se abre y manda el botón ADMIN de la derecha; si esta
+ * entrada se viera, saldrían dos puertas a lo mismo en la misma barra.
+ *
+ * Y lleva el color de administración, no el de navegar: en una lista donde
+ * todo lo demás son secciones de la plataforma, esto es otra cosa.
+ */
+.soloMenu { display: none; }
+.soloMenu a { color: var(--accent-gold); letter-spacing: 0.12em; }
+
+@media (max-width: 968px) {
+  .soloMenu { display: block; }
+}
