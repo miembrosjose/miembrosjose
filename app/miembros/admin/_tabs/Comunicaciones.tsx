@@ -174,6 +174,8 @@ type Audiencia = {
   excluidas?: string[] | null
   /** Dentro o fuera del grupo de Telegram. «dentro» es estar en el grupo. */
   telegram?: "dentro" | "fuera" | null
+  /** Con o sin la aplicación instalada. Solo se anota desde el 12/11/2026. */
+  app?: "instalada" | "sin_instalar" | null
 }
 
 /** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
@@ -2728,6 +2730,44 @@ function Audiencias({
           </div>
         </div>
       )}
+
+      {/* ── CON O SIN LA APLICACIÓN ───────────────────────────────────────
+          Para no pedirle que se instale la aplicación a quien la abre cada
+          día. El aviso de abajo no es un detalle: la marca es nueva, y quien
+          instaló la aplicación antes figura como que no la tiene hasta que la
+          abra una vez. Sin decirlo, el primer envío parecería decir que casi
+          nadie la tiene. */}
+      <div>
+        <label className={labelCls}>Según la aplicación</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Se anota al abrirla desde el icono, y solo desde el 12/11/2026. Estos
+          días, «todavía no la tiene» incluye a gente que sí la tiene y aún no
+          la ha abierto.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla
+            activa={!a.app}
+            onClick={() => cambiar({ app: null })}
+            desactivada={!editable}
+          >
+            Da igual
+          </Pastilla>
+          <Pastilla
+            activa={a.app === "sin_instalar"}
+            onClick={() => cambiar({ app: a.app === "sin_instalar" ? null : "sin_instalar" })}
+            desactivada={!editable}
+          >
+            Todavía no la tiene
+          </Pastilla>
+          <Pastilla
+            activa={a.app === "instalada"}
+            onClick={() => cambiar({ app: a.app === "instalada" ? null : "instalada" })}
+            desactivada={!editable}
+          >
+            Ya la tiene
+          </Pastilla>
+        </div>
+      </div>
 
       {/* ── DENTRO O FUERA DEL TELEGRAM ───────────────────────────────────
           Para dejar de invitar al grupo a quien ya está dentro. Hasta ahora

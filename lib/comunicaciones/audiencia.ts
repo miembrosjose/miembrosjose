@@ -45,6 +45,8 @@ export type MotivoExclusion =
   | "excluida_a_mano"
   | "ya_en_telegram"
   | "no_en_telegram"
+  | "ya_tiene_la_app"
+  | "sin_la_app"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -81,6 +83,8 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   excluida_a_mano: "La quitaste de este envío",
   ya_en_telegram: "Ya está en el grupo de Telegram",
   no_en_telegram: "Todavía no está en el grupo de Telegram",
+  ya_tiene_la_app: "Ya tiene la aplicación instalada",
+  sin_la_app: "Todavía no ha abierto la aplicación instalada",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -444,6 +448,8 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.paises?.length) {
     partes.push("de " + a.paises.map((c) => nombrePais(c)).join(" o "))
   }
+  if (a.app === "sin_instalar") partes.push("sin la aplicación instalada")
+  if (a.app === "instalada") partes.push("con la aplicación instalada")
   if (a.telegram === "fuera") partes.push("que todavía no están en el Telegram")
   if (a.telegram === "dentro") partes.push("que ya están en el Telegram")
 
@@ -525,6 +531,7 @@ export async function resolverAudiencia(
   // se queda a medio camino sin llegar a entrar. A esa hay que invitarla
   // igual que a quien no hizo nada.
   const pideTelegram = audiencia.telegram === "dentro" || audiencia.telegram === "fuera"
+  const pideApp = audiencia.app === "instalada" || audiencia.app === "sin_instalar"
 
   const elegidas = new Set((audiencia.personas || []).filter(Boolean))
   const pidePersonas = elegidas.size > 0
@@ -562,12 +569,12 @@ export async function resolverAudiencia(
   // Por páginas, porque una tabla puede crecer más que el límite por defecto
   // de PostgREST y un límite silencioso aquí sería enviar a la mitad de la
   // gente creyendo que se envió a todos.
-  const filas: Array<{ id: string; email: string | null; full_name: string | null }> = []
+  const filas: Array<{ id: string; email: string | null; full_name: string | null; app_instalada_at: string | null }> = []
   const PAGINA = 1000
   for (let desde = 0; ; desde += PAGINA) {
     const { data, error } = await admin
       .from("profiles")
-      .select("id, email, full_name")
+      .select("id, email, full_name, app_instalada_at")
       .range(desde, desde + PAGINA - 1)
     if (error) throw new Error(`No se pudo leer el padrón: ${error.message}`)
     const lote = data || []
@@ -635,6 +642,7 @@ export async function resolverAudiencia(
     ya_la_termino: 0, no_la_empezo: 0,
     otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0, excluida_a_mano: 0,
     ya_en_telegram: 0, no_en_telegram: 0,
+    ya_tiene_la_app: 0, sin_la_app: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -737,6 +745,25 @@ export async function resolverAudiencia(
       }
       if (pideCiudad && (!donde || donde.ciudad == null || !ciudadesPedidas.includes(donde.ciudad))) {
         cuenta.otra_ciudad++
+        continue
+      }
+    }
+
+    // ── CON O SIN LA APLICACIÓN ──────────────────────────────────────
+    // Para no pedirle que se instale la aplicación a quien la abre cada día.
+    //
+    // Ojo con el reverso: la marca solo existe desde el 12 de noviembre de
+    // 2026, así que quien la instaló antes figura como que no la tiene hasta
+    // que la abra una vez desde el icono. Durante unos días, «todavía no la
+    // tiene» incluye a gente que sí.
+    if (pideApp) {
+      const tiene = Boolean(f.app_instalada_at)
+      if (audiencia.app === "sin_instalar" && tiene) {
+        cuenta.ya_tiene_la_app++
+        continue
+      }
+      if (audiencia.app === "instalada" && !tiene) {
+        cuenta.sin_la_app++
         continue
       }
     }

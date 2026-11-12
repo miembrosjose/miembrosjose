@@ -420,6 +420,18 @@ export type Audiencia = {
    * camino. A esa hay que seguir invitándola: no está dentro.
    */
   telegram?: "dentro" | "fuera" | null
+  /**
+   * Según tengan o no la aplicación instalada.
+   *
+   * ── LO QUE ESTA MARCA NO SABE ───────────────────────────────────────────
+   * Solo se anota desde el 12 de noviembre de 2026, y se anota al ABRIR la
+   * aplicación desde el icono. Quien la instaló antes y todavía no la ha
+   * abierto figura como que no la tiene.
+   *
+   * Durante los primeros días, «sin instalar» incluye a gente que sí la
+   * tiene. Se corrige sola conforme cada persona abre la suya.
+   */
+  app?: "instalada" | "sin_instalar" | null
 }
 
 /**

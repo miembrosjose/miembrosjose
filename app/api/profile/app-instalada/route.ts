@@ -29,6 +29,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -49,6 +50,27 @@ export async function POST() {
   if (error) {
     console.error("[app-instalada] no se pudo guardar:", error.message)
     return NextResponse.json({ error: "No se pudo guardar" }, { status: 500 })
+  }
+
+  // ── Y EN EL PERFIL, QUE ES LO QUE SE PUEDE CONSULTAR ──────────────────
+  // La sesión sirve al navegador —la lleva encima, sin pedir nada— pero no se
+  // puede filtrar ni contar desde el servidor. El padrón de las
+  // comunicaciones sale de `profiles`, así que para poder mandar el
+  // recordatorio de instalar la aplicación solo a quien no la tiene, el dato
+  // tiene que estar también ahí.
+  //
+  // Si esta parte falla, no se devuelve error: la persona ya tiene lo suyo
+  // guardado en la sesión y dejar de usar la aplicación por no poder
+  // segmentar un correo sería el peor intercambio posible. Se reintenta en el
+  // siguiente arranque.
+  try {
+    await getSupabaseAdmin()
+      .from("profiles")
+      .update({ app_instalada_at: ahora })
+      .eq("id", user.id)
+      .is("app_instalada_at", null)
+  } catch (e) {
+    console.warn("[app-instalada] perfil no actualizado:", e instanceof Error ? e.message : e)
   }
 
   return NextResponse.json({ ok: true, ya: false, desde: ahora })
