@@ -386,6 +386,26 @@ export type Audiencia = {
    * aparte para ello: se pone su nombre y la audiencia es ella.
    */
   personas?: string[] | null
+  /**
+   * Todos MENOS estas personas.
+   *
+   * ── POR QUÉ HACÍA FALTA ─────────────────────────────────────────────────
+   * El 12 de noviembre de 2026 hubo que pedir disculpas por un correo que
+   * salió a quien no tocaba. La disculpa iba dirigida a todo el mundo…
+   * excepto a las dos personas para las que el correo original SÍ era: a
+   * ellas había que mandarles el bueno, no una disculpa diciéndoles que lo
+   * ignoraran.
+   *
+   * Con lo que había, eso no se podía expresar. Se podía elegir a dos
+   * personas; no se podía quitar a dos de todas.
+   *
+   * ── MANDA SOBRE TODO LO DEMÁS ───────────────────────────────────────────
+   * Quien esté aquí no recibe el correo, aunque cumpla todos los filtros y
+   * aunque esté también en `personas`. Una exclusión que un filtro pudiera
+   * contradecir no serviría para lo único que sirve una exclusión: estar
+   * seguro de que a esa persona no le llega.
+   */
+  excluidas?: string[] | null
 }
 
 /**

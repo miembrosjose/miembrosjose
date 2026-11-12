@@ -42,6 +42,7 @@ export type MotivoExclusion =
   | "otro_pais"
   | "otra_ciudad"
   | "no_en_la_lista"
+  | "excluida_a_mano"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -75,6 +76,7 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   otro_pais: "Está en otro país, o no lo ha puesto",
   otra_ciudad: "Está en otra ciudad, o no la ha puesto",
   no_en_la_lista: "No está entre las personas elegidas",
+  excluida_a_mano: "La quitaste de este envío",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -409,13 +411,19 @@ export function describirAudiencia(a: Audiencia): string {
   }
   // Las personas nombradas van al principio de la frase, no al final: si
   // hay una lista, es el dato que manda y lo demás son matices.
+  // Lo quitado a mano se dice al final y siempre: es lo que más fácil se
+  // olvida de un envío al siguiente, y lo que peor sienta descubrir tarde.
+  const menos = a.excluidas?.length
+    ? ", menos " + (a.excluidas.length === 1 ? "una persona" : a.excluidas.length + " personas")
+    : ""
+
   if (a.personas?.length) {
     const cuantas = a.personas.length === 1 ? "Una persona" : a.personas.length + " personas elegidas"
-    return partes.length === 0 ? cuantas : cuantas + ", " + partes.join(", ")
+    return (partes.length === 0 ? cuantas : cuantas + ", " + partes.join(", ")) + menos
   }
-  return partes.length === 0
+  return (partes.length === 0
     ? "Todos los miembros activos"
-    : "Miembros " + partes.join(", ")
+    : "Miembros " + partes.join(", ")) + menos
 }
 
 /**
@@ -472,6 +480,10 @@ export async function resolverAudiencia(
 
   const elegidas = new Set((audiencia.personas || []).filter(Boolean))
   const pidePersonas = elegidas.size > 0
+
+  // Quien esté aquí no recibe el correo, pase lo que pase con el resto de
+  // filtros. Se comprueba ANTES que nada por eso mismo.
+  const excluidas = new Set((audiencia.excluidas || []).filter(Boolean))
 
   // El avance se calcula una vez y sirve a los tres filtros que lo usan.
   const avanceCompleto = (pideTemporada || pideCompletada || pideAMedias)
@@ -572,7 +584,7 @@ export async function resolverAudiencia(
     no_termino_temporada: 0,
     aun_activo: 0, inactivo_hace_mucho: 0, sin_senal: 0,
     ya_la_termino: 0, no_la_empezo: 0,
-    otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0,
+    otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0, excluida_a_mano: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -596,6 +608,19 @@ export async function resolverAudiencia(
     // sobre ella. Y va antes que las preferencias para que el panel diga
     // «no está entre las elegidas» en vez de «se dio de baja», que explica
     // otra cosa.
+    // Antes que cualquier filtro: si alguien está quitado a mano, da igual
+    // que cumpla la temporada, el rol o el país. Puesta después, el motivo
+    // que se vería sería el del filtro, y quien mira la lista no sabría si
+    // se le quitó a propósito o si se cayó por otra cosa.
+    //
+    // Arriba quedan las comprobaciones de correo y preferencias, que también
+    // dejan fuera. No importa el orden entre ellas: el resultado es el mismo
+    // —no le llega— y el motivo que se enseña es igual de cierto.
+    if (excluidas.has(f.id)) {
+      cuenta.excluida_a_mano++
+      continue
+    }
+
     if (pidePersonas && !elegidas.has(f.id)) {
       cuenta.no_en_la_lista++
       continue

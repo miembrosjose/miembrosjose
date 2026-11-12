@@ -170,6 +170,8 @@ type Audiencia = {
   ciudades?: number[] | null
   /** Nombradas una por una. Se cruza con los demás filtros, no los sustituye. */
   personas?: string[] | null
+  /** Todos MENOS estas. Manda sobre cualquier otro filtro. */
+  excluidas?: string[] | null
 }
 
 /** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
@@ -2731,6 +2733,20 @@ function Audiencias({
         editable={editable}
       />
 
+      {/* ── QUITAR A ALGUIEN DE TODOS ──────────────────────────────────────
+          Lo de arriba estrecha: «solo a estas». Esto resta: «a todos menos a
+          estas». Parecen lo mismo y no lo son, y sin lo segundo no se podía
+          expresar el caso más común después de una equivocación — pedir
+          disculpas a todo el mundo menos a quien el correo sí iba dirigido. */}
+      <PersonasElegidas
+        elegidas={a.excluidas ?? []}
+        onCambiar={(ids) => cambiar({ excluidas: ids.length > 0 ? ids : null })}
+        editable={editable}
+        titulo="Quitar a estas personas"
+        nota="A quien pongas aquí NO le llega, aunque cumpla todo lo demás y aunque esté también en la lista de arriba."
+        color="#c98a8a"
+      />
+
       <div>
         <label className={labelCls}>Por rol en La Red</label>
         <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Qué función desempeña.</p>
@@ -2896,10 +2912,17 @@ type Hallada = { id: string; full_name: string; username: string | null; email: 
  */
 function PersonasElegidas({
   elegidas, onCambiar, editable,
+  titulo = "A personas concretas",
+  nota = "Para escribirle a alguien en particular. Si eliges personas, se cruza con los demás filtros: no los sustituye.",
+  color = "#6D4A9B",
 }: {
   elegidas: string[]
   onCambiar: (ids: string[]) => void
   editable: boolean
+  /** El mismo buscador sirve para elegir y para quitar: cambia lo que dice. */
+  titulo?: string
+  nota?: string
+  color?: string
 }) {
   const [busca, setBusca] = useState("")
   const [resultados, setResultados] = useState<Hallada[]>([])
@@ -2959,11 +2982,8 @@ function PersonasElegidas({
 
   return (
     <div>
-      <label className={labelCls}>A personas concretas</label>
-      <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-        Para escribirle a alguien en particular. Si eliges personas, se cruza con los
-        demás filtros: no los sustituye.
-      </p>
+      <label className={labelCls} style={{ color }}>{titulo}</label>
+      <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">{nota}</p>
 
       {elegidas.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
