@@ -31,7 +31,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import {
-  AlertTriangle, Check, Eye, Monitor, RefreshCw, Smartphone, X,
+  AlertTriangle, Bell, Check, Eye, Monitor, RefreshCw, Smartphone, X,
 } from "lucide-react"
 import { useAuth } from "../../_lib/auth-context"
 import { usePwa } from "../../_lib/pwa-contexto"
@@ -325,6 +325,8 @@ export function DiagnosticoPwa() {
         </button>
       </section>
 
+      <PruebaDeAviso />
+
       {simulando && (
         <HojaInstalacion
           onCerrar={() => { setSimulando(false); mirar() }}
@@ -333,5 +335,109 @@ export function DiagnosticoPwa() {
         />
       )}
     </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MANDARME UNA NOTIFICACIÓN A MÍ MISMO
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ HACE FALTA ESTO ───────────────────────────────────────────────
+// El 12 de noviembre de 2026 salieron 82 notificaciones, el servicio de Apple
+// y de Google las aceptó todas —201— y no apareció ninguna en ningún
+// teléfono. Desde el servidor todo se veía perfecto: la firma, el cifrado, el
+// plazo de entrega. El tramo que faltaba por mirar es el único que no deja
+// rastro en la base: lo que el móvil hace con el aviso cuando le llega.
+//
+// Para mirar ese tramo hay que poder probar DESDE el móvil, una vez tras
+// otra, cambiando cosas del teléfono entre intento e intento. Con un envío a
+// toda la plataforma eso no se puede hacer.
+//
+// La ruta ya existía desde la fase de push y nunca tuvo botón. Manda solo a
+// los dispositivos de quien pulsa, y solo si es administración.
+function PruebaDeAviso() {
+  const [estado, setEstado] = useState<"quieto" | "enviando">("quieto")
+  const [resultado, setResultado] = useState<string | null>(null)
+  const [bien, setBien] = useState(false)
+
+  async function mandar() {
+    setEstado("enviando")
+    setResultado(null)
+    try {
+      const r = await fetch("/api/admin/push/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: "Prueba de aviso",
+          // La hora va dentro a propósito: si llegan dos, se distingue cuál
+          // es cuál, y si llega una vieja se nota que es vieja.
+          body: `Mandada a las ${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}.`,
+        }),
+      })
+      const j = (await r.json()) as {
+        ok?: boolean
+        mensaje?: string
+        dispositivos?: number
+        entregados?: number
+        fallidos?: number
+        retiradas?: number
+        error?: string
+      }
+
+      if (j.error) { setBien(false); setResultado(j.error); return }
+      if (j.mensaje) { setBien(false); setResultado(j.mensaje); return }
+
+      setBien(Boolean(j.ok))
+      setResultado(
+        `Dispositivos con esta cuenta: ${j.dispositivos ?? 0}. ` +
+        `Aceptados por el servicio: ${j.entregados ?? 0}. ` +
+        `Fallidos: ${j.fallidos ?? 0}. ` +
+        `Retirados por muertos: ${j.retiradas ?? 0}.`,
+      )
+    } catch {
+      setBien(false)
+      setResultado("No se pudo llamar al servidor.")
+    } finally {
+      setEstado("quieto")
+    }
+  }
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0b0b12] p-5">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
+        <Bell size={14} className="text-[#a78bca]" /> Mandarme un aviso de prueba
+      </h3>
+      <p className="mt-2 text-[12px] leading-relaxed text-[#8a8fa8] [font-family:var(--font-geist-sans)]">
+        Va solo a tus dispositivos. Nadie más lo recibe.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => void mandar()}
+        disabled={estado === "enviando"}
+        className="mt-4 inline-flex items-center gap-2 border border-[#6D4A9B] bg-[#6D4A9B]/15 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c3b2e0] transition-colors hover:bg-[#6D4A9B]/30 disabled:opacity-50"
+      >
+        <Bell size={13} /> {estado === "enviando" ? "Mandando…" : "Mandarme uno ahora"}
+      </button>
+
+      {resultado && (
+        <div
+          role="status"
+          className={`mt-4 border-l-2 pl-3 text-[12px] leading-relaxed ${
+            bien ? "border-[#6D4A9B] text-[#c3b2e0]" : "border-[#8a5a5a] text-[#d0a0a0]"
+          } [font-family:var(--font-geist-sans)]`}
+        >
+          {resultado}
+          {bien && (
+            <p className="mt-2 text-[#8a8fa8]">
+              El servicio lo aceptó. Si no aparece en el móvil en un minuto, el
+              problema está en el teléfono: permisos del sistema para la
+              aplicación, modo concentración, o la app abierta en primer plano.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
