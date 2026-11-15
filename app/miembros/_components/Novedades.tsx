@@ -167,12 +167,23 @@ export function Novedades() {
   if (!novedades || novedades.length === 0) return null
 
   return (
-    <section className={s.registro} aria-label="Novedades">
-      {oculta && (
-        <p className={s.oculta}>
-          <EyeOff size={11} aria-hidden /> Esta sección todavía no la ve nadie más
-        </p>
-      )}
+    <section className={s.panel} aria-labelledby="novedades-titulo">
+      {/* ── EL TÍTULO, DENTRO DE LA CAJA ─────────────────────────────────
+          Fuera quedaba suelto y la sección parecía una nota al pie del
+          Pulso. Dentro, y con el mismo ancho y el mismo aire que él, las
+          dos se leen como hermanas en vez de como una grande y un apéndice. */}
+      <header className={s.cabeceraPanel}>
+        <h2 id="novedades-titulo" className={s.tituloPanel}>
+          Novedades de Los 144.000
+        </h2>
+        {oculta && (
+          <span className={s.oculta}>
+            <EyeOff size={11} aria-hidden /> Solo la ves tú
+          </span>
+        )}
+      </header>
+
+      <div className={s.registro}>
 
       {filas.map(({ n, estado }) => {
         const abierto = abierta === n.id
@@ -234,6 +245,7 @@ export function Novedades() {
           </article>
         )
       })}
+      </div>
     </section>
   )
 }

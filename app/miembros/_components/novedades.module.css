@@ -1,33 +1,82 @@
-/* NOVEDADES — el registro de convocatorias.
+/* NOVEDADES DE LOS 144.000 — el panel de convocatorias.
+   Mobile-first. Vive encima del Pulso de la semana y comparte su silueta. */
 
-   Un contenedor, filas separadas por un hilo. NO tarjetas: una tarjeta por
-   novedad convierte tres avisos en tres bloques que piden atención por
-   separado, y lo que esto es en realidad es una lista con un estado.
+/* ── EL PANEL ────────────────────────────────────────────────────────────
+   Misma silueta que el Pulso de la semana: mismo ancho máximo, mismo radio,
+   mismo borde, mismo aire por dentro. Son hermanas y tienen que leerse como
+   tales — antes esto era una franja fina debajo de una tarjeta grande, y
+   parecía su nota al pie.
 
-   Mobile-first. Encima vive el Pulso, que sí es una tarjeta con nebulosa;
-   por eso aquí no hay fondo con color: dos superficies compitiendo a dos
-   centímetros se anulan. */
-
-.registro {
+   Lo que NO copia es la nebulosa. El Pulso puede permitirse tres focos de
+   color porque invita a participar; esto informa de algo que ocurre a una
+   hora concreta, y dos superficies con vida propia a dos centímetros se
+   anulan. Un solo foco violeta arriba basta para que sea la misma familia. */
+.panel {
+  position: relative;
   max-width: 1100px;
   margin: 0 auto;
-  border: 1px solid rgba(167, 139, 202, 0.18);
-  border-radius: 14px;
-  background: linear-gradient(170deg, rgba(13, 11, 26, 0.9), rgba(7, 6, 15, 0.9));
+  padding: 1.25rem 1.15rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 202, 0.28);
+  background:
+    radial-gradient(85% 60% at 50% -8%, rgba(109, 74, 155, 0.22), transparent 62%),
+    linear-gradient(165deg, #0a0814 0%, #0d0b1a 100%);
   overflow: hidden;
 }
 
-.oculta {
+@media (min-width: 640px) {
+  .panel { padding: 2rem 2.2rem 1.8rem; }
+}
+@media (min-width: 1024px) {
+  .panel { padding: 2.4rem 3rem 2rem; }
+}
+
+.cabeceraPanel {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.1rem;
+}
+
+/* El título es lo más grande de la sección, como la pregunta lo es en el
+   Pulso. Sin versalitas ni etiqueta encima: ya se sabe qué sección es. */
+.tituloPanel {
   margin: 0;
-  padding: 0.45rem 0.9rem;
-  border-bottom: 1px solid rgba(224, 134, 74, 0.2);
-  background: rgba(224, 134, 74, 0.07);
+  font-family: var(--font-cinzel, Georgia, serif);
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: #F3F6FA;
+}
+
+@media (min-width: 640px) {
+  .tituloPanel { font-size: 1.9rem; }
+}
+
+.oculta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border: 1px solid rgba(224, 134, 74, 0.35);
+  border-radius: 999px;
   font-family: var(--font-geist-sans, sans-serif);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #e0864a;
+  white-space: nowrap;
+}
+
+/* ── EL REGISTRO ─────────────────────────────────────────────────────────
+   Dentro del panel, las convocatorias son filas separadas por un hilo. Una
+   tarjeta por novedad convertiría tres avisos en tres bloques pidiendo
+   atención por separado; lo que son es una lista con un estado.
+
+   Y por eso se queda el histórico: una novedad vieja cuesta una línea de
+   48px. Borrarlas ahorraría nada y perdería el rastro de lo que se ha ido
+   convocando. */
+.registro {
+  border-top: 1px solid rgba(167, 139, 202, 0.14);
 }
 
 /* ── LA FILA ─────────────────────────────────────────────────────────────
@@ -40,7 +89,9 @@
   align-items: center;
   gap: 0.7rem;
   width: 100%;
-  padding: 0.85rem 0.9rem;
+  /* Sin sangría lateral: el aire lo pone el panel. Lo que se roba aquí se
+     nota, porque la fila cerrada es casi todo lo que se ve. */
+  padding: 0.9rem 0;
   border: 0;
   background: none;
   text-align: left;
@@ -49,7 +100,13 @@
   transition: background 160ms ease;
 }
 
-.cabecera:hover { background: rgba(167, 139, 202, 0.05); }
+/* El hover se dibuja hacia fuera para que llegue al borde del panel: una
+   franja iluminada con dos márgenes blancos a los lados parece un error. */
+.cabecera:hover { background: rgba(167, 139, 202, 0.05); box-shadow: -1.15rem 0 0 rgba(167, 139, 202, 0.05), 1.15rem 0 0 rgba(167, 139, 202, 0.05); }
+
+@media (min-width: 640px) {
+  .cabecera:hover { box-shadow: -2.2rem 0 0 rgba(167, 139, 202, 0.05), 2.2rem 0 0 rgba(167, 139, 202, 0.05); }
+}
 .cabecera:focus-visible {
   outline: 2px solid #6D4A9B;
   outline-offset: -2px;
@@ -157,11 +214,11 @@
    Aquí sí entra el Cinzel y el texto respira: desplegar tiene que dar algo
    a cambio del gesto. */
 .cuerpoCaja {
-  padding: 0 0.9rem 1.1rem;
+  padding: 0 0 1.2rem;
   /* Alineado con el título de la fila: el punto (7px) más su hueco (0.7rem).
      Sin esto, el texto desplegado empieza antes que el título que lo
      anuncia y la columna se rompe. */
-  padding-left: calc(0.9rem + 7px + 0.7rem);
+  padding-left: calc(7px + 0.7rem);
 }
 
 .horaLarga {

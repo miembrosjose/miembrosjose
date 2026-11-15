@@ -696,16 +696,14 @@ function ViewInicio({
               recargar nada. Va la primera porque es lo único de aquí que
               deja de verse para siempre en cuanto se atiende. */}
           <TarjetaNotificaciones />
-          {/* ── NOVEDADES, ANTES DEL PULSO ───────────────────────────────
-              Las dos son de José y las dos piden algo. La diferencia es que
-              una caduca: una reunión que fue ayer ya no sirve de nada, y una
-              pregunta de la semana aguanta hasta el domingo.
+          {/* ── ARRIBA, SOLO LO QUE CADUCA ───────────────────────────────
+              Una reunión que fue ayer no sirve de nada; una pregunta de la
+              semana aguanta hasta el domingo. Lo que tiene hora va donde se
+              mira primero, y lo demás baja.
 
-              Lo que caduca va primero. Y cuando no hay ninguna novedad, esto
-              no dibuja nada —ni un hueco— así que el Pulso sube a su sitio
-              de siempre sin que se note que había algo encima. */}
+              Cuando no hay ninguna novedad esto no dibuja nada —ni un hueco—
+              y la pantalla empieza por donde empezaba antes. */}
           <Novedades />
-          <PulsoSemana compacto onIrALaRed={() => setView("red")} />
           {/* A la pestaña de encuentros, no al Pulso: quien pulsa "Ver
               todos" bajo un anuncio de encuentros quiere los encuentros. */}
           <ProximoEncuentro onVerTodos={() => setView("red", null, { redTab: "encuentros" })} />
@@ -774,6 +772,16 @@ function ViewInicio({
           <OwnedProducts owned={owned} />
         </section>
       )}
+
+      {/* ── EL PULSO, ENTRE LAS TEMPORADAS Y LOS RECURSOS ─────────────────
+          Estaba arriba, compitiendo con las novedades por el mismo golpe de
+          vista. Aquí abajo cae en una pausa: se acaba de recorrer el camino
+          iniciático y todavía no ha empezado la tienda, que es exactamente el
+          momento en que una pregunta sobre la propia semana se lee en vez de
+          esquivarse. */}
+      <section className={styles.section}>
+        <PulsoSemana compacto onIrALaRed={() => setView("red")} />
+      </section>
 
       {/* BIBLIOTECA — productos categoría "biblioteca" */}
       <section id="biblioteca" className={styles.section}>
