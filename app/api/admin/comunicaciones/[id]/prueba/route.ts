@@ -66,12 +66,20 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       )
     }
 
+    // ── EL DESTINO, DICHO EN VOZ ALTA ───────────────────────────────────
+    // Se calcula aquí y se devuelve al panel. Antes la prueba contestaba
+    // «enviada» y nada más, y cuando el aviso abría la portada en vez del
+    // enlace no había forma de saber si el destino había viajado vacío o si
+    // el fallo estaba en el teléfono. Son dos cosas distintas y se arreglan
+    // en sitios distintos.
+    const destino = (c.cta_url || "").trim() || "/miembros"
+
     const r = await avisarAPersona(
       g.user.id,
       {
         title: c.subject,
         body: (c.body || "").replace(/\s+/g, " ").trim().slice(0, 300),
-        url: c.cta_url || "/miembros",
+        url: destino,
         // Etiqueta propia: una prueba no debe reemplazar en el teléfono al
         // aviso de verdad si luego se manda la misma comunicación.
         tag: `prueba-${id}`,
@@ -106,6 +114,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({
       ok: true,
       push: r,
+      destino,
       cuando: new Date().toISOString(),
     })
   }

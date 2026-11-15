@@ -4107,10 +4107,11 @@ function PruebaPush({ id, titulo, onEnviada }: {
 }) {
   const [enviando, setEnviando] = useState(false)
   const [hecho, setHecho] = useState<string | null>(null)
+  const [destino, setDestino] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const enviar = async () => {
-    setEnviando(true); setError(null); setHecho(null)
+    setEnviando(true); setError(null); setHecho(null); setDestino(null)
     try {
       const r = await fetch(`/api/admin/comunicaciones/${id}/prueba`, {
         method: "POST",
@@ -4121,6 +4122,7 @@ function PruebaPush({ id, titulo, onEnviada }: {
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || "No se pudo enviar")
       setHecho(new Date(j.cuando).toLocaleTimeString("es-419", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
+      if (typeof j.destino === "string") setDestino(j.destino)
       onEnviada?.(j.cuando)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo enviar")
@@ -4153,7 +4155,27 @@ function PruebaPush({ id, titulo, onEnviada }: {
       {!titulo.trim() && (
         <p className="mt-2 text-[11px] text-[#6a6a7a]">Ponle título antes: es la línea que se lee primero.</p>
       )}
-      {hecho && <p className="mt-3 text-xs text-emerald-400">Enviada a las {hecho}. Mira tu teléfono.</p>}
+      {hecho && (
+        <div className="mt-3 text-xs text-emerald-400">
+          <p>Enviada a las {hecho}. Mira tu teléfono.</p>
+          {/* ── A DÓNDE MANDA ESTE AVISO, DICHO AQUÍ ──────────────────────
+              Antes la prueba decía «enviada» y nada más. Cuando el aviso
+              abría la portada en vez del enlace, no había forma de saber si
+              el destino había viajado vacío o si el fallo estaba en el
+              teléfono — y son dos cosas que se arreglan en sitios distintos.
+              Ahora se lee en la misma línea en que se prueba. */}
+          {destino && (
+            <p className="mt-1 break-all text-[#8a8fa8]">
+              Al tocarlo tiene que abrir <span className="text-[#c3b2e0]">{destino}</span>.
+              {destino === "/miembros" && (
+                <span className="text-[#d0a0a0]">
+                  {" "}Eso es la portada: esta comunicación no lleva destino puesto.
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+      )}
       {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
     </section>
   )
