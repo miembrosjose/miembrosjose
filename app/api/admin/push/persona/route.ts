@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
     // incompleto sigue valiendo; uno que no sale, no.
   }
 
-  const { data: subs } = await admin
+  const { data: subs, error: errorSubs } = await admin
     .from("push_subscriptions")
     // Sin endpoint, sin p256dh y sin auth. A propósito.
     .select("activa, motivo_baja, user_agent, created_at, last_used_at")
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
   const activos = dispositivos.filter((d) => d.activa)
   const muertos = dispositivos.filter((d) => !d.activa && d.motivo === "gone")
 
-  const { data: envios } = await admin
+  const { data: envios, error: errorEnvios } = await admin
     .from("push_envios")
     .select("created_at, categoria, titulo, resultado, http_status")
     .eq("user_id", perfil.id)
@@ -157,6 +157,28 @@ export async function GET(req: NextRequest) {
     resultado: (e.resultado as string | null) ?? null,
     http: (e.http_status as number | null) ?? null,
   }))
+
+  // ── UN DIAGNÓSTICO QUE MIENTE ES PEOR QUE NINGUNO ──────────────────
+  // Si una de las dos lecturas falla, `data` llega vacío y el veredicto de
+  // abajo concluiría, con total seguridad, que esta persona nunca activó los
+  // avisos. Sería una respuesta falsa y convincente sobre la que alguien
+  // actuaría: pedirle que los active cuando ya los tiene.
+  //
+  // Un diagnóstico tiene que poder decir «no lo sé».
+  if (errorSubs || errorEnvios) {
+    console.error(
+      "[admin/push/persona]",
+      errorSubs?.message || errorEnvios?.message,
+    )
+    return NextResponse.json({
+      encontrada: true,
+      persona: { nombre: perfil.full_name || perfil.email, correo: perfil.email },
+      veredicto:
+        "No se pudieron leer sus dispositivos o su historial, así que no puedo decir nada " +
+        "con fundamento. No es que no tenga avisos: es que esta consulta falló. Vuelve a " +
+        "intentarlo.",
+    })
+  }
 
   // ── EL VEREDICTO ───────────────────────────────────────────────────────
   // Una sola frase, con lo que hay que hacer dentro. Una lista de datos sin
