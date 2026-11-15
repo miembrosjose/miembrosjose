@@ -33,6 +33,15 @@ import { EditorCodigo, PLANTILLAS } from "./EditorCodigo"
 // La única cosa del servidor que se importa aquí: no toca la base, es un mapa
 // de países y una cuenta de horas. Tener dos copias sería tener dos verdades.
 import { avisoDeHora, type AvisoDeHora } from "@/lib/comunicaciones/horas"
+import { DESTINOS_DE_LA_PLATAFORMA, destinoDeAvisoValido } from "@/lib/comunicaciones/destinos"
+import { useAuth } from "../../_lib/auth-context"
+import {
+  activarNotificaciones, estadoActual, registrarWorker, reintentarRegistro,
+  type EstadoPush,
+} from "../../_lib/push-cliente"
+
+/** La clave pública con la que el navegador se suscribe. La misma que usa la campana. */
+const CLAVE_VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""
 
 // ── Vocabulario, duplicado a propósito ─────────────────────────────────────
 // El servidor tiene el suyo en lib/comunicaciones/tipos.ts. Importarlo aquí
@@ -1627,23 +1636,13 @@ function CamposPush({
       <Bloque
         id="destino"
         titulo="A dónde lleva"
-        nota="Dónde se abre la plataforma cuando alguien toca el aviso."
+        nota="Qué se abre cuando alguien toca el aviso."
       >
-        <div>
-          <label className={labelCls}>Destino</label>
-          <input
-            type="text"
-            placeholder="/miembros/transmisiones"
-            value={c.cta_url ?? ""}
-            onChange={(e) => editar("cta_url", e.target.value)}
-            disabled={!editable}
-            className={inputCls}
-          />
-          <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-            Una ruta de la plataforma —<code className="text-[#c3b2e0]">/miembros/transmisiones</code>—
-            o una dirección completa. Si lo dejas vacío, se abre por el inicio.
-          </p>
-        </div>
+        <DestinoDelAviso
+          valor={c.cta_url ?? ""}
+          onCambiar={(v) => editar("cta_url", v)}
+          editable={editable}
+        />
       </Bloque>
 
       <Audiencias c={c} editar={editar} editable={editable} />
@@ -3910,6 +3909,190 @@ function VistaPreviaPush({ c }: { c: Comunicacion }) {
 }
 
 /**
+ * A dónde lleva el aviso.
+ *
+ * ── POR QUÉ ESTO DEJÓ DE SER UN CAMPO DE TEXTO ────────────────────────────
+ * Porque era texto libre y su propio ejemplo estaba mal: proponía
+ * `/miembros/transmisiones`, que no existe —las transmisiones son
+ * `/miembros#feed`—. Y un ejemplo equivocado es lo que se copia.
+ *
+ * El aviso salía igual, llegaba igual, y al tocarlo caía donde no hay nada.
+ *
+ * Tampoco es adivinable escribiéndolo a mano: «Recursos de los 144000» es
+ * `#biblioteca` por dentro y «Biblioteca» es `#libreria`. Esos dos nombres
+ * cruzados no los va a acertar nadie.
+ *
+ * Con la lista delante, elegir mal una pantalla de la plataforma deja de ser
+ * posible. El campo de escribir sigue ahí para lo único que lo necesitaba: un
+ * enlace de fuera —un Zoom, un vídeo—, que ahora sí se abre de verdad.
+ */
+function DestinoDelAviso({ valor, onCambiar, editable }: {
+  valor: string
+  onCambiar: (v: string) => void
+  editable: boolean
+}) {
+  const esDeLaLista = DESTINOS_DE_LA_PLATAFORMA.some((d) => d.ruta === valor)
+  const [manual, setManual] = useState(() => Boolean(valor.trim()) && !esDeLaLista)
+
+  const fuera = manual && Boolean(valor.trim()) && !valor.trim().startsWith("/")
+  const malEscrito = manual && Boolean(valor.trim()) && !destinoDeAvisoValido(valor)
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls}>Destino</label>
+        <select
+          className={inputCls}
+          disabled={!editable}
+          value={manual ? "__fuera__" : esDeLaLista ? valor : ""}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v === "__fuera__") { setManual(true); onCambiar("") ; return }
+            setManual(false)
+            onCambiar(v)
+          }}
+        >
+          <option value="">El inicio de la plataforma</option>
+          {DESTINOS_DE_LA_PLATAFORMA.map((d) => (
+            <option key={d.ruta} value={d.ruta}>
+              {d.nombre}{d.nota ? ` — ${d.nota}` : ""}
+            </option>
+          ))}
+          <option value="__fuera__">Otra dirección (un Zoom, un vídeo…)</option>
+        </select>
+      </div>
+
+      {manual && (
+        <div>
+          <label className={labelCls}>La dirección</label>
+          <input
+            type="text"
+            placeholder="https://us02web.zoom.us/j/…"
+            value={valor}
+            onChange={(e) => onCambiar(e.target.value)}
+            disabled={!editable}
+            className={inputCls}
+          />
+          {malEscrito ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-[#d08080]">
+              Tiene que empezar por <code>https://</code>. Así, al tocar el aviso
+              no se abriría nada.
+            </p>
+          ) : fuera ? (
+            <p className="mt-2 border-l-2 border-[#6D4A9B] pl-3 text-[11px] leading-relaxed text-[#8a8fa8]">
+              Se abre fuera de la plataforma, en el navegador del teléfono. Es lo
+              correcto para un Zoom: dentro de la aplicación instalada no habría
+              barra de direcciones ni forma de volver.
+            </p>
+          ) : (
+            <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+              Pégala completa, como la copiaste.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * En qué estado están los avisos de quien está mirando esta pantalla.
+ *
+ * ── POR QUÉ ESTO TIENE QUE ESTAR AQUÍ ─────────────────────────────────────
+ * Porque «Enviármela a mí» no puede funcionar si quien lo pulsa no tiene
+ * ningún dispositivo registrado, y eso NO se ve en ninguna parte. Pasó: una
+ * administradora probó los avisos durante días, a ella no le llegaba ninguno
+ * y a los demás sí, y la pantalla no daba una sola pista. La conclusión
+ * razonable era «los avisos están rotos» cuando lo que estaba vacío era su
+ * propia suscripción.
+ *
+ * Una suscripción se muere sola y sin avisar: el servicio de push contesta
+ * 410 y aquí se apaga. Desinstalar la aplicación, reinstalarla, borrar los
+ * datos del navegador, un iPhone que recicla la suya. Nada de eso lo
+ * provoca la persona a propósito, y nada de eso se nota.
+ *
+ * Así que se dice antes de pulsar, con el número de dispositivos, y con el
+ * botón de arreglarlo al lado. Un diagnóstico sin salida no sirve de nada.
+ */
+function MisDispositivos() {
+  const { user } = useAuth()
+  const [estado, setEstado] = useState<EstadoPush | null>(null)
+  const [cuantos, setCuantos] = useState<number | null>(null)
+  const [ocupado, setOcupado] = useState(false)
+
+  const mirar = useCallback(async () => {
+    await registrarWorker()
+    setEstado(await estadoActual(user?.id))
+    try {
+      const r = await fetch("/api/push/subscribe", { credentials: "include" })
+      const j = (await r.json()) as { dispositivos?: number }
+      setCuantos(typeof j.dispositivos === "number" ? j.dispositivos : null)
+    } catch { setCuantos(null) }
+  }, [user?.id])
+
+  useEffect(() => { void mirar() }, [mirar])
+
+  const arreglar = async () => {
+    setOcupado(true)
+    try {
+      // `incompleto` es el navegador diciendo que sí y el servidor sin
+      // enterarse: se arregla repitiendo la llamada que falló, sin pedir
+      // ningún permiso otra vez. Lo demás sí necesita permiso.
+      if (estado === "incompleto") setEstado(await reintentarRegistro(user?.id))
+      else if (CLAVE_VAPID && user?.id) setEstado(await activarNotificaciones(CLAVE_VAPID, user.id))
+      await mirar()
+      window.dispatchEvent(new CustomEvent("los144k:push-cambio"))
+    } finally { setOcupado(false) }
+  }
+
+  if (estado === null) return null
+
+  const frase =
+    estado === "activo"
+      ? "Este dispositivo está registrado."
+      : estado === "incompleto"
+        ? "Este dispositivo dio el permiso, pero el servidor no lo tiene apuntado: no le puede llegar nada."
+        : estado === "denegado"
+          ? "Los avisos están bloqueados en los ajustes de este navegador. Desde aquí no se puede desbloquear."
+          : estado === "requiere_instalar"
+            ? "En iPhone y iPad los avisos solo llegan con la plataforma instalada en la pantalla de inicio."
+            : estado === "no_soportado"
+              ? "Este navegador no entrega avisos."
+              : "En este dispositivo no están activados."
+
+  const sePuedeArreglar = estado === "incompleto" || estado === "sin_permiso" || estado === "desactivado"
+  const vacia = cuantos === 0
+
+  return (
+    <div
+      className={`mt-4 border-l-2 pl-3 text-[11px] leading-relaxed ${
+        estado === "activo" && !vacia ? "border-[#6D4A9B] text-[#8a8fa8]" : "border-[#8a5a5a] text-[#d0a0a0]"
+      }`}
+    >
+      <p>{frase}</p>
+      {cuantos !== null && (
+        <p className="mt-1">
+          {vacia
+            ? "Tu cuenta no tiene ningún dispositivo registrado, así que la prueba no puede llegar a ninguna parte."
+            : `Dispositivos registrados con tu cuenta: ${cuantos}.`}
+        </p>
+      )}
+      {sePuedeArreglar && (
+        <button
+          type="button"
+          onClick={() => void arreglar()}
+          disabled={ocupado}
+          className="mt-2 inline-flex items-center gap-2 border border-[#2f2f42] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a0a0b0] hover:border-[#6D4A9B] hover:text-[#c3b2e0] disabled:opacity-40"
+        >
+          {ocupado ? <Loader2 size={11} className="animate-spin" /> : <Bell size={11} />}
+          {estado === "incompleto" ? "Volver a registrarlo" : "Activarlos aquí"}
+        </button>
+      )}
+    </div>
+  )
+}
+
+/**
  * La prueba de un aviso.
  *
  * Va a los dispositivos de quien está mirando esta pantalla, y a ninguno más.
@@ -3956,6 +4139,8 @@ function PruebaPush({ id, titulo, onEnviada }: {
         y no puede alcanzar a ningún miembro. Si tienes la plataforma instalada
         en el teléfono, míralo ahí: en el escritorio se ve distinto.
       </p>
+      <MisDispositivos />
+
       <button
         type="button"
         onClick={enviar}

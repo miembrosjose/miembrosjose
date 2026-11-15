@@ -93,48 +93,79 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// ── EL DESTINO SIEMPRE ES DE ESTA PLATAFORMA ───────────────────────────────
+// ── A DÓNDE SE ABRE, Y EN QUÉ VENTANA ────────────────────────────
 //
-// `data.url` llega dentro del push, y quien manda un push es el servidor. Pero
-// este es el único sitio de todo el sistema que abre una ventana a partir de un
-// dato recibido, y si algún día ese dato llegara mal, lo que se abriría es una
-// página cualquiera con toda la apariencia de venir de aquí: la persona ha
-// tocado un aviso de Los 144.000 y confiará en lo que vea.
+// ── LO QUE ESTABA MAL ───────────────────────────────────────
+// Esto descartaba TODO destino de otro dominio y lo cambiaba en silencio por
+// el inicio de la plataforma. O sea: se podía configurar un aviso con el
+// enlace de un Zoom, el panel lo aceptaba, el aviso llegaba bien —y al
+// tocarlo se abría la portada de miembros—. Sin ningún error en ninguna
+// pantalla, porque para el servidor el envío había ido perfecto.
 //
-// Resolverlo contra el origen y descartar lo que caiga fuera cuesta seis líneas.
-function dentroDelSitio(bruto) {
+// El enlace del encuentro es justo el caso que hacía falta.
+//
+// ── POR QUÉ AHORA SÍ SE PUEDE CONFIAR EN EL DESTINO ───────────────────
+// El miedo original era razonable: este es el único sitio del sistema que
+// abre una ventana a partir de un dato recibido, y una dirección cualquiera
+// se abriría con toda la apariencia de venir de aquí.
+//
+// Pero el cuerpo de un push viaja cifrado de extremo a extremo con las claves
+// de ESTE dispositivo (RFC 8291) y firmado con nuestra clave VAPID. Nadie
+// más puede meter un destino ahí dentro: lo que llega lo escribió nuestro
+// servidor, y lo que escribe nuestro servidor es lo que la administración
+// tecleó en el panel. Descartarlo no protegía de nada y rompía los enlaces.
+//
+// Lo que SÍ se sigue rechazando es un esquema que no sea http o https:
+// `javascript:`, `data:` y compañía no son destinos, son otra cosa.
+function destinoDelAviso(bruto) {
   const inicio = self.location.origin + "/miembros";
   try {
     // Resuelve tanto "/miembros/mensajes/x" como una dirección completa.
     const u = new URL(bruto, self.location.origin);
-    return u.origin === self.location.origin ? u.href : inicio;
+    if (u.protocol !== "https:" && u.protocol !== "http:") {
+      return { href: inicio, fuera: false };
+    }
+    return { href: u.href, fuera: u.origin !== self.location.origin };
   } catch {
-    return inicio;
+    return { href: inicio, fuera: false };
   }
 }
 
-// ── EL CLIC ────────────────────────────────────────────────────────────────
+// ── EL CLIC ─────────────────────────────────────────────────
 //
-// Primero se busca una ventana ya abierta de la plataforma y se la enfoca,
-// navegándola al destino. Abrir una pestaña nueva cada vez deja a la persona
-// con seis copias de la misma aplicación.
+// Dentro de la plataforma: se reutiliza la ventana que ya esté abierta. Abrir
+// una pestaña nueva cada vez deja a la persona con seis copias de la
+// aplicación.
 //
-// Solo se abre una ventana nueva si no había ninguna.
+// ── EL FALLO SILENCIOSO QUE HABÍA AQUÍ ────────────────────────────
+// `v.navigate()` no siempre puede: el navegador la rechaza cuando la ventana
+// no la controla este trabajador —la primera carga, una pestaña vieja— y
+// algunos no la implementan. Eso estaba envuelto en un `catch` vacío con el
+// comentario «algunas no dejan», y lo que pasaba después era que la ventana
+// se enfocaba y se quedaba EXACTAMENTE donde estaba.
+//
+// Si la aplicación estaba abierta en la portada —que es lo normal—, tocar un
+// aviso enfocaba la portada. Visto desde fuera: «me lleva a miembros y no al
+// enlace». Y no había nada que mirar, porque no fallaba nada.
+//
+// Ahora, si no se puede navegar, se abre el destino en una ventana. Una copia
+// de más es una molestia; no llegar nunca al sitio es el aviso entero
+// perdido.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const destino = dentroDelSitio(
+  const destino = destinoDelAviso(
     (event.notification.data && event.notification.data.url) || "/miembros",
   );
 
-  // ── APUNTAR EL TOQUE, SIN HACER ESPERAR A NADIE ──────────────────────────
+  // ── APUNTAR EL TOQUE, SIN HACER ESPERAR A NADIE ────────────────────
   // Es el único dato real que hay después de un envío: el servicio de push dice
   // "aceptado" y de ahí en adelante no informa de nada.
   //
-  // Va sin `await` dentro del flujo de abrir la ventana a propósito: lo que la
-  // persona ha pedido es que se abra la pantalla, y una estadística no puede
-  // retrasar eso ni fallar en su nombre. Si no hay sesión o la red falla, se
-  // pierde el apunte y no pasa nada más.
+  // Va aparte del flujo de abrir la ventana a propósito: lo que la persona ha
+  // pedido es que se abra la pantalla, y una estadística no puede retrasar eso
+  // ni fallar en su nombre. Si no hay sesión o la red falla, se pierde el
+  // apunte y no pasa nada más.
   const campana = event.notification.data && event.notification.data.id;
   if (campana) {
     event.waitUntil(
@@ -149,23 +180,40 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
+      // ── UN DESTINO DE FUERA VA EN SU PROPIA VENTANA ─────────────────
+      // Un Zoom, un YouTube. Meterlo DENTRO de la aplicación instalada deja a
+      // la persona sin barra de direcciones y sin botón de atrás: para volver
+      // a la plataforma tendría que cerrar la app y abrirla otra vez.
+      if (destino.fuera) {
+        await self.clients.openWindow(destino.href);
+        return;
+      }
+
       const ventanas = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
 
       for (const v of ventanas) {
-        // Misma plataforma → se reutiliza.
-        if (new URL(v.url).origin === self.location.origin) {
+        let esNuestra = false;
+        try { esNuestra = new URL(v.url).origin === self.location.origin; } catch { /* vacía */ }
+        if (!esNuestra) continue;
+
+        try {
           await v.focus();
           if ("navigate" in v) {
-            try { await v.navigate(destino); } catch { /* algunas no dejan */ }
+            // Devuelve el cliente si consiguió moverlo; `null` si no.
+            const movida = await v.navigate(destino.href);
+            if (movida) return;
           }
-          return;
-        }
+        } catch { /* no se pudo: se abre ventana, abajo */ }
+
+        // Enfocada pero sin poder moverla. Antes esto se daba por bueno y la
+        // persona se quedaba donde estuviera.
+        break;
       }
 
-      await self.clients.openWindow(destino);
+      await self.clients.openWindow(destino.href);
     })(),
   );
 });

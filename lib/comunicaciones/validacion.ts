@@ -13,6 +13,7 @@
 import type { Comunicacion } from "./tipos"
 import { TIPOS } from "./tipos"
 import { esUrlValida } from "./plantilla"
+import { destinoDeAvisoValido, rutaDeLaPlataformaExiste } from "./destinos"
 
 export type Hallazgo = {
   campo: string
@@ -46,18 +47,20 @@ const TEXTO_COMODO = 120
 /**
  * ¿A dónde puede llevar una notificación?
  *
- * A diferencia del botón de un correo, aquí vale una ruta de la propia
- * plataforma —`/miembros/transmisiones`— porque la notificación se abre dentro
- * de la aplicación. El trabajador de servicio la resuelve contra el origen.
+ * Una ruta de la propia plataforma O una dirección completa de fuera —el
+ * enlace de un Zoom, un vídeo—. Las dos cosas funcionan: el trabajador de
+ * servicio abre lo de dentro en la aplicación y lo de fuera en su propia
+ * ventana.
  *
- * Lo que NO vale es cualquier otra cosa: un `javascript:` o un esquema raro
- * acabaría en `clients.openWindow`, y eso se abre sin que nadie lo revise.
+ * ── POR QUÉ AHORA SE COMPRUEBA QUE LA RUTA EXISTA ───────────────────
+ * Antes bastaba con que empezara por `/`. Con eso, `/miembros/transmisiones`
+ * —que es lo que proponía el propio ejemplo del campo, y no existe— pasaba
+ * la validación, el aviso salía a todo el mundo y al tocarlo caía en una
+ * página que no está.
+ *
+ * Un destino roto no se puede arreglar después de enviar: el aviso ya está en
+ * los teléfonos. Es exactamente el momento de pararlo.
  */
-function destinoDeNotificacionValido(url: string): boolean {
-  if (url.startsWith("/")) return !url.startsWith("//")
-  return esUrlValida(url)
-}
-
 /**
  * La validación de una notificación.
  *
@@ -102,12 +105,24 @@ function validarNotificacion(
 
   // ── A dónde lleva ───────────────────────────────────────────────────────
   const destino = (c.cta_url || "").trim()
-  if (destino && !destinoDeNotificacionValido(destino)) {
-    err(
-      "cta_url",
-      "El destino no es válido. Puede ser una ruta de la plataforma —/miembros/transmisiones— " +
-      "o una dirección completa que empiece por https://.",
-    )
+  if (destino && !destinoDeAvisoValido(destino)) {
+    // Se distingue el destino que NO EXISTE del que está mal escrito. Los
+    // dos acaban en una pantalla equivocada, pero no se arreglan igual, y
+    // «no es válido» a secas manda a revisar la sintaxis de algo que está
+    // perfectamente escrito.
+    if (destino.startsWith("/") && !rutaDeLaPlataformaExiste(destino)) {
+      err(
+        "cta_url",
+        `En la plataforma no hay ninguna pantalla en ${destino}: al tocar el aviso saldría un error. ` +
+        "Elígela de la lista de destinos.",
+      )
+    } else {
+      err(
+        "cta_url",
+        "El destino no es válido. Elige una pantalla de la plataforma de la lista, " +
+        "o pega una dirección completa que empiece por https://.",
+      )
+    }
   }
   if (!destino) {
     avi("cta_url", "Sin destino, al tocar el aviso se abre la plataforma por el inicio. Se puede enviar así.")
