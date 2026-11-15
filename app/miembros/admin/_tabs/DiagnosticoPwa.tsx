@@ -31,7 +31,8 @@
 
 import { useCallback, useEffect, useState } from "react"
 import {
-  AlertTriangle, Bell, Check, Eye, Monitor, RefreshCw, Smartphone, X,
+  AlertTriangle, Bell, Check, Eye, Loader2, Monitor, RefreshCw, Search,
+  Smartphone, X,
 } from "lucide-react"
 import { useAuth } from "../../_lib/auth-context"
 import { usePwa } from "../../_lib/pwa-contexto"
@@ -327,6 +328,8 @@ export function DiagnosticoPwa() {
 
       <PruebaDeAviso />
 
+      <PorQueNoLeLlegan />
+
       {simulando && (
         <HojaInstalacion
           onCerrar={() => { setSimulando(false); mirar() }}
@@ -435,6 +438,211 @@ function PruebaDeAviso() {
               problema está en el teléfono: permisos del sistema para la
               aplicación, modo concentración, o la app abierta en primer plano.
             </p>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  POR QUÉ A ESTA PERSONA NO LE LLEGAN
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ ESTÁ AQUÍ ─────────────────────────────────────────────────────
+// Todo lo de arriba mide ESTE dispositivo con ESTA cuenta, que es lo único
+// que se puede medir desde el navegador. Y eso deja fuera el caso que más
+// duele: alguien dice que no le llegan, y desde aquí no hay nada que mirar.
+//
+// Pasó con una administradora. Tenía la aplicación instalada, los avisos
+// activados y su teléfono en silencio durante días. Los envíos salían bien,
+// el servicio los aceptaba, y nadie podía ver que sus suscripciones estaban
+// muertas: ella seguía leyendo «activados» en su pantalla.
+//
+// Las suscripciones SÍ viven en el servidor —son la dirección a la que se
+// manda— y cada envío deja su resultado escrito. Estaba todo guardado y no se
+// enseñaba en ninguna parte.
+//
+// ── LO QUE SE PUEDE Y LO QUE NO ───────────────────────────────────────────
+// Se puede ver: cuántos dispositivos tiene, cuáles están apagados y por qué,
+// qué ha apagado en sus preferencias, y cómo acabaron sus últimos avisos.
+//
+// No se puede ver: si tiene el teléfono en modo concentración, o si le quitó
+// el permiso a la aplicación en los ajustes del sistema. Eso no sale del
+// aparato. Cuando el servidor dice que todo está bien, lo que queda es eso, y
+// el veredicto lo dice con esas palabras en vez de dejarlo en el aire.
+function PorQueNoLeLlegan() {
+  const [correo, setCorreo] = useState("")
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [dato, setDato] = useState<Diagnostico | null>(null)
+
+  type Diagnostico = {
+    encontrada: boolean
+    persona?: { nombre: string; correo: string }
+    apagados?: string[]
+    dispositivos?: Array<{
+      aparato: string
+      activa: boolean
+      motivo: string | null
+      creado: string | null
+      ultimoUso: string | null
+    }>
+    envios?: Array<{
+      cuando: string
+      categoria: string | null
+      titulo: string | null
+      resultado: string | null
+      http: number | null
+    }>
+    veredicto: string
+  }
+
+  async function mirar() {
+    const c = correo.trim()
+    if (!c) return
+    setCargando(true); setError(null); setDato(null)
+    try {
+      const r = await fetch(`/api/admin/push/persona?correo=${encodeURIComponent(c)}`, {
+        credentials: "include",
+      })
+      const j = (await r.json()) as Diagnostico & { error?: string }
+      if (!r.ok) { setError(j.error || "No se pudo consultar."); return }
+      setDato(j)
+    } catch {
+      setError("No se pudo llamar al servidor.")
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  function cuando(iso: string | null): string {
+    if (!iso) return "—"
+    const d = new Date(iso)
+    if (!Number.isFinite(d.getTime())) return "—"
+    return d.toLocaleString("es-419", {
+      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    })
+  }
+
+  const MOTIVOS: Record<string, string> = {
+    gone: "el servicio dijo que ya no existe",
+    rotada: "el navegador la cambió por otra",
+    revocada: "los apagó a propósito",
+  }
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0b0b12] p-5">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
+        <Search size={14} className="text-[#a78bca]" /> Por qué a alguien no le llegan
+      </h3>
+      <p className="mt-2 text-[12px] leading-relaxed text-[#8a8fa8] [font-family:var(--font-geist-sans)]">
+        Escribe su correo. Dice cuántos dispositivos tiene, cuáles están
+        apagados y por qué, y cómo acabaron sus últimos avisos. Solo lee: no le
+        manda nada ni cambia nada suyo.
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <input
+          type="email"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") void mirar() }}
+          placeholder="alguien@ejemplo.com"
+          className="min-w-0 flex-1 border border-[#2f2f42] bg-[#0d0d16] px-3 py-2.5 text-[13px] text-[#F3F6FA] placeholder:text-[#4a4a5a] focus:border-[#6D4A9B] focus:outline-none [font-family:var(--font-geist-sans)]"
+        />
+        <button
+          type="button"
+          onClick={() => void mirar()}
+          disabled={cargando || !correo.trim()}
+          className="inline-flex items-center gap-2 border border-[#6D4A9B] bg-[#6D4A9B]/15 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c3b2e0] transition-colors hover:bg-[#6D4A9B]/30 disabled:opacity-40"
+        >
+          {cargando ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+          {cargando ? "Mirando…" : "Mirar"}
+        </button>
+      </div>
+
+      {error && (
+        <p className="mt-3 border-l-2 border-[#8a5a5a] pl-3 text-[12px] text-[#d0a0a0] [font-family:var(--font-geist-sans)]">
+          {error}
+        </p>
+      )}
+
+      {dato && (
+        <div className="mt-5 space-y-4 [font-family:var(--font-geist-sans)]">
+          {/* El veredicto va PRIMERO y en grande. Los datos están debajo para
+              quien quiera comprobarlo, pero la respuesta no se esconde entre
+              ellos: quien abre esto no sabe qué columna mirar. */}
+          <div className="border-l-2 border-[#6D4A9B] bg-[#6D4A9B]/5 py-2 pl-3 text-[13px] leading-relaxed text-[#c3b2e0]">
+            {dato.veredicto}
+          </div>
+
+          {dato.encontrada && dato.persona && (
+            <p className="text-[12px] text-[#8a8fa8]">
+              {dato.persona.nombre} · {dato.persona.correo}
+            </p>
+          )}
+
+          {dato.dispositivos && dato.dispositivos.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6a6a7a]">
+                Sus dispositivos
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {dato.dispositivos.map((d, i) => (
+                  <li
+                    key={i}
+                    className={`flex flex-wrap items-baseline gap-x-2 border-l-2 pl-3 text-[12px] ${
+                      d.activa ? "border-emerald-800 text-[#a0a0b0]" : "border-[#2f2f42] text-[#6a6a7a]"
+                    }`}
+                  >
+                    <span className={d.activa ? "text-[#F3F6FA]" : undefined}>{d.aparato}</span>
+                    <span>
+                      {d.activa
+                        ? "· activo"
+                        : `· apagado (${d.motivo ? MOTIVOS[d.motivo] ?? d.motivo : "sin motivo apuntado"})`}
+                    </span>
+                    <span className="text-[11px]">· último uso {cuando(d.ultimoUso)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {dato.envios && dato.envios.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6a6a7a]">
+                Sus últimos avisos
+              </p>
+              <ul className="mt-2 space-y-1">
+                {dato.envios.map((e, i) => (
+                  <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-[#8a8fa8]">
+                    <span className="text-[#a0a0b0]">{cuando(e.cuando)}</span>
+                    <span
+                      className={
+                        e.resultado === "ok"
+                          ? "text-emerald-400"
+                          : e.resultado === "gone"
+                            ? "text-[#d0a0a0]"
+                            : "text-[#e0864a]"
+                      }
+                    >
+                      {e.resultado === "ok"
+                        ? "aceptado"
+                        : e.resultado === "gone"
+                          ? "dispositivo muerto"
+                          : `falló${e.http ? ` (${e.http})` : ""}`}
+                    </span>
+                    <span className="min-w-0 truncate">{e.titulo || e.categoria || "—"}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
+                «Aceptado» es el servicio de Apple o de Google diciendo que se lo
+                queda. No es que haya aparecido en la pantalla: eso ocurre en el
+                teléfono y no deja rastro en ninguna parte.
+              </p>
+            </div>
           )}
         </div>
       )}
