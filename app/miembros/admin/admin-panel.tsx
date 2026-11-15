@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import {
+  Activity,
   Unlock,
   Users,
   FileText,
@@ -43,6 +44,7 @@ type Tab =
   | "comms_dm"
   | "pwa"
   | "organizacion"
+  | "pulso"
 
 // El Centro de Comunicaciones trae su propio editor, su vista previa y sus
 // diálogos. Es el tab más pesado del panel, y es el que menos se abre: cargarlo
@@ -51,6 +53,10 @@ type Tab =
 // porque casi nunca se abre: es una herramienta de diagnóstico.
 // El calendario de trabajo. Se carga aparte porque trae su propio editor
 // y su rejilla del mes, y no hace falta mientras se mira otra cosa.
+const Pulso = dynamic(
+  () => import("./_tabs/Pulso").then((m) => m.Pulso),
+  { ssr: false },
+)
 const Organizacion = dynamic(
   () => import("./_tabs/Organizacion").then((m) => m.Organizacion),
   { ssr: false },
@@ -186,6 +192,12 @@ const TAB_GROUPS: TabGroup[] = [
         label: "Organización",
         description: "Calendario de trabajo, checklist semanal y cumplimiento",
         icon: CalendarDays,
+      },
+      {
+        id: "pulso",
+        label: "Pulso de la semana",
+        description: "La pregunta semanal: escribirla, programarla y ver qué responden",
+        icon: Activity,
       },
       {
         id: "comms",
@@ -459,6 +471,7 @@ export function AdminPanel() {
           {tab === "comms_interno" && <Comunicaciones key="interno" canal="interno" />}
           {tab === "comms_dm" && <Comunicaciones key="dm" canal="dm" />}
           {tab === "organizacion" && <Organizacion />}
+          {tab === "pulso" && <Pulso />}
           {tab === "pwa" && <DiagnosticoPwa />}
         </div>
       </main>
