@@ -29,9 +29,8 @@
 // justifica ocupar sitio en la pantalla de alguien.
 
 import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, MessageCircle, EyeOff } from "lucide-react"
+import { ChevronDown, MessageCircle, EyeOff, Send } from "lucide-react"
 import s from "./novedades.module.css"
-import { useView } from "../_lib/view-context"
 
 type Novedad = {
   id: string
@@ -122,11 +121,113 @@ function HoraLarga({ iso, zona }: { iso: string; zona: string | null }) {
   )
 }
 
+/**
+ * Los comentarios, aquí mismo.
+ *
+ * ── POR QUÉ NO SE VA AL FORO ──────────────────────────────────────────────
+ * «Comentar» llevaba a la comunidad buscando el hilo por su título. Dos
+ * problemas: saca a alguien de Inicio para escribir dos frases, y cuando la
+ * búsqueda no encontraba el hilo aterrizaba en La Red, que no tiene nada que
+ * ver con lo que se acababa de leer.
+ *
+ * El hilo existe igual —es una fila del foro, con su moderación y sus
+ * denuncias— y se puede seguir abriendo desde la comunidad. Lo que cambia es
+ * que para decir «ahí estaré» no hace falta ir a ninguna parte.
+ *
+ * Se piden al abrir, no al cargar la página: la mayoría de las veces nadie
+ * los abre, y traerlos siempre sería una consulta por novedad en cada visita
+ * a Inicio.
+ */
+function Comentarios({ novedadId, alPublicar }: { novedadId: string; alPublicar: () => void }) {
+  type Respuesta = { id: string; author_name: string; body: string; created_at: string }
+
+  const [lista, setLista] = useState<Respuesta[] | null>(null)
+  const [texto, setTexto] = useState("")
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vivo = true
+    fetch(`/api/forum/posts/${novedadId}/replies`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { replies?: Respuesta[] } | null) => { if (vivo) setLista(d?.replies ?? []) })
+      .catch(() => { if (vivo) setLista([]) })
+    return () => { vivo = false }
+  }, [novedadId])
+
+  async function enviar() {
+    const limpio = texto.trim()
+    if (!limpio || enviando) return
+    setEnviando(true)
+    setError(null)
+    try {
+      const r = await fetch(`/api/forum/posts/${novedadId}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ body: limpio }),
+      })
+      const j = (await r.json().catch(() => ({}))) as { reply?: Respuesta; error?: string }
+      if (!r.ok || !j.reply) { setError(j.error || "No se pudo publicar."); return }
+      // Se añade al final, que es donde lo va a buscar quien acaba de
+      // escribirlo. Recargar la lista entera haría parpadear lo que ya hay.
+      setLista((prev) => [...(prev ?? []), j.reply as Respuesta])
+      setTexto("")
+      alPublicar()
+    } catch {
+      setError("No se pudo publicar.")
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <div className={s.comentarios}>
+      {lista && lista.length > 0 && (
+        <ul className={s.hilos}>
+          {lista.map((c) => (
+            <li key={c.id} className={s.comentario}>
+              <p className={s.comentarioAutor}>{c.author_name}</p>
+              <p className={s.comentarioTexto}>{c.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={s.escribir}>
+        <textarea
+          className={s.campo}
+          rows={2}
+          placeholder="Escribe un comentario…"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          // Enviar con Enter y saltar de línea con Mayúsculas+Enter: esto son
+          // dos frases, no un ensayo.
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void enviar() }
+          }}
+        />
+        <button
+          type="button"
+          className={s.enviar}
+          onClick={() => void enviar()}
+          disabled={enviando || texto.trim().length === 0}
+          aria-label="Publicar comentario"
+        >
+          <Send size={15} />
+        </button>
+      </div>
+
+      {error && <p className={s.errorComentario}>{error}</p>}
+    </div>
+  )
+}
+
 export function Novedades() {
-  const { setView } = useView()
   const [novedades, setNovedades] = useState<Novedad[] | null>(null)
   const [oculta, setOculta] = useState(false)
   const [abierta, setAbierta] = useState<string | null>(null)
+  const [conComentarios, setConComentarios] = useState<string | null>(null)
   // Para que `estadoDe` se recalcule cuando la reunión pasa de «mañana» a
   // «ahora» sin que nadie recargue. Una vez por minuto basta.
   const [, tic] = useState(0)
@@ -234,7 +335,8 @@ export function Novedades() {
                 <button
                   type="button"
                   className={s.comentar}
-                  onClick={() => setView("comunidad", null, { comunidadTema: n.titulo })}
+                  aria-expanded={conComentarios === n.id}
+                  onClick={() => setConComentarios(conComentarios === n.id ? null : n.id)}
                 >
                   <MessageCircle size={14} aria-hidden />
                   {n.respuestas === 0
@@ -242,6 +344,19 @@ export function Novedades() {
                     : `${n.respuestas} ${n.respuestas === 1 ? "comentario" : "comentarios"}`}
                 </button>
               </div>
+
+              {conComentarios === n.id && (
+                <Comentarios
+                  novedadId={n.id}
+                  alPublicar={() =>
+                    setNovedades((prev) =>
+                      (prev ?? []).map((x) =>
+                        x.id === n.id ? { ...x, respuestas: x.respuestas + 1 } : x,
+                      ),
+                    )
+                  }
+                />
+              )}
             </div>
           </article>
         )
