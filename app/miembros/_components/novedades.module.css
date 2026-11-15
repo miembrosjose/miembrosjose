@@ -13,8 +13,13 @@
    anulan. Un solo foco violeta arriba basta para que sea la misma familia. */
 .panel {
   position: relative;
-  max-width: 1100px;
-  margin: 0 auto;
+  /* Sin ancho máximo: las secciones de esta página no lo tienen —las rejillas
+     de temporadas y recursos van de borde a borde— y una columna de 1100px
+     centrada en medio de todo eso se lee como un recuadro encogido.
+
+     El texto sí se limita, pero dentro: ver `.texto p`. Una cosa es que la
+     caja acompañe a la página y otra que un párrafo mida doscientos
+     caracteres. */
   padding: 1.25rem 1.15rem 1.1rem;
   border-radius: 16px;
   border: 1px solid rgba(167, 139, 202, 0.28);

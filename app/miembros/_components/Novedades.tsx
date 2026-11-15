@@ -145,13 +145,14 @@ export function Novedades() {
         const lista = d.novedades ?? []
         setNovedades(lista)
         setOculta(Boolean(d.oculta))
-        // La que importa se abre sola. Si no hay ninguna inminente, todas
-        // en una línea: la sección no pide sitio cuando no lo necesita.
-        const urgente = lista.find((n) => {
-          const e = estadoDe(n.eventoAt)
-          return e === "vivo" || e === "pronto"
-        })
-        if (urgente) setAbierta(urgente.id)
+        // ── TODAS CERRADAS, SIEMPRE ───────────────────────────────────
+        // Antes la inminente nacía desplegada. Leído en pantalla, eso no es
+        // «te aviso de lo urgente»: es media pantalla de texto que nadie ha
+        // pedido, y el resto de Inicio empujado hacia abajo.
+        //
+        // El punto ámbar y «mañana · 11:00» ya dicen que hay algo y cuándo.
+        // Quien quiera el detalle, abre. Una línea que se puede ignorar
+        // informa más que un bloque que hay que saltarse.
       })
       .catch(() => { if (vivo) setNovedades([]) })
     return () => { vivo = false }
