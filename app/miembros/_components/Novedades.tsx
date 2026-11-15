@@ -28,9 +28,10 @@
 // sección no decide por estética: decide por urgencia, que es lo único que
 // justifica ocupar sitio en la pantalla de alguien.
 
-import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, MessageCircle, EyeOff, Send } from "lucide-react"
+import { Fragment, useEffect, useMemo, useState } from "react"
+import { ChevronDown, MessageCircle, EyeOff, Send, X } from "lucide-react"
 import s from "./novedades.module.css"
+import { Avatar } from "./Avatar"
 
 type Novedad = {
   id: string
@@ -122,27 +123,41 @@ function HoraLarga({ iso, zona }: { iso: string; zona: string | null }) {
 }
 
 /**
- * Los comentarios, aquí mismo.
+ * Los comentarios de una novedad, aquí mismo.
  *
  * ── POR QUÉ NO SE VA AL FORO ──────────────────────────────────────────────
- * «Comentar» llevaba a la comunidad buscando el hilo por su título. Dos
- * problemas: saca a alguien de Inicio para escribir dos frases, y cuando la
- * búsqueda no encontraba el hilo aterrizaba en La Red, que no tiene nada que
- * ver con lo que se acababa de leer.
+ * «Comentar» llevaba a la comunidad a buscar el hilo por su título, y cuando
+ * no lo encontraba aterrizaba en La Red — que no tiene nada que ver con lo
+ * que se acababa de leer.
  *
- * El hilo existe igual —es una fila del foro, con su moderación y sus
- * denuncias— y se puede seguir abriendo desde la comunidad. Lo que cambia es
- * que para decir «ahí estaré» no hace falta ir a ninguna parte.
+ * El hilo existe igual: es una fila del foro, con su moderación y sus
+ * denuncias, y se puede seguir abriendo desde la comunidad. Lo que
+ * desaparece es el viaje para escribir dos frases.
  *
- * Se piden al abrir, no al cargar la página: la mayoría de las veces nadie
- * los abre, y traerlos siempre sería una consulta por novedad en cada visita
- * a Inicio.
+ * ── UN SOLO NIVEL DE RESPUESTA ────────────────────────────────────────────
+ * Igual que en el foro. Una respuesta a una respuesta se cuelga del
+ * comentario de arriba, no de la de en medio: dos niveles ya se leen; tres
+ * convierten una conversación en un árbol que nadie sigue. Lo decide el
+ * servidor, no esta pantalla.
  */
 function Comentarios({ novedadId, alPublicar }: { novedadId: string; alPublicar: () => void }) {
-  type Respuesta = { id: string; author_name: string; body: string; created_at: string }
+  type Respuesta = {
+    id: string
+    user_id: string
+    parent_reply_id: string | null
+    author_name: string
+    author_username?: string | null
+    author_avatar: string
+    author_avatar_url?: string | null
+    author_badge_id?: string | null
+    author_is_admin?: boolean
+    body: string
+    created_at: string
+  }
 
   const [lista, setLista] = useState<Respuesta[] | null>(null)
   const [texto, setTexto] = useState("")
+  const [respondiendoA, setRespondiendoA] = useState<Respuesta | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -165,14 +180,15 @@ function Comentarios({ novedadId, alPublicar }: { novedadId: string; alPublicar:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ body: limpio }),
+        body: JSON.stringify({ body: limpio, parent_reply_id: respondiendoA?.id ?? null }),
       })
       const j = (await r.json().catch(() => ({}))) as { reply?: Respuesta; error?: string }
       if (!r.ok || !j.reply) { setError(j.error || "No se pudo publicar."); return }
-      // Se añade al final, que es donde lo va a buscar quien acaba de
-      // escribirlo. Recargar la lista entera haría parpadear lo que ya hay.
+      // Al final de la lista, que es donde lo va a buscar quien acaba de
+      // escribirlo. Recargar entera haría parpadear lo que ya hay.
       setLista((prev) => [...(prev ?? []), j.reply as Respuesta])
       setTexto("")
+      setRespondiendoA(null)
       alPublicar()
     } catch {
       setError("No se pudo publicar.")
@@ -181,28 +197,76 @@ function Comentarios({ novedadId, alPublicar }: { novedadId: string; alPublicar:
     }
   }
 
+  const raices = (lista ?? []).filter((c) => !c.parent_reply_id)
+  const hijasDe = (id: string) => (lista ?? []).filter((c) => c.parent_reply_id === id)
+
+  function Comentario({ c, anidado }: { c: Respuesta; anidado?: boolean }) {
+    return (
+      <li className={anidado ? s.respuesta : s.comentario}>
+        <Avatar
+          author={{
+            user_id: c.user_id,
+            author_name: c.author_name,
+            author_username: c.author_username ?? null,
+            // Si no hay foto, el avatar dibuja las iniciales. Sin esto
+            // saldría un círculo vacío, que parece una cuenta borrada.
+            author_avatar: c.author_avatar || c.author_name.slice(0, 2).toUpperCase(),
+            author_avatar_url: c.author_avatar_url ?? null,
+            author_badge_id: c.author_badge_id ?? null,
+            author_is_admin: c.author_is_admin ?? false,
+          }}
+          className={s.comentarioAvatar}
+        />
+        <div className={s.comentarioCuerpo}>
+          <p className={s.comentarioAutor}>{c.author_name}</p>
+          <p className={s.comentarioTexto}>{c.body}</p>
+          {/* Responder solo cuelga del comentario raíz: a una respuesta se le
+              contesta en el mismo hilo, no abriendo otro debajo. */}
+          {!anidado && (
+            <button
+              type="button"
+              className={s.responder}
+              onClick={() => setRespondiendoA(c)}
+            >
+              Responder
+            </button>
+          )}
+        </div>
+      </li>
+    )
+  }
+
   return (
     <div className={s.comentarios}>
-      {lista && lista.length > 0 && (
+      {raices.length > 0 && (
         <ul className={s.hilos}>
-          {lista.map((c) => (
-            <li key={c.id} className={s.comentario}>
-              <p className={s.comentarioAutor}>{c.author_name}</p>
-              <p className={s.comentarioTexto}>{c.body}</p>
-            </li>
+          {raices.map((c) => (
+            <Fragment key={c.id}>
+              <Comentario c={c} />
+              {hijasDe(c.id).map((h) => <Comentario key={h.id} c={h} anidado />)}
+            </Fragment>
           ))}
         </ul>
+      )}
+
+      {respondiendoA && (
+        <p className={s.respondiendo}>
+          Respondiendo a <strong>{respondiendoA.author_name}</strong>
+          <button type="button" onClick={() => setRespondiendoA(null)} aria-label="Cancelar">
+            <X size={12} />
+          </button>
+        </p>
       )}
 
       <div className={s.escribir}>
         <textarea
           className={s.campo}
           rows={2}
-          placeholder="Escribe un comentario…"
+          placeholder={respondiendoA ? "Escribe tu respuesta…" : "Escribe un comentario…"}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          // Enviar con Enter y saltar de línea con Mayúsculas+Enter: esto son
-          // dos frases, no un ensayo.
+          // Enter publica, Mayúsculas+Enter salta de línea: esto son dos
+          // frases, no un ensayo.
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void enviar() }
           }}

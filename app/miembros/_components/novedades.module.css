@@ -244,7 +244,8 @@
     grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
     grid-template-areas:
       "hora texto"
-      "acciones texto";
+      "acciones texto"
+      "comentarios comentarios";
     align-content: start;
     column-gap: 3rem;
     padding-right: 1rem;
@@ -364,10 +365,17 @@
   max-width: 68ch;
 }
 
-/* En dos columnas, los comentarios van debajo del texto y no bajo la columna
-   estrecha de los botones: una conversación en 230px no se lee. */
+/* ── LOS COMENTARIOS OCUPAN LAS DOS COLUMNAS ────────────────────────────
+   Tenían `grid-area: texto`, la MISMA celda que el cuerpo del anuncio: la
+   rejilla los apilaba uno encima del otro y el texto quedaba ilegible.
+
+   Van en su propia fila, de lado a lado. Una conversación metida en la
+   columna de 230px de los botones tampoco se leería. */
 @media (min-width: 1024px) {
-  .comentarios { grid-area: texto; margin-top: 1.4rem; }
+  .comentarios {
+    grid-area: comentarios;
+    margin-top: 1.6rem;
+  }
 }
 
 .hilos {
@@ -379,10 +387,6 @@
   gap: 0.75rem;
 }
 
-.comentario {
-  padding-left: 0.75rem;
-  border-left: 2px solid rgba(167, 139, 202, 0.2);
-}
 
 .comentarioAutor {
   margin: 0 0 0.15rem;
@@ -449,3 +453,72 @@
   font-size: 0.82rem;
   color: #d08080;
 }
+
+/* ── UN COMENTARIO SE PARECE A UN COMENTARIO ──────────────────────────────
+ *
+ * Foto, nombre que lleva al perfil y respuesta. Antes era una línea con el
+ * nombre en violeta, que no se distinguía de una etiqueta del sistema.
+ *
+ * El avatar es el mismo componente que usa el foro: trae la insignia, el aro
+ * de «en línea» y el enlace al perfil sin recargar. Dibujar aquí otro
+ * habría sido tener dos avatares que envejecen por separado.
+ */
+.comentario,
+.respuesta {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+/* La respuesta se sangra hasta debajo del texto de su comentario, no hasta
+   debajo de su avatar: así se lee como contestación y no como una lista
+   paralela. */
+.respuesta {
+  margin-left: 1.9rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid rgba(167, 139, 202, 0.16);
+}
+
+.comentarioAvatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.comentarioCuerpo { min-width: 0; flex: 1; }
+
+.responder {
+  margin-top: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 0.75rem;
+  color: #6f7490;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.responder:hover { color: #a78bca; }
+
+.respondiendo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: #a78bca;
+}
+
+.respondiendo button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: none;
+  color: #6f7490;
+  cursor: pointer;
+}
+
+.respondiendo button:hover { color: #F3F6FA; }
