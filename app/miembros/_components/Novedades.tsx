@@ -1,26 +1,35 @@
 "use client"
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  NOVEDADES · el tablón de José, en Inicio
+//  NOVEDADES · el registro de convocatorias
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// Reuniones, directos y avisos. Lo escribe una sola persona y la gente
-// comenta — un foro que no es un foro.
+// ── QUÉ SE APRENDIÓ EN EL PRIMER INTENTO ──────────────────────────────────
+// La primera versión dibujaba cada novedad como un artículo: titular grande,
+// tres párrafos, caja de fecha. Ocupaba media pantalla y competía con todo lo
+// demás de Inicio.
 //
-// ── POR QUÉ ESTÁ EN INICIO Y NO EN LA BARRA ───────────────────────────────
-// La barra de escritorio tiene seis secciones y está llena; una séptima la
-// rompe, y en el móvil se iría al menú, donde no la vería nadie. Inicio es
-// donde aterriza todo el mundo cada vez que entra: es el único sitio al que
-// no hay que ir.
+// El error no era de tamaño, era de categoría. Una convocatoria no es
+// contenido que se lee: es una SEÑAL que se comprueba. Nadie vuelve aquí a
+// releer el texto del anuncio — vuelve a mirar la hora.
 //
-// ── POR QUÉ SE LEE ENTERA AQUÍ ────────────────────────────────────────────
-// Un anuncio cortado con «leer más» obliga a decidir si merece la pena antes
-// de saber qué dice. Son tres párrafos y pasan una vez por semana: caben.
-// Lo que sí lleva a otro sitio es comentar, porque eso ya es una conversación
-// y vive en la comunidad, con su moderación y sus respuestas.
+// ── EL CONCEPTO ───────────────────────────────────────────────────────────
+// Un registro. Una línea por convocatoria, y un punto de estado en el raíl
+// izquierdo que dice sin leer nada si eso es ahora, mañana o ya pasó. El
+// punto no decora: es el dato.
+//
+// ── LO QUE MANDA ES EL CUÁNDO ─────────────────────────────────────────────
+// Al revés que en la primera versión. Lo primero que se lee en la línea es
+// «mañana · 11:00», no el título: la pregunta que trae a alguien aquí es
+// cuándo, y el qué ya lo sabe.
+//
+// ── SE ABRE SOLA CUANDO IMPORTA ───────────────────────────────────────────
+// Si falta menos de dos días, nace desplegada. Si no, en una línea. La
+// sección no decide por estética: decide por urgencia, que es lo único que
+// justifica ocupar sitio en la pantalla de alguien.
 
-import { useEffect, useState } from "react"
-import { Megaphone, Calendar, MessageCircle, ArrowUpRight, EyeOff } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { ChevronDown, MessageCircle, EyeOff } from "lucide-react"
 import s from "./novedades.module.css"
 import { useView } from "../_lib/view-context"
 
@@ -37,24 +46,60 @@ type Novedad = {
   respuestas: number
 }
 
+/** Cómo está una convocatoria respecto a ahora. El punto del raíl lo dibuja. */
+type Estado = "vivo" | "pronto" | "futuro" | "pasado" | "sin_fecha"
+
+const HORA = 3_600_000
+const DIA = 24 * HORA
+
+function estadoDe(iso: string | null): Estado {
+  if (!iso) return "sin_fecha"
+  const falta = new Date(iso).getTime() - Date.now()
+  // Noventa minutos de margen: una reunión no se evapora al dar la hora.
+  if (falta < -90 * 60_000) return "pasado"
+  if (falta <= 90 * 60_000) return "vivo"
+  if (falta < 2 * DIA) return "pronto"
+  return "futuro"
+}
+
 /**
- * La fecha del acto, dicha dos veces.
+ * El cuándo, en la línea: corto y suficiente para decidir.
  *
- * ── POR QUÉ DOS ───────────────────────────────────────────────────────────
- * «11:00 hora de México» es exacto y es inútil para quien lee desde Santiago
- * o desde Madrid: le obliga a abrir un buscador para saber si le pilla
- * desayunando o durmiendo.
- *
- * Pero decir solo la hora local tampoco vale: la gente habla entre sí, y en
- * el Telegram alguien va a escribir «es a las once». Si cada pantalla enseña
- * una hora distinta sin decir de dónde es, nadie sabe cuál es la buena.
- *
- * Así que se dicen las dos: la original, que es la que circula, y la suya,
- * que es la que necesita.
+ * Nada de «domingo 15 de noviembre de 2026 a las 11:00». Quien mira esta
+ * línea quiere saber si le pilla hoy, y para eso sobra el año.
  */
-function Cuando({ iso, zona }: { iso: string; zona: string | null }) {
+function resumenDeFecha(iso: string | null, estado: Estado): string | null {
+  if (!iso) return null
+  const cuando = new Date(iso)
+  if (estado === "vivo") return "ahora"
+
+  const hora = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(cuando)
+  const hoy = new Date()
+  const mismoDia = cuando.toDateString() === hoy.toDateString()
+  const manana = new Date(hoy.getTime() + DIA).toDateString() === cuando.toDateString()
+
+  if (mismoDia) return `hoy · ${hora}`
+  if (manana) return `mañana · ${hora}`
+
+  const dia = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" }).format(cuando)
+  return estado === "pasado" ? dia : `${dia} · ${hora}`
+}
+
+/**
+ * La hora completa, dentro del desplegable.
+ *
+ * ── POR QUÉ SE DICE DOS VECES ─────────────────────────────────────────────
+ * «11:00 hora de México» es exacto e inútil para quien lee desde Santiago.
+ * Pero poner solo la hora local tampoco vale: en el Telegram alguien va a
+ * escribir «es a las once», y si cada pantalla enseña una distinta sin decir
+ * de dónde es, nadie sabe cuál es la buena.
+ *
+ * La original circula; la local decide. Hacen falta las dos.
+ */
+function HoraLarga({ iso, zona }: { iso: string; zona: string | null }) {
   const cuando = new Date(iso)
   const aqui = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : null
+  const mismaZona = !zona || !aqui || zona === aqui
 
   const fmt = (tz?: string) =>
     new Intl.DateTimeFormat("es-ES", {
@@ -63,34 +108,17 @@ function Cuando({ iso, zona }: { iso: string; zona: string | null }) {
       ...(tz ? { timeZone: tz } : {}),
     }).format(cuando)
 
-  // Si quien lee está en la misma zona en que se anunció, repetirlo sería
-  // decir lo mismo dos veces con distinta etiqueta.
-  const mismaZona = !zona || !aqui || zona === aqui
-
-  const faltan = cuando.getTime() - Date.now()
-  const dias = Math.round(faltan / 86_400_000)
-  const aviso =
-    faltan < 0 ? "Ya ocurrió"
-      : dias === 0 ? "Es hoy"
-      : dias === 1 ? "Es mañana"
-      : `Faltan ${dias} días`
+  const donde = zona ? zona.split("/").pop()?.replace(/_/g, " ") : null
 
   return (
-    <div className={s.cuando}>
-      <Calendar size={14} className={s.cuandoIcono} aria-hidden />
-      <div>
-        <p className={s.cuandoLinea}>
-          {fmt(zona || undefined)}
-          {!mismaZona && <span className={s.cuandoZona}> · hora de México</span>}
-        </p>
-        {!mismaZona && (
-          <p className={s.cuandoLocal}>
-            {fmt()} <span className={s.cuandoZona}>· tu hora</span>
-          </p>
-        )}
-        <p className={`${s.cuandoFaltan} ${faltan < 0 ? s.pasado : ""}`}>{aviso}</p>
-      </div>
-    </div>
+    <p className={s.horaLarga}>
+      <span className={s.horaPrincipal}>{fmt()}</span>
+      {!mismaZona && (
+        <span className={s.horaOtra}>
+          {fmt(zona || undefined)} en {donde}
+        </span>
+      )}
+    </p>
   )
 }
 
@@ -98,6 +126,15 @@ export function Novedades() {
   const { setView } = useView()
   const [novedades, setNovedades] = useState<Novedad[] | null>(null)
   const [oculta, setOculta] = useState(false)
+  const [abierta, setAbierta] = useState<string | null>(null)
+  // Para que `estadoDe` se recalcule cuando la reunión pasa de «mañana» a
+  // «ahora» sin que nadie recargue. Una vez por minuto basta.
+  const [, tic] = useState(0)
+
+  useEffect(() => {
+    const t = setInterval(() => tic((n) => n + 1), 60_000)
+    return () => clearInterval(t)
+  }, [])
 
   useEffect(() => {
     let vivo = true
@@ -105,82 +142,98 @@ export function Novedades() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { novedades?: Novedad[]; oculta?: boolean } | null) => {
         if (!vivo || !d) return
-        setNovedades(d.novedades ?? [])
+        const lista = d.novedades ?? []
+        setNovedades(lista)
         setOculta(Boolean(d.oculta))
+        // La que importa se abre sola. Si no hay ninguna inminente, todas
+        // en una línea: la sección no pide sitio cuando no lo necesita.
+        const urgente = lista.find((n) => {
+          const e = estadoDe(n.eventoAt)
+          return e === "vivo" || e === "pronto"
+        })
+        if (urgente) setAbierta(urgente.id)
       })
       .catch(() => { if (vivo) setNovedades([]) })
     return () => { vivo = false }
   }, [])
 
-  // Mientras carga no se reserva sitio ni se pinta un esqueleto: esta sección
-  // puede estar legítimamente vacía, y un hueco gris que luego desaparece es
+  const filas = useMemo(
+    () => (novedades ?? []).map((n) => ({ n, estado: estadoDe(n.eventoAt) })),
+    [novedades],
+  )
+
+  // Puede estar legítimamente vacía. Un esqueleto que luego desaparece es
   // peor que aparecer un segundo más tarde.
   if (!novedades || novedades.length === 0) return null
 
   return (
-    <section className={s.zona} aria-labelledby="novedades-titulo">
-      <header className={s.cabecera}>
-        <h2 id="novedades-titulo" className={s.titulo}>
-          <Megaphone size={14} className={s.tituloIcono} aria-hidden />
-          Novedades
-        </h2>
+    <section className={s.registro} aria-label="Novedades">
+      {oculta && (
+        <p className={s.oculta}>
+          <EyeOff size={11} aria-hidden /> Esta sección todavía no la ve nadie más
+        </p>
+      )}
 
-        {/* ── EL AVISO DE QUE TODAVÍA NO LA VE NADIE ──────────────────────
-            Sin esto es facilísimo revisar la sección, verla bien, y darla por
-            publicada. Solo lo ve quien puede verla estando oculta, que es la
-            administración. */}
-        {oculta && (
-          <span className={s.oculta}>
-            <EyeOff size={12} aria-hidden /> Solo la ves tú
-          </span>
-        )}
-      </header>
+      {filas.map(({ n, estado }) => {
+        const abierto = abierta === n.id
+        const resumen = resumenDeFecha(n.eventoAt, estado)
 
-      <div className={s.lista}>
-        {novedades.map((n) => (
-          <article key={n.id} className={s.novedad}>
-            <h3 className={s.novedadTitulo}>{n.titulo}</h3>
+        return (
+          <article key={n.id} className={`${s.fila} ${s[estado]} ${abierto ? s.filaAbierta : ""}`}>
+            <button
+              type="button"
+              className={s.cabecera}
+              aria-expanded={abierto}
+              aria-controls={`novedad-${n.id}`}
+              onClick={() => setAbierta(abierto ? null : n.id)}
+            >
+              {/* El punto es el dato, no un adorno: dice en qué estado está
+                  esto sin que haya que leer una palabra. */}
+              <span className={s.punto} aria-hidden />
 
-            {n.eventoAt && <Cuando iso={n.eventoAt} zona={n.eventoZona} />}
+              <span className={s.linea}>
+                {resumen && <span className={s.cuando}>{resumen}</span>}
+                <span className={s.titulo}>{n.titulo}</span>
+              </span>
 
-            {/* El cuerpo se guarda como texto con saltos de línea, no como
-                HTML: lo escribe una persona, no una plantilla. Cada párrafo
-                es una línea en blanco. */}
-            <div className={s.cuerpo}>
-              {n.cuerpo.split(/\n{2,}/).map((parrafo, i) => (
-                <p key={i}>{parrafo}</p>
-              ))}
-            </div>
+              <ChevronDown size={16} className={s.flecha} aria-hidden />
+            </button>
 
-            <div className={s.acciones}>
-              {n.ctaUrl && (
-                <a
-                  href={n.ctaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={s.cta}
+            <div
+              id={`novedad-${n.id}`}
+              className={s.cuerpoCaja}
+              hidden={!abierto}
+            >
+              {n.eventoAt && <HoraLarga iso={n.eventoAt} zona={n.eventoZona} />}
+
+              <div className={s.texto}>
+                {n.cuerpo.split(/\n{2,}/).map((parrafo, i) => (
+                  <p key={i}>{parrafo}</p>
+                ))}
+              </div>
+
+              <div className={s.acciones}>
+                {n.ctaUrl && estado !== "pasado" && (
+                  <a href={n.ctaUrl} target="_blank" rel="noopener noreferrer" className={s.cta}>
+                    {n.ctaTexto || "Abrir"}
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  className={s.comentar}
+                  onClick={() => setView("comunidad", null, { comunidadTema: n.titulo })}
                 >
-                  {n.ctaTexto || "Abrir"} <ArrowUpRight size={14} aria-hidden />
-                </a>
-              )}
-
-              {/* Comentar lleva a la conversación de la comunidad. Se busca
-                  por el título, que es el camino que ya existe para llegar a
-                  un hilo desde fuera del foro. */}
-              <button
-                type="button"
-                className={s.comentar}
-                onClick={() => setView("comunidad", null, { comunidadTema: n.titulo })}
-              >
-                <MessageCircle size={14} aria-hidden />
-                {n.respuestas === 0
-                  ? "Comentar"
-                  : `${n.respuestas} ${n.respuestas === 1 ? "comentario" : "comentarios"}`}
-              </button>
+                  <MessageCircle size={14} aria-hidden />
+                  {n.respuestas === 0
+                    ? "Comentar"
+                    : `${n.respuestas} ${n.respuestas === 1 ? "comentario" : "comentarios"}`}
+                </button>
+              </div>
             </div>
           </article>
-        ))}
-      </div>
+        )
+      })}
     </section>
   )
 }

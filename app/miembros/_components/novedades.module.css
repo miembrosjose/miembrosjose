@@ -1,197 +1,235 @@
-/* NOVEDADES — el tablón de José en Inicio.
-   Mobile-first, y deliberadamente más sobrio que el Pulso: el Pulso invita a
-   participar y puede permitirse una nebulosa; esto informa de algo que ocurre
-   a una hora concreta y lo que tiene que hacer es leerse rápido. */
+/* NOVEDADES — el registro de convocatorias.
 
-.zona {
-  position: relative;
+   Un contenedor, filas separadas por un hilo. NO tarjetas: una tarjeta por
+   novedad convierte tres avisos en tres bloques que piden atención por
+   separado, y lo que esto es en realidad es una lista con un estado.
+
+   Mobile-first. Encima vive el Pulso, que sí es una tarjeta con nebulosa;
+   por eso aquí no hay fondo con color: dos superficies compitiendo a dos
+   centímetros se anulan. */
+
+.registro {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 1.15rem;
+  border: 1px solid rgba(167, 139, 202, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(170deg, rgba(13, 11, 26, 0.9), rgba(7, 6, 15, 0.9));
+  overflow: hidden;
 }
 
-@media (min-width: 640px) {
-  .zona { padding: 0; }
+.oculta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.45rem 0.9rem;
+  border-bottom: 1px solid rgba(224, 134, 74, 0.2);
+  background: rgba(224, 134, 74, 0.07);
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 0.72rem;
+  color: #e0864a;
 }
+
+/* ── LA FILA ─────────────────────────────────────────────────────────────
+   El raíl izquierdo es un borde de la propia fila, no un elemento aparte:
+   así la línea de estado y el contenido no se pueden desalinear nunca. */
+.fila + .fila { border-top: 1px solid rgba(167, 139, 202, 0.12); }
 
 .cabecera {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.9rem;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background 160ms ease;
 }
 
-.titulo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
+.cabecera:hover { background: rgba(167, 139, 202, 0.05); }
+.cabecera:focus-visible {
+  outline: 2px solid #6D4A9B;
+  outline-offset: -2px;
+}
+
+/* ── EL PUNTO DE ESTADO ──────────────────────────────────────────────────
+   Dice en qué momento está esto sin que haya que leer nada. Es el único
+   sitio donde el color lleva significado, y por eso no se usa en ningún
+   otro elemento de esta sección. */
+.punto {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6D4A9B;
+}
+
+.pronto .punto { background: #e0864a; }
+
+.vivo .punto {
+  background: #e0864a;
+  box-shadow: 0 0 0 0 rgba(224, 134, 74, 0.6);
+  animation: latido 2s ease-out infinite;
+}
+
+.pasado .punto,
+.sin_fecha .punto {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 202, 0.45);
+}
+
+@keyframes latido {
+  0%   { box-shadow: 0 0 0 0 rgba(224, 134, 74, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(224, 134, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(224, 134, 74, 0); }
+}
+
+/* Quien pidió menos movimiento no pierde el dato: el punto sigue siendo
+   ámbar, simplemente deja de latir. */
+@media (prefers-reduced-motion: reduce) {
+  .vivo .punto { animation: none; }
+}
+
+/* ── LA LÍNEA ────────────────────────────────────────────────────────────
+   En el móvil, el cuándo arriba y el título debajo: en una sola línea, un
+   título largo empujaría la hora fuera de la pantalla, y la hora es lo que
+   se viene a mirar. A partir de 560px caben en la misma. */
+.linea {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+@media (min-width: 560px) {
+  .linea {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+}
+
+.cuando {
+  flex-shrink: 0;
   font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   color: #a78bca;
 }
 
-.tituloIcono { color: #a78bca; }
+.pronto .cuando,
+.vivo .cuando { color: #e0864a; }
+.pasado .cuando { color: #6f7490; }
 
-/* El aviso de que la sección todavía no la ve nadie más. Ámbar y no violeta:
-   no es una sección más de la plataforma, es un estado de trabajo. */
-.oculta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.55rem;
-  border: 1px solid rgba(224, 134, 74, 0.4);
-  border-radius: 999px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #e0864a;
+.titulo {
+  min-width: 0;
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 0.93rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #F3F6FA;
+  /* Una sola línea con puntos suspensivos: la fila mide lo mismo siempre y
+     la lista se lee como una lista. El título entero está al desplegar. */
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.lista {
+.pasado .titulo { color: #a6abc4; }
+
+.flecha {
+  flex-shrink: 0;
+  color: #6f7490;
+  transition: transform 200ms ease;
+}
+
+.filaAbierta .flecha { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flecha { transition: none; }
+}
+
+/* ── LO QUE HAY DENTRO ───────────────────────────────────────────────────
+   Aquí sí entra el Cinzel y el texto respira: desplegar tiene que dar algo
+   a cambio del gesto. */
+.cuerpoCaja {
+  padding: 0 0.9rem 1.1rem;
+  /* Alineado con el título de la fila: el punto (7px) más su hueco (0.7rem).
+     Sin esto, el texto desplegado empieza antes que el título que lo
+     anuncia y la columna se rompe. */
+  padding-left: calc(0.9rem + 7px + 0.7rem);
+}
+
+.horaLarga {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.novedad {
-  padding: 1.25rem 1.15rem 1.15rem;
-  border-radius: 16px;
-  border: 1px solid rgba(167, 139, 202, 0.22);
-  background:
-    radial-gradient(90% 70% at 50% -10%, rgba(109, 74, 155, 0.16), transparent 70%),
-    linear-gradient(165deg, #0a0914 0%, #0d0b1a 100%);
-}
-
-@media (min-width: 640px) {
-  .novedad { padding: 1.8rem 2rem 1.6rem; }
-}
-
-.novedadTitulo {
+  gap: 0.15rem;
   margin: 0 0 0.9rem;
+}
+
+.horaPrincipal {
   font-family: var(--font-cinzel, Georgia, serif);
-  font-size: 1.35rem;
-  line-height: 1.25;
+  font-size: 1.15rem;
+  line-height: 1.3;
   color: #F3F6FA;
 }
+.horaPrincipal::first-letter { text-transform: uppercase; }
 
-@media (min-width: 640px) {
-  .novedadTitulo { font-size: 1.7rem; }
-}
-
-/* ── CUÁNDO ───────────────────────────────────────────────────────────────
-   Va antes del texto a propósito. Quien abre esto por segunda vez no viene a
-   releer el anuncio: viene a comprobar la hora. */
-.cuando {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  margin-bottom: 1.1rem;
-  padding: 0.75rem 0.85rem;
-  border-left: 2px solid #6D4A9B;
-  background: rgba(109, 74, 155, 0.08);
-  border-radius: 0 8px 8px 0;
-}
-
-.cuandoIcono { flex-shrink: 0; margin-top: 2px; color: #a78bca; }
-
-.cuandoLinea {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: #F3F6FA;
-  /* La primera letra del día de la semana llega en minúscula desde Intl. */
-  text-transform: none;
-}
-.cuandoLinea::first-letter { text-transform: uppercase; }
-
-.cuandoLocal {
-  margin: 0.15rem 0 0;
-  font-size: 0.82rem;
-  line-height: 1.4;
-  color: #a6abc4;
-}
-.cuandoLocal::first-letter { text-transform: uppercase; }
-
-.cuandoZona {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+.horaOtra {
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 0.78rem;
   color: #6f7490;
 }
+.horaOtra::first-letter { text-transform: uppercase; }
 
-.cuandoFaltan {
-  margin: 0.4rem 0 0;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #e0864a;
-}
-
-.pasado { color: #6f7490; }
-
-/* ── EL TEXTO ─────────────────────────────────────────────────────────── */
-.cuerpo p {
-  margin: 0 0 0.85rem;
-  font-size: 0.97rem;
-  line-height: 1.7;
+.texto p {
+  margin: 0 0 0.75rem;
+  max-width: 62ch;
+  font-size: 0.92rem;
+  line-height: 1.68;
   color: #c3c3d4;
 }
 
-.cuerpo p:last-child { margin-bottom: 0; }
+.texto p:last-child { margin-bottom: 0; }
 
-/* ── LO QUE SE PUEDE HACER ────────────────────────────────────────────── */
+/* ── LAS ACCIONES ────────────────────────────────────────────────────── */
 .acciones {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
-  margin-top: 1.3rem;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
 }
 
 .cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.8rem 1.4rem;
+  padding: 0.7rem 1.25rem;
   border-radius: 10px;
   border: 1px solid #8a63b8;
   background: #6D4A9B;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: #F3F6FA;
   text-decoration: none;
-  transition: background 160ms ease, transform 160ms ease;
+  transition: background 160ms ease;
 }
 
 .cta:hover { background: #7d57b0; }
-.cta:active { transform: translateY(1px); }
-
-/* En el móvil el botón ocupa la fila entera: es la acción de la tarjeta y
-   buscarlo con el pulgar entre otras cosas pequeñas es peor que tenerlo
-   delante. */
-@media (max-width: 480px) {
-  .cta { width: 100%; justify-content: center; }
-}
 
 .comentar {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.8rem 1.1rem;
+  gap: 0.4rem;
+  padding: 0.7rem 0.95rem;
   border-radius: 10px;
-  border: 1px solid rgba(167, 139, 202, 0.25);
-  background: transparent;
+  border: 1px solid rgba(167, 139, 202, 0.2);
+  background: none;
   font-family: var(--font-geist-sans, sans-serif);
   font-size: 0.82rem;
   color: #a6abc4;
@@ -199,8 +237,8 @@
   transition: border-color 160ms ease, color 160ms ease;
 }
 
-.comentar:hover { border-color: rgba(167, 139, 202, 0.5); color: #F3F6FA; }
+.comentar:hover { border-color: rgba(167, 139, 202, 0.45); color: #F3F6FA; }
 
-@media (max-width: 480px) {
-  .comentar { width: 100%; justify-content: center; }
+@media (max-width: 420px) {
+  .cta, .comentar { flex: 1; justify-content: center; }
 }
