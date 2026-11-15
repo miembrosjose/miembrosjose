@@ -163,5 +163,27 @@ comprobar(
     : "no encuentro el bloque",
 )
 
+// ══════════════════════════════════════════════════════════════════════════
+//  Y QUE DARSE DE BAJA DEL CORREO NO APAGUE EL TELÉFONO
+// ══════════════════════════════════════════════════════════════════════════
+//
+// `email_preferences` gobernaba también los avisos del móvil. Quien apagaba
+// una categoría de CORREO dejaba de recibir notificaciones sin haberlo
+// pedido, y por fuera no fallaba nada: el panel la contaba como «se dio de
+// baja» y ella seguía viendo la campana encendida en su teléfono.
+//
+// Los fallos invisibles vuelven. Esta comprobación es para que vuelva con un
+// aviso.
+const audiencia = leer("lib", "comunicaciones", "audiencia.ts")
+const interruptor = audiencia.match(/const sinPreferencias = (.*)/)
+
+comprobar(
+  "una notificación no consulta las preferencias de correo",
+  !!interruptor && interruptor[1].includes("esPush"),
+  interruptor
+    ? "`sinPreferencias` ya no exime a push: darse de baja del boletín volvería a apagar los avisos del teléfono"
+    : "no encuentro `sinPreferencias` en audiencia.ts",
+)
+
 console.log(fallos === 0 ? "\nTODO BIEN\n" : `\n${fallos} ${fallos === 1 ? "FALLO" : "FALLOS"}\n`)
 process.exit(fallos === 0 ? 0 : 1)

@@ -607,7 +607,27 @@ export async function resolverAudiencia(
   // Tampoco el comunicado interno: vive dentro de la plataforma, no en una
   // bandeja de entrada. Darse de baja de las novedades por correo no puede
   // esconderte lo que se publica dentro de donde ya pagas por entrar.
-  const sinPreferencias = canal === "dm" || canal === "interno"
+  //
+  // ── NI LA NOTIFICACIÓN, Y ESTO ERA UN FALLO ────────────────────────
+  //
+  // `email_preferences` es, con su nombre, las preferencias de CORREO. Hasta
+  // ahora también gobernaban los avisos del teléfono: quien había apagado una
+  // categoría de correo —o marcado «darme de baja de todos los correos»—
+  // dejaba de recibir notificaciones push sin haberlo pedido y sin que se
+  // viera en ninguna parte.
+  //
+  // Es el peor tipo de fallo que tiene este sistema: por fuera no falla nada.
+  // El panel la cuenta como «se dio de baja», que es cierto de otro canal, y
+  // ella sigue viendo la campana encendida en su teléfono. Las dos pantallas
+  // dicen la verdad y juntas dicen una mentira.
+  //
+  // Los avisos del teléfono YA tienen sus propios interruptores
+  // —`notification_prefs.push`, que se respetan en lib/comunicaciones/push.ts—
+  // y además tienen el más rotundo de todos: apagar la campana, o no darle el
+  // permiso al navegador. Esa es la forma de decir «no me aviséis al móvil».
+  // Darse de baja del boletín no lo es, igual que no es decir «no me
+  // escribáis».
+  const sinPreferencias = canal === "dm" || canal === "interno" || esPush
 
   const { data: prefs, error: errPrefs } = sinPreferencias
     ? { data: [], error: null }
