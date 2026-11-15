@@ -328,6 +328,8 @@ export function DiagnosticoPwa() {
 
       <PruebaDeAviso />
 
+      <PruebaSinServidor />
+
       <PorQueNoLeLlegan />
 
       {simulando && (
@@ -438,6 +440,145 @@ function PruebaDeAviso() {
               problema está en el teléfono: permisos del sistema para la
               aplicación, modo concentración, o la app abierta en primer plano.
             </p>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LA MISMA PRUEBA, SIN PASAR POR EL SERVIDOR
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ── POR QUÉ HACE FALTA UNA SEGUNDA PRUEBA ─────────────────────────────────
+// Porque la de arriba se queda a mitad de camino. Dice si el aviso salió y si
+// Google o Apple lo aceptaron, y ahí se acaba lo que el servidor puede saber:
+// lo que el teléfono haga con él después no deja rastro en ninguna parte.
+//
+// Y justo ahí es donde se atasca. Una administradora tiene un dispositivo
+// activo, el servicio ACEPTÓ sus dos últimos avisos, y en su teléfono no
+// apareció ninguno. Con los dos datos que había —«salió» y «lo aceptaron»— no
+// se puede saber si el fallo está en el camino o en el aparato.
+//
+// ── QUÉ HACE ESTA ─────────────────────────────────────────────────────────
+// Le pide al trabajador de servicio que dibuje una notificación AQUÍ MISMO.
+// No sale nada del teléfono: ni servidor, ni cifrado, ni Google, ni red.
+//
+// Es el mismo trabajador de servicio y el mismo `showNotification` que usa un
+// aviso de verdad cuando llega. Lo único que se salta es el viaje.
+//
+// ── Y POR QUÉ ESO LO RESUELVE ─────────────────────────────────────────────
+// Si NO aparece, el problema está en el teléfono y queda demostrado: Android
+// o iOS no le dejan dibujar notificaciones a esta aplicación. Ahí no hay nada
+// que arreglar en la plataforma, y seguir mirando envíos es perder el día.
+//
+// Si SÍ aparece, el teléfono sabe pintarlas y el corte está en el viaje: la
+// suscripción apunta a un sitio que ya no es este navegador.
+//
+// Una pregunta de días se contesta en dos segundos, y la puede hacer la
+// propia persona afectada desde su móvil.
+function PruebaSinServidor() {
+  const [resultado, setResultado] = useState<string | null>(null)
+  const [bien, setBien] = useState(false)
+
+  async function dibujar() {
+    setResultado(null)
+    try {
+      if (typeof window === "undefined" || !("Notification" in window)) {
+        setBien(false)
+        setResultado("Este navegador no sabe de notificaciones.")
+        return
+      }
+
+      // Si el permiso no está dado, no hay nada que probar: eso ya lo dice la
+      // campana, y pedirlo aquí confundiría el diagnóstico con una activación.
+      if (Notification.permission !== "granted") {
+        setBien(false)
+        setResultado(
+          Notification.permission === "denied"
+            ? "Este dispositivo tiene las notificaciones BLOQUEADAS en el navegador. Eso se desbloquea en los ajustes del sistema, no desde aquí."
+            : "Este dispositivo todavía no ha dado permiso. Actívalos primero en la campana.",
+        )
+        return
+      }
+
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (!reg) {
+        setBien(false)
+        setResultado("No hay trabajador de servicio registrado aquí. Recarga la página y vuelve a probar.")
+        return
+      }
+
+      const hora = new Date().toLocaleTimeString("es-419", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      })
+
+      // El mismo camino que recorre un aviso de verdad en su último tramo.
+      await reg.showNotification("Prueba sin servidor", {
+        body: `Dibujada por este mismo teléfono a las ${hora}.`,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        tag: "prueba-sin-servidor",
+        data: { url: "/miembros/admin" },
+      })
+
+      setBien(true)
+      setResultado("Pedida. Mira la pantalla del teléfono ahora mismo.")
+    } catch (e) {
+      setBien(false)
+      setResultado(
+        "El teléfono rechazó dibujarla: " +
+        (e instanceof Error ? e.message : "sin detalle") +
+        ". Eso es del aparato, no de la plataforma.",
+      )
+    }
+  }
+
+  return (
+    <section className="border border-[#1a1a24] bg-[#0b0b12] p-5">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-[#F3F6FA] [font-family:var(--font-geist-sans)]">
+        <Bell size={14} className="text-[#a78bca]" /> Probar sin pasar por el servidor
+      </h3>
+      <p className="mt-2 text-[12px] leading-relaxed text-[#8a8fa8] [font-family:var(--font-geist-sans)]">
+        No sale nada de este teléfono: ni servidor, ni Google, ni red. Le pide
+        al trabajador de servicio que dibuje una notificación aquí mismo, por
+        el mismo camino que recorre un aviso de verdad en su último tramo.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => void dibujar()}
+        className="mt-4 inline-flex items-center gap-2 border border-[#2f2f42] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a0a0b0] transition-colors hover:border-[#6D4A9B] hover:text-[#c3b2e0] [font-family:var(--font-geist-sans)]"
+      >
+        <Bell size={13} /> Dibujar una aquí
+      </button>
+
+      {resultado && (
+        <div
+          role="status"
+          className={`mt-4 border-l-2 pl-3 text-[12px] leading-relaxed ${
+            bien ? "border-[#6D4A9B] text-[#c3b2e0]" : "border-[#8a5a5a] text-[#d0a0a0]"
+          } [font-family:var(--font-geist-sans)]`}
+        >
+          {resultado}
+          {bien && (
+            <div className="mt-2 space-y-1 text-[#8a8fa8]">
+              <p>
+                <strong className="text-[#F3F6FA]">Si NO aparece:</strong> el
+                problema es del teléfono y queda demostrado. El sistema no le deja
+                dibujar notificaciones a esta aplicación — permisos de la app en
+                los ajustes, ahorro de batería, o no molestar. En la plataforma no
+                hay nada que arreglar.
+              </p>
+              <p>
+                <strong className="text-[#F3F6FA]">Si SÍ aparece</strong> y los
+                avisos de verdad no llegan: el teléfono sabe pintarlas y lo que
+                falla es el viaje. La suscripción guardada apunta a un sitio que
+                ya no es este navegador — apágalos en la campana y vuelve a
+                activarlos para crear una nueva.
+              </p>
+            </div>
           )}
         </div>
       )}
