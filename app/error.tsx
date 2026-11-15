@@ -62,6 +62,37 @@ export default function Error({
             Soporte
           </a>
         </p>
+
+        {/* ── EL DETALLE, PLEGADO ────────────────────────────────────
+
+            Hasta ahora esto solo se escribía en la consola del navegador. En un
+            ordenador se puede abrir; en un teléfono NO, y en la aplicación
+            instalada menos. Así que cuando algo se rompía en un móvil, lo
+            único que quedaba era «tuvimos un inconveniente» y a adivinar.
+
+            Va plegado porque no es para quien entra a leer: quien no lo abre no
+            ve ruido técnico. Y va corto a propósito.
+
+            ── QUÉ SE ENSEÑA Y QUÉ NO ────────────────────────────
+            El `digest` es un identificador opaco que Next genera para los
+            errores del SERVIDOR; no lleva nada dentro, y es lo que permite
+            encontrar la traza en los registros de Cloudflare.
+
+            El `message` solo existe cuando el fallo ocurrió en el navegador
+            —un error del servidor llega sin mensaje a propósito, y Next lo
+            sustituye por el digest—. Por eso enseñarlo no destapa nada del
+            servidor: es el mensaje de un código que ya está en ese teléfono.
+            Recortado a 300 caracteres para que no arrastre una traza entera. */}
+        {(error?.digest || error?.message) && (
+          <details className="mt-6 text-left">
+            <summary className="cursor-pointer text-center text-[11px] uppercase tracking-[0.2em] text-[#6a6a85] [font-family:var(--font-geist-sans)]">
+              Detalle técnico
+            </summary>
+            <p className="mt-3 break-words border-l-2 border-[#251f30] pl-3 text-[11px] leading-relaxed text-[#6a6a85] [font-family:var(--font-geist-sans)]">
+              {error.digest ? `digest ${error.digest}` : error.message?.slice(0, 300)}
+            </p>
+          </details>
+        )}
       </div>
     </main>
   )
