@@ -29,6 +29,9 @@ const TarjetaNotificaciones = dynamic(
   { ssr: false },
 )
 const PulsoSemana = dynamic(() => import("./PulsoSemana").then((m) => m.PulsoSemana), { ssr: false })
+// Igual que el Pulso: sin servidor. Lee del navegador con la sesión puesta y
+// decide sola si hay algo que enseñar.
+const Novedades = dynamic(() => import("./Novedades").then((m) => m.Novedades), { ssr: false })
 const ProximoEncuentro = dynamic(() => import("./ProximoEncuentro").then((m) => m.ProximoEncuentro), { ssr: false })
 import { getIntegrationPortal } from "../_lib/portals-data"
 import { setForumTarget } from "../_lib/forum-nav"
@@ -693,6 +696,15 @@ function ViewInicio({
               recargar nada. Va la primera porque es lo único de aquí que
               deja de verse para siempre en cuanto se atiende. */}
           <TarjetaNotificaciones />
+          {/* ── NOVEDADES, ANTES DEL PULSO ───────────────────────────────
+              Las dos son de José y las dos piden algo. La diferencia es que
+              una caduca: una reunión que fue ayer ya no sirve de nada, y una
+              pregunta de la semana aguanta hasta el domingo.
+
+              Lo que caduca va primero. Y cuando no hay ninguna novedad, esto
+              no dibuja nada —ni un hueco— así que el Pulso sube a su sitio
+              de siempre sin que se note que había algo encima. */}
+          <Novedades />
           <PulsoSemana compacto onIrALaRed={() => setView("red")} />
           {/* A la pestaña de encuentros, no al Pulso: quien pulsa "Ver
               todos" bajo un anuncio de encuentros quiere los encuentros. */}
