@@ -496,6 +496,7 @@ function PorQueNoLeLlegan() {
       http: number | null
     }>
     veredicto: string
+    ultimoAceptado?: string | null
   }
 
   async function mirar() {
@@ -575,6 +576,11 @@ function PorQueNoLeLlegan() {
               ellos: quien abre esto no sabe qué columna mirar. */}
           <div className="border-l-2 border-[#6D4A9B] bg-[#6D4A9B]/5 py-2 pl-3 text-[13px] leading-relaxed text-[#c3b2e0]">
             {dato.veredicto}
+            {/* La fecha se pinta aquí, no en el servidor: allí salía en UTC y
+                contradecía a la lista de abajo, que es la hora de quien mira. */}
+            {dato.ultimoAceptado && (
+              <span className="text-[#8a8fa8]"> Último aceptado: {cuando(dato.ultimoAceptado)}.</span>
+            )}
           </div>
 
           {dato.encontrada && dato.persona && (

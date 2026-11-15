@@ -188,6 +188,7 @@ export async function GET(req: NextRequest) {
   // El orden va de lo que hace IMPOSIBLE que llegue a lo que solo lo hace
   // improbable.
   let veredicto: string
+  let ultimoAceptado: string | null = null
   if (dispositivos.length === 0) {
     veredicto =
       "Nunca ha activado los avisos en ningún dispositivo. Desde su teléfono: abrir la " +
@@ -214,11 +215,18 @@ export async function GET(req: NextRequest) {
       "Tiene dispositivo activo y correcto, y no se le ha intentado mandar ningún aviso " +
       "todavía. No hay nada roto: no ha entrado en la audiencia de ningún envío."
   } else if (historial.some((h) => h.resultado === "ok")) {
-    const ultimo = historial.find((h) => h.resultado === "ok")!
+    // ── LA FECHA NO SE FORMATEA AQUÍ ────────────────────────────
+    // Se hacía, y el servidor vive en UTC: el veredicto decía «4:26 p.m.» y
+    // la lista de debajo decía «10:26 a.m.» del MISMO aviso. Dos horas
+    // distintas para el mismo hecho, en la misma pantalla, es la forma más
+    // rápida de mandar a alguien a buscar un fallo que no existe.
+    //
+    // Viaja en crudo y la pinta el navegador, que es el único que sabe en
+    // qué huso está quien mira.
+    ultimoAceptado = historial.find((h) => h.resultado === "ok")!.cuando
     veredicto =
-      "Tiene dispositivo activo y el servicio de push ACEPTÓ su último aviso (" +
-      new Date(ultimo.cuando).toLocaleString("es-419") + "). Desde el servidor está todo " +
-      "bien, así que el corte está en el teléfono: permisos del sistema para la aplicación, " +
+      "Tiene dispositivo activo y el servicio de push ACEPTÓ su último aviso. Desde el " +
+      "servidor está todo bien, así que el corte está en el teléfono: permisos del sistema para la aplicación, " +
       "modo concentración o no molestar, ahorro de batería, o la aplicación abierta en " +
       "primer plano. En iPhone, además, los avisos solo llegan a la aplicación instalada en " +
       "la pantalla de inicio, nunca a una pestaña de Safari."
@@ -237,5 +245,6 @@ export async function GET(req: NextRequest) {
     dispositivos,
     envios: historial,
     veredicto,
+    ultimoAceptado,
   })
 }
