@@ -29,6 +29,7 @@ import { Loader2, Play, Settings, Video, Film, CalendarDays } from "lucide-react
 import { useAuth } from "../_lib/auth-context"
 import { useGrabaciones, type GrabacionVista } from "../_lib/use-grabaciones"
 import { VturbPlayer } from "./VturbPlayer"
+import { CompartirGrabacion } from "./CompartirGrabacion"
 import { Modal } from "./Modal"
 import styles from "./grabaciones-red.module.css"
 
@@ -140,6 +141,11 @@ export function GrabacionesRed() {
                   </p>
                   <h3 className={styles.titulo}>{g.titulo}</h3>
                   {g.descripcion && <p className={styles.desc}>{g.descripcion}</p>}
+                  {/* Copiar el enlace sin tener que abrir la grabación: es lo
+                      que se hace cuando ya sabes cuál quieres mandar. */}
+                  <div className={styles.pie}>
+                    <CompartirGrabacion id={g.id} titulo={g.titulo} compacto />
+                  </div>
                 </div>
               </li>
             ))}
@@ -189,6 +195,7 @@ export function GrabacionesRed() {
               elementoId={viendo.elementoId}
               titulo={viendo.titulo}
             />
+            <CompartirGrabacion id={viendo.id} titulo={viendo.titulo} />
             {viendo.descripcion && (
               <p className={styles.vistaDesc}>{viendo.descripcion}</p>
             )}

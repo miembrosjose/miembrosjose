@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
 import { translateAuthError } from "@/lib/auth-error-messages"
+import { destinoSeguro } from "../_lib/destino-seguro"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -72,9 +73,19 @@ export default function LoginForm() {
           return
         }
 
-        // Redirect pra raiz do subdomínio (área de membros). Middleware faz
-        // o rewrite interno pra /miembros automaticamente.
-        router.push("/")
+        // ── A DÓNDE SE IBA, SI SE IBA A ALGÚN SITIO ──────────────────
+        // Por defecto, a la raíz del área de miembros. Pero cuando se llega
+        // aquí desde una dirección concreta —el enlace de una grabación
+        // repartido en el grupo de Telegram—, hay que volver A ESA.
+        //
+        // Sin esto, el enlace que mandas a setenta personas lleva a todas a
+        // la portada, y cada una tiene que buscarse la grabación a mano.
+        //
+        // `destinoSeguro` descarta cualquier cosa que no sea una ruta de
+        // aquí dentro: este valor viene de la barra de direcciones y acaba
+        // siendo una redirección.
+        const destino = destinoSeguro(searchParams.get("redirectTo"))
+        router.push(destino ?? "/")
         router.refresh()
       } catch (err) {
         setError(translateAuthError(err instanceof Error ? err.message : undefined))

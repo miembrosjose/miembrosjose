@@ -106,7 +106,21 @@ function parsePath(pathname: string, hash: string): ParseResult {
   if (path === "/miembros/admin") return { view: "admin", anchor: null, params: {} }
   if (path === "/miembros/mensajes") return { view: "messages", anchor: null, params: {} }
   if (path === "/miembros/personas") return { view: "miembros_lista", anchor: null, params: {} }
-  if (path === "/miembros/red") return { view: "red", anchor: null, params: {} }
+  // ── /miembros/red#encuentros ──────────────────────────────────────────
+  // La Red entra siempre por Pulso, a propósito. Pero una dirección que se
+  // REPARTE tiene que caer donde dice: el «volver» de una grabación abierta
+  // desde el grupo de Telegram debe llevar a las grabaciones, no a Pulso.
+  //
+  // Es el mismo fallo que ya está anotado unas líneas más abajo sobre
+  // #libreria: funciona al pulsarlo —eso va por estado— y falla al
+  // compartirlo. Nunca falla para quien lo escribe.
+  if (path === "/miembros/red") {
+    const pestana = hash.replace(/^#/, "").toLowerCase()
+    if ((["pulso", "foro", "lista", "mapa", "encuentros"] as string[]).includes(pestana)) {
+      return { view: "red", anchor: null, params: { redTab: pestana as RedTab } }
+    }
+    return { view: "red", anchor: null, params: {} }
+  }
 
   const mensajesMatch = path.match(/^\/miembros\/mensajes\/([^/]+)$/)
   if (mensajesMatch)

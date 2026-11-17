@@ -186,6 +186,16 @@
   overflow: hidden;
 }
 
+/* El pie de la tarjeta, separado del texto por una línea tenue: lo de arriba
+   describe la grabación, lo de abajo es una acción sobre ella. */
+.pie {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(167, 139, 202, 0.12);
+}
+
 .selloBorrador {
   display: inline-flex;
   align-items: center;

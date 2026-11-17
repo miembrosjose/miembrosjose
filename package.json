@@ -15,6 +15,7 @@
     "manual:deploy": "node scripts/manual-deploy.mjs",
     "probar:pwa": "node scripts/probar-reglas-pwa.mjs",
     "probar:vturb": "node scripts/probar-vturb.mjs",
+    "probar:destino": "node scripts/probar-destino.mjs",
     "iconos": "node scripts/generar-iconos.mjs",
     "logo": "node scripts/exportar-logo.mjs",
     "probar:navegadores": "node scripts/probar-navegadores.mjs",

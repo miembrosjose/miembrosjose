@@ -1,0 +1,73 @@
+/* Una grabación de los Encuentros, en su propia página.
+   Mismo aire que la lectura de una transmisión: una columna centrada, sin
+   nada alrededor que compita con el vídeo. */
+
+.pagina {
+  min-height: 100dvh;
+  background: #05050d;
+  padding: clamp(1.5rem, 4vw, 3rem) 1rem clamp(3rem, 8vw, 5rem);
+}
+
+.articulo {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.volver {
+  display: inline-block;
+  margin-bottom: 1.6rem;
+  color: #8b90b4;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.volver:hover { color: #c3b2e0; }
+
+.borrador {
+  margin: 0 0 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 2px solid #e0b06a;
+  background: rgba(224, 176, 106, 0.08);
+  color: #e0b06a;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.5rem;
+  color: #8b90b4;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.titulo {
+  margin: 0 0 1.4rem;
+  font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+  line-height: 1.15;
+  font-weight: 700;
+  color: #f3f6fa;
+  font-family: var(--font-cinzel, serif);
+}
+
+.reproductor {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.descripcion {
+  margin: 1.8rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #c3c6d8;
+  white-space: pre-wrap;
+  max-width: 68ch;
+}

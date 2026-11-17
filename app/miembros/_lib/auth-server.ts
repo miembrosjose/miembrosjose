@@ -17,13 +17,31 @@
 import { redirect } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { accesoVolviendoA } from "./destino-seguro"
 
 export type MiembrosAuthResult = {
   user: User | null
   supabase: Awaited<ReturnType<typeof getSupabaseServer>>
 }
 
-export async function requireMiembrosAuth(): Promise<MiembrosAuthResult> {
+
+/**
+ * ── POR QUÉ HACE FALTA DECIR A DÓNDE SE IBA ───────────────────────────────
+ * Esto mandaba siempre a `/miembros/login` a secas, y la pantalla de acceso,
+ * al terminar, lleva a la portada. Mientras todo se navegaba desde dentro, no
+ * se notaba: ya estabas dentro.
+ *
+ * Se nota en cuanto una dirección concreta se reparte FUERA —el enlace de una
+ * grabación puesto en el grupo de Telegram—. Alguien lo abre en el móvil, no
+ * tiene la sesión puesta ahí, entra… y aparece en la portada. El enlace que
+ * mandaste a setenta personas lleva a todas al sitio equivocado, y cada una
+ * tiene que buscarse la grabación a mano.
+ *
+ * Quien publica una dirección compartible pasa `volverA` con la suya.
+ */
+export async function requireMiembrosAuth(
+  opciones?: { volverA?: string },
+): Promise<MiembrosAuthResult> {
   const supabase = await getSupabaseServer()
 
   // Em dev pula o gate pra facilitar testes locais sem login real.
@@ -35,7 +53,7 @@ export async function requireMiembrosAuth(): Promise<MiembrosAuthResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect("/miembros/login")
+  if (!user) redirect(accesoVolviendoA(opciones?.volverA))
 
   // 2. Bypass de admin — mesmo mecanismo server-side existente (profiles.is_admin).
   //    Nunca usa user_metadata nem lista de emails hardcoded, e o cliente não decide.
