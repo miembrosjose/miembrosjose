@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { CentroComunidad } from "./comunidad/CentroComunidad"
 import { PulsoSemana } from "./PulsoSemana"
 import Link from "next/link"
-import { Activity, MapPin, Search, MessageCircle, MessageSquare, Users, Globe2, Loader2, X, CalendarDays } from "lucide-react"
+import { Activity, MapPin, Search, MessageCircle, MessageSquare, Users, Globe2, Loader2, X, Film } from "lucide-react"
 import dynamic from "next/dynamic"
 import { getAchievementById, getAura, ORDEN_AURAS } from "@/lib/achievements"
 import { getAchievementSvg } from "@/lib/achievement-svg"
@@ -27,9 +27,18 @@ const MapaRed = dynamic(() => import("./MapaRed").then((m) => m.MapaRed), {
   ssr: false,
   loading: () => <div style={{ height: "min(68vh,560px)", minHeight: 340, borderRadius: 14, border: "1px solid rgba(217,184,102,0.28)", background: "#05050d", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b90b4", fontSize: "0.8rem" }}>Cargando mapa…</div>,
 })
-const EncuentrosRed = dynamic(() => import("./EncuentrosRed").then((m) => m.EncuentrosRed), {
+// ENCUENTROS = las GRABACIONES de los encuentros.
+//
+// Antes esta pestaña era la convocatoria: fecha futura, ciudad, cupo, quién
+// asiste. Los anuncios se han ido al canal de Telegram, donde la gente ya
+// mira y donde le llega el aviso sin abrir nada.
+//
+// La convocatoria NO se ha borrado: `EncuentrosRed.tsx`, `/api/red/encuentros`
+// y las tablas `network_meetings` siguen intactas. Si algún día vuelven los
+// encuentros de ciudad, se recupera cambiando esta línea.
+const GrabacionesRed = dynamic(() => import("./GrabacionesRed").then((m) => m.GrabacionesRed), {
   ssr: false,
-  loading: () => <p style={{ color: "#8b90b4", fontSize: "0.8rem", padding: "2rem 0" }}>Cargando encuentros…</p>,
+  loading: () => <p style={{ color: "#8b90b4", fontSize: "0.8rem", padding: "2rem 0" }}>Cargando grabaciones…</p>,
 })
 import styles from "./view-red.module.css"
 
@@ -371,7 +380,7 @@ export function ViewRed() {
             onClick={() => setTab("encuentros")}
             className={`${styles.tab} ${tab === "encuentros" ? styles.tabOn : ""}`}
           >
-            <CalendarDays size={13} aria-hidden /> Encuentros
+            <Film size={13} aria-hidden /> Encuentros
           </button>
           <button
             type="button" role="tab" aria-selected={tab === "lista"}
@@ -448,7 +457,7 @@ export function ViewRed() {
              media pantalla antes de llegar a la primera conversación. */
           <CentroComunidad />
         ) : tab === "encuentros" ? (
-          <EncuentrosRed />
+          <GrabacionesRed />
         ) : tab === "mapa" ? (
           <>
 
