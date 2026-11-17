@@ -195,7 +195,9 @@ export function GrabacionesRed() {
               elementoId={viendo.elementoId}
               titulo={viendo.titulo}
             />
-            <CompartirGrabacion id={viendo.id} titulo={viendo.titulo} />
+            {/* Compartir vive SOLO en la rejilla, antes de abrir nada. Aquí
+                dentro competía con el vídeo: quien ya le dio al play viene a
+                ver, no a repartir enlaces. */}
             {viendo.descripcion && (
               <p className={styles.vistaDesc}>{viendo.descripcion}</p>
             )}

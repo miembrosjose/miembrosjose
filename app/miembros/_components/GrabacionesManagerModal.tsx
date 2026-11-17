@@ -258,33 +258,43 @@ function Fila({
             {g.descripcion}
           </p>
         )}
-      </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {ocupada && <Loader2 size={13} className="animate-spin text-[#8b90b4]" aria-hidden />}
-        <Boton onClick={onPublicar} titulo={publicada ? "Pasar a borrador" : "Publicar"} disabled={ocupada}>
-          {publicada ? <EyeOff size={13} /> : <Eye size={13} />}
-        </Boton>
-        <Boton onClick={onFijar} titulo={fijada ? "Quitar de arriba" : "Fijar arriba"} disabled={ocupada}>
-          {fijada ? <PinOff size={13} /> : <Pin size={13} />}
-        </Boton>
-        <Boton onClick={onEditar} titulo="Editar" disabled={ocupada}>
-          <Pencil size={13} />
-        </Boton>
-        <Boton onClick={onBorrar} titulo="Quitar del archivo" disabled={ocupada} peligro>
-          <Trash2 size={13} />
-        </Boton>
+        {/* ── LAS ACCIONES, CON SU NOMBRE ESCRITO ────────────────────────
+            Esto eran cuatro iconos grises de trece píxeles, sin una palabra.
+            El resultado previsible: «solo me permite subir nuevas
+            grabaciones, no editar las anteriores». El botón estaba ahí; lo
+            que no estaba era ninguna forma de saber que era un botón.
+
+            Un icono vale cuando la acción se usa a diario y se reconoce de
+            memoria. Estas se usan una vez por reunión. */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {ocupada && <Loader2 size={13} className="animate-spin text-[#8b90b4]" aria-hidden />}
+          <Accion onClick={onEditar} disabled={ocupada} icono={<Pencil size={12} />}>
+            Editar
+          </Accion>
+          <Accion onClick={onPublicar} disabled={ocupada}
+            icono={publicada ? <EyeOff size={12} /> : <Eye size={12} />}>
+            {publicada ? "Pasar a borrador" : "Publicar"}
+          </Accion>
+          <Accion onClick={onFijar} disabled={ocupada}
+            icono={fijada ? <PinOff size={12} /> : <Pin size={12} />}>
+            {fijada ? "Quitar de arriba" : "Fijar arriba"}
+          </Accion>
+          <Accion onClick={onBorrar} disabled={ocupada} peligro icono={<Trash2 size={12} />}>
+            Quitar
+          </Accion>
+        </div>
       </div>
     </div>
   )
 }
 
-function Boton({
-  children, onClick, titulo, disabled, peligro,
+function Accion({
+  children, icono, onClick, disabled, peligro,
 }: {
   children: React.ReactNode
+  icono: React.ReactNode
   onClick: () => void
-  titulo: string
   disabled?: boolean
   peligro?: boolean
 }) {
@@ -293,15 +303,16 @@ function Boton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      title={titulo}
-      aria-label={titulo}
       className={
-        "rounded p-2 transition-colors disabled:opacity-40 " +
+        "inline-flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-[10px] " +
+        "uppercase tracking-[0.12em] transition-colors disabled:opacity-40 " +
+        "[font-family:var(--font-mono)] " +
         (peligro
-          ? "text-[#8a5a5a] hover:bg-[#7f1d1d]/25 hover:text-[#fca5a5]"
-          : "text-[#8b90b4] hover:bg-[#251f30] hover:text-[#F3F6FA]")
+          ? "border-[#8a5a5a]/40 text-[#a87a7a] hover:border-[#8a5a5a] hover:bg-[#7f1d1d]/20 hover:text-[#fca5a5]"
+          : "border-[#2f2f42] text-[#a0a0b0] hover:border-[#6D4A9B] hover:text-[#F3F6FA]")
       }
     >
+      {icono}
       {children}
     </button>
   )

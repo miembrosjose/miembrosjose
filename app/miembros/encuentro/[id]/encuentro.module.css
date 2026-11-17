@@ -63,6 +63,45 @@
   overflow: hidden;
 }
 
+/* ── La página mínima de quien llega sin sesión ──────────────────────────
+   Una persona la ve una fracción de segundo. Para el robot que dibuja la
+   tarjeta del mensaje, es la página entera: por eso lleva el título de
+   verdad y no un cartel de «cargando». */
+.espera {
+  max-width: 44ch;
+  margin: 18vh auto 0;
+  text-align: center;
+}
+
+.esperaTitulo {
+  margin: 0 0 0.8rem;
+  font-size: clamp(1.2rem, 4vw, 1.7rem);
+  line-height: 1.25;
+  color: #f3f6fa;
+  font-family: var(--font-cinzel, serif);
+}
+
+.esperaTexto {
+  margin: 0 0 1.4rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #8b90b4;
+}
+
+/* Si el JavaScript no corre —o tarda—, el enlace sigue llevando al acceso. */
+.esperaEnlace {
+  display: inline-block;
+  padding: 0.7rem 1.6rem;
+  border: 1px solid rgba(217, 184, 102, 0.45);
+  background: rgba(217, 184, 102, 0.08);
+  color: #e6cf95;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
 .descripcion {
   margin: 1.8rem 0 0;
   font-size: 0.95rem;

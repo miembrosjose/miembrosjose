@@ -26,6 +26,29 @@ export function faltaLaTabla(error: { code?: string; message?: string }): boolea
   return /does not exist|schema cache/i.test(mensaje)
 }
 
+/**
+ * La miniatura que de verdad se debe enseñar.
+ *
+ * ── POR QUÉ NO BASTA CON LO GUARDADO ──────────────────────────────────────
+ * `thumbnail.jpg` de VTurb mide 64×36 píxeles: es la mancha borrosa que pone
+ * detrás del reproductor mientras carga, no una miniatura. La buena se llama
+ * `cover.jpg` y mide 640×360.
+ *
+ * Las grabaciones guardadas antes de descubrirlo llevan la dirección mala
+ * escrita en la base. Como la miniatura es un dato DEDUCIDO del código de
+ * VTurb, no hace falta ir a corregirlas una por una: se recalcula al leerlas.
+ *
+ * Así nadie tiene que acordarse de abrir cada grabación y volver a guardarla
+ * —que con una es un clic y con cuarenta es una tarde—.
+ */
+export function miniaturaBuena(
+  guardada: string | null,
+  deducida: string | null,
+): string | null {
+  if (guardada && !/\/thumbnail\.jpg$/i.test(guardada)) return guardada
+  return deducida ?? guardada
+}
+
 export const MAX_TITULO = 160
 export const MAX_DESCRIPCION = 2000
 /** Lo que da VTurb ronda el kilobyte; con 20 sobra y se corta un pegote absurdo. */

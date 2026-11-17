@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { leerVturb } from "@/lib/red/vturb"
-import { faltaLaTabla } from "@/lib/red/grabaciones"
+import { faltaLaTabla, miniaturaBuena } from "@/lib/red/grabaciones"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -123,7 +123,15 @@ function aRespuesta(f: Fila) {
     titulo: f.titulo,
     descripcion: f.descripcion,
     fecha: f.fecha,
-    miniatura: f.miniatura,
+    // ── LAS GUARDADAS ANTES SE ARREGLAN SOLAS ──────────────────────────
+    // Las grabaciones publicadas antes de descubrir que `thumbnail.jpg` son
+    // 64×36 píxeles tienen esa dirección escrita en la base. Corregirlas
+    // exigía abrir cada una y volver a guardarla: con una es un clic, con
+    // cuarenta es una tarde, y nadie se acuerda de por qué hay que hacerlo.
+    //
+    // Como la miniatura es un dato DEDUCIDO del código de VTurb, aquí se
+    // puede recalcular: si lo guardado es la mancha, se usa la buena.
+    miniatura: miniaturaBuena(f.miniatura, g?.miniatura ?? null),
     borrador: f.estado !== "publicado",
     iframe: g?.iframe ?? null,
     script: g?.script ?? null,

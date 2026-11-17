@@ -1,0 +1,68 @@
+/* El envoltorio del reproductor con su botón de pantalla completa. */
+
+.caja {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.boton {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.boton:hover {
+  border-color: #6d4a9b;
+  color: #fff;
+}
+
+.boton svg { width: 16px; height: 16px; }
+
+/* ── Pantalla completa fingida (iPhone) ──────────────────────────────────
+   Se fija a los cuatro bordes en vez de usar vw/dvh: iOS no los recalcula
+   bien al girar y el vídeo quedaba cortado hasta tocar algo. */
+.caja.fingida {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  margin: 0;
+  max-width: none;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La caja 16:9 centrada, para que las franjas negras salgan simétricas. Las
+   medidas las calcula el JavaScript sobre el contenedor real. */
+.caja.fingida > *:first-child,
+.caja:fullscreen > *:first-child,
+.caja:-webkit-full-screen > *:first-child {
+  width: var(--fc-ancho, 100%);
+  height: var(--fc-alto, 100%);
+  max-width: 100%;
+}
+
+.caja:fullscreen,
+.caja:-webkit-full-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+}

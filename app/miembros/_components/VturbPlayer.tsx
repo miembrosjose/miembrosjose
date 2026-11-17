@@ -7,12 +7,8 @@
 // Dos caminos, porque VTurb da dos formatos de código y no se portan igual:
 //
 //   NATIVO (<vturb-smartplayer>) — se carga su script en esta misma página.
-//     La pantalla completa es la de verdad, la del navegador.
-//
-//   IFRAME (embed.html) — el reproductor vive en un marco aparte.
-//     Más aislado, pero el botón de pantalla completa agranda dentro del
-//     marco en vez de ocupar la pantalla. Se usa cuando el código pegado es
-//     del formato clásico, que no trae elemento nativo.
+//   IFRAME (embed.html) — el reproductor vive en un marco aparte. Se usa
+//     cuando el código pegado es del formato clásico, que no trae elemento.
 //
 // ── NADA DE INYECTAR EL CÓDIGO PEGADO ─────────────────────────────────────
 // Este componente no recibe HTML: recibe direcciones ya construidas por el
@@ -27,6 +23,7 @@
 // la grabación esté de verdad en pantalla.
 
 import { useEffect, useRef } from "react"
+import { PantallaCompleta, buscarVideo } from "./PantallaCompleta"
 
 type Props = {
   /** Dirección del script del reproductor nativo. */
@@ -42,34 +39,39 @@ export function VturbPlayer({ script, iframe, elementoId, titulo }: Props) {
   const nativo = !!script && !!elementoId
 
   if (nativo) {
-    return <PlayerNativo script={script!} elementoId={elementoId!} />
+    return (
+      <PantallaCompleta>
+        <PlayerNativo script={script!} elementoId={elementoId!} />
+      </PantallaCompleta>
+    )
   }
 
   if (iframe) {
     return (
-      <div style={CAJA}>
-        <iframe
-          src={iframe}
-          title={titulo}
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          allowFullScreen
-          loading="lazy"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            border: "none",
-          }}
-        />
-      </div>
+      <PantallaCompleta>
+        <div style={CAJA_16_9}>
+          <iframe
+            src={iframe}
+            title={titulo}
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            allowFullScreen
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+          />
+        </div>
+      </PantallaCompleta>
     )
   }
 
   // Ni una cosa ni la otra: la fila está a medias. Se dice, en vez de dejar
   // un rectángulo negro que parece un vídeo que no carga.
   return (
-    <div style={{ ...CAJA, display: "grid", placeItems: "center" }}>
+    <div style={{ ...CAJA_16_9, display: "grid", placeItems: "center" }}>
       <p
         style={{
           color: "#8b90b4",
@@ -92,12 +94,11 @@ export function VturbPlayer({ script, iframe, elementoId, titulo }: Props) {
  * real del vídeo. Si se le impusiera 16:9, una grabación vertical saldría
  * recortada por arriba y por abajo.
  */
-const CAJA: React.CSSProperties = {
+const CAJA_16_9: React.CSSProperties = {
   position: "relative",
   width: "100%",
   paddingTop: "56.25%",
   background: "#05050d",
-  borderRadius: 12,
   overflow: "hidden",
 }
 
@@ -126,7 +127,33 @@ function PlayerNativo({ script, elementoId }: { script: string; elementoId: stri
     etiqueta.async = true
     document.body.appendChild(etiqueta)
 
+    // ── QUE EL CLIC QUE ABRIÓ LA GRABACIÓN SEA EL QUE LA ARRANCA ────────
+    // Sin esto hacen falta DOS clics: uno para abrir y otro en el botón de
+    // VTurb. El segundo sobra: quien pulsa sobre una grabación ya ha dicho
+    // que quiere verla.
+    //
+    // El navegador deja reproducir con sonido durante unos segundos después
+    // de un clic de verdad. El reproductor de VTurb tarda en aparecer, así
+    // que se busca el <video> —que vive dentro de un shadow DOM— unas
+    // cuantas veces y se le pide que arranque en cuanto exista.
+    //
+    // Si el navegador lo rechaza, no pasa nada: el botón de VTurb sigue ahí.
+    // Por eso el fallo se traga y no se avisa de nada.
+    let intentos = 0
+    const reloj = window.setInterval(() => {
+      intentos++
+      const v = buscarVideo(host)
+      if (v) {
+        window.clearInterval(reloj)
+        v.play().catch(() => { /* el navegador prefiere que lo pulsen */ })
+      } else if (intentos > 40) {
+        // Veinte segundos. Si no apareció, no va a aparecer.
+        window.clearInterval(reloj)
+      }
+    }, 500)
+
     return () => {
+      window.clearInterval(reloj)
       etiqueta.remove()
       host.innerHTML = ""
     }
@@ -138,12 +165,9 @@ function PlayerNativo({ script, elementoId }: { script: string; elementoId: stri
       style={{
         width: "100%",
         // Mientras VTurb arranca, el hueco ya tiene el color del fondo en vez
-        // de dar un salto blanco. `minHeight` evita que la tarjeta colapse a
-        // cero antes de que el reproductor se dibuje.
+        // de dar un salto blanco.
         minHeight: 180,
         background: "#05050d",
-        borderRadius: 12,
-        overflow: "hidden",
       }}
     />
   )

@@ -15,14 +15,14 @@
 // en VTurb— lo dejaría abierto a cualquiera que lo reciba, para siempre y sin
 // forma de retirarlo. El enlace de aquí no vale nada sin una cuenta.
 //
-// ── POR QUÉ SE COPIA Y NO SOLO «COMPARTIR» ────────────────────────────────
-// El botón de Telegram abre su aplicación con el mensaje empezado, que es el
-// camino rápido. Pero no siempre está Telegram instalado en el aparato desde
-// el que se mira, y a veces el enlace va a un correo o a una nota. Copiar
-// nunca falla, así que está siempre.
+// ── POR QUÉ SOLO COPIAR ───────────────────────────────────────────────────
+// Hubo un segundo botón que abría Telegram con el mensaje empezado. Se quitó:
+// no siempre está Telegram en el aparato desde el que se mira, y el enlace
+// acaba igual de a menudo en un correo, en WhatsApp o en una nota. Copiar
+// sirve para los cuatro casos y nunca falla, así que un botón basta.
 
 import { useState } from "react"
-import { Check, Copy, Send } from "lucide-react"
+import { Check, Copy } from "lucide-react"
 
 export function CompartirGrabacion({
   id,
@@ -58,24 +58,15 @@ export function CompartirGrabacion({
     }
   }
 
-  function aTelegram() {
-    const url = enlace()
-    if (!url) return
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(url)}` +
-      `&text=${encodeURIComponent(titulo)}`,
-      "_blank",
-      "noopener,noreferrer",
-    )
-  }
-
   if (compacto) {
     return (
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); void copiar() }}
-        title={copiado ? "Enlace copiado" : "Copiar el enlace de esta grabación"}
-        aria-label={copiado ? "Enlace copiado" : "Copiar el enlace de esta grabación"}
+        title={copiado ? "Enlace copiado" : `Copiar el enlace de «${titulo}»`}
+        // Con cuarenta tarjetas, cuarenta botones que dicen solo «Compartir»
+        // son indistinguibles para quien navega a oídas. El título los separa.
+        aria-label={copiado ? "Enlace copiado" : `Copiar el enlace de «${titulo}»`}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -117,10 +108,6 @@ export function CompartirGrabacion({
           {copiado ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
           {copiado ? "Enlace copiado" : "Copiar enlace"}
         </button>
-
-        <button type="button" onClick={aTelegram} style={BOTON(false)}>
-          <Send size={14} aria-hidden /> Enviar a Telegram
-        </button>
       </div>
 
       {aLaVista && (
@@ -140,19 +127,6 @@ export function CompartirGrabacion({
           }}
         />
       )}
-
-      <p
-        style={{
-          margin: "0.7rem 0 0",
-          fontSize: "0.72rem",
-          lineHeight: 1.6,
-          color: "#6a6a7a",
-          maxWidth: "52ch",
-        }}
-      >
-        Quien abra este enlace sin ser miembro verá la pantalla de acceso. Al
-        entrar, vuelve directo a esta grabación.
-      </p>
     </div>
   )
 }
