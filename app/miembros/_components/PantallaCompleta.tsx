@@ -182,7 +182,10 @@ export function PantallaCompleta({ children }: { children: React.ReactNode }) {
 
   return (
     <div ref={ref} className={`${s.caja} ${fingida ? s.fingida : ""}`}>
-      {children}
+      {/* Envoltorio propio para poder darle un tamaño EXACTO en pantalla
+          completa. Sin él habría que apuntar al primer hijo, que es distinto
+          según el formato del código de VTurb. */}
+      <div className={s.dentro}>{children}</div>
       <button
         type="button"
         onClick={alternar}

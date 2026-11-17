@@ -17,20 +17,30 @@
 // busca en un archivo es «cuál de todas», y para eso lo que manda es la
 // imagen, no el texto.
 //
-// ── EL REPRODUCTOR SE MONTA AL ABRIR, NO ANTES ────────────────────────────
-// Cada reproductor de VTurb trae su script y empieza a hablar con sus
-// servidores. Con cuarenta grabaciones en pantalla, montarlos todos para que
-// se vea uno dejaría la pestaña inservible en el móvil. Aquí la rejilla son
-// imágenes; el reproductor existe solo mientras hay una grabación abierta.
+// ── AQUÍ NO SE REPRODUCE NADA: ESTO ES EL ÍNDICE ──────────────────────────
+// Pulsar una grabación lleva a su página. Antes se abría en una ventana
+// encima, y eso traía dos problemas que solo se ven en un teléfono:
+//
+//   1. La ventana del modal lleva `transform` y `backdrop-filter`. Cualquiera
+//      de los dos convierte a ese elemento en el marco de referencia de todo
+//      lo que esté dentro y esté puesto en `position: fixed`. O sea que la
+//      pantalla completa NO podía salir de la caja del modal: se quedaba
+//      dentro, como una banda a media pantalla.
+//   2. Esa caja tiene `max-height: 90dvh` y su contenido se desplaza, así que
+//      el vídeo se recortaba por arriba y por abajo.
+//
+// Se podían parchear los dos. Pero la página de la grabación ya existía —hizo
+// falta para poder compartir el enlace—, y llevar ahí resuelve los dos de una
+// vez y además deja la dirección del navegador diciendo lo que se está
+// viendo: lo que se comparte y lo que se mira coinciden siempre.
 
-import { useState } from "react"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { Loader2, Play, Settings, Video, Film, CalendarDays } from "lucide-react"
+import { useState } from "react"
 import { useAuth } from "../_lib/auth-context"
-import { useGrabaciones, type GrabacionVista } from "../_lib/use-grabaciones"
-import { VturbPlayer } from "./VturbPlayer"
+import { useGrabaciones } from "../_lib/use-grabaciones"
 import { CompartirGrabacion } from "./CompartirGrabacion"
-import { Modal } from "./Modal"
 import styles from "./grabaciones-red.module.css"
 
 // El panel solo lo abre administración: no tiene por qué entrar en lo que se
@@ -45,7 +55,6 @@ export function GrabacionesRed() {
   const { grabaciones, total, hayMas, cargando, trayendoMas, error, sinTabla, cargarMas } =
     useGrabaciones()
 
-  const [viendo, setViendo] = useState<GrabacionVista | null>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
 
   return (
@@ -101,10 +110,9 @@ export function GrabacionesRed() {
           <ul className={styles.rejilla}>
             {grabaciones.map((g) => (
               <li key={g.id} className={styles.tarjeta}>
-                <button
-                  type="button"
+                <Link
+                  href={`/miembros/encuentro/${g.id}`}
                   className={styles.abrir}
-                  onClick={() => setViendo(g)}
                   aria-label={`Ver «${g.titulo}»`}
                 >
                   {g.miniatura ? (
@@ -130,7 +138,7 @@ export function GrabacionesRed() {
                       <Play size={20} fill="currentColor" aria-hidden />
                     </span>
                   </span>
-                </button>
+                </Link>
 
                 <div className={styles.cuerpo}>
                   <p className={styles.meta}>
@@ -175,35 +183,7 @@ export function GrabacionesRed() {
         </>
       )}
 
-      {/* El modal existe siempre en el árbol, así que el reproductor se pinta
-          solo cuando hay una grabación elegida. Si no, el script de VTurb se
-          cargaría al entrar en la pestaña, sin que nadie haya pulsado nada. */}
-      <Modal
-        open={!!viendo}
-        onClose={() => setViendo(null)}
-        title={viendo?.titulo}
-        maxWidth={1000}
-      >
-        {viendo && (
-          <div>
-            <p className={styles.vistaMeta}>
-              <CalendarDays size={12} aria-hidden /> {fechaLarga(viendo.fecha)}
-            </p>
-            <VturbPlayer
-              script={viendo.script}
-              iframe={viendo.iframe}
-              elementoId={viendo.elementoId}
-              titulo={viendo.titulo}
-            />
-            {/* Compartir vive SOLO en la rejilla, antes de abrir nada. Aquí
-                dentro competía con el vídeo: quien ya le dio al play viene a
-                ver, no a repartir enlaces. */}
-            {viendo.descripcion && (
-              <p className={styles.vistaDesc}>{viendo.descripcion}</p>
-            )}
-          </div>
-        )}
-      </Modal>
+
 
       {isAdmin && panelAbierto && (
         <GrabacionesManagerModal
@@ -234,15 +214,4 @@ function fechaCorta(iso: string): string {
   }
 }
 
-function fechaLarga(iso: string): string {
-  try {
-    return new Date(iso + "T12:00:00").toLocaleDateString("es-419", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  } catch {
-    return iso
-  }
-}
+

@@ -1,11 +1,29 @@
-/* El envoltorio del reproductor con su botón de pantalla completa. */
+/* El envoltorio del reproductor con su botón de pantalla completa.
+   La estructura copia la que lleva funcionando en las temporadas: una caja
+   con la proporción reservada y el reproductor colocado DENTRO en absoluto.
+
+   Por qué importa que sea así y no una caja que crece con su contenido: en
+   pantalla completa hay que poder fijarle al reproductor un tamaño exacto
+   —el recuadro 16:9 centrado que calcula el JavaScript—, y a un elemento que
+   se dimensiona solo no se le puede imponer. Cuando la caja crecía con el
+   contenido, el vídeo salía como una banda estrecha y recortada. */
 
 .caja {
   position: relative;
   width: 100%;
+  /* Reserva el hueco antes de que VTurb monte nada, para que la página no
+     pegue un salto al aparecer el reproductor. */
+  aspect-ratio: 16 / 9;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.dentro {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .boton {
@@ -16,8 +34,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(0, 0, 0, 0.55);
@@ -27,42 +45,53 @@
   transition: border-color 180ms ease, color 180ms ease;
 }
 
-.boton:hover {
-  border-color: #6d4a9b;
-  color: #fff;
-}
-
+.boton:hover { border-color: #6d4a9b; color: #fff; }
 .boton svg { width: 16px; height: 16px; }
 
-/* ── Pantalla completa fingida (iPhone) ──────────────────────────────────
-   Se fija a los cuatro bordes en vez de usar vw/dvh: iOS no los recalcula
-   bien al girar y el vídeo quedaba cortado hasta tocar algo. */
+/* ── Pantalla completa, de las dos clases ────────────────────────────────
+   La real la da el navegador. La fingida es para iPhone, donde Safari no
+   deja poner en pantalla completa nada que no sea un <video>.
+
+   Se fija a los cuatro bordes en vez de usar vw/dvh porque iOS no los
+   recalcula bien al girar: el vídeo quedaba cortado hasta tocar algo. */
 .caja.fingida {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  margin: 0;
-  max-width: none;
   border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* La caja 16:9 centrada, para que las franjas negras salgan simétricas. Las
-   medidas las calcula el JavaScript sobre el contenedor real. */
-.caja.fingida > *:first-child,
-.caja:fullscreen > *:first-child,
-.caja:-webkit-full-screen > *:first-child {
-  width: var(--fc-ancho, 100%);
-  height: var(--fc-alto, 100%);
-  max-width: 100%;
-}
-
+.caja.fingida,
 .caja:fullscreen,
 .caja:-webkit-full-screen {
+  /* La proporción la manda ahora el recuadro de dentro, no la caja: la caja
+     ocupa la pantalla entera y pinta las franjas negras. */
+  aspect-ratio: auto;
+  max-width: none;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #000;
   border-radius: 0;
+}
+
+/* El recuadro 16:9 centrado. Las medidas las calcula el JavaScript sobre el
+   tamaño real del contenedor, y se rehacen al girar el teléfono. */
+.caja.fingida .dentro,
+.caja:fullscreen .dentro,
+.caja:-webkit-full-screen .dentro {
+  position: relative;
+  inset: auto;
+  width: var(--fc-ancho, 100%);
+  height: var(--fc-alto, 100%);
+}
+
+/* En pantalla completa el botón se separa del borde: en un móvil girado, la
+   esquina queda debajo de la muesca o de la barra del sistema. */
+.caja.fingida .boton,
+.caja:fullscreen .boton,
+.caja:-webkit-full-screen .boton {
+  right: max(0.75rem, env(safe-area-inset-right));
+  top: max(0.75rem, env(safe-area-inset-top));
 }

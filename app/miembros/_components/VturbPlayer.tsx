@@ -49,21 +49,13 @@ export function VturbPlayer({ script, iframe, elementoId, titulo }: Props) {
   if (iframe) {
     return (
       <PantallaCompleta>
-        <div style={CAJA_16_9}>
-          <iframe
-            src={iframe}
-            title={titulo}
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-            allowFullScreen
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
-        </div>
+        <iframe
+          src={iframe}
+          title={titulo}
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          allowFullScreen
+          style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+        />
       </PantallaCompleta>
     )
   }
@@ -88,17 +80,21 @@ export function VturbPlayer({ script, iframe, elementoId, titulo }: Props) {
 }
 
 /**
- * 16:9 para el iframe, que no tiene tamaño propio.
+ * El hueco para cuando no hay nada que montar.
  *
- * El reproductor NATIVO no usa esta caja: fija él su altura según la forma
- * real del vídeo. Si se le impusiera 16:9, una grabación vertical saldría
- * recortada por arriba y por abajo.
+ * La proporción 16:9 ya no se pone aquí: la pone `PantallaCompleta`, que es
+ * quien tiene que poder imponerle un tamaño exacto al reproductor cuando se
+ * pasa a pantalla completa. Es también lo que hacen las temporadas.
+ *
+ * El precio es que una grabación vertical saldría con franjas a los lados.
+ * Se asume: estas son grabaciones de reuniones, y una reunión es apaisada.
  */
 const CAJA_16_9: React.CSSProperties = {
   position: "relative",
   width: "100%",
-  paddingTop: "56.25%",
+  aspectRatio: "16 / 9",
   background: "#05050d",
+  borderRadius: 12,
   overflow: "hidden",
 }
 
@@ -113,11 +109,12 @@ function PlayerNativo({ script, elementoId }: { script: string; elementoId: stri
     // es un elemento propio de VTurb que React no conoce, y su script lo
     // busca en el documento por identificador.
     //
-    // Solo se le da el ancho. La altura la pone VTurb con la proporción del
-    // vídeo de verdad.
+    // Llena la caja entera. Antes solo se le daba el ancho y él ponía su
+    // altura, y en pantalla completa eso dejaba el vídeo como una banda: la
+    // caja medía lo que debía y el reproductor no la seguía.
     host.innerHTML =
       `<vturb-smartplayer id="${elementoId}" ` +
-      `style="display:block;width:100%"></vturb-smartplayer>`
+      `style="display:block;width:100%;height:100%"></vturb-smartplayer>`
 
     // createElement y no innerHTML: un <script> escrito con innerHTML no se
     // ejecuta nunca. Y se vuelve a añadir en cada montaje para que el
@@ -159,16 +156,10 @@ function PlayerNativo({ script, elementoId }: { script: string; elementoId: stri
     }
   }, [script, elementoId])
 
+  // Llena la caja que le da PantallaCompleta. Antes traía su propia altura
+  // mínima y crecía con el contenido, y eso impedía fijarle un tamaño en
+  // pantalla completa: el vídeo acababa como una banda estrecha.
   return (
-    <div
-      ref={hostRef}
-      style={{
-        width: "100%",
-        // Mientras VTurb arranca, el hueco ya tiene el color del fondo en vez
-        // de dar un salto blanco.
-        minHeight: 180,
-        background: "#05050d",
-      }}
-    />
+    <div ref={hostRef} style={{ width: "100%", height: "100%", background: "#05050d" }} />
   )
 }
