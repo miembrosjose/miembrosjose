@@ -28,7 +28,38 @@ jobs:
         run: npm ci
 
       - name: Build (OpenNext → Cloudflare)
-        run: npx opennextjs-cloudflare build
+        # ── POR QUÉ SE REINTENTA ─────────────────────────────────────────
+        # Compilar descarga OCHO fuentes de Google (app/layout.tsx y
+        # app/miembros/layout.tsx usan next/font/google). O sea que cada
+        # despliegue depende de un servicio ajeno respondiendo, y a ratos no
+        # responde.
+        #
+        # El 17-11-2026 fallaron tres runs seguidos —#354, #356 y #361— en
+        # poco más de un minuto cada uno, mientras los de al lado pasaban.
+        # Una compilación limpia local del MISMO commit terminaba bien, y
+        # relanzar el workflow sin tocar una línea lo puso en verde. O sea:
+        # no era el código.
+        #
+        # Lo peor no fue el fallo, fue no enterarse: esos commits estaban
+        # desplegados a mano, así que el sitio funcionaba con Actions en rojo
+        # y nadie lo miró.
+        #
+        # Tres intentos con una pausa entre ellos. No arregla la causa —para
+        # eso hay que traerse las fuentes al repositorio con next/font/local—
+        # pero convierte un corte de red ajeno en veinte segundos de espera.
+        run: |
+          for intento in 1 2 3; do
+            echo "── Compilación, intento $intento de 3 ──"
+            if npx opennextjs-cloudflare build; then
+              exit 0
+            fi
+            if [ "$intento" -lt 3 ]; then
+              echo "Falló. Se reintenta en 20 segundos."
+              sleep 20
+            fi
+          done
+          echo "Las tres compilaciones fallaron: esto ya no es un corte pasajero."
+          exit 1
         env:
           # NEXT_PUBLIC_* são inlined no bundle do navegador em tempo de build.
           # Precisam estar presentes AQUI (não bastam as vars de runtime do Worker).
