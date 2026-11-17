@@ -64,10 +64,13 @@ console.log("\n── El formato moderno ─────────────
   comprobar("saca la cuenta", g.cuentaId, CUENTA)
   comprobar("saca el reproductor", g.playerId, PLAYER)
   comprobar("saca el elemento nativo", g.elementoId, `vid-${PLAYER}`)
+  // `cover.jpg`, NO `thumbnail.jpg`. Medido contra el servidor de VTurb el
+  // 16-11-2026 sobre un vídeo real: thumbnail.jpg son 64×36 píxeles —la
+  // mancha borrosa de carga— y cover.jpg son 640×360.
   comprobar(
-    "deduce la miniatura",
+    "deduce la miniatura BUENA (cover, no thumbnail)",
     g.miniatura,
-    `https://images.converteai.net/${CUENTA}/players/${PLAYER}/thumbnail.jpg`,
+    `https://images.converteai.net/${CUENTA}/players/${PLAYER}/cover.jpg`,
   )
   comprobar("sabe que la dedujo", g.miniaturaDelCodigo, false)
   comprobar(
@@ -86,9 +89,26 @@ console.log("\n── El formato clásico ────────────�
   comprobar("saca el reproductor", g.playerId, PLAYER)
   // Sin elemento nativo → el reproductor irá en un iframe.
   comprobar("no inventa elemento nativo", g.elementoId, null)
+  // ── EL CASO QUE PARECÍA RESUELTO Y ERA EL PEOR ──────────────────────
+  // La regla era «si el código trae imagen, úsala». Suena prudente. Pero la
+  // imagen que trae el formato clásico ES la mancha de 64×36: va dentro de un
+  // div con blur(5px) a propósito. O sea que la regla prudente daba el
+  // resultado malo justo en el formato que sí trae imagen.
   comprobar(
-    "toma la miniatura DEL CÓDIGO, no deducida",
-    g.miniaturaDelCodigo,
+    "ignora la mancha del código y usa cover.jpg",
+    g.miniatura,
+    `https://images.converteai.net/${CUENTA}/players/${PLAYER}/cover.jpg`,
+  )
+  comprobar("y no dice que venga del código", g.miniaturaDelCodigo, false)
+
+  // Una imagen distinta de la mancha sí se respeta: si algún día VTurb
+  // escribe ahí la buena, se usa esa.
+  const otra = leerVturb(
+    CLASICO.replace("/thumbnail.jpg", "/una-portada-de-verdad.jpg"),
+  )
+  comprobar(
+    "pero respeta una imagen que NO sea la mancha",
+    otra.grabacion?.miniaturaDelCodigo,
     true,
   )
   comprobar(

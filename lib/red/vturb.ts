@@ -109,10 +109,29 @@ export function leerVturb(bruto: string): Lectura {
   const playerId = m[2]
   const version = m[3]
 
-  const enElCodigo = MINIATURA_EN_EL_CODIGO.exec(texto)
-  const miniatura = enElCodigo
-    ? enElCodigo[0]
-    : `https://images.converteai.net/${cuentaId}/players/${playerId}/thumbnail.jpg`
+  // ── «thumbnail.jpg» NO ES LA MINIATURA ────────────────────────────────
+  // Aquí se pedía `thumbnail.jpg`, que es el nombre evidente. Y responde: con
+  // una imagen de SESENTA Y CUATRO POR TREINTA Y SEIS píxeles.
+  //
+  // No es una miniatura rota ni recortada: es la mancha de color que VTurb
+  // pone borrosa detrás del reproductor mientras carga —por eso el código
+  // clásico la envuelve en un div con `blur(5px)`—. Estirada a 440 píxeles en
+  // una tarjeta, se ve exactamente como lo que es.
+  //
+  // La buena se llama `cover.jpg` y mide 640×360: cien veces más píxeles, y
+  // doce kilobytes en vez de uno.
+  //
+  // ── Y LA DEL CÓDIGO PEGADO TAMPOCO SIRVE, SI ES ESA ───────────────────
+  // En el formato clásico, la imagen que VTurb escribe DENTRO del código es
+  // justo esa mancha: va envuelta en un div con `blur(5px)` a propósito.
+  //
+  // O sea que «usa la que venga escrita, y si no deduce» —que suena a lo
+  // prudente— daba el resultado malo precisamente en el formato que SÍ trae
+  // imagen. Se respeta la del código solo cuando no es la mancha.
+  const enElCodigo = MINIATURA_EN_EL_CODIGO.exec(texto)?.[0] ?? null
+  const esLaMancha = !!enElCodigo && /\/thumbnail\.jpg$/i.test(enElCodigo)
+  const deLaCuenta = `https://images.converteai.net/${cuentaId}/players/${playerId}/cover.jpg`
+  const miniatura = enElCodigo && !esLaMancha ? enElCodigo : deLaCuenta
 
   const base = `https://scripts.converteai.net/${cuentaId}/players/${playerId}/${version}`
 
@@ -124,7 +143,7 @@ export function leerVturb(bruto: string): Lectura {
       playerId,
       version,
       miniatura,
-      miniaturaDelCodigo: !!enElCodigo,
+      miniaturaDelCodigo: !!enElCodigo && !esLaMancha,
       iframe: `${base}/embed.html`,
       script: `${base}/player.js`,
       elementoId: ELEMENTO_MODERNO.exec(texto)?.[1] ?? null,
