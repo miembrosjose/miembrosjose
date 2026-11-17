@@ -112,18 +112,30 @@ export async function generateMetadata({
   const descripcion =
     g.descripcion?.trim() || "Grabación de un Encuentro de la Red de Los 144.000."
 
+  // ── LA DIRECCIÓN TIENE QUE SER ABSOLUTA ─────────────────────────────
+  // `og:url` salía como «/miembros/encuentro/1». OpenGraph pide una
+  // dirección completa, y Next solo convierte las relativas si hay un
+  // `metadataBase` general, que aquí no lo hay. Unos lectores lo perdonan y
+  // otros descartan la tarjeta entera: el fallo aparecería en una aplicación
+  // sí y en otra no, que es de los peores de diagnosticar.
+  const base = (process.env.NEXT_PUBLIC_MIEMBROS_URL || "https://los144000.com")
+    .replace(/\/+$/, "")
+  const direccion = `${base}/miembros/encuentro/${numero}`
+
   return {
     title: `${g.titulo} · Encuentros de la Red`,
     description: descripcion,
     // Sin indexar: que la tarjeta del mensaje se vea bien no significa querer
     // esto en los buscadores.
     robots: { index: false, follow: false },
-    alternates: { canonical: `/miembros/encuentro/${numero}` },
+    alternates: { canonical: direccion },
     openGraph: {
       title: g.titulo,
       description: descripcion,
       type: "video.other",
-      url: `/miembros/encuentro/${numero}`,
+      url: direccion,
+      siteName: "Los 144000",
+      locale: "es_LA",
       images: portada ? [{ url: portada, width: 640, height: 360 }] : undefined,
     },
     twitter: {
