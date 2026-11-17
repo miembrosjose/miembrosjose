@@ -31,8 +31,6 @@ type Fila = {
   descripcion: string
   fecha: string
   miniatura: string | null
-  cuenta_id: string | null
-  player_id: string | null
   embed: string
   estado: string
 }
@@ -54,8 +52,11 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await supabase
     .from("network_recordings")
+    // `cuenta_id` y `player_id` no se piden: las direcciones se sacan de
+    // `embed`, que es la única fuente. Traerlas además invitaría a armar la
+    // dirección con ellas en algún sitio, y entonces habría dos.
     .select(
-      "id, titulo, descripcion, fecha, miniatura, cuenta_id, player_id, embed, estado",
+      "id, titulo, descripcion, fecha, miniatura, embed, estado",
       { count: "exact" },
     )
     // Las fijadas arriba; el resto, lo más reciente primero. `id` al final
