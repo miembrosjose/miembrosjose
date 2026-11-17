@@ -29,9 +29,18 @@
 // justifica ocupar sitio en la pantalla de alguien.
 
 import { Fragment, useEffect, useMemo, useState } from "react"
-import { ChevronDown, MessageCircle, EyeOff, Send, X } from "lucide-react"
+import dynamic from "next/dynamic"
+import { ChevronDown, MessageCircle, EyeOff, Send, X, Settings } from "lucide-react"
 import s from "./novedades.module.css"
 import { Avatar } from "./Avatar"
+import { useAuth } from "../_lib/auth-context"
+
+// Solo lo abre administración: no tiene por qué entrar en lo que se descarga
+// el resto de la gente.
+const NovedadesManagerModal = dynamic(
+  () => import("./NovedadesManagerModal").then((m) => m.NovedadesManagerModal),
+  { ssr: false },
+)
 
 type Novedad = {
   id: string
@@ -288,8 +297,10 @@ function Comentarios({ novedadId, alPublicar }: { novedadId: string; alPublicar:
 }
 
 export function Novedades() {
+  const { isAdmin } = useAuth()
   const [novedades, setNovedades] = useState<Novedad[] | null>(null)
   const [oculta, setOculta] = useState(false)
+  const [panelAbierto, setPanelAbierto] = useState(false)
   const [abierta, setAbierta] = useState<string | null>(null)
   const [conComentarios, setConComentarios] = useState<string | null>(null)
   // Para que `estadoDe` se recalcule cuando la reunión pasa de «mañana» a
@@ -299,6 +310,16 @@ export function Novedades() {
   useEffect(() => {
     const t = setInterval(() => tic((n) => n + 1), 60_000)
     return () => clearInterval(t)
+  }, [])
+
+  // Recarga sola cuando el panel publica, edita o retira algo: sin esto hay
+  // que refrescar la página para ver el cambio que acabas de hacer, y se
+  // duda de si se guardó.
+  const [recarga, setRecarga] = useState(0)
+  useEffect(() => {
+    const alCambiar = () => setRecarga((n) => n + 1)
+    window.addEventListener("app:novedades-cambiadas", alCambiar)
+    return () => window.removeEventListener("app:novedades-cambiadas", alCambiar)
   }, [])
 
   useEffect(() => {
@@ -321,16 +342,40 @@ export function Novedades() {
       })
       .catch(() => { if (vivo) setNovedades([]) })
     return () => { vivo = false }
-  }, [])
+  }, [recarga])
 
   const filas = useMemo(
     () => (novedades ?? []).map((n) => ({ n, estado: estadoDe(n.eventoAt) })),
     [novedades],
   )
 
-  // Puede estar legítimamente vacía. Un esqueleto que luego desaparece es
-  // peor que aparecer un segundo más tarde.
-  if (!novedades || novedades.length === 0) return null
+  // ── VACÍA, PERO NO PARA QUIEN LA ESCRIBE ──────────────────────────────
+  // Para la Red, sin novedades no hay sección: un hueco vacío dice que aquí
+  // no pasa nada, y eso es peor que no decir nada.
+  //
+  // Para administración sí tiene que quedar algo. Si el botón de gestionar
+  // viviera solo dentro del panel, al retirar la última novedad desaparecería
+  // la única forma de publicar la siguiente — y habría que volver a pegar SQL
+  // justo para salir de ahí.
+  if (!novedades || novedades.length === 0) {
+    if (!isAdmin) return null
+    return (
+      <section className={s.panel}>
+        <header className={s.cabeceraPanel}>
+          <h2 className={s.tituloPanel}>Novedades de Los 144.000</h2>
+          <button type="button" className={s.gestionar} onClick={() => setPanelAbierto(true)}>
+            <Settings size={12} aria-hidden /> Gestionar
+          </button>
+        </header>
+        <p className={s.vaciaAdmin}>
+          No hay ninguna novedad. La Red no ve esta sección mientras esté así.
+        </p>
+        {panelAbierto && (
+          <NovedadesManagerModal open onClose={() => setPanelAbierto(false)} />
+        )}
+      </section>
+    )
+  }
 
   return (
     <section className={s.panel} aria-labelledby="novedades-titulo">
@@ -346,6 +391,11 @@ export function Novedades() {
           <span className={s.oculta}>
             <EyeOff size={11} aria-hidden /> Solo la ves tú
           </span>
+        )}
+        {isAdmin && (
+          <button type="button" className={s.gestionar} onClick={() => setPanelAbierto(true)}>
+            <Settings size={12} aria-hidden /> Gestionar
+          </button>
         )}
       </header>
 
@@ -426,6 +476,10 @@ export function Novedades() {
         )
       })}
       </div>
+
+      {isAdmin && panelAbierto && (
+        <NovedadesManagerModal open onClose={() => setPanelAbierto(false)} />
+      )}
     </section>
   )
 }

@@ -522,3 +522,38 @@
 }
 
 .respondiendo button:hover { color: #F3F6FA; }
+
+/* ── Gestionar: solo administración ──────────────────────────────────────
+   Discreto a propósito. Convive con el título de una sección que lee toda la
+   Red, así que no debe parecer parte del anuncio. */
+.gestionar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(167, 139, 202, 0.3);
+  background: transparent;
+  color: #a78bca;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.gestionar:hover {
+  border-color: #a78bca;
+  color: #c3b2e0;
+}
+
+/* Lo que ve administración cuando no queda ninguna novedad. La Red no ve
+   nada: para ella la sección sencillamente no existe. */
+.vaciaAdmin {
+  margin: 0;
+  padding: 1.2rem 0 0.2rem;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: #6a6a7a;
+}
