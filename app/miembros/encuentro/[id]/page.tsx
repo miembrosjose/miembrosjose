@@ -48,6 +48,7 @@ import { leerVturb } from "@/lib/red/vturb"
 import { miniaturaBuena } from "@/lib/red/grabaciones"
 import { VturbPlayer } from "../../_components/VturbPlayer"
 import { LlevarAlAcceso } from "../../_components/LlevarAlAcceso"
+import { ComentariosEncuentro } from "../../_components/ComentariosEncuentro"
 import styles from "./encuentro.module.css"
 
 export const dynamic = "force-dynamic"
@@ -236,6 +237,11 @@ export default async function PaginaEncuentro({
         </div>
 
         {g.descripcion && <p className={styles.descripcion}>{g.descripcion}</p>}
+
+        {/* Solo bajo una grabación publicada: en un borrador no hay a quién
+            responder, y lo que se escribiera ahí quedaría colgando de algo
+            que nadie más ve todavía. */}
+        {g.estado === "publicado" && <ComentariosEncuentro grabacionId={g.id} />}
       </article>
     </main>
   )

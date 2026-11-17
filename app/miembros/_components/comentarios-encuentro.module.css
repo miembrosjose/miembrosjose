@@ -1,0 +1,247 @@
+/* Comentarios bajo una grabación de los Encuentros. */
+
+.bloque {
+  margin-top: 2.2rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid rgba(167, 139, 202, 0.16);
+}
+
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.1rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+/* ── Escribir ───────────────────────────────────────────────────────────── */
+.escribir { margin-bottom: 1.6rem; }
+
+.respondiendoA {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.74rem;
+  color: #8b90b4;
+}
+
+.respondiendoA strong { color: #c3b2e0; font-weight: 600; }
+
+.respondiendoA button {
+  display: flex;
+  border: none;
+  background: none;
+  color: #6a6a7a;
+  cursor: pointer;
+  padding: 0;
+}
+
+.respondiendoA button:hover { color: #fca5a5; }
+
+.cajaEscribir {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.campo {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #2f2f42;
+  background: #0a0a14;
+  color: #f3f6fa;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-radius: 10px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.campo::placeholder { color: #4a4a5a; }
+.campo:focus { border-color: #6d4a9b; outline: none; }
+
+.enviar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(217, 184, 102, 0.45);
+  background: rgba(217, 184, 102, 0.1);
+  color: #e6cf95;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.enviar:hover:not(:disabled) {
+  background: rgba(217, 184, 102, 0.2);
+  border-color: #e6cf95;
+}
+
+.enviar:disabled { opacity: 0.4; cursor: default; }
+
+.cuenta {
+  margin: 0.4rem 0 0;
+  text-align: right;
+  font-size: 0.7rem;
+  color: #6a6a7a;
+}
+
+/* ── El hilo ────────────────────────────────────────────────────────────── */
+.hilo, .respuestas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hilo { display: flex; flex-direction: column; gap: 1.3rem; }
+
+/* Las respuestas se sangran UNA vez y llevan un raíl a la izquierda. No hay
+   más niveles: el servidor las aplana todas a este. */
+.respuestas {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0.9rem 0 0 1.1rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(167, 139, 202, 0.2);
+}
+
+.comentario {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.anidado .avatar { width: 30px; height: 30px; }
+
+.cuerpo { min-width: 0; flex: 1; }
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.25rem;
+}
+
+.nombre {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f3f6fa;
+  text-decoration: none;
+}
+
+.nombre:hover { color: #c3b2e0; text-decoration: underline; }
+
+.sello {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #e8e8f0;
+}
+
+.cuando {
+  font-size: 0.68rem;
+  color: #6a6a7a;
+}
+
+.texto {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #c3c6d8;
+  /* Un comentario pegado de otro sitio puede traer una palabra larguísima o
+     una dirección: sin esto, estira la fila y aparece desplazamiento lateral
+     en el móvil. */
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* ── Acciones ───────────────────────────────────────────────────────────── */
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.45rem;
+}
+
+.accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: none;
+  padding: 0;
+  color: #6a6a7a;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.accion:hover { color: #c3b2e0; }
+
+.gustado { color: #e0708a; }
+.gustado:hover { color: #f08ba3; }
+
+.borrar:hover { color: #fca5a5; }
+
+/* ── Estados ────────────────────────────────────────────────────────────── */
+.cargando, .vacio, .error, .aviso {
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8b90b4;
+}
+
+.vacio { color: #6a6a7a; margin: 0; }
+
+.error {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid #8a5a5a;
+  background: rgba(127, 29, 29, 0.12);
+  color: #fca5a5;
+}
+
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid #e0b06a;
+  background: rgba(224, 176, 106, 0.08);
+  color: #e0b06a;
+}
+
+.gira { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+@media (max-width: 520px) {
+  .respuestas { margin-left: 0.5rem; padding-left: 0.7rem; }
+  .avatar { width: 32px; height: 32px; }
+  .acciones { gap: 0.75rem; }
+}

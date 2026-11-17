@@ -14,9 +14,24 @@ import type { ForumAuthor } from "../_lib/types"
 type AvatarProps = {
   author: ForumAuthor
   className?: string
+  /**
+   * Navegar de verdad, en vez de cambiar la vista del SPA.
+   *
+   * ── CUÁNDO HACE FALTA ──────────────────────────────────────────────────
+   * Este avatar cancela siempre el clic y llama a `setView`, que es lo
+   * correcto DENTRO de la pantalla única de /miembros: cambia de vista sin
+   * recargar.
+   *
+   * Pero hay páginas que no son esa pantalla —la de una grabación, por
+   * ejemplo—. Ahí `setView` actualiza un estado que nadie dibuja, así que el
+   * avatar queda como un enlace que no hace absolutamente nada, y eso no se
+   * nota al programarlo: se nota cuando alguien intenta ver el perfil de
+   * quien comentó.
+   */
+  enlaceReal?: boolean
 }
 
-export function Avatar({ author, className }: AvatarProps) {
+export function Avatar({ author, className, enlaceReal }: AvatarProps) {
   const { setView } = useView()
   const isOnline = useIsOnline(author.user_id)
   const url = `/miembros/u/${author.user_id}`
@@ -43,6 +58,8 @@ export function Avatar({ author, className }: AvatarProps) {
     <a
       href={url}
       onClick={(e) => {
+        // Fuera de la pantalla única, se deja que el enlace haga lo suyo.
+        if (enlaceReal) return
         e.preventDefault()
         setView("user", null, { userId: author.user_id })
       }}
