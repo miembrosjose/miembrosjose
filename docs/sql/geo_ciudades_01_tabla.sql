@@ -172,6 +172,20 @@ create policy "geo_ciudades_leer"
 -- función devolvía los resultados POR ORDEN ALFABÉTICO y no por relevancia.
 -- Toda la puntuación cuidadosa se tiraba en la última línea. Por eso ahora
 -- hay una consulta exterior que vuelve a ordenar.
+-- ── SE BORRA ANTES DE CREARLA, Y NO ES POR GUSTO ──────────────────────────
+-- `create or replace function` NO puede cambiar las columnas que devuelve
+-- una función que ya existe: «cannot change return type of existing
+-- function». Y aquí se le añadió `tambien` sobre la marcha.
+--
+-- Es el mismo tropiezo que con `create table if not exists`, que tampoco
+-- añade columnas: las dos órdenes PARECEN idempotentes y en realidad se
+-- rinden en silencio cuando el objeto ya está. Las dos han dado un error que
+-- no se parecía a su causa.
+--
+-- Borrarla no pierde nada: es una función, no datos. Si no existía, el
+-- `if exists` se encarga.
+drop function if exists public.buscar_ciudad(text, text, int);
+
 create or replace function public.buscar_ciudad(
   q text,
   lugar text default null,
