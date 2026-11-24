@@ -55,6 +55,8 @@ type Fila = {
   lon: number
   zona: string
   poblacion: number
+  /** Con qué otro nombre coincidió, si no fue con el suyo. */
+  tambien: string | null
 }
 
 const CUANTAS = 8
@@ -102,7 +104,12 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     ciudades: filas.map((f) => ({
-      nombre: `${f.nombre}, ${f.pais}`,
+      // Cuando se encontró por otro de sus nombres, se dice: quien escribe
+      // «salcedo» y recibe «San Miguel» necesita saber por qué se lo
+      // ofrecemos, o creerá que el buscador se ha equivocado.
+      nombre: f.tambien
+        ? `${f.nombre} (${f.tambien}), ${f.pais}`
+        : `${f.nombre}, ${f.pais}`,
       provincia: f.provincia && f.provincia !== f.nombre ? f.provincia : "",
       lat: f.lat,
       lon: f.lon,

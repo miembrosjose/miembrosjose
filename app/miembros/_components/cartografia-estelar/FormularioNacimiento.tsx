@@ -297,7 +297,7 @@ export function FormularioNacimiento({ onTrazar, error, portada = PORTADA_CARTOG
                   salida exacta. */}
               {sinNada && (
                 <p className={s.sinCiudad}>
-                  No encontramos «{busqueda.trim()}» entre las 237.000 localidades que
+                  No encontramos «{busqueda.trim()}» entre las 1.300.000 localidades que
                   tenemos. Prueba solo con el nombre, sin el país — o escribe{" "}
                   <strong>las coordenadas exactas</strong>, que es lo más preciso.
                 </p>
@@ -333,7 +333,7 @@ export function FormularioNacimiento({ onTrazar, error, portada = PORTADA_CARTOG
         <p className={s.privacidad}>
           Tu fecha y tu hora de nacimiento <strong>no salen de este dispositivo</strong>, y
           el cálculo entero ocurre aquí. Lo único que viaja es el nombre de la ciudad
-          mientras la buscas, para poder mirarla entre las 237.000 que tenemos.
+          mientras la buscas, para poder mirarla entre las 1.300.000 que tenemos.
         </p>
 
         {/* GeoNames es CC BY 4.0: el crédito es obligatorio. Si se quita de

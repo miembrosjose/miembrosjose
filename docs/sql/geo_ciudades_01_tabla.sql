@@ -133,17 +133,45 @@ create policy "geo_ciudades_leer"
 -- tres consultas que se cortan en cuanto hay suficiente —hacerlas desde
 -- fuera serían tres viajes— y el criterio de ordenación queda en UN sitio.
 --
--- El orden importa y no es casual:
+-- Las tres pasadas:
 --
 --   1. EMPIEZA POR. Lo que casi siempre se busca, y lo más barato: usa el
 --      índice de prefijo.
 --   2. CONTIENE, en el nombre o en los alias. Más caro y con más ruido.
---   3. SE PARECE. La red de seguridad, solo si las dos anteriores no
---      llenaron la lista. Es la que encuentra «Mompós» escribiendo «Mompox»,
---      y también la que traería basura si se usara antes de tiempo.
+--   3. SE PARECE. La red de seguridad. Es la que encuentra «Mompós»
+--      escribiendo «Mompox», y también la que traería basura si pesara
+--      demasiado.
 --
--- Dentro de cada pasada manda la población: entre dos coincidencias igual de
--- buenas, la que más gente tiene es la que casi siempre se buscaba.
+-- ── POR QUÉ NO BASTA CON PONERLAS EN ORDEN ────────────────────────────────
+-- La primera versión devolvía primero TODAS las de la pasada 1, luego las de
+-- la 2, etc. Parecía razonable y daba un resultado malo:
+--
+-- Escribiendo «salcedo» hay quince lugares que se llaman exactamente así
+-- —en Asturias, en Galicia, en Cantabria, en Catamarca—, casi todos aldeas
+-- con población 0. Las quince ocupaban la lista entera. Y el Salcedo de
+-- Ecuador, que es un cantón de once mil habitantes, NO salía: en GeoNames
+-- está como «San Miguel» y «salcedo» es uno de sus nombres alternativos, o
+-- sea pasada 2, o sea nunca.
+--
+-- Lo detectó José preguntando por qué no le salía el suyo.
+--
+-- Así que la pasada y la población se combinan en UNA puntuación:
+--
+--     puntos = peso de la pasada + log10(población + 1)
+--
+-- El logaritmo es lo que hace que funcione: entre 1.000 y 10.000 habitantes
+-- hay un punto de diferencia, igual que entre 100.000 y un millón. Sin él,
+-- Ciudad de México aplastaría cualquier coincidencia mejor.
+--
+-- Con eso, un cantón de once mil que se llama Salcedo de segundo nombre
+-- (4 + 4,03 = 8,03) adelanta a una aldea de cero habitantes que se llama
+-- Salcedo de primero (6 + 0 = 6). Que es lo que cualquiera esperaría.
+--
+-- ── Y UN SEGUNDO FALLO, MÁS TONTO ─────────────────────────────────────────
+-- El `distinct on` obliga a ordenar por sus propias columnas, así que la
+-- función devolvía los resultados POR ORDEN ALFABÉTICO y no por relevancia.
+-- Toda la puntuación cuidadosa se tiraba en la última línea. Por eso ahora
+-- hay una consulta exterior que vuelve a ordenar.
 create or replace function public.buscar_ciudad(
   q text,
   lugar text default null,
@@ -157,7 +185,11 @@ returns table (
   lat double precision,
   lon double precision,
   zona text,
-  poblacion integer
+  poblacion integer,
+  -- Con qué otro nombre coincidió, cuando no coincidió por el suyo. Sin
+  -- esto, quien escribe «salcedo» ve «San Miguel» en la lista y no entiende
+  -- por qué se lo ofrecemos.
+  tambien text
 )
 language plpgsql
 stable
@@ -174,55 +206,80 @@ begin
 
   return query
   with candidatas as (
-    -- 1 · empieza por
-    select c.*, 1 as pasada, 1.0::real as parecido
-    from public.geo_ciudades c
-    where c.nombre_norm like patron || '%'
-      and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+    -- 1 · empieza por su propio nombre. Peso 6.
+    (
+      select c.*, (6.0 + log(10, c.poblacion + 1))::real as puntos, null::text as alias_visto
+      from public.geo_ciudades c
+      where c.nombre_norm like patron || '%'
+        and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+      order by c.poblacion desc
+      -- Un tope por pasada. Sin él, escribir «san» pondría a la base a
+      -- ordenar decenas de miles de filas para enseñar ocho.
+      limit 150
+    )
 
     union all
 
-    -- 2 · contiene, en el nombre o en algún alias
-    select c.*, 2 as pasada, 0.9::real as parecido
-    from public.geo_ciudades c
-    where length(q) >= 3
-      and (c.nombre_norm like '%' || patron || '%' or c.alias_norm like '%' || patron || '%')
-      and c.nombre_norm not like patron || '%'
-      and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+    -- 2 · lo contiene, en su nombre o en otro de sus nombres. Peso 4.
+    --
+    -- `alias_visto` saca el trozo que coincidió para poder enseñarlo: quien
+    -- escribe «salcedo» y ve «San Miguel» necesita saber por qué.
+    (
+      select c.*, (4.0 + log(10, c.poblacion + 1))::real as puntos,
+        (
+          select a from unnest(string_to_array(c.alias_norm, ' ')) a
+          where a like '%' || patron || '%' limit 1
+        ) as alias_visto
+      from public.geo_ciudades c
+      where length(q) >= 3
+        and (c.nombre_norm like '%' || patron || '%' or c.alias_norm like '%' || patron || '%')
+        and c.nombre_norm not like patron || '%'
+        and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+      order by c.poblacion desc
+      limit 150
+    )
 
     union all
 
-    -- 3 · se parece.
+    -- 3 · se parece. Peso 2 más lo parecido que sea.
     --
     -- `%` es el operador de pg_trgm y es el que usa el índice GIN; sin él,
     -- `similarity()` a secas recorrería el millón trescientas mil filas.
     --
     -- El 0,45 va escrito aquí y no como ajuste de sesión a propósito: un
-    -- ajuste de sesión no viaja con la función, y el día que alguien llame a
-    -- esto desde otro sitio se encontraría el umbral por defecto de Postgres
-    -- —0,3—, que con nombres cortos devuelve media tabla.
-    --
-    -- 0,45 deja pasar «mompox»→«mompós» y corta el ruido. Bajarlo trae más
-    -- resultados y peores.
-    select c.*, 3 as pasada, similarity(c.nombre_norm, q) as parecido
-    from public.geo_ciudades c
-    where length(q) >= 4
-      and c.nombre_norm % q
-      and similarity(c.nombre_norm, q) >= 0.45
-      and c.nombre_norm not like '%' || patron || '%'
-      and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+    -- ajuste de sesión no viaja con la función, y quien la llamara desde
+    -- otro sitio se encontraría el 0,3 por defecto de Postgres, que con
+    -- nombres cortos devuelve media tabla.
+    (
+      select c.*, (2.0 + similarity(c.nombre_norm, q) * 2 + log(10, c.poblacion + 1))::real as puntos,
+             null::text as alias_visto
+      from public.geo_ciudades c
+      where length(q) >= 4
+        and c.nombre_norm % q
+        and similarity(c.nombre_norm, q) >= 0.45
+        and c.nombre_norm not like '%' || patron || '%'
+        and (lugar is null or lugar = '' or c.pais ilike '%' || lugar || '%' or c.provincia ilike '%' || lugar || '%')
+      order by similarity(c.nombre_norm, q) desc, c.poblacion desc
+      limit 100
+    )
+  ),
+  -- El mismo sitio puede salir en dos pasadas, o repetido en GeoNames con
+  -- coordenadas casi iguales. Se queda la mejor versión de cada uno.
+  mejores as (
+    select distinct on (x.nombre, x.pais_codigo, round(x.lat::numeric, 2), round(x.lon::numeric, 2))
+      x.nombre, x.provincia, x.pais, x.pais_codigo, x.lat, x.lon, x.zona, x.poblacion,
+      x.alias_visto, x.puntos
+    from candidatas x
+    order by x.nombre, x.pais_codigo, round(x.lat::numeric, 2), round(x.lon::numeric, 2), x.puntos desc
   )
-  select
-    distinct on (x.nombre, x.pais_codigo, round(x.lat::numeric, 2), round(x.lon::numeric, 2))
-    x.nombre, x.provincia, x.pais, x.pais_codigo, x.lat, x.lon, x.zona, x.poblacion
-  from (
-    select * from candidatas
-    order by pasada, parecido desc, poblacion desc
-    limit limite * 4
-  ) x
-  order by
-    x.nombre, x.pais_codigo, round(x.lat::numeric, 2), round(x.lon::numeric, 2),
-    x.pasada, x.parecido desc, x.poblacion desc;
+  -- Y AQUÍ se ordena por relevancia. El `distinct on` de arriba obliga a
+  -- ordenar por sus columnas, así que sin esta consulta exterior la lista
+  -- saldría alfabética y toda la puntuación no habría servido de nada.
+  select m.nombre, m.provincia, m.pais, m.pais_codigo, m.lat, m.lon, m.zona, m.poblacion,
+         m.alias_visto
+  from mejores m
+  order by m.puntos desc, m.nombre
+  limit limite;
 end;
 $$;
 
@@ -266,3 +323,12 @@ select * from public.buscar_ciudad('mompox');
 
 -- 3 · lo de siempre, que no se haya roto
 select * from public.buscar_ciudad('bogota');
+
+-- 4 · el caso que destapó el fallo del orden: hay quince lugares llamados
+--     exactamente «Salcedo», casi todos aldeas de cero habitantes. El de
+--     Ecuador es un cantón de once mil que en GeoNames se llama «San
+--     Miguel», con «salcedo» entre sus otros nombres.
+--
+--     Tiene que salir en la lista, y la columna `tambien` debe decir por qué.
+select nombre, provincia, pais, poblacion, tambien
+from public.buscar_ciudad('salcedo');
