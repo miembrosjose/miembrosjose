@@ -614,3 +614,47 @@
 .predominante { border-color: rgba(167, 139, 202, 0.45); background: rgba(167, 139, 202, 0.05); }
 .ausente { border-color: rgba(167, 139, 202, 0.14); }
 .ausente .filaEstado { color: #7f849e; }
+
+/* ── «Dónde se nota en tu vida» ─────────────────────────────────────────────
+   Los enlaces que llevan de un signo a los planetas tuyos que caen en él.
+   Van como botones anchos y tocables, no como texto subrayado: en el móvil
+   un enlace de una línea dentro de un párrafo es imposible de acertar. */
+.dondeSeNota {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.enlaceDonde {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(167, 139, 202, 0.22);
+  border-left-width: 2px;
+  border-left-color: rgba(167, 139, 202, 0.55);
+  border-radius: 0 9px 9px 0;
+  background: rgba(167, 139, 202, 0.05);
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.enlaceDonde:hover {
+  background: rgba(167, 139, 202, 0.12);
+  border-color: rgba(167, 139, 202, 0.5);
+  border-left-color: #c3b2e0;
+}
+
+.dondeTitulo {
+  font-size: 0.84rem;
+  color: #f3f6fa;
+}
+
+.dondeTexto {
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: #8b90b4;
+}

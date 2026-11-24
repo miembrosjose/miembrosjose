@@ -169,7 +169,9 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
           <CasasVista carta={carta} abierta={casaAbierta} onAbrir={setCasaAbierta} />
         )}
         {pestana === "aspectos" && <Aspectos carta={carta} />}
-        {pestana === "camino" && <CaminoSolar pesos={pesos} />}
+        {pestana === "camino" && (
+          <CaminoSolar pesos={pesos} carta={carta} onPunto={tocarPunto} />
+        )}
         {pestana === "guia" && <GuiaVista />}
       </div>
 
@@ -448,7 +450,11 @@ function Aspectos({ carta }: { carta: Carta }) {
 //  5 · CAMINO SOLAR
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
+function CaminoSolar({ pesos, carta, onPunto }: {
+  pesos: PesoDeSigno[]
+  carta: Carta
+  onPunto: (id: PuntoId) => void
+}) {
   return (
     <div>
       <p className={s.entradilla}>
@@ -490,7 +496,9 @@ function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
 
           (Antes se abrían los «ausentes», resto de cuando yo los trataba
           como el hallazgo importante de la lectura. No lo son.) */}
-      {pesos.map((w) => <FilaSigno key={w.signo} w={w} />)}
+      {pesos.map((w) => (
+        <FilaSigno key={w.signo} w={w} carta={carta} onPunto={onPunto} />
+      ))}
     </div>
   )
 }
@@ -509,7 +517,11 @@ function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
  * reconoce la suya. Es más honesto y además es más útil: nadie se reconoce en
  * una etiqueta que le han puesto.
  */
-function FilaSigno({ w }: { w: PesoDeSigno }) {
+function FilaSigno({ w, carta, onPunto }: {
+  w: PesoDeSigno
+  carta: Carta
+  onPunto: (id: PuntoId) => void
+}) {
   const [abierto, setAbierto] = useState(false)
   const signo = SIGNOS[w.signo]
   const mapa = MAPA_POR_DEFECTO[w.signo]
@@ -534,11 +546,52 @@ function FilaSigno({ w }: { w: PesoDeSigno }) {
 
       {abierto && (
         <div className={s.filaCuerpo}>
-          <p className={s.filaHabitantes}>
-            {w.habitantes.length > 0
-              ? `En tu carta: ${w.habitantes.map((h) => h.nombre).join(", ")}.`
-              : "En tu carta no cayó nada en este signo."}
-          </p>
+          {/* ── DÓNDE SE NOTA ESTE SIGNO, EN TU VIDA ───────────────────
+              Lo pidió José con un ejemplo que lo explica mejor que
+              cualquier descripción: «estoy en desequilibrio con Sagitario,
+              y tengo Sagitario en Venus — si eso son peleas de pareja,
+              discusiones, me voy».
+
+              O sea: saber que un arquetipo te está pesando no sirve de
+              mucho si no sabes DÓNDE te pesa. El signo dice qué; el
+              planeta, en qué función tuya; la casa, en qué terreno de tu
+              vida. Tu carta ya tiene esos tres datos — lo que faltaba era
+              ponerlos en la misma línea.
+
+              Va como enlaces y no desplegado, también porque él lo pidió:
+              doce signos por sus planetas por sus casas sería un muro. */}
+          {w.habitantes.length > 0 ? (
+            <div className={s.dondeSeNota}>
+              <p className={s.etiquetaMini}>Dónde se nota en tu vida</p>
+              {w.habitantes.map((h) => {
+                const punto = carta.puntos.find((x) => x.id === h.id)
+                if (!punto) return null
+                const casa = CASAS[punto.casa]
+                const info = PLANETAS[h.id as PlanetaId]
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    className={s.enlaceDonde}
+                    onClick={() => onPunto(h.id)}
+                  >
+                    <span className={s.dondeTitulo}>
+                      {h.nombre} · casa {punto.casa} — {casa.nombre}
+                    </span>
+                    <span className={s.dondeTexto}>
+                      {info ? info.breve.replace(/\.$/, "") : "Tu puerta de entrada"},
+                      {" "}en el terreno de {casa.breve.charAt(0).toLowerCase() + casa.breve.slice(1).replace(/\.$/, "")}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className={s.filaHabitantes}>
+              En tu carta no cayó ningún planeta en este signo. El arquetipo sigue
+              existiendo, pero no tiene dónde apoyarse en ti.
+            </p>
+          )}
 
           <p className={s.etiquetaMini}>El arquetipo · {signo.nombre}</p>
           <p className={s.parrafo}>{signo.atributos}</p>
