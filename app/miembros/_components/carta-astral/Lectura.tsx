@@ -484,13 +484,13 @@ function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
         Lo otro lo sabes tú.
       </p>
 
-      {/* Solo el primero viene abierto: uno de ejemplo, para que no sea un
-          muro de filas cerradas, y los once restantes se abren si interesan.
+      {/* TODOS cerrados. Son doce signos con cuatro párrafos cada uno: abrir
+          cualquiera de entrada convierte la sección en un muro de texto, que
+          es justo lo que había que quitar. Se abre el que interese.
 
-          Antes se abrían los «ausentes», y era un resto de la idea que José
-          corrigió: yo los trataba como el hallazgo importante de la lectura.
-          No lo son — aparecer poco es un dato, no un diagnóstico. */}
-      {pesos.map((w, i) => <FilaSigno key={w.signo} w={w} abiertoAlPrincipio={i === 0} />)}
+          (Antes se abrían los «ausentes», resto de cuando yo los trataba
+          como el hallazgo importante de la lectura. No lo son.) */}
+      {pesos.map((w) => <FilaSigno key={w.signo} w={w} />)}
     </div>
   )
 }
@@ -509,11 +509,8 @@ function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
  * reconoce la suya. Es más honesto y además es más útil: nadie se reconoce en
  * una etiqueta que le han puesto.
  */
-function FilaSigno({ w, abiertoAlPrincipio = false }: {
-  w: PesoDeSigno
-  abiertoAlPrincipio?: boolean
-}) {
-  const [abierto, setAbierto] = useState(abiertoAlPrincipio)
+function FilaSigno({ w }: { w: PesoDeSigno }) {
+  const [abierto, setAbierto] = useState(false)
   const signo = SIGNOS[w.signo]
   const mapa = MAPA_POR_DEFECTO[w.signo]
   const sistema = SISTEMAS[mapa.sistema]
