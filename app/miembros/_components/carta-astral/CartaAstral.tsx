@@ -155,6 +155,13 @@ export function CartaAstral() {
         <div className={prod.body}>
           <h3 className={prod.name} style={{ color: "#F3F6FA" }}>{titulo}</h3>
           <p className={s.kicker}>Planetas · casas · sistemas</p>
+          {/* La descripción faltaba: la tarjeta era la única de la fila sin
+              ella. Sale de la que se edita en Gestionar, con un respaldo por
+              si alguien la deja en blanco. */}
+          <p className={s.descripcionTarjeta}>
+            {producto?.description?.trim() ||
+              "El cielo del minuto en que naciste, leído desde el Camino Solar: qué signos pesan en ti y qué sistema orgánico señala cada uno."}
+          </p>
         </div>
       </button>
 

@@ -766,3 +766,12 @@
 }
 
 .pieDeFila strong { color: #a78bca; }
+
+/* La descripción de la tarjeta. Mismo tamaño y color que las demás de la fila
+   de Recursos, para que no desentone. */
+.descripcionTarjeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #a8a8c0;
+}
