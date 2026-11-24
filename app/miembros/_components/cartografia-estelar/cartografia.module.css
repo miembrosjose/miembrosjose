@@ -1977,3 +1977,76 @@
   color: #a78bca;
 }
 .disposicion > .parrafo:last-child { margin-bottom: 0; }
+
+/* ── Buscador mundial de ciudades ───────────────────────────────────────── */
+.buscandoMundo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.74rem;
+  color: #7f849e;
+}
+
+.gira { animation: giraBuscador 1s linear infinite; }
+@keyframes giraBuscador { to { transform: rotate(360deg); } }
+
+/* Un enlace dentro de un texto de ayuda: parece enlace, es botón. */
+.enlaceSuelto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #a78bca;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.enlaceSuelto:hover { color: #c3b2e0; }
+
+/* ── Coordenadas a mano ─────────────────────────────────────────────────── */
+.aMano {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(167, 139, 202, 0.25);
+  border-radius: 11px;
+  background: rgba(167, 139, 202, 0.05);
+}
+
+.aManoCampos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.aManoCampos label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  color: #8b90b4;
+}
+
+.aManoBotones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ── Crédito obligatorio de GeoNames (CC BY 4.0) ────────────────────────── */
+.credito {
+  margin: 0.4rem 0 0;
+  font-size: 0.66rem;
+  line-height: 1.5;
+  color: #5f6478;
+}
+
+.credito a { color: #7f849e; text-decoration: underline; text-underline-offset: 2px; }
+.credito a:hover { color: #a78bca; }

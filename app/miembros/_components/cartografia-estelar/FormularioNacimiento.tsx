@@ -26,12 +26,30 @@
 // navegador, que es lo que faltaba para que no vuelva a pasar.
 
 import { useMemo, useState } from "react"
-import { MapPin } from "lucide-react"
+import { MapPin, Loader2, Compass } from "lucide-react"
 import { AVISO_DOS_CAPAS } from "../../_lib/cartografia-estelar/content/avisos"
 import type { Nacimiento } from "../../_lib/cartografia-estelar/domain/types"
 import { buscarCiudades, type CiudadEncontrada } from "../../_lib/cartografia-estelar/geo/ciudades"
+import { useCiudadesMundo, juntarSinRepetir } from "../../_lib/cartografia-estelar/geo/use-ciudades-mundo"
 import { CabeceraRecurso } from "../CabeceraRecurso"
 import s from "./cartografia.module.css"
+
+/**
+ * La zona horaria de unas coordenadas escritas a mano.
+ *
+ * No se puede saber: hace falta un mapa de husos, y eso son megas. Así que se
+ * usa la del propio dispositivo y se DICE en pantalla, para que quien nació
+ * en otro huso la corrija eligiendo una ciudad cercana.
+ *
+ * Es el último recurso de todos, para la aldea que no está en ninguna base.
+ */
+function zonaDelDispositivo(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+  } catch {
+    return "UTC"
+  }
+}
 
 export function FormularioNacimiento({ onTrazar, error }: {
   onTrazar: (n: Nacimiento) => void
@@ -54,12 +72,51 @@ export function FormularioNacimiento({ onTrazar, error }: {
   const [busqueda, setBusqueda] = useState("")
   const [lugar, setLugar] = useState<CiudadEncontrada | null>(null)
 
+  const [aMano, setAMano] = useState(false)
+  const [latTexto, setLatTexto] = useState("")
+  const [lonTexto, setLonTexto] = useState("")
+
   const hallazgo = useMemo(
     () => (lugar ? { estado: "corto" as const } : buscarCiudades(busqueda)),
     [busqueda, lugar],
   )
-  const sugerencias = hallazgo.estado === "ok" ? hallazgo.ciudades : []
+  const locales = hallazgo.estado === "ok" ? hallazgo.ciudades : []
+
+  // Las 237.393 del servidor, por detrás. Ver use-ciudades-mundo.ts.
+  const mundo = useCiudadesMundo(busqueda, !lugar && !aMano)
+  const sugerencias = useMemo(
+    () => juntarSinRepetir(locales, mundo.ciudades),
+    [locales, mundo.ciudades],
+  )
+
+  // Nada encontrado en NINGUNA de las dos, y ya terminó de buscar.
+  const sinNada =
+    !lugar && !aMano && !mundo.buscando &&
+    hallazgo.estado !== "corto" && sugerencias.length === 0
+
   const listo = Boolean(fecha && hora && lugar)
+
+  /** Acepta «4.6097» y «4,6097»: en español la coma es lo natural. */
+  const aNumero = (v: string) => Number(v.trim().replace(",", "."))
+  const latNum = aNumero(latTexto)
+  const lonNum = aNumero(lonTexto)
+  const coordenadasValen =
+    latTexto.trim() !== "" && lonTexto.trim() !== "" &&
+    Number.isFinite(latNum) && Number.isFinite(lonNum) &&
+    Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180
+
+  const usarCoordenadas = () => {
+    if (!coordenadasValen) return
+    const zona = zonaDelDispositivo()
+    setLugar({
+      nombre: `${latNum.toFixed(4)}, ${lonNum.toFixed(4)}`,
+      provincia: "coordenadas escritas a mano",
+      lat: latNum,
+      lon: lonNum,
+      zona,
+    })
+    setAMano(false)
+  }
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,13 +176,59 @@ export function FormularioNacimiento({ onTrazar, error }: {
                 Cambiar
               </button>
             </div>
+          ) : aMano ? (
+            /* ── EL ÚLTIMO RECURSO ──────────────────────────────────────
+               Para la aldea que no está en ninguna base. Lo ofrecen todos
+               los programas serios de astrología, y es la única forma de
+               cubrir el cien por cien sin depender de nadie. */
+            <div className={s.aMano}>
+              <p className={s.ayuda}>
+                Las coordenadas de tu lugar exacto. Las encuentras en cualquier mapa:
+                busca el sitio, mantén pulsado y te las enseña.
+              </p>
+              <div className={s.aManoCampos}>
+                <label>
+                  <span>Latitud</span>
+                  <input
+                    type="text" inputMode="decimal" value={latTexto}
+                    onChange={(e) => setLatTexto(e.target.value)}
+                    placeholder="4,6097" className={s.input}
+                  />
+                </label>
+                <label>
+                  <span>Longitud</span>
+                  <input
+                    type="text" inputMode="decimal" value={lonTexto}
+                    onChange={(e) => setLonTexto(e.target.value)}
+                    placeholder="-74,0817" className={s.input}
+                  />
+                </label>
+              </div>
+              <p className={s.sinCiudad}>
+                Con coordenadas a mano usamos la zona horaria de <strong>este
+                dispositivo</strong> ({zonaDelDispositivo()}). Si naciste en otro huso,
+                elige mejor una ciudad cercana de la lista: la zona importa tanto como
+                el sitio.
+              </p>
+              <div className={s.aManoBotones}>
+                <button
+                  type="button" className={s.primario}
+                  disabled={!coordenadasValen} onClick={usarCoordenadas}
+                >
+                  Usar estas coordenadas
+                </button>
+                <button type="button" className={s.lugarCambiar} onClick={() => setAMano(false)}>
+                  Volver a buscar por nombre
+                </button>
+              </div>
+            </div>
           ) : (
             <>
               <input
                 type="text"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Escribe una ciudad…"
+                placeholder="Escribe una ciudad o un pueblo…"
                 className={s.input}
                 autoComplete="off"
               />
@@ -142,18 +245,29 @@ export function FormularioNacimiento({ onTrazar, error }: {
                 </ul>
               )}
 
+              {/* Mientras llegan las del servidor. Solo se enseña si lo local
+                  no dio nada: con resultados en pantalla, un cargando debajo
+                  solo inquieta. */}
+              {mundo.buscando && sugerencias.length === 0 && (
+                <p className={s.buscandoMundo}>
+                  <Loader2 size={13} className={s.gira} aria-hidden />
+                  Buscando entre todas las ciudades del mundo…
+                </p>
+              )}
+
               {/* ── CUANDO NO HAY NADA, HAY QUE DECIRLO ────────────────────
                   Antes esto no existía: la lista salía vacía y la única pista
                   era el texto de abajo repitiendo que el lugar hace falta.
                   Así que la gente escribía su ciudad una y otra vez, sin
                   saber que el problema era que no estaba en la lista. Es el
-                  fallo que trajo a José, y el silencio era la mitad de él. */}
-              {hallazgo.estado === "vacio" && (
+                  fallo que trajo a José, y el silencio era la mitad de él.
+                  Ahora, además, ya no se le pide que aproxime: se le da una
+                  salida exacta. */}
+              {sinNada && (
                 <p className={s.sinCiudad}>
-                  No encontramos «{busqueda.trim()}».
-                  {" "}Prueba solo con el nombre de la ciudad, sin el país. Y si es un
-                  pueblo pequeño, usa <strong>la ciudad grande más cercana</strong>: unos
-                  kilómetros no cambian tu Ascendente.
+                  No encontramos «{busqueda.trim()}» entre las 237.000 localidades que
+                  tenemos. Prueba solo con el nombre, sin el país — o escribe{" "}
+                  <strong>las coordenadas exactas</strong>, que es lo más preciso.
                 </p>
               )}
 
@@ -161,7 +275,10 @@ export function FormularioNacimiento({ onTrazar, error }: {
                 {/* Que hay que ELEGIRLA de la lista no se decía en ninguna
                     parte, y es el paso donde se atascaba todo el mundo. */}
                 Escribe y <strong>elige una de la lista</strong>. Hace falta: sin el lugar
-                no se puede calcular tu Ascendente.
+                no se puede calcular tu Ascendente.{" "}
+                <button type="button" className={s.enlaceSuelto} onClick={() => setAMano(true)}>
+                  <Compass size={11} aria-hidden /> Escribir coordenadas
+                </button>
               </small>
             </>
           )}
@@ -173,8 +290,26 @@ export function FormularioNacimiento({ onTrazar, error }: {
           Trazar mi cartografía
         </button>
 
+        {/* ── LA PRIVACIDAD, DICHA COMO ES AHORA ──────────────────────────
+            Antes ponía «nada se guarda en ningún servidor», y era verdad
+            mientras las ciudades viajaban dentro de la aplicación. Con el
+            buscador mundial, el NOMBRE que se escribe sí va al servidor. La
+            fecha y la hora no, y el cálculo sigue ocurriendo aquí.
+
+            Se reescribe en vez de dejarlo: una promesa de privacidad que ha
+            dejado de ser exacta es peor que no haberla hecho. */}
         <p className={s.privacidad}>
-          Todo el cálculo ocurre en tu dispositivo. Nada se guarda en ningún servidor.
+          Tu fecha y tu hora de nacimiento <strong>no salen de este dispositivo</strong>, y
+          el cálculo entero ocurre aquí. Lo único que viaja es el nombre de la ciudad
+          mientras la buscas, para poder mirarla entre las 237.000 que tenemos.
+        </p>
+
+        {/* GeoNames es CC BY 4.0: el crédito es obligatorio. Si se quita de
+            aquí, se incumple la licencia. */}
+        <p className={s.credito}>
+          Datos de ciudades de{" "}
+          <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>
+          {" "}(CC BY 4.0).
         </p>
         <details className={s.avisoPlegado}>
           <summary>Aviso sobre cálculo e interpretación</summary>
