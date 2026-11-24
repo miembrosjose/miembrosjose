@@ -415,13 +415,21 @@
 }
 
 /* ── Pestañas ───────────────────────────────────────────────────────────── */
-/* Estas SÍ se quedan arriba: es la navegación, y tiene que estar siempre a
-   un dedo. Fondo sólido y opaco — con degradado se transparenta el texto
-   que pasa por debajo y se lee doble. */
+/* ── LAS PESTAÑAS YA NO SE QUEDAN PEGADAS ───────────────────────────────────
+   Estaban con  y el contenido se veía POR ENCIMA de la
+   barra al desplazar: el panel parecía tener un filtro flotante a media
+   altura. Es el segundo disgusto con sticky en esta pantalla —el primero fue
+   la rueda, que se dibujaba sobre el texto— y las dos veces el síntoma fue el
+   mismo: dos elementos disputándose el mismo  dentro de un panel que
+   ya tiene su propio desplazamiento.
+
+   Dentro de un contenedor con scroll propio, y en Safari de iOS, sticky es
+   frágil. Y con todas las filas cerradas la lista cabe en poco: volver arriba
+   es un gesto corto. No merece la pena pelearse por ello.
+
+   Si algún día se quiere recuperar, no basta con devolver la propiedad: hay
+   que mirar primero qué otro elemento comparte ese mismo borde superior. */
 .pestanas {
-  position: sticky;
-  top: 0;
-  z-index: 3;
   display: flex;
   gap: 0.3rem;
   padding: 0.6rem 0;
@@ -429,7 +437,6 @@
   overflow-x: auto;
   scrollbar-width: none;
   background: #0d0d18;
-  box-shadow: 0 6px 12px -6px rgba(5, 5, 12, 0.9);
   border-bottom: 1px solid rgba(167, 139, 202, 0.14);
 }
 
