@@ -1,0 +1,392 @@
+/* Carta Astral · Camino Solar
+   La paleta es la de la casa: las variables se llaman «gold» pero valen
+   violeta. Aquí se usan los valores directamente, como en cartografia. */
+
+/* ── La tarjeta ─────────────────────────────────────────────────────────── */
+.etiquetaNuevo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  background: #a78bca;
+  color: #0a0a14;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.portadaProvisional {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(167, 139, 202, 0.28), transparent 60%),
+    radial-gradient(circle at 75% 70%, rgba(167, 139, 202, 0.16), transparent 55%),
+    #11111d;
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+/* ── El panel ───────────────────────────────────────────────────────────── */
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(5, 5, 12, 0.86);
+  backdrop-filter: blur(6px);
+}
+
+.panel {
+  position: relative;
+  width: min(820px, 100%);
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d18;
+  border: 1px solid rgba(167, 139, 202, 0.22);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #2f2f42;
+  border-radius: 10px;
+  background: rgba(13, 13, 24, 0.9);
+  color: #c3c6d8;
+  cursor: pointer;
+}
+
+.cerrar:hover { color: #f3f6fa; border-color: #6d4a9b; }
+
+.scroll {
+  overflow-y: auto;
+  padding: 1.5rem 1.2rem 2rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Cabecera del resultado ─────────────────────────────────────────────── */
+.resultado { color: #c3c6d8; }
+
+.cabecera { margin-bottom: 1.4rem; }
+
+.titulo {
+  margin: 0.3rem 0 0.4rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: #f3f6fa;
+}
+
+.datosNacimiento {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  color: #7f849e;
+}
+
+/* ── Los tres grandes ───────────────────────────────────────────────────── */
+.tresGrandes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.6rem;
+}
+
+.grande {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.8rem 0.7rem;
+  border: 1px solid rgba(167, 139, 202, 0.2);
+  border-radius: 12px;
+  background: rgba(167, 139, 202, 0.06);
+}
+
+.grandeRotulo {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.grandeSigno { font-size: 1rem; color: #f3f6fa; }
+.grandeGrado { font-family: var(--font-mono, monospace); font-size: 0.62rem; color: #7f849e; }
+.grandePie { margin-top: 0.2rem; font-size: 0.68rem; color: #8b90b4; }
+
+@media (max-width: 560px) {
+  .tresGrandes { grid-template-columns: 1fr; }
+}
+
+/* ── Secciones plegables ────────────────────────────────────────────────── */
+.seccion {
+  border-top: 1px solid rgba(167, 139, 202, 0.14);
+  padding-top: 0.9rem;
+  margin-top: 1.2rem;
+}
+
+.seccionCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #a78bca;
+  cursor: pointer;
+}
+
+.seccionTitulo {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.seccionCuerpo { margin-top: 0.9rem; }
+
+.giro { transform: rotate(180deg); }
+
+/* ── Textos ─────────────────────────────────────────────────────────────── */
+.parrafo { margin: 0 0 0.7rem; font-size: 0.86rem; line-height: 1.65; color: #c3c6d8; }
+.parrafoSecundario { margin: 0 0 0.6rem; font-size: 0.8rem; line-height: 1.6; color: #8b90b4; }
+
+.nota {
+  margin: 0 0 1rem;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: #7f849e;
+}
+
+.nota strong, .parrafoSecundario strong { color: #c3b2e0; }
+
+.etiquetaMini {
+  margin: 0.8rem 0 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6d6d82;
+}
+
+.notaGeneracional {
+  margin: 0 0 0.7rem;
+  padding: 0.5rem 0.65rem;
+  border-left: 2px solid rgba(167, 139, 202, 0.4);
+  background: rgba(167, 139, 202, 0.06);
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: #8b90b4;
+}
+
+/* ── Tabla ──────────────────────────────────────────────────────────────── */
+.tabla { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+
+.tabla th {
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6d6d82;
+  border-bottom: 1px solid rgba(167, 139, 202, 0.16);
+}
+
+.tabla td {
+  padding: 0.38rem 0.4rem;
+  border-bottom: 1px solid rgba(167, 139, 202, 0.07);
+  color: #c3c6d8;
+}
+
+.celdaNombre { color: #f3f6fa; }
+.celdaNum { font-family: var(--font-mono, monospace); color: #8b90b4; }
+
+.retro {
+  margin-left: 0.35rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: #e0a0a0;
+}
+
+/* ── Planetas ───────────────────────────────────────────────────────────── */
+.bloquePlaneta {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgba(167, 139, 202, 0.08);
+}
+
+.bloqueTitulo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.98rem;
+  color: #f3f6fa;
+}
+
+.bloqueCasa {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.bloqueBreve { margin: 0 0 0.3rem; font-size: 0.78rem; font-style: italic; color: #7f849e; }
+
+/* ── Aspectos ───────────────────────────────────────────────────────────── */
+.aspecto { padding: 0.8rem 0; border-bottom: 1px solid rgba(167, 139, 202, 0.08); }
+
+.aspectoTitulo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.92rem;
+  color: #f3f6fa;
+}
+
+.punto { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.union { background: #c3b2e0; }
+.tension { background: #e0a0a0; }
+.fluidez { background: #a8ce86; }
+
+.orbe {
+  margin-left: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: #6d6d82;
+}
+
+/* ── Camino Solar ───────────────────────────────────────────────────────── */
+.filaSigno {
+  border: 1px solid rgba(167, 139, 202, 0.14);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.predominante { border-color: rgba(167, 139, 202, 0.45); background: rgba(167, 139, 202, 0.05); }
+.ausente { border-color: rgba(224, 176, 106, 0.3); }
+
+.filaCabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: none;
+  background: none;
+  color: #c3c6d8;
+  cursor: pointer;
+  text-align: left;
+}
+
+.filaNombre { flex: 1; font-size: 0.9rem; color: #f3f6fa; }
+
+.filaEstado {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a78bca;
+}
+
+.ausente .filaEstado { color: #e0b06a; }
+
+.filaPuntos {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: #6d6d82;
+}
+
+.filaCuerpo { padding: 0 0.7rem 0.8rem; }
+
+.filaHabitantes {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  color: #7f849e;
+}
+
+.sistema {
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed rgba(167, 139, 202, 0.18);
+}
+
+.borrador {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid rgba(224, 176, 106, 0.4);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e0b06a;
+}
+
+/* ── Pie ────────────────────────────────────────────────────────────────── */
+.avisoCapas {
+  margin: 1.6rem 0 0;
+  padding: 0.7rem 0.8rem;
+  border-left: 2px solid rgba(167, 139, 202, 0.4);
+  background: rgba(167, 139, 202, 0.05);
+  font-size: 0.74rem;
+  line-height: 1.6;
+  color: #8b90b4;
+}
+
+.pie { display: flex; gap: 0.6rem; margin-top: 1rem; }
+
+.secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #2f2f42;
+  border-radius: 9px;
+  background: none;
+  color: #8b90b4;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.secundario:hover { color: #f3f6fa; border-color: #6d4a9b; }
+
+.aviso {
+  padding: 1rem;
+  border-left: 2px solid #e0b06a;
+  background: rgba(224, 176, 106, 0.08);
+  color: #e0b06a;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
