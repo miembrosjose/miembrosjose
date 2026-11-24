@@ -40,6 +40,7 @@ import { textoEnCasa } from "../../_lib/carta-astral/contenido/planeta-en-casa"
 import { textoEnSigno, GENERACIONALES } from "../../_lib/carta-astral/contenido/planeta-en-signo"
 import { textoAngulo } from "../../_lib/carta-astral/contenido/angulos-en-signo"
 import { COMO_ACTUA, textoPareja } from "../../_lib/carta-astral/contenido/aspectos-texto"
+import { sombraEn } from "../../_lib/carta-astral/contenido/sombra-en-punto"
 import { GUIA } from "../../_lib/carta-astral/contenido/guia"
 
 import { RuedaCarta } from "./RuedaCarta"
@@ -562,7 +563,9 @@ function FilaSigno({ w, carta, onPunto }: {
               doce signos por sus planetas por sus casas sería un muro. */}
           {w.habitantes.length > 0 ? (
             <div className={s.dondeSeNota}>
-              <p className={s.etiquetaMini}>Dónde se nota en tu vida</p>
+              <p className={s.etiquetaMini}>
+                Si este signo se te desequilibra, dónde se nota
+              </p>
               {w.habitantes.map((h) => {
                 const punto = carta.puntos.find((x) => x.id === h.id)
                 if (!punto) return null
@@ -578,8 +581,18 @@ function FilaSigno({ w, carta, onPunto }: {
                     <span className={s.dondeTitulo}>
                       {h.nombre} · casa {punto.casa} — {casa.nombre}
                     </span>
+                    {/* ESTO es el cruce que faltaba. La versión anterior
+                        ponía aquí una descripción genérica del planeta y de
+                        la casa —«qué valoras y cómo te vinculas»— y José lo
+                        dijo sin rodeos: «ese cruce que te acabo de pedir, no
+                        lo veo». Tenía razón: eso era un índice, no una
+                        lectura. */}
+                    <span className={s.dondeSombra}>
+                      {sombraEn(w.signo, h.id) ??
+                        `${info ? info.breve.replace(/\.$/, "") : "Tu forma de aparecer"}, en el terreno de ${casa.breve.charAt(0).toLowerCase() + casa.breve.slice(1).replace(/\.$/, "")}`}
+                    </span>
                     <span className={s.dondeTexto}>
-                      {info ? info.breve.replace(/\.$/, "") : "Tu puerta de entrada"},
+                      {info ? info.breve.replace(/\.$/, "") : "Cómo apareces"},
                       {" "}en el terreno de {casa.breve.charAt(0).toLowerCase() + casa.breve.slice(1).replace(/\.$/, "")}
                     </span>
                   </button>

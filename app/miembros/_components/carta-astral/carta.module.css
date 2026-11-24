@@ -658,3 +658,12 @@
   line-height: 1.5;
   color: #8b90b4;
 }
+
+/* La frase del cruce: la sombra de ese signo pasando por ese punto. Es lo que
+   la persona vino a leer, así que va delante y con el color del texto normal.
+   La descripción genérica del planeta y la casa queda debajo, apagada. */
+.dondeSombra {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #c3c6d8;
+}
