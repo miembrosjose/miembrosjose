@@ -90,7 +90,7 @@ export const GUIA: EntradaGuia[] = [
     id: "camino-solar",
     pregunta: "¿Y el Camino Solar?",
     respuesta:
-      "Es la lectura propia de Los 144.000. Se mira cuánto pesa cada signo en tu carta y, según esté predominante, presente o ausente, se lee su atributo o su conflicto y el sistema orgánico que le corresponde. Lo que falta en una carta dice tanto como lo que sobra.",
+      "Es la lectura propia de Los 144.000. Los doce signos del zodiaco están alineados uno a uno con los doce sistemas orgánicos: Capricornio con el esqueleto, Acuario con el nervioso, y así los doce. La herramienta mira cuánto aparece cada signo en tu carta y te enseña, de cada uno, el arquetipo y su sombra, y su sistema orgánico en equilibrio y en desequilibrio. Y una advertencia que importa: que un signo aparezca poco NO significa que ese sistema esté en desequilibrio. Presencia y estado son dos cosas distintas. La carta dice cuánto hay; el estado lo sabes tú.",
   },
   {
     id: "no-es",

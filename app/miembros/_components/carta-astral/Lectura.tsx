@@ -452,65 +452,114 @@ function CaminoSolar({ pesos }: { pesos: PesoDeSigno[] }) {
   return (
     <div>
       <p className={s.entradilla}>
-        La lectura propia de Los 144.000. Cada signo pesa según lo que haya caído en él: el
-        Sol, la Luna y el Ascendente valen 3; los planetas personales, 2; los lentos, 1,
+        La lectura propia de Los 144.000. Los doce signos del zodiaco están alineados con
+        los <strong>doce sistemas orgánicos</strong>, uno a uno: Capricornio con el
+        esqueleto, Acuario con el nervioso, Piscis con el circulatorio, y así los doce.
+        Esa correspondencia es el centro de todo lo que viene.
+      </p>
+
+      <p className={s.entradilla}>
+        Lo que esta pantalla mide es <strong>cuánto aparece cada signo en tu carta</strong>.
+        El Sol, la Luna y el Ascendente valen 3; los planetas personales, 2; los lentos, 1,
         porque esos los comparte una generación entera.
       </p>
+
+      {/* ── LA CORRECCIÓN QUE PIDIÓ JOSÉ, Y QUE IMPORTA ─────────────────
+          La primera versión hacía que un signo ausente SIGNIFICARA
+          desequilibrio en su sistema orgánico: enseñaba el conflicto del
+          signo y el desequilibrio del sistema, como si la carta lo
+          dictaminara.
+
+          Es falso en su marco y además es feo: le estaría diciendo a
+          alguien que tiene un problema de salud porque le salió poco
+          Virgo. Presencia y estado son dos ejes distintos, y la carta
+          solo habla del primero.
+
+          Por eso este aviso va arriba, en grande, y no en una nota al
+          pie. */}
       <p className={s.instruccion}>
-        Lo <strong>ausente</strong> es tan parte de la lectura como lo que predomina. Ahí es
-        donde el Camino Solar señala el sistema orgánico que pide atención.
+        <strong>Presencia no es estado.</strong> Que un signo aparezca poco no significa que
+        su sistema orgánico esté en desequilibrio, igual que aparecer mucho no significa que
+        esté en equilibrio. Son dos cosas distintas: la carta dice cuánto hay, y nada más.
+        Lo otro lo sabes tú.
       </p>
+
       {pesos.map((w) => <FilaSigno key={w.signo} w={w} />)}
     </div>
   )
 }
 
+/**
+ * Un signo, su sistema orgánico, y las dos caras de cada uno.
+ *
+ * ── LO QUE AQUÍ NO SE HACE ────────────────────────────────────────────────
+ * No se elige por ti qué cara leer. La versión anterior enseñaba el conflicto
+ * del signo y el desequilibrio del sistema cuando el signo salía poco, y los
+ * atributos y el equilibrio cuando salía mucho — como si la carta dictaminara
+ * en qué estado estás.
+ *
+ * No lo hace. La carta dice cuánto aparece un arquetipo; el equilibrio es otra
+ * cosa. Así que se enseñan LAS DOS caras, dichas como lo que son, y quien lee
+ * reconoce la suya. Es más honesto y además es más útil: nadie se reconoce en
+ * una etiqueta que le han puesto.
+ */
 function FilaSigno({ w }: { w: PesoDeSigno }) {
   const [abierto, setAbierto] = useState(w.estado !== "presente")
   const signo = SIGNOS[w.signo]
   const mapa = MAPA_POR_DEFECTO[w.signo]
   const sistema = SISTEMAS[mapa.sistema]
-  const ausente = w.estado === "ausente"
 
   return (
     <article id={`signo-${w.signo}`} className={`${s.filaSigno} ${s[w.estado]}`}>
       <button type="button" className={s.filaCabecera} onClick={() => setAbierto((v) => !v)}>
-        <span className={s.filaNombre}>{signo.nombre}</span>
+        <span className={s.filaNombre}>
+          {signo.nombre}
+          {/* El sistema orgánico va en la cabecera, no escondido dentro: es
+              la correspondencia que da sentido a todo el Camino Solar, y
+              estaba a dos clics de distancia. */}
+          <span className={s.filaSistema}>{sistema.nombre}</span>
+        </span>
         <span className={s.filaEstado}>
-          {w.estado === "predominante" ? "Predominante"
-            : w.estado === "presente" ? "Presente" : "Ausente o débil"}
+          {w.estado === "predominante" ? "Muy presente"
+            : w.estado === "presente" ? "Presente" : "Poco presente"}
         </span>
         <span className={s.filaPuntos}>{w.puntos}</span>
       </button>
 
       {abierto && (
         <div className={s.filaCuerpo}>
-          {w.habitantes.length > 0 && (
-            <p className={s.filaHabitantes}>Ahí tienes: {w.habitantes.map((h) => h.nombre).join(", ")}</p>
-          )}
+          <p className={s.filaHabitantes}>
+            {w.habitantes.length > 0
+              ? `En tu carta: ${w.habitantes.map((h) => h.nombre).join(", ")}.`
+              : "En tu carta no cayó nada en este signo."}
+          </p>
 
-          <p className={s.etiquetaMini}>{ausente ? "Conflicto" : "Atributos"}</p>
-          <p className={s.parrafo}>{ausente ? signo.conflictos : signo.atributos}</p>
-
-          {w.estado === "predominante" && (
-            <>
-              <p className={s.etiquetaMini}>Y su sombra, cuando se pasa</p>
-              <p className={s.parrafoSecundario}>{signo.conflictos}</p>
-            </>
-          )}
+          <p className={s.etiquetaMini}>El arquetipo · {signo.nombre}</p>
+          <p className={s.parrafo}>{signo.atributos}</p>
+          <p className={s.etiquetaMini}>Y su sombra</p>
+          <p className={s.parrafoSecundario}>{signo.conflictos}</p>
 
           <div className={s.sistema}>
-            <p className={s.etiquetaMini}>Sistema orgánico · {sistema.nombre}</p>
-            <p className={s.parrafo}>{ausente ? sistema.desequilibrio : sistema.equilibrio}</p>
+            <p className={s.etiquetaSistema}>Sistema orgánico · {sistema.nombre}</p>
+
+            <p className={s.etiquetaMini}>En equilibrio</p>
+            <p className={s.parrafo}>{sistema.equilibrio}</p>
+
+            <p className={s.etiquetaMini}>En desequilibrio</p>
+            <p className={s.parrafo}>{sistema.desequilibrio}</p>
+
+            {/* Las somatizaciones van CONDICIONADAS, y la frase lo dice.
+                Antes se afirmaban, que es muy distinto. */}
             {mapa.zona && (
               <p className={s.parrafoSecundario}>
-                <strong>Zona:</strong> {mapa.zona}
-                {mapa.somatizaciones && <> · <strong>Se expresa como:</strong> {mapa.somatizaciones}</>}
+                <strong>Si este sistema entra en desequilibrio</strong>, suele notarse en{" "}
+                {mapa.zona.toLowerCase()}
+                {mapa.somatizaciones && <>: {mapa.somatizaciones.toLowerCase()}</>}.
                 {mapa.borrador && <span className={s.borrador}>borrador</span>}
               </p>
             )}
             {mapa.emocion && (
-              <p className={s.parrafoSecundario}><strong>Emoción:</strong> {mapa.emocion}</p>
+              <p className={s.parrafoSecundario}><strong>Emoción detrás:</strong> {mapa.emocion}</p>
             )}
           </div>
         </div>

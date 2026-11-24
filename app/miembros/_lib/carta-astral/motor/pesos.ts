@@ -123,7 +123,18 @@ export function pesarSignos(carta: Carta): PesoDeSigno[] {
   return filas
 }
 
-/** Atajo: los signos ausentes, que son los que apuntan al desequilibrio. */
+/**
+ * Atajo: los signos que apenas aparecen en la carta.
+ *
+ * OJO con lo que esto NO significa. Que un signo aparezca poco dice que ese
+ * arquetipo está poco representado, y se acabó. NO dice que su sistema
+ * orgánico esté en desequilibrio: presencia y estado son dos ejes distintos y
+ * la carta solo habla del primero.
+ *
+ * Se apunta aquí porque la primera versión de la pantalla los trataba como lo
+ * mismo —signo ausente, luego conflicto, luego desequilibrio— y eso le decía
+ * a alguien que tenía un problema de salud porque le salió poco Virgo.
+ */
 export function signosAusentes(pesos: PesoDeSigno[]): PesoDeSigno[] {
   return pesos.filter((p) => p.estado === "ausente")
 }

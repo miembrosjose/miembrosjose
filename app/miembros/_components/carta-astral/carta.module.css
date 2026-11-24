@@ -581,3 +581,36 @@
 }
 
 .pestanaRueda:hover { background: rgba(167, 139, 202, 0.12); color: #f3f6fa; }
+
+/* ── El sistema orgánico, visible desde fuera ───────────────────────────────
+   Estaba dentro del desplegable, a dos clics. Es la correspondencia que da
+   sentido al Camino Solar entero —doce signos, doce sistemas— así que va en
+   la cabecera, junto al nombre del signo. */
+.filaNombre {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.filaSistema {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9bbf7a;
+}
+
+.etiquetaSistema {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9bbf7a;
+}
+
+/* Ya no hay signos «ausentes» en rojo ni «presentes» en violeta: la presencia
+   no es un juicio. Solo cambia el grosor del borde según cuánto aparece. */
+.predominante { border-color: rgba(167, 139, 202, 0.45); background: rgba(167, 139, 202, 0.05); }
+.ausente { border-color: rgba(167, 139, 202, 0.14); }
+.ausente .filaEstado { color: #7f849e; }
