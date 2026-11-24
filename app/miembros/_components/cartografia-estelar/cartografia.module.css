@@ -460,6 +460,22 @@
 .ayuda { font-size: 0.72rem; line-height: 1.55; color: #7f849e; }
 .error { margin: 0; font-size: 0.78rem; color: #e08a8a; }
 
+/* «No encontramos esa ciudad». No es un error —no se ha roto nada—, así que
+   no va en rojo: va en ámbar, que es el color de «esto necesita algo de ti».
+   En rojo, quien nació en un pueblo pequeño creería que la herramienta falla. */
+.sinCiudad {
+  margin: 0.45rem 0 0;
+  padding: 0.6rem 0.7rem;
+  border-left: 2px solid #e0b06a;
+  background: rgba(224, 176, 106, 0.08);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: #e0b06a;
+}
+
+.sinCiudad strong { color: #f0c98a; font-weight: 600; }
+
 .sugerencias {
   list-style: none;
   margin: 0.35rem 0 0;

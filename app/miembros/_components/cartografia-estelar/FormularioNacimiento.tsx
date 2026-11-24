@@ -15,37 +15,23 @@
 // el proyecto. El desfase histórico lo aporta la base IANA del navegador.
 //
 // Nada de esto sale del dispositivo.
+//
+// ── CÓMO SE BUSCA LA CIUDAD, Y POR QUÉ NO SE BUSCA AQUÍ ───────────────────
+// La búsqueda vive en `_lib/cartografia-estelar/geo/ciudades.ts` y se prueba
+// con `npm run probar:ciudades`. Está fuera porque el fallo del 24-11-2026
+// fue de búsqueda, no de pantalla: `lookupViaCity` exigía el nombre exacto, y
+// la base guarda «Bogota» sin tilde, «Tucumán» con tilde y «Mexico City» en
+// inglés. La gente escribía su ciudad bien, no salía nada, y el formulario
+// seguía pidiendo el lugar. Ahora eso se puede comprobar sin abrir el
+// navegador, que es lo que faltaba para que no vuelva a pasar.
 
 import { useMemo, useState } from "react"
 import { MapPin } from "lucide-react"
-import cityTimezones from "city-timezones"
 import { AVISO_DOS_CAPAS } from "../../_lib/cartografia-estelar/content/avisos"
 import type { Nacimiento } from "../../_lib/cartografia-estelar/domain/types"
+import { buscarCiudades, type CiudadEncontrada } from "../../_lib/cartografia-estelar/geo/ciudades"
 import { CabeceraRecurso } from "../CabeceraRecurso"
 import s from "./cartografia.module.css"
-
-type Sugerencia = { nombre: string; lat: number; lon: number; zona: string }
-
-function buscarCiudades(texto: string): Sugerencia[] {
-  const q = texto.trim()
-  if (q.length < 3) return []
-  try {
-    const r = cityTimezones.lookupViaCity(q) as Array<{
-      city: string; country: string; lat: number; lng: number; timezone: string
-    }>
-    return r
-      .filter((c) => c.timezone && Number.isFinite(c.lat) && Number.isFinite(c.lng))
-      .slice(0, 6)
-      .map((c) => ({
-        nombre: `${c.city}, ${c.country}`,
-        lat: c.lat,
-        lon: c.lng,
-        zona: c.timezone,
-      }))
-  } catch {
-    return []
-  }
-}
 
 export function FormularioNacimiento({ onTrazar, error }: {
   onTrazar: (n: Nacimiento) => void
@@ -66,9 +52,13 @@ export function FormularioNacimiento({ onTrazar, error }: {
     previo ? `${String(previo.hora).padStart(2, "0")}:${String(previo.minuto).padStart(2, "0")}` : "12:00",
   )
   const [busqueda, setBusqueda] = useState("")
-  const [lugar, setLugar] = useState<Sugerencia | null>(null)
+  const [lugar, setLugar] = useState<CiudadEncontrada | null>(null)
 
-  const sugerencias = useMemo(() => (lugar ? [] : buscarCiudades(busqueda)), [busqueda, lugar])
+  const hallazgo = useMemo(
+    () => (lugar ? { estado: "corto" as const } : buscarCiudades(busqueda)),
+    [busqueda, lugar],
+  )
+  const sugerencias = hallazgo.estado === "ok" ? hallazgo.ciudades : []
   const listo = Boolean(fecha && hora && lugar)
 
   const enviar = (e: React.FormEvent) => {
@@ -145,14 +135,33 @@ export function FormularioNacimiento({ onTrazar, error }: {
                     <li key={i}>
                       <button type="button" onClick={() => setLugar(c)}>
                         <span>{c.nombre}</span>
-                        <span className={s.sugerenciaZona}>{c.zona}</span>
+                        <span className={s.sugerenciaZona}>{c.provincia || c.zona}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
+
+              {/* ── CUANDO NO HAY NADA, HAY QUE DECIRLO ────────────────────
+                  Antes esto no existía: la lista salía vacía y la única pista
+                  era el texto de abajo repitiendo que el lugar hace falta.
+                  Así que la gente escribía su ciudad una y otra vez, sin
+                  saber que el problema era que no estaba en la lista. Es el
+                  fallo que trajo a José, y el silencio era la mitad de él. */}
+              {hallazgo.estado === "vacio" && (
+                <p className={s.sinCiudad}>
+                  No encontramos «{busqueda.trim()}».
+                  {" "}Prueba solo con el nombre de la ciudad, sin el país. Y si es un
+                  pueblo pequeño, usa <strong>la ciudad grande más cercana</strong>: unos
+                  kilómetros no cambian tu Ascendente.
+                </p>
+              )}
+
               <small className={s.ayuda}>
-                Hace falta: sin él no se puede calcular tu Ascendente.
+                {/* Que hay que ELEGIRLA de la lista no se decía en ninguna
+                    parte, y es el paso donde se atascaba todo el mundo. */}
+                Escribe y <strong>elige una de la lista</strong>. Hace falta: sin el lugar
+                no se puede calcular tu Ascendente.
               </small>
             </>
           )}
