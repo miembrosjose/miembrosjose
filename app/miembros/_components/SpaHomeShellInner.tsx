@@ -20,10 +20,8 @@ const CodigoOrigen = dynamic(() => import("./CodigoOrigen").then((m) => m.Codigo
 // Cartografía Estelar arrastra astronomy-engine y city-timezones: solo cliente
 // y bajo demanda, para no engordar el arranque de /miembros.
 const CartografiaEstelar = dynamic(() => import("./cartografia-estelar/CartografiaEstelar").then((m) => m.CartografiaEstelar), { ssr: false })
-// Carta Astral: SOLO ADMINISTRACIÓN mientras se termina. Va montada dentro de
-// un `isAdmin &&` más abajo, así que a un miembro no le aparece la tarjeta y
-// este código ni siquiera se descarga — es un import dinámico, y nadie lo
-// dispara. Para abrirla a todo el mundo, basta quitar esa condición.
+// Carta Astral: abierta a todos los miembros desde el 24-11-2026. Estuvo
+// detrás de un `isAdmin` mientras se terminaba.
 // `ssr: false` como el resto: arrastra astronomy-engine y no debe compilarse
 // en el Worker.
 const CartaAstral = dynamic(() => import("./carta-astral/CartaAstral").then((m) => m.CartaAstral), { ssr: false })
@@ -820,7 +818,7 @@ function ViewInicio({
         <BibliotecaSeeder />
         <TiendaCarousel
           category="biblioteca"
-          leadingCard={<>{isAdmin && <CartaAstral />}<NumerologiaCosmica /><CodigoOrigen /><CartografiaEstelar /><LugaresContacto /></>}
+          leadingCard={<><CartaAstral /><NumerologiaCosmica /><CodigoOrigen /><CartografiaEstelar /><LugaresContacto /></>}
           hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p) || isCodigoOrigenToolProduct(p) || isCartografiaToolProduct(p) || isCartaAstralToolProduct(p)}
         />
       </section>

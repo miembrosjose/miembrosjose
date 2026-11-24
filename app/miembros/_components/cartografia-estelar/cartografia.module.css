@@ -2067,3 +2067,18 @@
 
 /* El scroll vertical del panel tampoco desplaza en horizontal. */
 .scroll { overflow-x: hidden; }
+
+/* El aviso de la hora de nacimiento. En ámbar y no en rojo: no se ha roto
+   nada, es algo que la persona tiene que ir a buscar. */
+.avisoHora {
+  margin: 0.45rem 0 0;
+  padding: 0.6rem 0.7rem;
+  border-left: 2px solid #e0b06a;
+  background: rgba(224, 176, 106, 0.08);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.74rem;
+  line-height: 1.6;
+  color: #e0b06a;
+}
+
+.avisoHora strong { color: #f0c98a; font-weight: 600; }

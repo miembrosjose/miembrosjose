@@ -195,6 +195,26 @@ export function FormularioNacimiento({ onTrazar, error, portada = PORTADA_CARTOG
           <small className={s.ayuda}>
             La de tu reloj local, tal como te la contaron.
           </small>
+          {/* ── POR QUÉ ESTE AVISO ESTÁ AQUÍ Y NO EN UNA NOTA AL PIE ───────
+              El campo viene con 12:00 puesto. Quien no sepa su hora deja ese
+              12:00 y recibe un Ascendente que no es el suyo, sin enterarse de
+              nada: la carta sale completa y con aspecto de ser correcta.
+
+              Medido sobre una carta real: dos horas de desviación mueven el
+              Ascendente de Acuario a Piscis. Otro signo, otra lectura entera.
+
+              No se ofrece calcular «a medias» escondiendo el Ascendente,
+              porque eso normaliza entrar con datos inventados. Lo que toca es
+              decir dónde se busca el dato y quién lo deduce cuando no hay
+              dónde buscarlo. */}
+          <p className={s.avisoHora}>
+            <strong>Si no la sabes, averíguala antes de seguir.</strong> Suele estar en tu
+            partida o certificado de nacimiento. Si ahí no aparece, un astrólogo puede
+            deducirla a partir de hechos de tu vida — se llama rectificación.
+            <br />
+            Sin la hora exacta, el <strong>Ascendente y las casas</strong> no son fiables.
+            El resto de la carta sí.
+          </p>
         </label>
 
         <div className={s.campo}>
