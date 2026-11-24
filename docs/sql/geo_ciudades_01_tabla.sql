@@ -78,6 +78,20 @@ create table if not exists public.geo_ciudades (
   poblacion integer not null default 0
 );
 
+-- ── SI LA TABLA YA EXISTÍA ────────────────────────────────────────────────
+-- `create table if not exists` no añade columnas: si la tabla ya estaba de
+-- una versión anterior, se la salta entera y `alias_norm` nunca aparece. El
+-- resultado es un «column alias_norm does not exist» doscientas líneas más
+-- abajo, al crear la función, que no se parece en nada a la causa.
+--
+-- Pasó. Estas líneas lo arreglan y no molestan si la tabla es nueva.
+alter table public.geo_ciudades
+  add column if not exists alias_norm text not null default '';
+
+-- Por si acaso también faltara alguna de las otras.
+alter table public.geo_ciudades add column if not exists provincia text;
+alter table public.geo_ciudades add column if not exists poblacion integer not null default 0;
+
 -- ── ÍNDICES ───────────────────────────────────────────────────────────────
 -- `text_pattern_ops` es lo que hace que `LIKE 'bogot%'` use el índice. Con el
 -- operador por defecto no lo usaría y recorrería la tabla entera.

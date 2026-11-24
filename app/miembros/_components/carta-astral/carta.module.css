@@ -400,32 +400,36 @@
 
 .lectura { color: #c3c6d8; }
 
-.zonaRueda {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: 0.4rem 0 0.8rem;
-  margin: -0.4rem -0.2rem 0;
-  background: linear-gradient(#0d0d18 78%, rgba(13, 13, 24, 0));
-}
+/* ── LA RUEDA NO SE QUEDA PEGADA, Y HAY MOTIVO ──────────────────────────
+   Estaba con `position: sticky` y un degradado que acababa en transparente.
+   Resultado: el texto pasaba por detrás de la parte transparente y la rueda
+   se dibujaba encima. Se veían los dos a la vez, revueltos. Y además había
+   DOS elementos pegados a `top: 0` —la rueda y las pestañas— peleándose por
+   el mismo sitio.
 
-/* En pantallas bajas la rueda fija se come el contenido: ahí se suelta. */
-@media (max-height: 680px) {
-  .zonaRueda { position: static; background: none; }
+   Lo que se queda arriba son las PESTAÑAS, que es lo que de verdad hace
+   falta tener siempre a mano. La rueda se desplaza como cualquier contenido,
+   y para volver a ella está el botón de la última pestaña. */
+.zonaRueda {
+  padding: 0.2rem 0 0.8rem;
 }
 
 /* ── Pestañas ───────────────────────────────────────────────────────────── */
+/* Estas SÍ se quedan arriba: es la navegación, y tiene que estar siempre a
+   un dedo. Fondo sólido y opaco — con degradado se transparenta el texto
+   que pasa por debajo y se lee doble. */
 .pestanas {
   position: sticky;
   top: 0;
   z-index: 3;
   display: flex;
   gap: 0.3rem;
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
   margin-bottom: 0.4rem;
   overflow-x: auto;
   scrollbar-width: none;
   background: #0d0d18;
+  box-shadow: 0 6px 12px -6px rgba(5, 5, 12, 0.9);
   border-bottom: 1px solid rgba(167, 139, 202, 0.14);
 }
 
@@ -561,3 +565,19 @@
   font-size: 0.62rem;
   color: #7f849e;
 }
+
+/* El atajo para volver a la rueda. Se distingue de las pestañas porque no es
+   una pestaña: no selecciona nada, solo lleva arriba. */
+.pestanaRueda {
+  flex-shrink: 0;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(167, 139, 202, 0.3);
+  border-radius: 999px;
+  background: none;
+  color: #a78bca;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pestanaRueda:hover { background: rgba(167, 139, 202, 0.12); color: #f3f6fa; }

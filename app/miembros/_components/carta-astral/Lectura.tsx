@@ -73,6 +73,7 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
   const [resaltado, setResaltado] = useState<PuntoId | null>(null)
   const [casaAbierta, setCasaAbierta] = useState<number | null>(null)
   const contenidoRef = useRef<HTMLDivElement | null>(null)
+  const ruedaRef = useRef<HTMLDivElement | null>(null)
 
   const punto = (id: PuntoId) => carta.puntos.find((p) => p.id === id)!
 
@@ -109,7 +110,7 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
   return (
     <div className={s.lectura}>
       {/* ── LA RUEDA, PEGADA ARRIBA ──────────────────────────────── */}
-      <div className={s.zonaRueda}>
+      <div className={s.zonaRueda} ref={ruedaRef}>
         <RuedaCarta
           carta={carta}
           onPunto={tocarPunto}
@@ -132,6 +133,17 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
 
       {/* ── PESTAÑAS ─────────────────────────────────────────────── */}
       <div className={s.pestanas} role="tablist" aria-label="Partes de tu carta">
+        {/* La rueda ya no se queda pegada arriba —se superponía al texto—,
+            así que hace falta una forma de volver a ella sin desplazar a
+            mano. Va la primera porque es el punto de partida. */}
+        <button
+          type="button"
+          className={s.pestanaRueda}
+          aria-label="Volver a la rueda"
+          onClick={() => ruedaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        >
+          ◎ Rueda
+        </button>
         {PESTANAS.map((p) => (
           <button
             key={p.id}

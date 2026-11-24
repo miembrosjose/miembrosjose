@@ -51,9 +51,41 @@ function zonaDelDispositivo(): string {
   }
 }
 
-export function FormularioNacimiento({ onTrazar, error }: {
+/**
+ * Lo que este formulario dice de sí mismo.
+ *
+ * ── POR QUÉ ES UN PARÁMETRO Y NO TEXTO FIJO ───────────────────────────────
+ * Lo usan DOS herramientas: la Cartografía Estelar y la Carta Astral. Piden
+ * exactamente lo mismo —fecha, hora y lugar— y por eso comparten formulario:
+ * la búsqueda de ciudad es complicada y arreglarla dos veces sería arreglarla
+ * mal una de las dos.
+ *
+ * Pero compartir el formulario NO es compartir la portada. Con el texto fijo,
+ * quien abría la Carta Astral leía «Traza tu cartografía» y «50 puntos del
+ * cielo», que es otra herramienta. Daba la impresión de haber abierto la que
+ * no era.
+ */
+export type Portada = {
+  kicker: string
+  titulo: string
+  entrada: string
+  matiz: string
+  /** Lo que pone el botón. Un botón dice lo que va a pasar al pulsarlo. */
+  accion: string
+}
+
+const PORTADA_CARTOGRAFIA: Portada = {
+  kicker: "Cartografía Estelar 144",
+  titulo: "Traza tu cartografía",
+  entrada: "Calculamos el cielo del instante exacto en que naciste y lo comparamos con 50 puntos elegidos: estrellas, cúmulos, nebulosas, galaxias y centros del universo.",
+  matiz: "Los que quedaron más cerca forman tu mapa. Cada uno se abre en dos capas separadas: lo que la astronomía sabe de él, y su lectura dentro de los 144.",
+  accion: "Trazar mi cartografía",
+}
+
+export function FormularioNacimiento({ onTrazar, error, portada = PORTADA_CARTOGRAFIA }: {
   onTrazar: (n: Nacimiento) => void
   error: string | null
+  portada?: Portada
 }) {
   // Se reutiliza lo que ya escribió en Código de Origen, si está.
   const previo = useMemo(() => {
@@ -136,13 +168,13 @@ export function FormularioNacimiento({ onTrazar, error }: {
 
   return (
     <>
-      {/* «Compara tu nacimiento con 50 puntos del cielo» decía lo que hace el
-          cálculo, no lo que vas a ver. Ahora lo dice. */}
+      {/* El texto lo pone quien usa el formulario: lo comparten la
+          Cartografía Estelar y la Carta Astral, y no son lo mismo. */}
       <CabeceraRecurso
-        kicker="Cartografía Estelar 144"
-        titulo="Traza tu cartografía"
-        entrada="Calculamos el cielo del instante exacto en que naciste y lo comparamos con 50 puntos elegidos: estrellas, cúmulos, nebulosas, galaxias y centros del universo."
-        matiz="Los que quedaron más cerca forman tu mapa. Cada uno se abre en dos capas separadas: lo que la astronomía sabe de él, y su lectura dentro de los 144."
+        kicker={portada.kicker}
+        titulo={portada.titulo}
+        entrada={portada.entrada}
+        matiz={portada.matiz}
       />
 
       <form onSubmit={enviar} className={s.form}>
@@ -287,7 +319,7 @@ export function FormularioNacimiento({ onTrazar, error }: {
         {error && <p className={s.error}>{error}</p>}
 
         <button type="submit" className={s.primario} disabled={!listo}>
-          Trazar mi cartografía
+          {portada.accion}
         </button>
 
         {/* ── LA PRIVACIDAD, DICHA COMO ES AHORA ──────────────────────────

@@ -27,7 +27,7 @@ import { X, Sparkles } from "lucide-react"
 
 import { aTiempoUniversal } from "../../_lib/cartografia-estelar/astronomy/tiempo"
 import type { Nacimiento } from "../../_lib/cartografia-estelar/domain/types"
-import { FormularioNacimiento } from "../cartografia-estelar/FormularioNacimiento"
+import { FormularioNacimiento, type Portada } from "../cartografia-estelar/FormularioNacimiento"
 
 import { calcularCarta } from "../../_lib/carta-astral/motor/carta"
 import { pesarSignos } from "../../_lib/carta-astral/motor/pesos"
@@ -41,6 +41,38 @@ import s from "./carta.module.css"
 
 const CLAVE = "los144k_carta_astral_nacimiento"
 const VIOLET = "#a78bca"
+
+/**
+ * Lo primero que se lee al abrir.
+ *
+ * ── POR QUÉ ESTABA MAL ────────────────────────────────────────────────────
+ * El formulario se comparte con la Cartografía Estelar —piden lo mismo y la
+ * búsqueda de ciudad es complicada de hacer bien—, pero el TEXTO venía fijo
+ * dentro. Así que al abrir la Carta Astral ponía «Traza tu cartografía» y
+ * «50 puntos del cielo», que es otra herramienta. Parecía que te habías
+ * equivocado de botón.
+ *
+ * Lo detectó José: «es igual a cartografía estelar».
+ *
+ * ── Y POR QUÉ DICE LO QUE DICE ────────────────────────────────────────────
+ * Quien abre esto por primera vez no sabe qué es una carta astral, o cree
+ * que es el horóscopo del periódico. Antes de pedirle la hora exacta de su
+ * nacimiento conviene decirle para qué se la estamos pidiendo.
+ */
+const PORTADA: Portada = {
+  kicker: "Carta Astral · Camino Solar",
+  titulo: "Calcula tu carta astral",
+  entrada:
+    "Una carta astral es el mapa del cielo en el minuto y el lugar exactos en que naciste: " +
+    "dónde estaba cada planeta visto desde ahí. No es el horóscopo del periódico, que solo " +
+    "mira tu signo solar — aquí entran los diez planetas, las doce casas y las distancias " +
+    "entre ellos.",
+  matiz:
+    "Después la leemos desde el Camino Solar: qué signos pesan en ti, cuáles faltan, y qué " +
+    "sistema orgánico señala cada uno. Hace falta la hora lo más aproximada que puedas: " +
+    "el Ascendente cambia cada cuatro minutos.",
+  accion: "Calcular mi carta astral",
+}
 
 function guardar(n: Nacimiento) {
   try { localStorage.setItem(CLAVE, JSON.stringify(n)) } catch { /* cuota llena */ }
@@ -133,7 +165,7 @@ function Panel({ onClose }: { onClose: () => void }) {
         <div className={s.scroll}>
           <PanelFallo modulo="Carta Astral" onReiniciar={reiniciar}>
             {!nacimiento || !calculo ? (
-              <FormularioNacimiento onTrazar={trazar} error={error} />
+              <FormularioNacimiento onTrazar={trazar} error={error} portada={PORTADA} />
             ) : "fallo" in calculo ? (
               <div className={s.aviso}>
                 <p>{calculo.fallo}</p>
