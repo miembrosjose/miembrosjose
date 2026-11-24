@@ -1,0 +1,123 @@
+/* La rueda de la carta. */
+
+.rueda {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+  /* Que el texto del SVG no se pueda seleccionar al arrastrar: se toca, no se
+     copia, y una selección azul sobre un glifo parece un fallo. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Todo lo que responde al dedo comparte este comportamiento. */
+.tocable {
+  cursor: pointer;
+  outline: none;
+}
+
+.tocable:focus-visible circle,
+.tocable:focus-visible path {
+  stroke: #e6cf95;
+  stroke-width: 2;
+}
+
+.tocable:focus-visible text { fill: #f3f6fa; }
+
+/* ── Glifos ─────────────────────────────────────────────────────────────── */
+.glifoSigno {
+  font-size: 15px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.glifoPunto {
+  font-size: 15px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* AC y MC son letras, no glifos: necesitan ir más pequeñas para caber en el
+   mismo círculo. */
+.glifoAngulo {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.retroGlifo {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  fill: #e0a0a0;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* ── Casas ──────────────────────────────────────────────────────────────── */
+.numCasa,
+.numCasaFuerte {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.numCasa { fill: #6d6d82; }
+.numCasaFuerte { fill: #a78bca; font-weight: 700; }
+
+/* ── El centro ──────────────────────────────────────────────────────────── */
+.centroVacio {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: #5a5a70;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.centroNombre {
+  font-size: 13px;
+  fill: #f3f6fa;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.centroSigno {
+  font-size: 15px;
+  fill: #c3b2e0;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.centroCasa {
+  font-family: var(--font-mono, monospace);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  fill: #7f849e;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* ── Leyenda ────────────────────────────────────────────────────────────── */
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin: 0.7rem 0 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6d6d82;
+}
+
+.leyendaItem { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+.muestra { width: 14px; height: 2px; border-radius: 2px; display: inline-block; }

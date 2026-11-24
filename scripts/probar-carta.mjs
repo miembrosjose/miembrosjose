@@ -42,6 +42,8 @@ const { textoEnCasa } = await import(ruta("app","miembros","_lib","carta-astral"
 const { CASAS, PLANETAS } = await import(ruta("app","miembros","_lib","carta-astral","contenido","vocabulario.ts"))
 const { textoEnSigno } = await import(ruta("app","miembros","_lib","carta-astral","contenido","planeta-en-signo.ts"))
 const { COMO_ACTUA, textoPareja } = await import(ruta("app","miembros","_lib","carta-astral","contenido","aspectos-texto.ts"))
+const { textoAngulo } = await import(ruta("app","miembros","_lib","carta-astral","contenido","angulos-en-signo.ts"))
+const { GUIA } = await import(ruta("app","miembros","_lib","carta-astral","contenido","guia.ts"))
 const { SIGNOS, ORDEN_ZODIACAL, signoDeGrado, gradoEnSigno } = await import(ruta("app", "miembros", "_lib", "carta-astral", "contenido", "signos.ts"))
 const { SISTEMAS, SISTEMAS_IDS } = await import(ruta("app", "miembros", "_lib", "carta-astral", "contenido", "sistemas.ts"))
 
@@ -441,6 +443,37 @@ console.log("\n═══ 8c · LOS 120 TEXTOS DE PLANETA EN SIGNO ═══\n")
   const personales = ["sol", "luna", "mercurio", "venus", "marte"]
   ok("los personales no se escudan en la generación",
     personales.every((p) => ORDEN_ZODIACAL.every((s) => !/tu generaci[óo]n/i.test(textoEnSigno(p, s)))))
+}
+
+console.log("\n═══ 8c-bis · EL ASCENDENTE Y EL MEDIO CIELO EN SIGNO ═══\n")
+{
+  // EL HUECO QUE ENCONTRÓ JOSÉ USÁNDOLO: la pantalla enseñaba «Ascendente:
+  // Acuario» arriba del todo y no había una sola línea explicando qué era
+  // eso. Los 120 textos de «planeta en signo» cubren planetas, y el
+  // Ascendente no es un planeta.
+  const faltan = []
+  for (const s of ORDEN_ZODIACAL) {
+    for (const id of ["ascendente", "medio_cielo"]) {
+      const t = textoAngulo(id, s)
+      if (!t || t.length < 100) faltan.push(`${id}/${s}`)
+    }
+  }
+  ok("los 24 textos de Ascendente y Medio Cielo están", faltan.length === 0, faltan.slice(0, 5).join(", "))
+  ok("no devuelve texto para algo que no es un ángulo", textoAngulo("venus", "leo") === null)
+
+  // El Ascendente NO puede decir lo mismo que el Sol en ese signo: son cosas
+  // distintas y repetirlas haría la lectura redundante justo donde más mira
+  // la gente.
+  const repiten = ORDEN_ZODIACAL.filter((s) => textoAngulo("ascendente", s) === textoEnSigno("sol", s))
+  ok("el Ascendente no repite el texto del Sol", repiten.length === 0, repiten.join(", "))
+
+  // Y para cualquier carta real, los tres grandes tienen texto. Era
+  // exactamente lo que fallaba.
+  const c = calcularCarta(Date.UTC(1975, 5, 10, 8, 45), 4.61, -74.08)
+  const asc = c.puntos.find((p) => p.id === "ascendente")
+  const mc = c.puntos.find((p) => p.id === "medio_cielo")
+  ok("en una carta real, el Ascendente tiene lectura", !!textoAngulo("ascendente", asc.signo))
+  ok("y el Medio Cielo también", !!textoAngulo("medio_cielo", mc.signo))
 }
 
 console.log("\n═══ 8d · LOS ASPECTOS, EXPLICADOS ═══\n")

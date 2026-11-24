@@ -390,3 +390,174 @@
   font-size: 0.84rem;
   line-height: 1.6;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LA LECTURA · rueda arriba, pestañas debajo
+   ═══════════════════════════════════════════════════════════════════════════
+   La primera versión era un scroll plano. Esto lo parte en piezas sin quitar
+   una sola palabra: la rueda se queda fija arriba porque un mapa que
+   desaparece al desplazarte no sirve de mapa. */
+
+.lectura { color: #c3c6d8; }
+
+.zonaRueda {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0.4rem 0 0.8rem;
+  margin: -0.4rem -0.2rem 0;
+  background: linear-gradient(#0d0d18 78%, rgba(13, 13, 24, 0));
+}
+
+/* En pantallas bajas la rueda fija se come el contenido: ahí se suelta. */
+@media (max-height: 680px) {
+  .zonaRueda { position: static; background: none; }
+}
+
+/* ── Pestañas ───────────────────────────────────────────────────────────── */
+.pestanas {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.5rem 0;
+  margin-bottom: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #0d0d18;
+  border-bottom: 1px solid rgba(167, 139, 202, 0.14);
+}
+
+.pestanas::-webkit-scrollbar { display: none; }
+
+.pestana,
+.pestanaActiva {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: #7f849e;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.pestana:hover { color: #c3c6d8; }
+
+.pestanaActiva {
+  background: rgba(167, 139, 202, 0.16);
+  border-color: rgba(167, 139, 202, 0.4);
+  color: #f3f6fa;
+}
+
+.contenido { scroll-margin-top: 3rem; padding-top: 0.6rem; }
+
+/* ── Textos de entrada ──────────────────────────────────────────────────── */
+.entradilla {
+  margin: 0 0 0.9rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #c3c6d8;
+  max-width: 62ch;
+}
+
+.entradilla strong { color: #f3f6fa; }
+
+.instruccion {
+  margin: 0 0 1.2rem;
+  padding: 0.65rem 0.8rem;
+  border-left: 2px solid rgba(167, 139, 202, 0.5);
+  background: rgba(167, 139, 202, 0.07);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: #c3b2e0;
+  max-width: 62ch;
+}
+
+.instruccion strong { color: #f3f6fa; }
+
+.h3 {
+  margin: 1.5rem 0 0.7rem;
+  font-size: 0.95rem;
+  color: #f3f6fa;
+}
+
+/* ── Los tres grandes, ahora tocables ───────────────────────────────────── */
+.grande {
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.grande:hover {
+  border-color: rgba(167, 139, 202, 0.5);
+  background: rgba(167, 139, 202, 0.11);
+}
+
+/* ── Tira de atajos ─────────────────────────────────────────────────────── */
+.tiraPuntos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 1.2rem;
+}
+
+.chip,
+.chipActivo {
+  padding: 0.28rem 0.6rem;
+  border: 1px solid #2f2f42;
+  border-radius: 999px;
+  background: none;
+  color: #8b90b4;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.chip:hover { color: #f3f6fa; border-color: #6d4a9b; }
+
+.chipActivo {
+  background: rgba(167, 139, 202, 0.18);
+  border-color: rgba(167, 139, 202, 0.5);
+  color: #f3f6fa;
+}
+
+/* Lo que vienes de tocar en la rueda, señalado un momento. */
+.bloqueResaltado {
+  border-left: 2px solid #a78bca;
+  padding-left: 0.7rem;
+  background: rgba(167, 139, 202, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+/* ── Casas ──────────────────────────────────────────────────────────────── */
+.filaCasa,
+.filaGuia {
+  border: 1px solid rgba(167, 139, 202, 0.14);
+  border-radius: 10px;
+  margin-bottom: 0.45rem;
+  overflow: hidden;
+}
+
+.casaNumero {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(167, 139, 202, 0.14);
+  color: #c3b2e0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+}
+
+.casaSigno {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: #7f849e;
+}
