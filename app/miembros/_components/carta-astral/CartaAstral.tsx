@@ -21,7 +21,7 @@
 // parte difícil: la búsqueda de ciudad tolerante a tildes y a nombres en
 // inglés. Duplicarlo habría significado arreglar dos veces el mismo fallo.
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { X, Sparkles } from "lucide-react"
 
@@ -35,6 +35,11 @@ import { Lectura } from "./Lectura"
 
 
 import { usePanelAPantallaCompleta } from "../../_lib/panel-modal"
+import { useProducts } from "../../_lib/use-products"
+import { useProductAccess } from "../../_lib/use-product-access"
+import {
+  isCartaAstralToolProduct, numeroLibre, CARTA_ASTRAL_PRODUCT_NUM,
+} from "../../_lib/tool-products"
 import { PanelFallo } from "../PanelFallo"
 import prod from "../products.module.css"
 import s from "./carta.module.css"
@@ -87,8 +92,40 @@ function olvidar() {
   try { localStorage.removeItem(CLAVE) } catch { /* bloqueado */ }
 }
 
+/** ¿La portada es un vídeo? Mismo criterio que el resto de la Biblioteca. */
+const esVideo = (u?: string | null) => !!u && /\.(mp4|webm|mov)(\?|$)/i.test(u)
+
 export function CartaAstral() {
   const [abierto, setAbierto] = useState(false)
+
+  // ── LA PORTADA SE EDITA DESDE «GESTIONAR PRODUCTOS» ───────────────────
+  // Igual que Numerología, Código de Origen y Cartografía: detrás de la
+  // tarjeta hay un producto de la Biblioteca, y de ahí salen la portada y el
+  // nombre. Sin esto, la Carta Astral no aparecía en la lista de Gestionar y
+  // no había forma de cambiarle la imagen sin tocar código.
+  const { products, loading: cargandoProductos, createProduct } = useProducts()
+  const producto = useMemo(() => products.find(isCartaAstralToolProduct) ?? null, [products])
+  const { isAdminOverride } = useProductAccess()
+
+  // Alta automática, una sola vez y solo para administración.
+  const sembrado = useRef(false)
+  useEffect(() => {
+    if (sembrado.current || !isAdminOverride || cargandoProductos || producto) return
+    // Salvaguarda: si ese número ya lo tiene otro producto, no se siembra.
+    // Sembrar encima secuestraría la tarjeta ajena, que es justo lo que pasó
+    // cuando estos números eran 94 y 95.
+    if (!numeroLibre(CARTA_ASTRAL_PRODUCT_NUM, products)) return
+    sembrado.current = true
+    createProduct({
+      num: CARTA_ASTRAL_PRODUCT_NUM, name: "Carta Astral · Camino Solar",
+      description: "El mapa del cielo del minuto en que naciste, leído desde el Camino Solar: qué signos pesan en ti y qué sistema orgánico señala cada uno.",
+      category: "biblioteca", gradient: "linear-gradient(135deg, #04040c 0%, #6D4A9B 100%)",
+      emoji: "☉", sort_order: 5, is_locked: false, price_cents: 0, currency: "usd",
+    } as never).catch(() => { /* si falla, no reintentar en bucle */ })
+  }, [isAdminOverride, cargandoProductos, producto, products, createProduct])
+
+  const portada = (producto as { media_url?: string } | null)?.media_url || null
+  const titulo = producto?.name?.trim() || "Carta Astral · Camino Solar"
 
   return (
     <>
@@ -102,15 +139,21 @@ export function CartaAstral() {
         <span className={s.etiquetaNuevo}>Nuevo</span>
 
         <div className={prod.thumb}>
-          {/* Marcador: la portada se cambia luego, como en las demás
-              herramientas. Hasta entonces, algo que no parezca un hueco. */}
-          <div className={s.portadaProvisional}>
-            <Sparkles size={26} color={VIOLET} aria-hidden />
-          </div>
+          {portada ? (
+            esVideo(portada)
+              ? <video src={portada} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline loop autoPlay />
+              : <img src={portada} alt={titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            // Mientras no haya portada puesta desde Gestionar, algo que no
+            // parezca un hueco.
+            <div className={s.portadaProvisional}>
+              <Sparkles size={26} color={VIOLET} aria-hidden />
+            </div>
+          )}
         </div>
 
         <div className={prod.body}>
-          <h3 className={prod.name} style={{ color: "#F3F6FA" }}>Carta Astral · Camino Solar</h3>
+          <h3 className={prod.name} style={{ color: "#F3F6FA" }}>{titulo}</h3>
           <p className={s.kicker}>Planetas · casas · sistemas</p>
         </div>
       </button>

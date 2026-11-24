@@ -46,6 +46,7 @@ export function isLugaresToolProduct(p: { name: string; num?: number }): boolean
 // viven en un rango aparte, muy por encima, donde no se cruzan con nada.
 export const CODIGO_ORIGEN_PRODUCT_NUM = 901
 export const CARTOGRAFIA_PRODUCT_NUM = 902
+export const CARTA_ASTRAL_PRODUCT_NUM = 903
 
 /** Primer número del rango reservado a tarjetas-herramienta. */
 export const RANGO_HERRAMIENTAS = 900
@@ -70,4 +71,20 @@ export function isCartografiaToolProduct(p: { name: string; num?: number }): boo
   if (p.num === CARTOGRAFIA_PRODUCT_NUM) return true
   const n = norm(p.name)
   return n.includes("cartografia") && n.includes("estelar")
+}
+
+/**
+ * Carta Astral · Camino Solar.
+ *
+ * ── OJO CON EL RESPALDO POR NOMBRE ────────────────────────────────────────
+ * Pide «carta» Y «astral» juntas, no una de las dos. «Carta» sola casaría con
+ * cualquier producto futuro que lleve esa palabra —una carta de los Guías, una
+ * carta natal de otra cosa— y le robaría la portada a esta tarjeta.
+ *
+ * El `num` manda igual: el nombre solo entra si el número falta.
+ */
+export function isCartaAstralToolProduct(p: { name: string; num?: number }): boolean {
+  if (p.num === CARTA_ASTRAL_PRODUCT_NUM) return true
+  const n = norm(p.name)
+  return n.includes("carta") && n.includes("astral")
 }

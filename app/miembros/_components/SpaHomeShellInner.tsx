@@ -10,7 +10,7 @@ import { Hero } from "./Hero"
 import { ForumFeed } from "./ForumFeed"
 import { SeasonsCarousel } from "./SeasonsCarousel"
 import { TiendaCarousel } from "./TiendaCarousel"
-import { isNumerologiaToolProduct, isLugaresToolProduct, isCodigoOrigenToolProduct, isCartografiaToolProduct } from "../_lib/tool-products"
+import { isNumerologiaToolProduct, isLugaresToolProduct, isCodigoOrigenToolProduct, isCartografiaToolProduct, isCartaAstralToolProduct } from "../_lib/tool-products"
 import { BibliotecaSeeder } from "./BibliotecaSeeder"
 // Herramientas de Biblioteca: SOLO cliente (ssr:false) para no cargar Stripe/
 // Leaflet/globe.gl en el render del Worker (evita Error 1102 en /miembros).
@@ -821,7 +821,7 @@ function ViewInicio({
         <TiendaCarousel
           category="biblioteca"
           leadingCard={<>{isAdmin && <CartaAstral />}<NumerologiaCosmica /><CodigoOrigen /><CartografiaEstelar /><LugaresContacto /></>}
-          hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p) || isCodigoOrigenToolProduct(p) || isCartografiaToolProduct(p)}
+          hide={(p) => isNumerologiaToolProduct(p) || isLugaresToolProduct(p) || isCodigoOrigenToolProduct(p) || isCartografiaToolProduct(p) || isCartaAstralToolProduct(p)}
         />
       </section>
 
