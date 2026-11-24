@@ -38,24 +38,30 @@ type Estado = {
   /** Lo que encontró el servidor. Vacío mientras no haya llegado nada. */
   ciudades: CiudadEncontrada[]
   buscando: boolean
-  /** La tabla no está importada todavía. Se avisa en administración. */
-  sinTabla: boolean
+  /**
+   * Por qué no respondió la búsqueda ampliada, si no respondió.
+   *
+   * Existe porque la primera versión se callaba: devolvía cero resultados
+   * tanto si la ciudad no existía como si la función de la base estaba rota,
+   * y las dos cosas se veían igual en pantalla. Media hora de adivinar.
+   */
+  fallo: string | null
 }
 
 export function useCiudadesMundo(texto: string, activo: boolean): Estado {
-  const [estado, setEstado] = useState<Estado>({ ciudades: [], buscando: false, sinTabla: false })
+  const [estado, setEstado] = useState<Estado>({ ciudades: [], buscando: false, fallo: null })
   // Para descartar respuestas viejas que lleguen tarde.
   const ultima = useRef(0)
 
   useEffect(() => {
     if (!activo) {
-      setEstado({ ciudades: [], buscando: false, sinTabla: false })
+      setEstado({ ciudades: [], buscando: false, fallo: null })
       return
     }
 
     const consulta = texto.trim()
     if (consulta.length < 2) {
-      setEstado({ ciudades: [], buscando: false, sinTabla: false })
+      setEstado({ ciudades: [], buscando: false, fallo: null })
       return
     }
 
@@ -81,12 +87,18 @@ export function useCiudadesMundo(texto: string, activo: boolean): Estado {
         setEstado({
           ciudades: Array.isArray(j.ciudades) ? j.ciudades : [],
           buscando: false,
-          sinTabla: !!j.sinTabla,
+          fallo: typeof j.fallo === "string" ? j.fallo : null,
         })
-      } catch {
+      } catch (e) {
         if (mio !== ultima.current) return
-        // Sin ruido: quedan los resultados locales.
-        setEstado({ ciudades: [], buscando: false, sinTabla: false })
+        // Se anota el motivo. Los resultados locales siguen ahí, así que no
+        // se rompe nada — pero «no hay red» y «ese pueblo no existe» tienen
+        // que poder distinguirse. Antes no se podía.
+        setEstado({
+          ciudades: [],
+          buscando: false,
+          fallo: e instanceof Error ? e.message : "red",
+        })
       }
     }, ESPERA_MS)
 

@@ -93,11 +93,22 @@ export async function GET(req: Request) {
   })
 
   if (error) {
-    // Que falte la tabla o la función no es un error del que informar a quien
-    // escribe: la búsqueda local sigue funcionando y lo único que se pierde
-    // es alcance. Se deja constancia en el registro y poco más.
+    // ── EL SILENCIO ERA EL PROBLEMA ──────────────────────────────────────
+    // Esto devolvía una lista vacía y se callaba, con el argumento de que la
+    // búsqueda local sigue funcionando y solo se pierde alcance. Suena
+    // prudente y es justo lo que impide arreglar nada: desde fuera, «la
+    // función no existe» y «esa ciudad no existe» se ven exactamente igual.
+    //
+    // Pasó: la tabla tenía 1,3 millones de filas, la función estaba sin
+    // actualizar, y en pantalla no había ni una pista. Se perdió media hora
+    // adivinando.
+    //
+    // Ahora el motivo viaja. No se enseña tal cual a cualquiera —un mensaje
+    // de Postgres no le dice nada a quien busca su pueblo— pero está ahí
+    // para la consola y para que la pantalla sepa que falló algo, en vez de
+    // creer que no hay resultados.
     console.error("[geo] buscar_ciudad:", error.message)
-    return NextResponse.json({ ciudades: [], sinTabla: true })
+    return NextResponse.json({ ciudades: [], fallo: error.message })
   }
 
   const filas = (data ?? []) as Fila[]
