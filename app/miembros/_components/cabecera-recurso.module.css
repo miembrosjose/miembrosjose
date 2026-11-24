@@ -71,3 +71,42 @@
    * en 2.25rem por lado dejaba la línea en cuatro palabras. */
   .cabecera { padding-inline: 1.5rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL MÓVIL · dejar de desperdiciar los lados
+   ═══════════════════════════════════════════════════════════════════════════
+   El `padding-inline: 2.25rem` se reservaba para que el texto no chocara con
+   el botón de cerrar. Pero se aplicaba a la cabecera ENTERA, así que en un
+   teléfono de 390 px se comía 72 px —casi una quinta parte del ancho— también
+   en los párrafos, que están muy por debajo del botón y nunca lo iban a
+   tocar. El resultado: columnas estrechas, texto centrado partido en trozos y
+   dos dedos de hueco a cada lado.
+
+   Quien lo necesita de verdad es solo el kicker y el título, que son los que
+   quedan a la altura de la equis. */
+.cabecera { padding-inline: 0; }
+
+.kicker,
+.titulo { padding-inline: 2.5rem; }
+
+/* Los párrafos usan el ancho entero. El `max-width` en ch sigue mandando en
+   pantallas grandes, que es donde una línea larguísima cansa; en el móvil no
+   llega a aplicarse nunca. */
+.entrada,
+.matiz { max-width: 46ch; padding-inline: 0; }
+
+@media (max-width: 480px) {
+  .kicker,
+  .titulo { padding-inline: 2.25rem; }
+
+  /* Centrado con líneas de cuatro palabras se lee peor que alineado a la
+     izquierda. El título se queda centrado porque es corto y hace de ancla. */
+  .entrada,
+  .matiz { text-align: left; }
+}
+
+@media (max-width: 380px) {
+  .cabecera { padding-inline: 0; }
+  .kicker,
+  .titulo { padding-inline: 1.75rem; }
+}

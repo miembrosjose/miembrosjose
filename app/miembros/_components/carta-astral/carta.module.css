@@ -775,3 +775,28 @@
   line-height: 1.45;
   color: #a8a8c0;
 }
+
+/* ── NADA SE SALE DEL PANEL ─────────────────────────────────────────────────
+   Este panel es propio de la Carta Astral y se quedó sin la protección que sí
+   tienen Cartografía y Código de Origen. En el móvil se podía arrastrar la
+   pantalla de lado. */
+.panel { overflow-x: hidden; }
+.scroll { overflow-x: hidden; }
+
+/* `min-width: 0` en los contenedores flex: sin esto, un hijo ancho —una tabla,
+   una fila con un nombre largo— se niega a encogerse y empuja a todo lo demás
+   fuera de la pantalla. Es la causa más común del desplazamiento lateral y no
+   se ve mirando el elemento culpable, sino a su padre. */
+.lectura,
+.contenido,
+.filaTextos { min-width: 0; }
+
+/* La tabla de posiciones, que es lo más ancho que hay aquí. */
+.tabla { max-width: 100%; }
+
+@media (max-width: 560px) {
+  .scroll { padding-left: 0.9rem; padding-right: 0.9rem; }
+  /* Las etiquetas de estado («Muy presente») más el número no caben junto al
+     nombre del signo en pantallas estrechas. */
+  .filaExtra { font-size: 0.56rem; gap: 0.3rem; }
+}

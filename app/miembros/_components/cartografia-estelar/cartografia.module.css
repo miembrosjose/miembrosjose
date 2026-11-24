@@ -2050,3 +2050,20 @@
 
 .credito a { color: #7f849e; text-decoration: underline; text-underline-offset: 2px; }
 .credito a:hover { color: #a78bca; }
+
+/* ── LOS CAMPOS DE FECHA Y HORA SE SALÍAN DEL MARCO ─────────────────────────
+   `min-width: 0` no bastaba. En iOS, un `input[type=date]` conserva su ancho
+   intrínseco mientras mantenga la apariencia nativa, y ese ancho depende del
+   formato de fecha del sistema: con «24 nov 2026» cabe, con otros formatos
+   no. Quitarle la apariencia nativa es lo que le hace obedecer al 100%.
+
+   El selector del sistema sigue abriéndose igual al tocarlo. */
+.input[type="date"],
+.input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 46px;
+}
+
+/* El scroll vertical del panel tampoco desplaza en horizontal. */
+.scroll { overflow-x: hidden; }

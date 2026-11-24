@@ -417,3 +417,36 @@
   transition: border-color 0.18s ease, color 0.18s ease;
 }
 .rehacer:hover { border-color: rgba(230, 207, 149, 0.45); color: #e6cf95; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NADA SE SALE DEL PANEL
+   ═══════════════════════════════════════════════════════════════════════════
+   En el móvil se podía arrastrar la pantalla de izquierda a derecha. La causa
+   estaba en `.input`: tenía `width: 100%` y relleno, pero NO `box-sizing:
+   border-box`, así que el 100% era del contenido y el relleno se sumaba
+   encima. Cada campo salía unos 26 px más ancho que su contenedor y empujaba
+   el panel entero.
+
+   Es el mismo fallo que ya se había arreglado en Cartografía Estelar; este
+   archivo se quedó sin la corrección. */
+.input {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ── LOS CAMPOS NATIVOS DE FECHA Y HORA ─────────────────────────────────────
+   En iOS se niegan a encogerse por debajo de su ancho intrínseco aunque se
+   les ponga `width: 100%`: hay que quitarles la apariencia nativa para que
+   obedezcan. Siguen abriendo el selector del sistema al tocarlos. */
+.input[type="date"],
+.input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 46px;
+}
+
+/* Y la red de seguridad, por si algún día se cuela otro elemento ancho: el
+   panel no desplaza en horizontal, punto. */
+.panel { overflow-x: hidden; }
+.scroll { overflow-x: hidden; }
