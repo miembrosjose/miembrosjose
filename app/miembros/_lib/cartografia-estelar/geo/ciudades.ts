@@ -70,6 +70,9 @@ export function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[.'´`’]/g, "")
+    // El guion cuenta como espacio. GeoNames guarda «santa-fe-de-bogota» y
+    // «saint-denis», y nadie los escribe con guion al buscarlos.
+    .replace(/[-–—]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
 }

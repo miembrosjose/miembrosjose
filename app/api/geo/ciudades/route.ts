@@ -40,20 +40,10 @@ function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[.'´`’]/g, "")
+    // El guion cuenta como espacio, igual que en el cliente y en el CSV.
+    .replace(/[-–—]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-}
-
-/**
- * Escapa lo que en LIKE significa otra cosa.
- *
- * Sin esto, escribir «%» devolvería la tabla entera y «_» casaría con
- * cualquier letra. No es un agujero de seguridad —el cliente de Supabase
- * parametriza— pero sí una forma de pedirle a la base un trabajo enorme
- * escribiendo un carácter.
- */
-function escaparLike(texto: string): string {
-  return texto.replace(/[\\%_]/g, (c) => "\\" + c)
 }
 
 type Fila = {
@@ -85,56 +75,30 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Usuario no identificado" }, { status: 401 })
   }
 
-  const patron = escaparLike(consulta)
+  // ── LAS TRES PASADAS LAS HACE LA BASE ───────────────────────────────────
+  // `buscar_ciudad` —en docs/sql/geo_ciudades_01_tabla.sql— busca por
+  // principio, luego por dentro del nombre o de los alias, y por último por
+  // parecido, que es lo que encuentra «Mompós» escribiendo «Mompox».
+  //
+  // Va allí y no aquí por dos razones: las tres consultas se cortan en cuanto
+  // hay suficiente —hacerlas desde fuera serían tres viajes— y el criterio de
+  // ordenación queda en un solo sitio en vez de repartido entre la base y
+  // esta ruta.
+  const { data, error } = await supabase.rpc("buscar_ciudad", {
+    q: consulta,
+    lugar: lugar || null,
+    limite: CUANTAS,
+  })
 
-  // ── DOS PASADAS, Y EN ESTE ORDEN ────────────────────────────────────────
-  // Primero por PRINCIPIO de nombre, que es lo que casi siempre se busca y
-  // además usa el índice de prefijo. Solo si eso no llena la lista se busca
-  // por el medio, que es más caro y trae más ruido: «ana» encontraría
-  // «Santana», «Guanacaste» y medio mundo.
-  let filas: Fila[] = []
-
-  const porPrincipio = supabase
-    .from("geo_ciudades")
-    .select("nombre, provincia, pais, pais_codigo, lat, lon, zona, poblacion")
-    .like("nombre_norm", `${patron}%`)
-    .order("poblacion", { ascending: false })
-    .limit(CUANTAS)
-
-  const { data: d1, error: e1 } = lugar
-    ? await porPrincipio.or(`pais.ilike.%${lugar}%,provincia.ilike.%${lugar}%`)
-    : await porPrincipio
-
-  if (e1) {
-    // Que falte la tabla no es un error del que informar a quien escribe: la
-    // búsqueda local sigue funcionando y lo único que pierde es alcance.
-    console.error("[geo] búsqueda por prefijo:", e1.message)
+  if (error) {
+    // Que falte la tabla o la función no es un error del que informar a quien
+    // escribe: la búsqueda local sigue funcionando y lo único que se pierde
+    // es alcance. Se deja constancia en el registro y poco más.
+    console.error("[geo] buscar_ciudad:", error.message)
     return NextResponse.json({ ciudades: [], sinTabla: true })
   }
 
-  filas = (d1 ?? []) as Fila[]
-
-  if (filas.length < CUANTAS && consulta.length >= 3) {
-    const vistos = new Set(filas.map((f) => `${f.nombre}|${f.pais_codigo}|${f.lat}`))
-    const porDentro = supabase
-      .from("geo_ciudades")
-      .select("nombre, provincia, pais, pais_codigo, lat, lon, zona, poblacion")
-      .like("nombre_norm", `%${patron}%`)
-      .order("poblacion", { ascending: false })
-      .limit(CUANTAS * 2)
-
-    const { data: d2 } = lugar
-      ? await porDentro.or(`pais.ilike.%${lugar}%,provincia.ilike.%${lugar}%`)
-      : await porDentro
-
-    for (const f of (d2 ?? []) as Fila[]) {
-      const clave = `${f.nombre}|${f.pais_codigo}|${f.lat}`
-      if (vistos.has(clave)) continue
-      vistos.add(clave)
-      filas.push(f)
-      if (filas.length >= CUANTAS) break
-    }
-  }
+  const filas = (data ?? []) as Fila[]
 
   return NextResponse.json({
     ciudades: filas.map((f) => ({
