@@ -54,6 +54,7 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 // hay suscripción, que es otra cosa.
 
 
+
 /** Los grupos que conoce el sistema. */
 type GrupoKey = "general" | "protocols";
 
@@ -62,6 +63,15 @@ type Persona = {
   userId: string;
   email: string;
   esAdmin: boolean;
+  /**
+   * Acceso concedido a mano, sin pasar por Stripe.
+   *
+   * Es `profiles.manual_access`, de la base de la PLATAFORMA — la misma
+   * bandera que ya abre la puerta de la web en
+   * app/miembros/_lib/auth-server.ts. No tiene nada que ver con el embudo:
+   * quien entra por aquí no tiene, ni va a tener, fila de suscripción.
+   */
+  accesoManual: boolean;
 };
 
 function clienteAdmin(): SupabaseClient {
@@ -93,10 +103,37 @@ async function cargarPersona(
   const { data, error } = await admin.auth.admin.getUserById(userId);
   if (error || !data?.user) return null;
 
+  // ── EL PERFIL, QUE ES DONDE ESTÁ EL ACCESO CONCEDIDO A MANO ───────────
+  // Un fallo leyéndolo devuelve `null`, no una persona con las banderas en
+  // falso. La diferencia importa en el barrido: `null` lo hace saltar a la
+  // siguiente fila sin echar a nadie, mientras que «no tiene acceso manual»
+  // lo echaría. Una caída de la base no puede vaciar el grupo de invitados.
+  //
+  // Lanzar tampoco vale: las tres funciones llaman aquí FUERA de su try.
+  const { data: perfil, error: falloPerfil } = await admin
+    .from("profiles")
+    .select("manual_access, is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (falloPerfil) {
+    console.error(JSON.stringify({ evento: "perfil_no_leido", user_id: userId, motivo: falloPerfil.message }));
+    return null;
+  }
+
+  const p = perfil as { manual_access?: boolean | null; is_admin?: boolean | null } | null;
+
   return {
     userId,
     email: (data.user.email ?? "").toLowerCase(),
-    esAdmin: (data.user.app_metadata as { is_admin?: boolean } | null)?.is_admin === true,
+    // ── LAS DOS BANDERAS DE ADMINISTRACIÓN ──────────────────────────────
+    // Esto miraba solo `app_metadata.is_admin`. El resto de la plataforma
+    // acepta las dos —ver `requireAdmin()`—, así que un administrador
+    // marcado solo en `profiles` entraba en la web y no en el grupo.
+    esAdmin:
+      (data.user.app_metadata as { is_admin?: boolean } | null)?.is_admin === true ||
+      p?.is_admin === true,
+    accesoManual: p?.manual_access === true,
   };
 }
 
@@ -119,6 +156,21 @@ async function tieneAccesoGeneral(
   persona: Persona,
 ): Promise<boolean> {
   if (persona.esAdmin) return true;
+
+  // ── QUIEN ENTRÓ INVITADO NO TIENE SUSCRIPCIÓN, Y ESTÁ BIEN ────────────
+  // Aquí se iba derecho a preguntarle al embudo, y el embudo solo sabe de
+  // quien pasó por el botón de pago. A quien se le da acceso a mano no hay
+  // fila que encontrar, así que la respuesta era siempre «no».
+  //
+  // El efecto era desconcertante: entraba a la plataforma sin problema
+  // —esa puerta sí mira `manual_access`— y al pulsar Telegram le decía que
+  // no había suscripción asociada a su cuenta. Parecía una avería, y era
+  // esta línea que faltaba.
+  //
+  // Va ANTES de llamar al embudo a propósito: un invitado no depende de que
+  // la otra base esté en pie.
+  if (persona.accesoManual) return true;
+
   if (!persona.email) return false;
 
   const { data: registro, error } = await embudo

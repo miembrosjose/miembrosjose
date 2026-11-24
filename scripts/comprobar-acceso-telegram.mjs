@@ -91,12 +91,32 @@ if (!persona) {
   process.exit(0)
 }
 
+// ── EL PERFIL: DE AHÍ SALE EL ACCESO CONCEDIDO A MANO ─────────────────────
+// Esto no se leía, y por eso el diagnóstico mentía justo con los invitados:
+// daba «NO PASA» mirando solo el embudo, cuando `manual_access` les abre la
+// puerta igual que se la abre a la web.
+const { data: perfil, error: errPerfil } = await plataforma
+  .from("profiles")
+  .select("manual_access, is_admin")
+  .eq("id", persona.userId)
+  .maybeSingle()
+
+if (errPerfil) {
+  console.error("No pude leer el perfil:", errPerfil.message)
+  process.exit(1)
+}
+
+persona.accesoManual = perfil?.manual_access === true
+// Las DOS banderas, como `requireAdmin()` y como `acceso.ts` desde hoy.
+persona.esAdmin = persona.esAdmin || perfil?.is_admin === true
+
 linea(`PASO 1 · Cuenta en la plataforma:  SÍ`)
 linea(`         user_id        ${persona.userId}`)
 linea(`         correo         ${persona.emailCrudo}`)
 linea(`         coincide       ${persona.email === correoPedido ? "SÍ (ignorando mayúsculas)" : "NO"}`)
 linea(`         espacios       ${persona.emailCrudo !== persona.emailCrudo.trim() ? "SÍ — ROMPE LA BÚSQUEDA" : "no"}`)
 linea(`         administradora ${persona.esAdmin ? "SÍ" : "no"}`)
+linea(`         acceso manual  ${persona.accesoManual ? "SÍ — invitada, sin pasar por el pago" : "no"}`)
 linea("")
 
 // La salida para administración va ANTES de preguntarle al embudo.
@@ -104,6 +124,20 @@ if (persona.esAdmin) {
   linea("VEREDICTO: PASA — es administradora, y eso pasa sin mirar la suscripción.")
   linea("  Ojo: entonces esto no comprueba nada sobre su suscripción. Para probar")
   linea("  la regla de verdad hace falta una cuenta que no sea administradora.\n")
+  process.exit(0)
+}
+
+// La misma salida, y por el mismo motivo: en el embudo no hay fila que buscar.
+if (persona.accesoManual) {
+  linea("VEREDICTO: PASA — tiene acceso concedido a mano (`profiles.manual_access`).")
+  linea("  No pasó por el botón de pago, así que el embudo no tiene ninguna fila a")
+  linea("  su nombre. Eso es lo normal en una invitación, no una avería.")
+  linea("")
+  linea("  OJO, Y ES LO QUE IMPORTA: esto vale para el barrido, el webhook y")
+  linea("  Protocolos. El botón de Telegram lo atiende `telegram-link-start`, que")
+  linea("  lleva su propia copia de la regla y NO está en este repositorio. Si a")
+  linea("  esta persona el botón le sigue diciendo que no hay suscripción, es que")
+  linea("  esa función no se ha vuelto a desplegar con el arreglo.\n")
   process.exit(0)
 }
 

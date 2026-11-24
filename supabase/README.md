@@ -27,8 +27,9 @@ distintas de «quién puede entrar», que es el problema que veníamos a arregla
 
 ## `_shared/acceso.ts`
 
-Es la definición única de quién puede entrar a cada grupo. La importan las
-cuatro funciones con `../_shared/acceso.ts`.
+Es la definición única de quién puede entrar a cada grupo. La importan **tres**
+de las cuatro funciones con `../_shared/acceso.ts`. La cuarta,
+`telegram-link-start`, lleva todavía su propia copia: ver más abajo.
 
 **Ese import relativo solo funciona desplegando con la CLI.** Si despliegas
 pegando en el panel, hay que copiar `acceso.ts` como segundo archivo dentro de
@@ -43,13 +44,30 @@ supabase link --project-ref kjozrcugsywykpuvuqzu
 supabase functions deploy telegram-webhook --no-verify-jwt
 supabase functions deploy telegram-sweep
 supabase functions deploy telegram-protocols-access
+supabase functions deploy telegram-link-start
 ```
 
 `--no-verify-jwt` **solo** para `telegram-webhook`: Telegram no puede mandar un
-JWT de Supabase. Se protege con su propio secreto de cabecera. Las otras dos
+JWT de Supabase. Se protege con su propio secreto de cabecera. Las otras tres
 llevan verificación de JWT y deben conservarla.
 
-## Las que faltan aquí
+## `telegram-link-start`
 
-`telegram-link-start` no se ha tocado en este trabajo, así que no se ha
-copiado para no dar a entender que sí. Cuando se retoque, se trae.
+Es la que atiende el botón de Telegram del área de miembros: devuelve la
+dirección personal de un solo uso. **Sí está aquí** desde el 17-11-2026, que
+es cuando hubo que retocarla.
+
+No tiene imports relativos, así que **se puede pegar tal cual en el panel**,
+sin pasar por el generador.
+
+**Lleva su propia copia de la comprobación de acceso**, porque está escrita
+sobre `withSupabase` de `npm:@supabase/server` y no sobre `Deno.serve` como
+las otras tres. Eso ya cobró una vez: se añadió el acceso concedido a mano a
+`_shared/acceso.ts` y aquí no, así que el barrido y el webhook dejaban entrar
+a los invitados mientras **el botón** seguía diciéndoles que no tenían
+suscripción. Si la regla cambia, hay que cambiarla en los dos sitios hasta
+que se unifiquen.
+
+Queda una diferencia a propósito: `_shared/acceso.ts` acepta `canceled` y esta
+copia no. Está explicada en la cabecera del archivo; aflojar eso es una
+decisión del dueño, no un arreglo.
