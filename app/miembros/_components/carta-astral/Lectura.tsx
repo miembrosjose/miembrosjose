@@ -614,7 +614,6 @@ function FilaSigno({ w, carta, onPunto }: {
                 <strong>Si este sistema entra en desequilibrio</strong>, suele notarse en{" "}
                 {mapa.zona.toLowerCase()}
                 {mapa.somatizaciones && <>: {mapa.somatizaciones.toLowerCase()}</>}.
-                {mapa.borrador && <span className={s.borrador}>borrador</span>}
               </p>
             )}
             {mapa.emocion && (
