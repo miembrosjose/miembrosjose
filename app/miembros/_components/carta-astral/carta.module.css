@@ -667,3 +667,102 @@
   line-height: 1.55;
   color: #c3c6d8;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LA FILA QUE SE ABRE · una sola forma para las cinco pestañas
+   ═══════════════════════════════════════════════════════════════════════════
+   Antes cada lista tenía su propio desplegable, su propio borde y su propia
+   cabecera. Había que aprender la pantalla en vez de usarla, y además todo
+   venía abierto. Ahora abrir un planeta, una casa, un aspecto, un signo y una
+   pregunta de la guía son el mismo gesto y se ven igual. */
+
+.fila {
+  border: 1px solid rgba(167, 139, 202, 0.14);
+  border-radius: 10px;
+  margin-bottom: 0.45rem;
+  overflow: hidden;
+  transition: border-color 160ms ease;
+}
+
+.fila:hover { border-color: rgba(167, 139, 202, 0.3); }
+
+.filaResaltada {
+  border-color: rgba(167, 139, 202, 0.5);
+  background: rgba(167, 139, 202, 0.05);
+}
+
+.filaBoton {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: none;
+  background: none;
+  color: #c3c6d8;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.filaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.filaTitulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: #c3c6d8;
+}
+
+.filaTitulo strong { color: #f3f6fa; font-weight: 600; }
+
+.filaApunte {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7f849e;
+  /* Que un apunte largo no empuje los grados fuera de la fila. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filaExtra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: #7f849e;
+}
+
+.filaCuerpo {
+  padding: 0.2rem 0.75rem 0.85rem;
+  border-top: 1px solid rgba(167, 139, 202, 0.1);
+  margin-top: -1px;
+}
+
+.filaCuerpo > p:first-child { margin-top: 0.7rem; }
+
+/* La línea que remata una fila de «Empieza aquí»: dice dónde seguir sin
+   llevarte a ningún sitio por su cuenta. */
+.pieDeFila {
+  margin: 0.8rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(167, 139, 202, 0.16);
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: #7f849e;
+}
+
+.pieDeFila strong { color: #a78bca; }

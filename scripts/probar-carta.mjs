@@ -42,7 +42,6 @@ const { textoEnCasa } = await import(ruta("app","miembros","_lib","carta-astral"
 const { CASAS, PLANETAS } = await import(ruta("app","miembros","_lib","carta-astral","contenido","vocabulario.ts"))
 const { textoEnSigno } = await import(ruta("app","miembros","_lib","carta-astral","contenido","planeta-en-signo.ts"))
 const { COMO_ACTUA, textoPareja } = await import(ruta("app","miembros","_lib","carta-astral","contenido","aspectos-texto.ts"))
-const { sombraEn, SOMBRA_EN_PUNTO } = await import(ruta("app","miembros","_lib","carta-astral","contenido","sombra-en-punto.ts"))
 const { textoAngulo } = await import(ruta("app","miembros","_lib","carta-astral","contenido","angulos-en-signo.ts"))
 const { GUIA } = await import(ruta("app","miembros","_lib","carta-astral","contenido","guia.ts"))
 const { SIGNOS, ORDEN_ZODIACAL, signoDeGrado, gradoEnSigno } = await import(ruta("app", "miembros", "_lib", "carta-astral", "contenido", "signos.ts"))
@@ -514,58 +513,6 @@ console.log("\n═══ 8d · LOS ASPECTOS, EXPLICADOS ═══\n")
     }
   }
   ok(`los ${total} aspectos de 150 cartas reales se explican todos`, huecos === 0, String(huecos))
-}
-
-console.log("\n═══ 8e · LA SOMBRA DE CADA SIGNO EN CADA PUNTO ═══\n")
-{
-  // El cruce que pidió José: «estoy en desequilibrio en Sagitario, y
-  // Sagitario lo tengo en Venus — debería salirme que puede manifestarse
-  // como discusiones con la pareja que no se concretan, que no se cierran».
-  const PUNTOS = ["sol", "luna", "mercurio", "venus", "marte", "jupiter", "saturno",
-                  "urano", "neptuno", "pluton", "nodo_norte", "ascendente", "medio_cielo"]
-  const faltan = [], repetidos = []
-  const vistos = new Map()
-
-  for (const signo of ORDEN_ZODIACAL) {
-    for (const punto of PUNTOS) {
-      const texto = sombraEn(signo, punto)
-      if (!texto || texto.length < 40) { faltan.push(`${signo}/${punto}`); continue }
-      if (vistos.has(texto)) repetidos.push(`${signo}/${punto} = ${vistos.get(texto)}`)
-      else vistos.set(texto, `${signo}/${punto}`)
-    }
-  }
-
-  ok("están los 156 cruces de signo y punto", faltan.length === 0,
-    `faltan ${faltan.length}: ${faltan.slice(0, 5).join(", ")}`)
-  ok("ninguno repetido entre dos cruces", repetidos.length === 0, repetidos.slice(0, 3).join(" · "))
-
-  // Describen, no predicen: la misma regla que el resto del contenido.
-  const ADIVINA = /\b(ser[áé]s|tendr[áé]s|te pasar[áá]|ocurrir[áá]|sufrir[áá]s)\b/i
-  const adivinan = []
-  for (const signo of ORDEN_ZODIACAL) {
-    for (const punto of PUNTOS) {
-      const texto = sombraEn(signo, punto)
-      if (texto && ADIVINA.test(texto)) adivinan.push(`${signo}/${punto}`)
-    }
-  }
-  ok("ninguno predice el futuro", adivinan.length === 0, adivinan.join(", "))
-
-  // El caso exacto que describió José, antes de haber leído esta tabla.
-  const suyo = sombraEn("sagitario", "venus")
-  ok("Sagitario en Venus habla de la pareja y de no cerrar",
-    !!suyo && /pareja/i.test(suyo) && /(concret|cierr)/i.test(suyo), suyo ?? "(nada)")
-
-  ok("devuelve null para lo que no existe", sombraEn("aries", "quimera") === null)
-
-  // Y sobre cartas reales: todo lo que la pantalla vaya a pedir tiene texto.
-  let huecos = 0
-  for (let i = 0; i < 120; i++) {
-    const c = calcularCarta(Date.UTC(1950, 0, 1) + i * 211 * 86400e3, (i % 90) - 45, (i * 29) % 360 - 180)
-    for (const pt of c.puntos) {
-      if (PUNTOS.includes(pt.id) && !sombraEn(pt.signo, pt.id)) huecos++
-    }
-  }
-  ok("en 120 cartas reales, todos los puntos tienen su cruce", huecos === 0, String(huecos))
 }
 
 console.log("\n═══ 9 · DETERMINISTA ═══\n")

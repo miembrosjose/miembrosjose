@@ -1,31 +1,34 @@
 "use client"
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  LA LECTURA · la rueda arriba, y debajo lo que elijas mirar
+//  LA LECTURA · la rueda arriba, y debajo lo que elijas abrir
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// ── EL PROBLEMA QUE RESUELVE ──────────────────────────────────────────────
-// La primera versión era un scroll larguísimo de párrafos: todo estaba, y por
-// eso no se encontraba nada. Lo dijo José con una frase que vale más que
-// cualquier métrica: «me has enviado un texto tan plano y tan grande que es
-// difícil la navegación».
+// ── DOS REGLAS, Y LAS DOS VIENEN DE PROBARLO ──────────────────────────────
 //
-// Tres cambios, y ninguno quita contenido:
+//   1. NADA VIENE ABIERTO. Ni los planetas, ni los aspectos, ni los signos.
+//      La versión anterior lo desplegaba todo y José lo dijo claro: «todo
+//      está abierto, se ve muy feo, es difícil a la vista y no se entiende
+//      nada». Trece planetas con dos párrafos cada uno no es información: es
+//      un muro.
 //
-//   1. LA RUEDA SE QUEDA ARRIBA SIEMPRE. No se va al hacer scroll: es el
-//      mapa, y un mapa que desaparece al moverte no sirve de mapa.
-//   2. DEBAJO HAY PESTAÑAS, no un rollo. Cada una cabe en una pantalla o dos.
-//   3. TOCAR LA RUEDA NAVEGA. Tocas Venus y te abre Venus, resaltado. Tocas
-//      una casa y te abre esa casa.
+//   2. NO SE SALTA DE PESTAÑA. «Si yo estoy en el botón empieza aquí, debe
+//      permanecer en ese empieza aquí siempre.» Tocar tu Sol en la portada
+//      abre algo breve AHÍ MISMO. Lo completo está en Planetas, cuando se
+//      vaya a Planetas, y no antes.
 //
-// ── POR DÓNDE SE EMPIEZA ──────────────────────────────────────────────────
-// La pestaña por defecto es «Empieza aquí», y existe porque la pregunta de
-// alguien que abre esto por primera vez no es «¿qué dice mi Neptuno?» sino
-// «¿qué estoy mirando?». Si lo primero que ve es una tabla de trece filas, se
-// va.
+//      La única excepción es la rueda, porque ese es su trabajo: es el mapa,
+//      y un mapa existe para llevarte a un sitio.
+//
+// ── LO QUE SE QUITÓ ───────────────────────────────────────────────────────
+// El cruce signo × punto —«Sagitario en Venus: discusiones que no se
+// concretan»—. Se escribió a petición suya y se quita a petición suya:
+// «quita eso que te pedí del cruce porque se confunde más». Dentro de una
+// fila que ya trae el arquetipo, su sombra y el sistema orgánico con sus dos
+// estados, una cuarta capa deja de aclarar y empieza a estorbar.
 
 import { useEffect, useRef, useState } from "react"
-import { RotateCcw } from "lucide-react"
+import { ChevronDown, RotateCcw } from "lucide-react"
 
 import type { Nacimiento } from "../../_lib/cartografia-estelar/domain/types"
 import type { Carta, PuntoId } from "../../_lib/carta-astral/motor/carta"
@@ -40,17 +43,11 @@ import { textoEnCasa } from "../../_lib/carta-astral/contenido/planeta-en-casa"
 import { textoEnSigno, GENERACIONALES } from "../../_lib/carta-astral/contenido/planeta-en-signo"
 import { textoAngulo } from "../../_lib/carta-astral/contenido/angulos-en-signo"
 import { COMO_ACTUA, textoPareja } from "../../_lib/carta-astral/contenido/aspectos-texto"
-import { sombraEn } from "../../_lib/carta-astral/contenido/sombra-en-punto"
 import { GUIA } from "../../_lib/carta-astral/contenido/guia"
 
 import { RuedaCarta } from "./RuedaCarta"
 import s from "./carta.module.css"
 import r from "./rueda.module.css"
-
-const PLANETAS_IDS: PlanetaId[] = [
-  "sol", "luna", "mercurio", "venus", "marte",
-  "jupiter", "saturno", "urano", "neptuno", "pluton",
-]
 
 type Pestana = "empezar" | "puntos" | "casas" | "aspectos" | "camino" | "guia"
 
@@ -63,6 +60,62 @@ const PESTANAS: Array<{ id: Pestana; rotulo: string }> = [
   { id: "guia", rotulo: "Guía" },
 ]
 
+/** El orden en que se leen los puntos: primero los tres que más dicen. */
+const ORDEN_PUNTOS: PuntoId[] = [
+  "sol", "luna", "ascendente", "medio_cielo",
+  "mercurio", "venus", "marte",
+  "jupiter", "saturno", "urano", "neptuno", "pluton",
+]
+
+const esAngulo = (id: PuntoId) => id === "ascendente" || id === "medio_cielo"
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  UNA FILA QUE SE ABRE · el mismo gesto en las cinco pestañas
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Existe para que abrir un planeta, una casa, un aspecto y un signo se sientan
+// lo mismo. Cuando cada lista inventa su forma de desplegarse, hay que
+// aprender la pantalla en vez de usarla.
+function Fila({ titulo, apunte, extra, abierta, onAlternar, resaltada, children }: {
+  titulo: React.ReactNode
+  /** La línea pequeña de debajo del título. */
+  apunte?: React.ReactNode
+  /** Lo que va a la derecha: grados, orbe, puntos. */
+  extra?: React.ReactNode
+  abierta: boolean
+  onAlternar: () => void
+  resaltada?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <article className={`${s.fila} ${resaltada ? s.filaResaltada : ""}`}>
+      <button
+        type="button"
+        className={s.filaBoton}
+        onClick={onAlternar}
+        aria-expanded={abierta}
+      >
+        <span className={s.filaTextos}>
+          <span className={s.filaTitulo}>{titulo}</span>
+          {apunte && <span className={s.filaApunte}>{apunte}</span>}
+        </span>
+        {extra && <span className={s.filaExtra}>{extra}</span>}
+        <ChevronDown size={15} className={abierta ? s.giro : ""} aria-hidden />
+      </button>
+      {abierta && <div className={s.filaCuerpo}>{children}</div>}
+    </article>
+  )
+}
+
+/** Abrir una a la vez, o ninguna. Vuelve a tocar y se cierra. */
+function useUnaAbierta<T>(inicial: T | null = null) {
+  const [abierta, setAbierta] = useState<T | null>(inicial)
+  const alternar = (id: T) => setAbierta((x) => (x === id ? null : id))
+  return { abierta, setAbierta, alternar }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+
 export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
   carta: Carta
   pesos: PesoDeSigno[]
@@ -71,15 +124,12 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
   onReiniciar: () => void
 }) {
   const [pestana, setPestana] = useState<Pestana>("empezar")
-  const [resaltado, setResaltado] = useState<PuntoId | null>(null)
+  const [puntoAbierto, setPuntoAbierto] = useState<PuntoId | null>(null)
   const [casaAbierta, setCasaAbierta] = useState<number | null>(null)
-  const contenidoRef = useRef<HTMLDivElement | null>(null)
+  const [signoAbierto, setSignoAbierto] = useState<SignoId | null>(null)
   const ruedaRef = useRef<HTMLDivElement | null>(null)
+  const contenidoRef = useRef<HTMLDivElement | null>(null)
 
-  const punto = (id: PuntoId) => carta.puntos.find((p) => p.id === id)!
-
-  // Al navegar desde la rueda, el contenido cambia DEBAJO de la rueda. Sin
-  // llevar la vista hasta ahí, parece que no ha pasado nada.
   const irA = (destino: Pestana) => {
     setPestana(destino)
     requestAnimationFrame(() => {
@@ -87,37 +137,20 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
     })
   }
 
-  const tocarPunto = (id: PuntoId) => {
-    setResaltado(id)
-    irA("puntos")
-  }
-
-  const tocarCasa = (numero: number) => {
-    setCasaAbierta(numero)
-    irA("casas")
-  }
-
-  const tocarSigno = (signo: SignoId) => {
-    setResaltado(null)
-    irA("camino")
-    // La fila del signo se abre sola. Se busca por id en el DOM porque la
-    // lista de signos vive dentro de otro componente y pasarle estado por
-    // props para esto solo enredaría a los dos.
-    requestAnimationFrame(() => {
-      document.getElementById(`signo-${signo}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
-    })
-  }
+  // La rueda SÍ navega: es su oficio. Las pestañas no se saltan solas.
+  const tocarPunto = (id: PuntoId) => { setPuntoAbierto(id); irA("puntos") }
+  const tocarCasa = (n: number) => { setCasaAbierta(n); irA("casas") }
+  const tocarSigno = (sig: SignoId) => { setSignoAbierto(sig); irA("camino") }
 
   return (
     <div className={s.lectura}>
-      {/* ── LA RUEDA, PEGADA ARRIBA ──────────────────────────────── */}
       <div className={s.zonaRueda} ref={ruedaRef}>
         <RuedaCarta
           carta={carta}
           onPunto={tocarPunto}
           onCasa={tocarCasa}
           onSigno={tocarSigno}
-          resaltado={resaltado}
+          resaltado={puntoAbierto}
         />
         <p className={r.leyenda}>
           <span className={r.leyendaItem}>
@@ -132,11 +165,7 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
         </p>
       </div>
 
-      {/* ── PESTAÑAS ─────────────────────────────────────────────── */}
       <div className={s.pestanas} role="tablist" aria-label="Partes de tu carta">
-        {/* La rueda ya no se queda pegada arriba —se superponía al texto—,
-            así que hace falta una forma de volver a ella sin desplazar a
-            mano. Va la primera porque es el punto de partida. */}
         <button
           type="button"
           className={s.pestanaRueda}
@@ -161,17 +190,17 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
 
       <div className={s.contenido} ref={contenidoRef}>
         {pestana === "empezar" && (
-          <Empezar carta={carta} nacimiento={nacimiento} desfase={desfase} onPunto={tocarPunto} />
+          <Empezar carta={carta} nacimiento={nacimiento} desfase={desfase} />
         )}
         {pestana === "puntos" && (
-          <Puntos carta={carta} resaltado={resaltado} onResaltar={setResaltado} />
+          <Puntos carta={carta} abierto={puntoAbierto} onAbrir={setPuntoAbierto} />
         )}
         {pestana === "casas" && (
           <CasasVista carta={carta} abierta={casaAbierta} onAbrir={setCasaAbierta} />
         )}
         {pestana === "aspectos" && <Aspectos carta={carta} />}
         {pestana === "camino" && (
-          <CaminoSolar pesos={pesos} carta={carta} onPunto={tocarPunto} />
+          <CaminoSolar pesos={pesos} abierto={signoAbierto} onAbrir={setSignoAbierto} />
         )}
         {pestana === "guia" && <GuiaVista />}
       </div>
@@ -190,53 +219,81 @@ export function Lectura({ carta, pesos, nacimiento, desfase, onReiniciar }: {
 // ═══════════════════════════════════════════════════════════════════════════
 //  1 · EMPIEZA AQUÍ
 // ═══════════════════════════════════════════════════════════════════════════
+//
+// Tocar el Sol abre el Sol AQUÍ. No manda a Planetas.
+//
+// Lo que se abre es corto a propósito: una frase de qué es ese punto y el
+// texto de su signo. Lo de la casa, los aspectos y el resto está en Planetas,
+// para quien quiera seguir. Esta pestaña contesta «¿qué estoy mirando?», no
+// «cuéntamelo todo».
 
-function Empezar({ carta, nacimiento, desfase, onPunto }: {
+function Empezar({ carta, nacimiento, desfase }: {
   carta: Carta
   nacimiento: Nacimiento
   desfase: string
-  onPunto: (id: PuntoId) => void
 }) {
+  const { abierta, alternar } = useUnaAbierta<PuntoId>()
   const punto = (id: PuntoId) => carta.puntos.find((p) => p.id === id)!
 
-  const TRES = [
-    { id: "sol" as const, rotulo: "Sol", pregunta: "Lo que vienes a ser" },
-    { id: "luna" as const, rotulo: "Luna", pregunta: "Lo que necesitas para estar bien" },
-    { id: "ascendente" as const, rotulo: "Ascendente", pregunta: "Cómo apareces ante los demás" },
+  const TRES: Array<{ id: PuntoId; rotulo: string; pregunta: string; que: string }> = [
+    {
+      id: "sol", rotulo: "Sol", pregunta: "Lo que vienes a ser",
+      que: "El Sol es el centro: la dirección hacia la que tiende una vida cuando nadie la empuja. Es lo que casi todo el mundo llama «su signo».",
+    },
+    {
+      id: "luna", rotulo: "Luna", pregunta: "Lo que necesitas para estar bien",
+      que: "La Luna es la necesidad básica: lo que te calma, lo que te altera, aquello a lo que vuelves sin pensarlo. Reaccionas desde aquí antes de decidir.",
+    },
+    {
+      id: "ascendente", rotulo: "Ascendente", pregunta: "Cómo apareces ante los demás",
+      que: "El signo que asomaba por el horizonte este en el minuto en que naciste. Cambia cada cuatro minutos: es lo más personal de la carta.",
+    },
   ]
 
   return (
     <div>
       <p className={s.entradilla}>
-        Lo que tienes arriba es el cielo del minuto en que naciste, visto desde{" "}
+        Lo de arriba es el cielo del minuto en que naciste, visto desde{" "}
         {nacimiento.lugar.nombre}. El anillo de fuera son los doce signos; el de dentro,
-        las doce casas. Los símbolos del medio son los planetas, cada uno en su sitio,
-        y las líneas del centro son las distancias entre ellos.
+        las doce casas. Los símbolos del medio son los planetas, y las líneas del centro
+        son las distancias entre ellos.
       </p>
 
       <p className={s.instruccion}>
         <strong>Toca cualquier símbolo de la rueda</strong> y te lleva a lo que significa.
-        Si prefieres leerlo ordenado, usa las pestañas de arriba.
+        Las pestañas de arriba son lo mismo, ordenado.
       </p>
 
       <h3 className={s.h3}>Si solo vas a mirar tres cosas, mira estas</h3>
-      <div className={s.tresGrandes}>
-        {TRES.map(({ id, rotulo, pregunta }) => {
-          const p = punto(id)
-          return (
-            <button key={id} type="button" className={s.grande} onClick={() => onPunto(id)}>
-              <span className={s.grandeRotulo}>{rotulo}</span>
-              <strong className={s.grandeSigno}>{SIGNOS[p.signo].nombre}</strong>
-              <span className={s.grandeGrado}>{Math.floor(p.grado)}° · casa {p.casa}</span>
-              <span className={s.grandePie}>{pregunta}</span>
-            </button>
-          )
-        })}
-      </div>
       <p className={s.nota}>
-        Casi todo el mundo conoce solo su Sol: es lo que sale en las revistas. La Luna y el
-        Ascendente suelen explicar mejor lo que a uno le pasa, y casi nadie los sabe.
+        Casi todo el mundo conoce solo su Sol: es lo que sale en las revistas. La Luna y
+        el Ascendente suelen explicar mejor lo que a uno le pasa, y casi nadie los sabe.
+        Tócalos para ver qué dicen.
       </p>
+
+      {TRES.map(({ id, rotulo, pregunta, que }) => {
+        const p = punto(id)
+        const texto = esAngulo(id)
+          ? textoAngulo(id, p.signo)
+          : textoEnSigno(id as PlanetaId, p.signo)
+        return (
+          <Fila
+            key={id}
+            titulo={<><strong>{rotulo}</strong> en {SIGNOS[p.signo].nombre}</>}
+            apunte={pregunta}
+            extra={`${Math.floor(p.grado)}° · casa ${p.casa}`}
+            abierta={abierta === id}
+            onAlternar={() => alternar(id)}
+          >
+            <p className={s.parrafoSecundario}>{que}</p>
+            <p className={s.parrafo}>{texto}</p>
+            <p className={s.pieDeFila}>
+              Lo que significa estar en la <strong>casa {p.casa}</strong>, y el resto de tu
+              carta, está en la pestaña <strong>Planetas</strong>.
+            </p>
+          </Fila>
+        )
+      })}
 
       <h3 className={s.h3}>Tus datos</h3>
       <p className={s.datosNacimiento}>
@@ -259,89 +316,77 @@ function Empezar({ carta, nacimiento, desfase, onPunto }: {
 //  2 · PLANETAS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function Puntos({ carta, resaltado, onResaltar }: {
+function Puntos({ carta, abierto, onAbrir }: {
   carta: Carta
-  resaltado: PuntoId | null
-  onResaltar: (id: PuntoId | null) => void
+  abierto: PuntoId | null
+  onAbrir: (id: PuntoId | null) => void
 }) {
   const refs = useRef<Record<string, HTMLElement | null>>({})
 
-  // Al llegar desde la rueda, el bloque correspondiente se trae a la vista.
+  // Al llegar desde la rueda, se trae a la vista el que se tocó.
   useEffect(() => {
-    if (!resaltado) return
-    refs.current[resaltado]?.scrollIntoView({ behavior: "smooth", block: "center" })
-  }, [resaltado])
-
-  const orden: PuntoId[] = ["sol", "luna", "ascendente", "medio_cielo", ...PLANETAS_IDS.filter((x) => x !== "sol" && x !== "luna")]
+    if (!abierto) return
+    refs.current[abierto]?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [abierto])
 
   return (
     <div>
       <p className={s.entradilla}>
         Cada uno dice dos cosas. El <strong>signo</strong> dice cómo funciona esa parte de
-        ti. La <strong>casa</strong> dice en qué terreno de tu vida se nota. Las dos hacen
-        falta: Marte en Aries es actuar de frente, Marte en la casa 7 es gastar esa fuerza
-        en los vínculos.
+        ti; la <strong>casa</strong>, en qué terreno de tu vida se nota. Marte en Aries es
+        actuar de frente; Marte en la casa 7 es gastar esa fuerza en los vínculos.
       </p>
+      <p className={s.nota}>Toca cualquiera para abrirlo.</p>
 
-      <div className={s.tiraPuntos}>
-        {orden.map((id) => {
-          const p = carta.puntos.find((x) => x.id === id)!
-          return (
-            <button key={id} type="button"
-              className={resaltado === id ? s.chipActivo : s.chip}
-              onClick={() => onResaltar(id)}
-            >
-              {p.nombre}
-            </button>
-          )
-        })}
-      </div>
-
-      {orden.map((id) => {
+      {ORDEN_PUNTOS.map((id) => {
         const p = carta.puntos.find((x) => x.id === id)!
-        const esAngulo = id === "ascendente" || id === "medio_cielo"
-        const textoSigno = esAngulo
+        const angulo = esAngulo(id)
+        const textoSigno = angulo
           ? textoAngulo(id, p.signo)
           : textoEnSigno(id as PlanetaId, p.signo)
-        const info = esAngulo ? null : PLANETAS[id as PlanetaId]
-        const generacional = !esAngulo && GENERACIONALES.includes(id as PlanetaId)
+        const info = angulo ? null : PLANETAS[id as PlanetaId]
+        const generacional = !angulo && GENERACIONALES.includes(id as PlanetaId)
 
         return (
-          <article
-            key={id}
-            ref={(el) => { refs.current[id] = el }}
-            className={`${s.bloquePlaneta} ${resaltado === id ? s.bloqueResaltado : ""}`}
-          >
-            <h4 className={s.bloqueTitulo}>
-              {p.nombre} en {SIGNOS[p.signo].nombre}
-              {p.retrogrado && <span className={s.retro} title="Retrógrado">R</span>}
-              <span className={s.bloqueCasa}>casa {p.casa} · {CASAS[p.casa].nombre}</span>
-            </h4>
+          <div key={id} ref={(el) => { refs.current[id] = el }}>
+            <Fila
+              titulo={<><strong>{p.nombre}</strong> en {SIGNOS[p.signo].nombre}</>}
+              apunte={`Casa ${p.casa} — ${CASAS[p.casa].nombre}`}
+              extra={
+                <>
+                  {Math.floor(p.grado)}°
+                  {p.retrogrado && <span className={s.retro} title="Retrógrado">R</span>}
+                </>
+              }
+              abierta={abierto === id}
+              onAlternar={() => onAbrir(abierto === id ? null : id)}
+              resaltada={abierto === id}
+            >
+              {info && <p className={s.parrafoSecundario}>{info.largo}</p>}
+              {id === "ascendente" && (
+                <p className={s.parrafoSecundario}>
+                  El signo que asomaba por el horizonte este cuando naciste. Cambia cada
+                  cuatro minutos: es lo más personal de la carta.
+                </p>
+              )}
+              {id === "medio_cielo" && (
+                <p className={s.parrafoSecundario}>
+                  El punto más alto de la carta: tu lugar público y tu vocación.
+                </p>
+              )}
 
-            {info && <p className={s.bloqueBreve}>{info.largo}</p>}
-            {id === "ascendente" && (
-              <p className={s.bloqueBreve}>
-                El signo que asomaba por el horizonte este cuando naciste. Cambia cada cuatro
-                minutos: es lo más personal de la carta.
-              </p>
-            )}
-            {id === "medio_cielo" && (
-              <p className={s.bloqueBreve}>
-                El punto más alto de la carta: tu lugar público y tu vocación.
-              </p>
-            )}
+              <p className={s.etiquetaMini}>Cómo — el signo</p>
+              <p className={s.parrafo}>{textoSigno}</p>
+              {generacional && <p className={s.notaGeneracional}>{AVISO_GENERACIONALES}</p>}
 
-            <p className={s.etiquetaMini}>Cómo — el signo</p>
-            <p className={s.parrafo}>{textoSigno}</p>
-            {generacional && <p className={s.notaGeneracional}>{AVISO_GENERACIONALES}</p>}
-
-            {!esAngulo && (
-              <>
-                <p className={s.etiquetaMini}>Dónde — la casa {p.casa}</p>
-                <p className={s.parrafo}>{textoEnCasa(id as PlanetaId, p.casa)}</p>
-              </>
-            )}
-          </article>
+              {!angulo && (
+                <>
+                  <p className={s.etiquetaMini}>Dónde — la casa {p.casa}</p>
+                  <p className={s.parrafo}>{textoEnCasa(id as PlanetaId, p.casa)}</p>
+                </>
+              )}
+            </Fila>
+          </div>
         )
       })}
     </div>
@@ -366,49 +411,53 @@ function CasasVista({ carta, abierta, onAbrir }: {
 
   return (
     <div>
+      {/* La entradilla anterior decía «doce terrenos de una vida» y se quedaba
+          ahí. José: «lo de las casas no se entiende». Faltaba lo básico: qué
+          es una casa, de dónde sale y para qué sirve saberlo. */}
       <p className={s.entradilla}>
-        Doce terrenos de una vida. No dependen solo de tu fecha: dependen de la hora y del
-        lugar. Por eso dos personas nacidas el mismo día pueden tener cartas muy distintas.
+        Si los planetas dicen <strong>qué</strong> y los signos <strong>cómo</strong>, las
+        casas dicen <strong>dónde</strong>: en qué parte de tu vida se nota cada cosa. Son
+        doce terrenos —el cuerpo, el dinero, la familia, la pareja, el trabajo, lo que no
+        se ve— y la rueda los reparte alrededor de ti.
+      </p>
+      <p className={s.entradilla}>
+        Salen de tu <strong>hora y tu lugar</strong> de nacimiento, no de la fecha. Por eso
+        dos personas del mismo día pueden tener cartas muy distintas, y por eso la hora
+        importa tanto.
+      </p>
+      <p className={s.nota}>
+        Una casa con planetas dentro es un terreno donde pasan cosas. Una vacía no es una
+        parte vacía de tu vida: es una que no pide tanto de ti.
       </p>
 
       {carta.casas.map((casa) => {
-        const dentro = carta.puntos.filter((p) => p.casa === casa.numero && p.id !== "ascendente" && p.id !== "medio_cielo")
+        const dentro = carta.puntos.filter(
+          (p) => p.casa === casa.numero && !esAngulo(p.id),
+        )
         const info = CASAS[casa.numero]
-        const esta = abierta === casa.numero
         return (
-          <article
-            key={casa.numero}
-            ref={(el) => { refs.current[casa.numero] = el }}
-            className={`${s.filaCasa} ${esta ? s.bloqueResaltado : ""}`}
-          >
-            <button type="button" className={s.filaCabecera} onClick={() => onAbrir(esta ? null : casa.numero)}>
-              <span className={s.casaNumero}>{casa.numero}</span>
-              <span className={s.filaNombre}>{info.nombre}</span>
-              <span className={s.casaSigno}>
-                {SIGNOS[casa.signo].nombre}
-                {dentro.length > 0 && ` · ${dentro.length}`}
-              </span>
-            </button>
-            {esta && (
-              <div className={s.filaCuerpo}>
-                <p className={s.parrafo}>{info.largo}</p>
+          <div key={casa.numero} ref={(el) => { refs.current[casa.numero] = el }}>
+            <Fila
+              titulo={<><strong>Casa {casa.numero}</strong> — {info.nombre}</>}
+              apunte={info.breve}
+              extra={dentro.length > 0 ? `${dentro.length}` : ""}
+              abierta={abierta === casa.numero}
+              onAlternar={() => onAbrir(abierta === casa.numero ? null : casa.numero)}
+              resaltada={abierta === casa.numero}
+            >
+              <p className={s.parrafo}>{info.largo}</p>
+              <p className={s.parrafoSecundario}>
+                Empieza en {Math.floor(casa.grado)}° de {SIGNOS[casa.signo].nombre}.
+              </p>
+              {dentro.length > 0 ? (
                 <p className={s.parrafoSecundario}>
-                  Empieza en {Math.floor(casa.grado)}° de {SIGNOS[casa.signo].nombre}.
+                  Aquí tienes: <strong>{dentro.map((p) => p.nombre).join(", ")}</strong>.
                 </p>
-                {dentro.length > 0 ? (
-                  <p className={s.parrafoSecundario}>
-                    Aquí tienes: <strong>{dentro.map((p) => p.nombre).join(", ")}</strong>.
-                    Una casa con planetas dentro es un terreno donde pasan cosas.
-                  </p>
-                ) : (
-                  <p className={s.parrafoSecundario}>
-                    Sin planetas dentro. No significa que esté vacía tu vida ahí: significa
-                    que no es un terreno de conflicto ni de foco especial.
-                  </p>
-                )}
-              </div>
-            )}
-          </article>
+              ) : (
+                <p className={s.parrafoSecundario}>Sin planetas dentro.</p>
+              )}
+            </Fila>
+          </div>
         )
       })}
     </div>
@@ -420,28 +469,55 @@ function CasasVista({ carta, abierta, onAbrir }: {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Aspectos({ carta }: { carta: Carta }) {
+  const { abierta, alternar } = useUnaAbierta<number>()
+
   return (
     <div>
+      {/* «Todos están tan abiertos que es difícil a la vista y no se entiende
+          nada, no se explica.» Las dos cosas: ahora vienen cerrados y antes
+          va qué es un aspecto, en una frase que no da nada por sabido. */}
       <p className={s.entradilla}>
-        Las líneas del centro de la rueda. Son distancias concretas entre dos planetas, y
-        dicen si esas dos partes de ti se llevan bien o se estorban. Están del más exacto
-        al más flojo: cuanto menor es el orbe, más se nota.
+        Un aspecto es la <strong>distancia entre dos planetas</strong> de tu carta. Cuando
+        esa distancia es una de cinco concretas, se lee como que esas dos partes de ti se
+        hablan: a veces ayudándose, a veces estorbándose.
       </p>
+      <p className={s.entradilla}>
+        Son las líneas del centro de la rueda. <strong>Ninguno es bueno ni malo:</strong>{" "}
+        los fáciles dan talento que no se nota porque nunca costó, y los difíciles dan el
+        empuje que acaba construyendo algo.
+      </p>
+      <p className={s.nota}>
+        Están del más exacto al más flojo. El número de la derecha es el{" "}
+        <strong>orbe</strong>: cuánto se aparta de la distancia exacta. Cuanto menor, más
+        se nota.
+      </p>
+
       {carta.aspectos.length === 0 && (
-        <p className={s.nota}>Tu carta no tiene aspectos dentro de los orbes habituales. Es poco común y no es un fallo.</p>
+        <p className={s.nota}>
+          Tu carta no tiene aspectos dentro de los márgenes habituales. Es poco común y no
+          es un fallo.
+        </p>
       )}
+
       {carta.aspectos.map((a, i) => (
-        <article key={i} className={s.aspecto}>
-          <h4 className={s.aspectoTitulo}>
-            <span className={`${s.punto} ${s[a.naturaleza]}`} aria-hidden />
-            {a.nombreA} {a.nombre.toLowerCase()} {a.nombreB}
-            <span className={s.orbe}>{a.desviacion.toFixed(1)}°</span>
-          </h4>
+        <Fila
+          key={i}
+          titulo={
+            <>
+              <span className={`${s.punto} ${s[a.naturaleza]}`} aria-hidden />
+              {a.nombreA} <strong>{a.nombre.toLowerCase()}</strong> {a.nombreB}
+            </>
+          }
+          apunte={COMO_ACTUA[a.tipo].titulo}
+          extra={`${a.desviacion.toFixed(1)}°`}
+          abierta={abierta === i}
+          onAlternar={() => alternar(i)}
+        >
+          <p className={s.etiquetaMini}>De qué va</p>
           <p className={s.parrafo}>{textoPareja(a.a, a.b)}</p>
-          <p className={s.parrafoSecundario}>
-            <strong>{COMO_ACTUA[a.tipo].titulo}.</strong> {COMO_ACTUA[a.tipo].texto}
-          </p>
-        </article>
+          <p className={s.etiquetaMini}>Y en qué términos</p>
+          <p className={s.parrafo}>{COMO_ACTUA[a.tipo].texto}</p>
+        </Fila>
       ))}
     </div>
   )
@@ -451,191 +527,94 @@ function Aspectos({ carta }: { carta: Carta }) {
 //  5 · CAMINO SOLAR
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CaminoSolar({ pesos, carta, onPunto }: {
+function CaminoSolar({ pesos, abierto, onAbrir }: {
   pesos: PesoDeSigno[]
-  carta: Carta
-  onPunto: (id: PuntoId) => void
+  abierto: SignoId | null
+  onAbrir: (s: SignoId | null) => void
 }) {
+  const refs = useRef<Record<string, HTMLElement | null>>({})
+
+  useEffect(() => {
+    if (!abierto) return
+    refs.current[abierto]?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [abierto])
+
   return (
     <div>
       <p className={s.entradilla}>
         La lectura propia de Los 144.000. Los doce signos del zodiaco están alineados con
         los <strong>doce sistemas orgánicos</strong>, uno a uno: Capricornio con el
-        esqueleto, Acuario con el nervioso, Piscis con el circulatorio, y así los doce.
-        Esa correspondencia es el centro de todo lo que viene.
+        esqueleto, Acuario con el nervioso, Piscis con el circulatorio. Esa correspondencia
+        es el centro de todo.
       </p>
-
       <p className={s.entradilla}>
-        Lo que esta pantalla mide es <strong>cuánto aparece cada signo en tu carta</strong>.
-        El Sol, la Luna y el Ascendente valen 3; los planetas personales, 2; los lentos, 1,
+        Lo que se mide aquí es <strong>cuánto aparece cada signo en tu carta</strong>. El
+        Sol, la Luna y el Ascendente valen 3; los planetas personales, 2; los lentos, 1,
         porque esos los comparte una generación entera.
       </p>
-
-      {/* ── LA CORRECCIÓN QUE PIDIÓ JOSÉ, Y QUE IMPORTA ─────────────────
-          La primera versión hacía que un signo ausente SIGNIFICARA
-          desequilibrio en su sistema orgánico: enseñaba el conflicto del
-          signo y el desequilibrio del sistema, como si la carta lo
-          dictaminara.
-
-          Es falso en su marco y además es feo: le estaría diciendo a
-          alguien que tiene un problema de salud porque le salió poco
-          Virgo. Presencia y estado son dos ejes distintos, y la carta
-          solo habla del primero.
-
-          Por eso este aviso va arriba, en grande, y no en una nota al
-          pie. */}
       <p className={s.instruccion}>
-        <strong>Presencia no es estado.</strong> Que un signo aparezca poco no significa que
-        su sistema orgánico esté en desequilibrio, igual que aparecer mucho no significa que
-        esté en equilibrio. Son dos cosas distintas: la carta dice cuánto hay, y nada más.
-        Lo otro lo sabes tú.
+        <strong>Presencia no es estado.</strong> Que un signo aparezca poco no significa
+        que su sistema orgánico esté en desequilibrio, igual que aparecer mucho no
+        significa que esté en equilibrio. La carta dice cuánto hay, y nada más. Lo otro lo
+        sabes tú.
       </p>
 
-      {/* TODOS cerrados. Son doce signos con cuatro párrafos cada uno: abrir
-          cualquiera de entrada convierte la sección en un muro de texto, que
-          es justo lo que había que quitar. Se abre el que interese.
-
-          (Antes se abrían los «ausentes», resto de cuando yo los trataba
-          como el hallazgo importante de la lectura. No lo son.) */}
-      {pesos.map((w) => (
-        <FilaSigno key={w.signo} w={w} carta={carta} onPunto={onPunto} />
-      ))}
-    </div>
-  )
-}
-
-/**
- * Un signo, su sistema orgánico, y las dos caras de cada uno.
- *
- * ── LO QUE AQUÍ NO SE HACE ────────────────────────────────────────────────
- * No se elige por ti qué cara leer. La versión anterior enseñaba el conflicto
- * del signo y el desequilibrio del sistema cuando el signo salía poco, y los
- * atributos y el equilibrio cuando salía mucho — como si la carta dictaminara
- * en qué estado estás.
- *
- * No lo hace. La carta dice cuánto aparece un arquetipo; el equilibrio es otra
- * cosa. Así que se enseñan LAS DOS caras, dichas como lo que son, y quien lee
- * reconoce la suya. Es más honesto y además es más útil: nadie se reconoce en
- * una etiqueta que le han puesto.
- */
-function FilaSigno({ w, carta, onPunto }: {
-  w: PesoDeSigno
-  carta: Carta
-  onPunto: (id: PuntoId) => void
-}) {
-  const [abierto, setAbierto] = useState(false)
-  const signo = SIGNOS[w.signo]
-  const mapa = MAPA_POR_DEFECTO[w.signo]
-  const sistema = SISTEMAS[mapa.sistema]
-
-  return (
-    <article id={`signo-${w.signo}`} className={`${s.filaSigno} ${s[w.estado]}`}>
-      <button type="button" className={s.filaCabecera} onClick={() => setAbierto((v) => !v)}>
-        <span className={s.filaNombre}>
-          {signo.nombre}
-          {/* El sistema orgánico va en la cabecera, no escondido dentro: es
-              la correspondencia que da sentido a todo el Camino Solar, y
-              estaba a dos clics de distancia. */}
-          <span className={s.filaSistema}>{sistema.nombre}</span>
-        </span>
-        <span className={s.filaEstado}>
-          {w.estado === "predominante" ? "Muy presente"
-            : w.estado === "presente" ? "Presente" : "Poco presente"}
-        </span>
-        <span className={s.filaPuntos}>{w.puntos}</span>
-      </button>
-
-      {abierto && (
-        <div className={s.filaCuerpo}>
-          {/* ── DÓNDE SE NOTA ESTE SIGNO, EN TU VIDA ───────────────────
-              Lo pidió José con un ejemplo que lo explica mejor que
-              cualquier descripción: «estoy en desequilibrio con Sagitario,
-              y tengo Sagitario en Venus — si eso son peleas de pareja,
-              discusiones, me voy».
-
-              O sea: saber que un arquetipo te está pesando no sirve de
-              mucho si no sabes DÓNDE te pesa. El signo dice qué; el
-              planeta, en qué función tuya; la casa, en qué terreno de tu
-              vida. Tu carta ya tiene esos tres datos — lo que faltaba era
-              ponerlos en la misma línea.
-
-              Va como enlaces y no desplegado, también porque él lo pidió:
-              doce signos por sus planetas por sus casas sería un muro. */}
-          {w.habitantes.length > 0 ? (
-            <div className={s.dondeSeNota}>
-              <p className={s.etiquetaMini}>
-                Si este signo se te desequilibra, dónde se nota
+      {pesos.map((w) => {
+        const signo = SIGNOS[w.signo]
+        const mapa = MAPA_POR_DEFECTO[w.signo]
+        const sistema = SISTEMAS[mapa.sistema]
+        return (
+          <div key={w.signo} ref={(el) => { refs.current[w.signo] = el }}>
+            <Fila
+              titulo={<strong>{signo.nombre}</strong>}
+              apunte={sistema.nombre}
+              extra={
+                <>
+                  {w.estado === "predominante" ? "Muy presente"
+                    : w.estado === "presente" ? "Presente" : "Poco presente"}
+                  <span className={s.filaPuntos}>{w.puntos}</span>
+                </>
+              }
+              abierta={abierto === w.signo}
+              onAlternar={() => onAbrir(abierto === w.signo ? null : w.signo)}
+              resaltada={abierto === w.signo}
+            >
+              <p className={s.filaHabitantes}>
+                {w.habitantes.length > 0
+                  ? `En tu carta: ${w.habitantes.map((h) => h.nombre).join(", ")}.`
+                  : "En tu carta no cayó ningún planeta en este signo."}
               </p>
-              {w.habitantes.map((h) => {
-                const punto = carta.puntos.find((x) => x.id === h.id)
-                if (!punto) return null
-                const casa = CASAS[punto.casa]
-                const info = PLANETAS[h.id as PlanetaId]
-                return (
-                  <button
-                    key={h.id}
-                    type="button"
-                    className={s.enlaceDonde}
-                    onClick={() => onPunto(h.id)}
-                  >
-                    <span className={s.dondeTitulo}>
-                      {h.nombre} · casa {punto.casa} — {casa.nombre}
-                    </span>
-                    {/* ESTO es el cruce que faltaba. La versión anterior
-                        ponía aquí una descripción genérica del planeta y de
-                        la casa —«qué valoras y cómo te vinculas»— y José lo
-                        dijo sin rodeos: «ese cruce que te acabo de pedir, no
-                        lo veo». Tenía razón: eso era un índice, no una
-                        lectura. */}
-                    <span className={s.dondeSombra}>
-                      {sombraEn(w.signo, h.id) ??
-                        `${info ? info.breve.replace(/\.$/, "") : "Tu forma de aparecer"}, en el terreno de ${casa.breve.charAt(0).toLowerCase() + casa.breve.slice(1).replace(/\.$/, "")}`}
-                    </span>
-                    <span className={s.dondeTexto}>
-                      {info ? info.breve.replace(/\.$/, "") : "Cómo apareces"},
-                      {" "}en el terreno de {casa.breve.charAt(0).toLowerCase() + casa.breve.slice(1).replace(/\.$/, "")}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          ) : (
-            <p className={s.filaHabitantes}>
-              En tu carta no cayó ningún planeta en este signo. El arquetipo sigue
-              existiendo, pero no tiene dónde apoyarse en ti.
-            </p>
-          )}
 
-          <p className={s.etiquetaMini}>El arquetipo · {signo.nombre}</p>
-          <p className={s.parrafo}>{signo.atributos}</p>
-          <p className={s.etiquetaMini}>Y su sombra</p>
-          <p className={s.parrafoSecundario}>{signo.conflictos}</p>
+              <p className={s.etiquetaMini}>El arquetipo</p>
+              <p className={s.parrafo}>{signo.atributos}</p>
+              <p className={s.etiquetaMini}>Y su sombra</p>
+              <p className={s.parrafoSecundario}>{signo.conflictos}</p>
 
-          <div className={s.sistema}>
-            <p className={s.etiquetaSistema}>Sistema orgánico · {sistema.nombre}</p>
+              <div className={s.sistema}>
+                <p className={s.etiquetaSistema}>Sistema orgánico · {sistema.nombre}</p>
+                <p className={s.etiquetaMini}>En equilibrio</p>
+                <p className={s.parrafo}>{sistema.equilibrio}</p>
+                <p className={s.etiquetaMini}>En desequilibrio</p>
+                <p className={s.parrafo}>{sistema.desequilibrio}</p>
 
-            <p className={s.etiquetaMini}>En equilibrio</p>
-            <p className={s.parrafo}>{sistema.equilibrio}</p>
-
-            <p className={s.etiquetaMini}>En desequilibrio</p>
-            <p className={s.parrafo}>{sistema.desequilibrio}</p>
-
-            {/* Las somatizaciones van CONDICIONADAS, y la frase lo dice.
-                Antes se afirmaban, que es muy distinto. */}
-            {mapa.zona && (
-              <p className={s.parrafoSecundario}>
-                <strong>Si este sistema entra en desequilibrio</strong>, suele notarse en{" "}
-                {mapa.zona.toLowerCase()}
-                {mapa.somatizaciones && <>: {mapa.somatizaciones.toLowerCase()}</>}.
-              </p>
-            )}
-            {mapa.emocion && (
-              <p className={s.parrafoSecundario}><strong>Emoción detrás:</strong> {mapa.emocion}</p>
-            )}
+                {mapa.zona && (
+                  <p className={s.parrafoSecundario}>
+                    <strong>Si este sistema entra en desequilibrio</strong>, suele notarse
+                    en {mapa.zona.toLowerCase()}
+                    {mapa.somatizaciones && <>: {mapa.somatizaciones.toLowerCase()}</>}.
+                  </p>
+                )}
+                {mapa.emocion && (
+                  <p className={s.parrafoSecundario}>
+                    <strong>Emoción detrás:</strong> {mapa.emocion}
+                  </p>
+                )}
+              </div>
+            </Fila>
           </div>
-        </div>
-      )}
-    </article>
+        )
+      })}
+    </div>
   )
 }
 
@@ -644,25 +623,22 @@ function FilaSigno({ w, carta, onPunto }: {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function GuiaVista() {
-  const [abierta, setAbierta] = useState<string | null>(GUIA[0]?.id ?? null)
+  const { abierta, alternar } = useUnaAbierta<string>()
   return (
     <div>
       <p className={s.entradilla}>
-        Si nunca has leído una carta, empieza por aquí. Son cuatro ideas y ninguna es difícil.
+        Si nunca has leído una carta, empieza por aquí. Son cuatro ideas y ninguna es
+        difícil.
       </p>
       {GUIA.map((g) => (
-        <article key={g.id} className={s.filaGuia}>
-          <button type="button" className={s.filaCabecera}
-            onClick={() => setAbierta(abierta === g.id ? null : g.id)}
-          >
-            <span className={s.filaNombre}>{g.pregunta}</span>
-          </button>
-          {abierta === g.id && (
-            <div className={s.filaCuerpo}>
-              <p className={s.parrafo}>{g.respuesta}</p>
-            </div>
-          )}
-        </article>
+        <Fila
+          key={g.id}
+          titulo={g.pregunta}
+          abierta={abierta === g.id}
+          onAlternar={() => alternar(g.id)}
+        >
+          <p className={s.parrafo}>{g.respuesta}</p>
+        </Fila>
       ))}
     </div>
   )
