@@ -295,11 +295,25 @@ export function FormularioNacimiento({ onTrazar, error, portada = PORTADA_CARTOG
                   fallo que trajo a José, y el silencio era la mitad de él.
                   Ahora, además, ya no se le pide que aproxime: se le da una
                   salida exacta. */}
-              {sinNada && (
+              {sinNada && !mundo.fallo && (
                 <p className={s.sinCiudad}>
                   No encontramos «{busqueda.trim()}» entre las 1.300.000 localidades que
                   tenemos. Prueba solo con el nombre, sin el país — o escribe{" "}
                   <strong>las coordenadas exactas</strong>, que es lo más preciso.
+                </p>
+              )}
+
+              {/* ── «NO HAY» Y «NO PUDE MIRAR» NO SON LO MISMO ─────────────
+                  Cuando la búsqueda ampliada falla, antes salía el mismo
+                  mensaje de «no encontramos»: o sea que la herramienta
+                  afirmaba que un pueblo no existe cuando en realidad no
+                  había podido comprobarlo. Eso no se dice si no se sabe. */}
+              {mundo.fallo && (
+                <p className={s.sinCiudad}>
+                  Ahora mismo solo estamos buscando entre las ciudades principales:
+                  la búsqueda ampliada no responde. Si tu pueblo no aparece, no es que
+                  no esté — vuelve a intentarlo en un momento, o escribe{" "}
+                  <strong>las coordenadas exactas</strong>.
                 </p>
               )}
 
