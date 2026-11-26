@@ -26,7 +26,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { URL_ACTIVAR_CUENTA } from "@/lib/activacion"
+import { invitarAActivarCuenta } from "@/lib/activacion"
 import {
   leerCamposDeRegalo,
   cambiosDeRegalo,
@@ -36,9 +36,6 @@ import {
 } from "./regalo"
 
 const MAX_BODY_BYTES = 8 * 1024 // 8 KB — el payload es pequeño
-// El destino vive en lib/activacion.ts para que la invitación de prueba del
-// panel aterrice EXACTAMENTE donde aterriza la de un miembro de verdad.
-const ACTIVATE_REDIRECT = URL_ACTIVAR_CUENTA
 const ACTIONS = new Set(["activate", "renew", "past_due", "cancel"] as const)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -391,24 +388,27 @@ async function escribir(
 }
 
 // ── Invitación (solo activate). Usuario ya existente = no-op correcto ───────
-async function ensureInvite(admin: ReturnType<typeof getSupabaseAdmin>, email: string) {
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: ACTIVATE_REDIRECT,
-  })
-  if (!error) return // invitación enviada
+//
+// ── POR QUÉ YA NO LA MANDA SUPABASE ───────────────────────────────────────
+// Esto llamaba a `inviteUserByEmail`, que manda el correo de fábrica de
+// Supabase. Ese correo trae un enlace que se GASTA nada más abrirlo, así que
+// los escáneres de Gmail lo consumían antes que la persona y ella se
+// encontraba con «este enlace ha expirado» en el primer intento. Además salía
+// por un servidor limitado a dos correos por hora que falla callado.
+//
+// Ahora lo manda la plataforma por Resend, con un enlace que solo se gasta al
+// pulsar un botón, y queda registrado. El porqué entero: lib/activacion.ts.
+async function ensureInvite(_admin: ReturnType<typeof getSupabaseAdmin>, email: string) {
+  const r = await invitarAActivarCuenta(email)
 
-  // Detección de usuario ya existente → no fallar, no duplicar invitaciones.
-  const status = (error as { status?: number }).status
-  const code = (error as { code?: string }).code || ""
-  const msg = (error.message || "").toLowerCase()
-  const alreadyExists =
-    code === "email_exists" ||
-    status === 422 ||
-    msg.includes("already been registered") ||
-    msg.includes("already registered") ||
-    msg.includes("already exists")
-  if (alreadyExists) return // membresía queda activa; no se reenvía invitación
+  // Ya tiene cuenta: la membresía queda activa y no se reenvía nada. Es el
+  // caso normal de una renovación o de alguien que vuelve.
+  if (r.estado === "ya_tiene_cuenta") return
+  if (r.estado === "enviada") return
 
-  // Otro error (rate limit / SMTP) → reintentable (marca failed arriba).
-  throw new Error(`invite:${code || status || "error"}`)
+  // No salió. Se lanza para que el evento quede como `failed` y se pueda
+  // reintentar reenviándolo desde Stripe: la persona ya tiene su cuenta
+  // creada, lo que le falta es el correo.
+  console.error("[member-sync] stage=invite estado=%s", r.estado)
+  throw new Error(`invite:${r.estado}`)
 }

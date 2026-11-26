@@ -33,9 +33,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
-import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { URL_ACTIVAR_CUENTA } from "@/lib/activacion"
+import { invitarAActivarCuenta } from "@/lib/activacion"
 
 export const dynamic = "force-dynamic"
 
@@ -68,53 +67,43 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const admin = getSupabaseAdmin()
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: URL_ACTIVAR_CUENTA,
-  })
+  const r = await invitarAActivarCuenta(email)
 
-  if (!error) {
+  if (r.estado === "enviada") {
     return NextResponse.json({
       ok: true,
       estado: "enviada",
       mensaje:
-        "Invitación enviada. Es la misma que recibe un miembro nuevo: ábrela desde el correo y " +
-        "recorre el alta entera.",
+        "Invitación enviada por Resend. Es la misma que recibe un miembro nuevo: ábrela desde el " +
+        "correo y recorre el alta entera. Queda registrada en el historial de abajo.",
     })
   }
 
   // ── Ya tiene cuenta ─────────────────────────────────────────────────────
   // No es un fallo, y conviene decirlo con todas las letras: a quien ya
-  // tiene cuenta, Supabase no le manda invitación, y quedarse esperando el
-  // correo es exactamente lo que no queremos que vuelva a pasar.
-  const status = (error as { status?: number }).status
-  const code = (error as { code?: string }).code || ""
-  const msg = (error.message || "").toLowerCase()
-  const yaExiste =
-    code === "email_exists" ||
-    status === 422 ||
-    msg.includes("already been registered") ||
-    msg.includes("already registered") ||
-    msg.includes("already exists")
-
-  if (yaExiste) {
+  // tiene cuenta no se le manda invitación, y quedarse esperando el correo
+  // es exactamente lo que no queremos que vuelva a pasar.
+  if (r.estado === "ya_tiene_cuenta") {
     return NextResponse.json({
       ok: false,
       estado: "ya_tiene_cuenta",
       mensaje:
-        "Ese correo ya tiene cuenta, así que Supabase no manda invitación. Para probar el alta " +
-        "desde cero usa una dirección nueva (con Gmail vale añadir +prueba1 antes de la arroba).",
+        "Ese correo ya tiene cuenta, así que no se manda invitación. Para probar el alta desde " +
+        "cero usa una dirección nueva (con Gmail vale añadir +prueba1 antes de la arroba).",
     })
   }
 
-  // ── Cualquier otro rechazo ──────────────────────────────────────────────
-  // Aquí SÍ se enseña el mensaje técnico: lo lee administración, no un
-  // miembro, y es justo el dato que faltaba para saber qué pasa.
-  console.error("[probar-activacion] code=%s status=%s", code || "sin_codigo", status ?? "")
+  // ── No salió ────────────────────────────────────────────────────────────
+  // Aquí SÍ se enseña el motivo entero: lo lee administración, no un
+  // miembro, y es el dato que hace falta para saber qué está fallando.
+  console.error("[probar-activacion] estado=%s", r.estado)
   return NextResponse.json({
     ok: false,
-    estado: "rechazada",
-    mensaje: "Supabase no la mandó.",
-    detalle: error.message || code || "sin detalle",
+    estado: r.estado,
+    mensaje:
+      r.estado === "no_enviada"
+        ? "El enlace se generó pero el correo no salió."
+        : "No se pudo generar la invitación.",
+    detalle: r.detalle,
   })
 }

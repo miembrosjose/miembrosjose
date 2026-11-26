@@ -47,6 +47,10 @@ export function ActivateForm() {
             ? "Este enlace ha expirado."
             : "Este enlace no es válido o ya fue utilizado."
         )
+        // El motivo, a la vista. Un enlace que un escáner de correo gastó
+        // antes de tiempo y uno que caducó de viejo dan el MISMO mensaje, y
+        // sin este dato no hay forma de distinguirlos desde fuera.
+        setCodigo(errorCode || "enlace_no_valido")
         setSessionReady(false)
         return
       }
@@ -197,6 +201,11 @@ export function ActivateForm() {
         >
           Pedir un enlace nuevo
         </a>
+        {codigo && (
+          <span className="mt-4 block font-mono text-[10px] uppercase tracking-[0.2em] text-[#6a6a85]">
+            motivo: {codigo}
+          </span>
+        )}
       </div>
     )
   }
