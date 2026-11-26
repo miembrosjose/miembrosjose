@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
-import { translateAuthError } from "@/lib/auth-error-messages"
+import { clasificarAuthError } from "@/lib/auth-error-messages"
 
 /**
  * Pantalla de nueva contraseña (flujo SSR con /auth/confirm).
@@ -100,8 +100,15 @@ export function ResetPasswordForm() {
           router.refresh()
         }, 1800)
       } catch (e) {
-        const raw = e instanceof Error ? e.message : ""
-        setError(translateAuthError(raw))
+        // Mismo arreglo que en /activar-cuenta: si el enlace ya no sirve, no
+        // se invita a reintentar —no funcionaría—, se manda a pedir otro.
+        const fallo = clasificarAuthError(e)
+        if (fallo.sesionMuerta) {
+          setSessionError(fallo.mensaje)
+          setSessionReady(false)
+          return
+        }
+        setError(fallo.mensaje)
       }
     })
   }

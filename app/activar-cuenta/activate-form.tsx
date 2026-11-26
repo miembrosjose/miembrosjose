@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowser } from "@/lib/supabase/client"
-import { translateAuthError } from "@/lib/auth-error-messages"
+import { clasificarAuthError } from "@/lib/auth-error-messages"
 
 /**
  * Formulario de activación de cuenta.
@@ -23,6 +23,8 @@ export function ActivateForm() {
   const [pwd, setPwd] = useState("")
   const [confirm, setConfirm] = useState("")
   const [error, setError] = useState<string | null>(null)
+  // Código técnico del último fallo, solo cuando no supimos traducirlo.
+  const [codigo, setCodigo] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -62,7 +64,7 @@ export function ActivateForm() {
         }
         // Limpia el hash de la URL sin recargar (no dejar tokens a la vista)
         window.history.replaceState(null, "", window.location.pathname)
-        setSessionReady(true)
+        await comprobarQueLaSesionVale()
         return
       }
 
@@ -72,11 +74,42 @@ export function ActivateForm() {
         data: { session },
       } = await supabase.auth.getSession()
       if (session) {
-        setSessionReady(true)
+        await comprobarQueLaSesionVale()
         return
       }
 
       setSessionError("Este enlace ha expirado.")
+      setSessionReady(false)
+    }
+
+    /**
+     * Preguntarle al servidor si esta sesión sirve DE VERDAD.
+     *
+     * ── POR QUÉ HACE FALTA ────────────────────────────────────────────
+     * `setSession` y `getSession` no hablan con nadie: se creen los tokens
+     * del enlace tal cual vienen. Un enlace caducado o ya usado pasaba ese
+     * filtro, la persona veía el formulario, escribía su contraseña dos
+     * veces, le daba al botón... y solo entonces fallaba, con un «intenta
+     * de nuevo en unos segundos» que no iba a funcionar nunca.
+     *
+     * `getUser` sí pregunta al servidor. Si el enlace está muerto, se dice
+     * ANTES de pedir nada, y con el botón para pedir uno nuevo.
+     */
+    async function comprobarQueLaSesionVale() {
+      const { data, error } = await supabase.auth.getUser()
+      if (data?.user) {
+        setSessionReady(true)
+        return
+      }
+      // Sin usuario pero sin un error de sesión claro —por ejemplo, el móvil
+      // sin cobertura— no se declara muerto el enlace: se deja seguir y, si
+      // acaso, fallará al guardar con un mensaje de conexión.
+      const fallo = clasificarAuthError(error)
+      if (error && !fallo.sesionMuerta) {
+        setSessionReady(true)
+        return
+      }
+      setSessionError(fallo.sesionMuerta ? fallo.mensaje : "Este enlace ha expirado.")
       setSessionReady(false)
     }
 
@@ -86,6 +119,7 @@ export function ActivateForm() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setCodigo(null)
 
     if (pwd.length < 8) {
       setError("La contraseña debe tener al menos 8 caracteres.")
@@ -108,7 +142,16 @@ export function ActivateForm() {
           router.refresh()
         }, 1600)
       } catch (e) {
-        setError(translateAuthError(e instanceof Error ? e.message : undefined))
+        const fallo = clasificarAuthError(e)
+        // Si el enlace murió, no se ofrece reintentar: se manda a pedir uno
+        // nuevo. Era el callejón sin salida del 24-11-2026.
+        if (fallo.sesionMuerta) {
+          setSessionError(fallo.mensaje)
+          setSessionReady(false)
+          return
+        }
+        setError(fallo.mensaje)
+        setCodigo(fallo.codigo)
       }
     })
   }
@@ -212,6 +255,14 @@ export function ActivateForm() {
           className="border border-[#6D4A9B]/40 bg-[#6D4A9B]/10 px-4 py-3 text-sm text-[#a78bca] [font-family:var(--font-geist-sans)]"
         >
           {error}
+          {/* El código solo aparece cuando no supimos traducir el error. Es
+              feo a propósito: sirve para que un pantallazo nos diga qué
+              pasó, en vez de dejarnos adivinando. */}
+          {codigo && (
+            <span className="mt-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-[#6a6a85]">
+              código: {codigo}
+            </span>
+          )}
         </div>
       )}
 
