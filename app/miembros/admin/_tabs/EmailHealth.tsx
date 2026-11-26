@@ -56,6 +56,37 @@ export function EmailHealth() {
   const [retrying, setRetrying] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // ── Probar el alta de un miembro nuevo ──────────────────────────────
+  const [correoPrueba, setCorreoPrueba] = useState("")
+  const [enviandoPrueba, setEnviandoPrueba] = useState(false)
+  const [resultadoPrueba, setResultadoPrueba] = useState<
+    { bien: boolean; mensaje: string; detalle?: string } | null
+  >(null)
+
+  const probarActivacion = async () => {
+    setEnviandoPrueba(true)
+    setResultadoPrueba(null)
+    try {
+      const res = await fetch("/api/admin/probar-activacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: correoPrueba.trim().toLowerCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok && !data.estado) throw new Error(data.error || `HTTP ${res.status}`)
+      setResultadoPrueba({
+        bien: data.ok === true,
+        mensaje: data.mensaje || data.error || "Sin respuesta.",
+        detalle: data.detalle,
+      })
+    } catch (e) {
+      setResultadoPrueba({ bien: false, mensaje: e instanceof Error ? e.message : "Error" })
+    } finally {
+      setEnviandoPrueba(false)
+    }
+  }
+
   const load = useCallback(async () => {
     setError(null)
     try {
@@ -111,6 +142,63 @@ export function EmailHealth() {
       {error && (
         <div className="border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>
       )}
+
+      {/* ── PROBAR EL ALTA DE UN MIEMBRO NUEVO ───────────────────────────
+          Hay dos caminos de alta y este es el único que recorren los
+          miembros de verdad: la invitación de Supabase que aterriza en
+          /activar-cuenta. Las demás herramientas de este panel usan el
+          otro camino, así que no servían para comprobarlo. */}
+      <section className="border border-[#6D4A9B]/30 bg-[#6D4A9B]/5 p-4">
+        <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#a78bca] [font-family:var(--font-geist-sans)]">
+          <Mail size={13} />
+          Probar el alta de un miembro nuevo
+        </h3>
+        <p className="mt-2 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
+          Manda la invitación <strong>de verdad</strong>, la misma que recibe quien acaba de entrar por
+          el embudo. Úsala con un correo nuevo —con Gmail vale añadir <span className="font-mono">+prueba1</span>{" "}
+          antes de la arroba— y recorre el alta entera hasta dentro de la plataforma.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            value={correoPrueba}
+            onChange={(e) => setCorreoPrueba(e.target.value)}
+            disabled={enviandoPrueba}
+            placeholder="correo+prueba1@gmail.com"
+            className="min-w-0 flex-1 border border-[#1a1a24] bg-[#000000]/40 px-3 py-2 text-sm text-[#F3F6FA] placeholder:text-[#6a6a7a] focus:border-[#6D4A9B] focus:outline-none disabled:opacity-50 [font-family:var(--font-geist-sans)]"
+            aria-label="Correo al que mandar la invitación de prueba"
+          />
+          <button
+            type="button"
+            onClick={probarActivacion}
+            disabled={enviandoPrueba || correoPrueba.trim().length < 5}
+            className="border border-[#6D4A9B] bg-[#6D4A9B]/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#a78bca] transition-colors hover:bg-[#6D4A9B]/40 disabled:cursor-not-allowed disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+          >
+            {enviandoPrueba ? "Enviando…" : "Enviar invitación"}
+          </button>
+        </div>
+
+        {resultadoPrueba && (
+          <div
+            role="status"
+            className={`mt-3 border px-3 py-2 text-xs [font-family:var(--font-geist-sans)] ${
+              resultadoPrueba.bien
+                ? "border-emerald-700/50 bg-emerald-900/20 text-emerald-300"
+                : "border-amber-700/50 bg-amber-900/15 text-amber-300"
+            }`}
+          >
+            {resultadoPrueba.mensaje}
+            {/* El motivo técnico se enseña entero: aquí solo mira
+                administración, y es el dato que hace falta para saber si
+                lo que falla es el servidor de correo de Supabase. */}
+            {resultadoPrueba.detalle && (
+              <span className="mt-1 block font-mono text-[10px] text-[#a0a0b0]">
+                {resultadoPrueba.detalle}
+              </span>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* STATS */}
       {stats && (

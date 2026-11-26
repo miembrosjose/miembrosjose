@@ -26,6 +26,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { URL_ACTIVAR_CUENTA } from "@/lib/activacion"
 import {
   leerCamposDeRegalo,
   cambiosDeRegalo,
@@ -35,7 +36,9 @@ import {
 } from "./regalo"
 
 const MAX_BODY_BYTES = 8 * 1024 // 8 KB — el payload es pequeño
-const ACTIVATE_REDIRECT = "https://los144000.com/activar-cuenta"
+// El destino vive en lib/activacion.ts para que la invitación de prueba del
+// panel aterrice EXACTAMENTE donde aterriza la de un miembro de verdad.
+const ACTIVATE_REDIRECT = URL_ACTIVAR_CUENTA
 const ACTIONS = new Set(["activate", "renew", "past_due", "cancel"] as const)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
