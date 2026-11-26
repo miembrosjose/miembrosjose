@@ -41,7 +41,7 @@ export async function GET() {
   // piden; si la base de datos aún no las tiene, se lee sin ellas y el panel
   // lo dice en vez de quedarse en blanco.
   const CAMPOS_BASE =
-    "email, status, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, created_at, updated_at"
+    "id, email, status, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, created_at, updated_at"
   const CAMPOS_REGALO = "tipo_acceso, codigo_promocional, primer_pago, pago_real_at"
 
   let regaloDisponible = true
@@ -70,6 +70,11 @@ export async function GET() {
   const rows = (subs || []).map((s) => {
     const r = s as Record<string, unknown>
     return {
+      // El id va al navegador a propósito: es lo que identifica la fila
+      // cuando hay que cancelarla o borrarla. Buscarla por el correo
+      // fallaba con las filas raras —una guardaba el texto
+      // «TU-CORREO-DE-PRUEBA», en mayúsculas, y no había forma de darle.
+      id: r.id as string,
       email: r.email as string,
       status: (r.status as string) || "pending",
       subscription_status: (r.subscription_status as string) || null,

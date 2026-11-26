@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import { inputCls, FilterBtn, AdminCard, StatCard, AdminBadge, AdminEmptyState } from "./_shared"
 
 type Row = {
+  /** Lo que identifica la fila. El correo no sirve: alguna no es un correo. */
+  id: string
   email: string
   status: string
   subscription_status: string | null
@@ -178,20 +180,21 @@ export function Subscriptions() {
    * acciones se parecen demasiado entre sí y las filas de la tabla son
    * todas iguales. Equivocarse de línea es fácil.
    */
-  async function accionarFila(email: string, accion: "cancelar" | "borrar") {
+  async function accionarFila(fila: Row, accion: "cancelar" | "borrar") {
+    const email = fila.email
     const pregunta =
       accion === "borrar"
         ? `Borrar la fila de ${email}? Desaparece de esta tabla. No cancela nada en Stripe ni borra su cuenta de acceso.`
         : `Marcar ${email} como cancelado? Pierde el acceso. No cancela el cobro en Stripe.`
     if (!window.confirm(pregunta)) return
 
-    setOcupada(email)
+    setOcupada(fila.id)
     try {
       const res = await fetch("/api/admin/subscriptions/fila", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, accion }),
+        body: JSON.stringify({ id: fila.id, email, accion }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
@@ -212,14 +215,14 @@ export function Subscriptions() {
    * nada deja a quien lo busca pensando que la pantalla está rota.
    */
   function acciones(r: Row) {
-    const trabajando = ocupada === r.email
+    const trabajando = ocupada === r.id
     return (
       <div className="flex items-center gap-2">
         {r.status !== "canceled" && (
           <button
             type="button"
             disabled={trabajando}
-            onClick={() => accionarFila(r.email, "cancelar")}
+            onClick={() => accionarFila(r, "cancelar")}
             className="border border-amber-700/50 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-400 transition-colors hover:bg-amber-900/20 disabled:opacity-40 [font-family:var(--font-geist-sans)]"
           >
             Cancelar
@@ -228,7 +231,7 @@ export function Subscriptions() {
         <button
           type="button"
           disabled={trabajando}
-          onClick={() => accionarFila(r.email, "borrar")}
+          onClick={() => accionarFila(r, "borrar")}
           className="border border-red-700/50 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-red-400 transition-colors hover:bg-red-900/20 disabled:opacity-40 [font-family:var(--font-geist-sans)]"
         >
           {trabajando ? "…" : "Borrar"}
@@ -548,7 +551,7 @@ export function Subscriptions() {
                 </thead>
                 <tbody>
                   {pageRows.map((r) => (
-                    <tr key={r.email} className="border-t border-[#1a1a24] text-[#c3c3d4]">
+                    <tr key={r.id} className="border-t border-[#1a1a24] text-[#c3c3d4]">
                       <td className="py-2 pr-4 text-[#F3F6FA]">{r.email}</td>
                       <td className="py-2 pr-4">{acciones(r)}</td>
                       <td className="py-2 pr-4">{statusBadge(r.status)}</td>

@@ -39,34 +39,65 @@ export async function POST(req: NextRequest) {
   const auth = await requireAdmin()
   if (!auth.ok) return auth.response
 
-  let body: { email?: string; accion?: string }
+  let body: { id?: string; email?: string; accion?: string }
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido" }, { status: 400 })
   }
 
-  const email = (body.email || "").trim().toLowerCase()
+  const id = (body.id || "").trim()
+  const email = (body.email || "").trim()
   const accion = body.accion as Accion
-  if (!email) return NextResponse.json({ error: "Falta el correo" }, { status: 400 })
+  if (!id && !email) return NextResponse.json({ error: "Falta la fila" }, { status: 400 })
   if (accion !== "cancelar" && accion !== "borrar") {
     return NextResponse.json({ error: "Acción desconocida" }, { status: 400 })
   }
 
   const admin = getSupabaseAdmin()
+  const CAMPOS = "id, email, status, stripe_subscription_id"
 
-  const { data: fila, error: errorLectura } = await admin
-    .from("member_subscriptions")
-    .select("id, email, status, stripe_subscription_id")
-    .eq("email", email)
-    .maybeSingle()
+  // ── CÓMO SE ENCUENTRA LA FILA ───────────────────────────────────────────
+  // Por el id, que es lo único que no depende de cómo esté escrito el
+  // correo. Esto empezó buscando por correo y en minúsculas, porque todos
+  // los correos se guardan así... todos menos los que no.
+  //
+  // Había una fila que guardaba el texto «TU-CORREO-DE-PRUEBA», en
+  // mayúsculas y sin arroba. Al pasarlo a minúsculas no coincidía con nada,
+  // el borrado decía «no hay ninguna fila con ese correo» y esa fila no se
+  // podía quitar de ninguna manera.
+  //
+  // El correo se sigue aceptando por si quedara abierta una pestaña con la
+  // versión anterior, y entonces se prueba tal cual y en minúsculas.
+  let fila: { id: string; email: string; status: string; stripe_subscription_id: string | null } | null =
+    null
+  let errorLectura: { code?: string } | null = null
+
+  if (id) {
+    const r = await admin.from("member_subscriptions").select(CAMPOS).eq("id", id).maybeSingle()
+    fila = r.data as typeof fila
+    errorLectura = r.error
+  } else {
+    const exacto = await admin.from("member_subscriptions").select(CAMPOS).eq("email", email).maybeSingle()
+    fila = exacto.data as typeof fila
+    errorLectura = exacto.error
+    if (!fila && !errorLectura && email !== email.toLowerCase()) {
+      const enMinusculas = await admin
+        .from("member_subscriptions")
+        .select(CAMPOS)
+        .eq("email", email.toLowerCase())
+        .maybeSingle()
+      fila = enMinusculas.data as typeof fila
+      errorLectura = enMinusculas.error
+    }
+  }
 
   if (errorLectura) {
     console.error("[subscriptions/fila] lectura code=%s", errorLectura.code || "db_error")
     return NextResponse.json({ error: "No se pudo leer esa fila." }, { status: 500 })
   }
   if (!fila) {
-    return NextResponse.json({ error: "No hay ninguna fila con ese correo." }, { status: 404 })
+    return NextResponse.json({ error: "Esa fila ya no está." }, { status: 404 })
   }
 
   // ── CANCELAR ────────────────────────────────────────────────────────────
