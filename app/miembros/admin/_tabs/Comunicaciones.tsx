@@ -183,6 +183,10 @@ type Audiencia = {
   excluidas?: string[] | null
   /** Dentro o fuera del grupo de Telegram. «dentro» es estar en el grupo. */
   telegram?: "dentro" | "fuera" | null
+  /** Si la membresía sigue viva. Ausente es «da igual». */
+  membresia?: "vigente" | "caducada" | null
+  /** Por qué puerta entró: pagando, con el regalo o con la prueba. */
+  comoEntro?: Array<"pago" | "regalo" | "prueba"> | null
   /** Con o sin la aplicación instalada. Solo se anota desde el 12/11/2026. */
   app?: "instalada" | "sin_instalar" | null
 }
@@ -2766,6 +2770,84 @@ function Audiencias({
             Ya la tiene
           </Pastilla>
         </div>
+      </div>
+
+      {/* ── LA MEMBRESÍA ──────────────────────────────────────────────────
+          Esto no existía, y su ausencia no era una decisión: el padrón era
+          «todo el que tenga perfil», así que a quien se dio de baja le
+          seguían llegando los correos y los avisos igual que el primer día.
+
+          «Vigente» usa la misma regla que la puerta de la plataforma, no una
+          copia: administración, accesos dados a mano, suscripción activa, o
+          cancelada con el periodo todavía por acabar —eso está pagado y esa
+          persona sigue siendo miembro hasta su última fecha—. */}
+      <div>
+        <label className={labelCls}>Según la membresía</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Quien canceló con el mes ya pagado sigue contando como vigente hasta que se le acabe.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Pastilla
+            activa={!a.membresia}
+            onClick={() => cambiar({ membresia: null })}
+            desactivada={!editable}
+          >
+            Da igual
+          </Pastilla>
+          <Pastilla
+            activa={a.membresia === "vigente"}
+            onClick={() => cambiar({ membresia: a.membresia === "vigente" ? null : "vigente" })}
+            desactivada={!editable}
+          >
+            Solo miembros al día
+          </Pastilla>
+          <Pastilla
+            activa={a.membresia === "caducada"}
+            onClick={() => cambiar({ membresia: a.membresia === "caducada" ? null : "caducada" })}
+            desactivada={!editable}
+          >
+            Solo los que ya no están
+          </Pastilla>
+        </div>
+      </div>
+
+      {/* ── POR QUÉ PUERTA ENTRÓ ──────────────────────────────────────────
+          Junto con «los que ya no están», esto da los dos grupos que no se
+          podían nombrar: quien probó tres días y no siguió, y quien
+          disfrutó el mes de regalo y no llegó a pagar nunca. */}
+      <div>
+        <label className={labelCls}>Según cómo entró</label>
+        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
+          Quien entró gratis y luego pagó cuenta como «pagando»: lo que vale es dónde está hoy.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            ["pago", "Pagando"],
+            ["regalo", "Mes de regalo"],
+            ["prueba", "Prueba de 3 días"],
+          ] as const).map(([via, texto]) => {
+            const puestas = a.comoEntro ?? []
+            const activa = puestas.includes(via)
+            return (
+              <Pastilla
+                key={via}
+                activa={activa}
+                onClick={() => {
+                  const siguiente = activa ? puestas.filter((v) => v !== via) : [...puestas, via]
+                  cambiar({ comoEntro: siguiente.length > 0 ? siguiente : null })
+                }}
+                desactivada={!editable}
+              >
+                {texto}
+              </Pastilla>
+            )
+          })}
+        </div>
+        {(a.comoEntro ?? []).length > 0 && a.membresia !== "caducada" && (
+          <p className="mt-2 text-[11px] text-amber-400/80">
+            Sin «Solo los que ya no están», esto incluye también a quien sigue dentro por esa vía.
+          </p>
+        )}
       </div>
 
       {/* ── DENTRO O FUERA DEL TELEGRAM ───────────────────────────────────

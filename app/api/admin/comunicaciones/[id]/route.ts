@@ -64,6 +64,8 @@ function revisarAudiencia(v: unknown): string | null {
     paises?: unknown
     ciudades?: unknown
     personas?: unknown
+    membresia?: unknown
+    comoEntro?: unknown
   } | null
   if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
 
@@ -94,6 +96,22 @@ function revisarAudiencia(v: unknown): string | null {
   // y sí apareció en siete. Siempre da cero, y el cero no explica nada.
   if (a.inactivoDias != null && a.activoDias != null) {
     return "No se puede filtrar por inactividad y por actividad a la vez: no hay nadie que cumpla las dos"
+  }
+
+  // ── La membresía y la puerta por la que entró ────────────────────────────
+  // Se revisan como todo lo demás: un valor que no esperamos dejaría una
+  // audiencia vacía sin decir por qué, y en esta pantalla una audiencia
+  // vacía que nadie explica se confunde con «no hay nadie así».
+  if (a.membresia != null && a.membresia !== "vigente" && a.membresia !== "caducada") {
+    return "Ese estado de membresía no existe"
+  }
+
+  if (a.comoEntro != null) {
+    if (!Array.isArray(a.comoEntro)) return "Las vías de entrada tienen que ser una lista"
+    const vias = new Set(["pago", "regalo", "prueba"])
+    if (a.comoEntro.some((v) => typeof v !== "string" || !vias.has(v))) {
+      return "Hay una vía de entrada que no existe"
+    }
   }
 
   if (a.roles != null) {

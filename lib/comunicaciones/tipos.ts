@@ -406,6 +406,42 @@ export type Audiencia = {
    * seguro de que a esa persona no le llega.
    */
   excluidas?: string[] | null
+
+  /**
+   * Según la membresía siga viva o no.
+   *
+   * ── POR QUÉ HACÍA FALTA (26-11-2026) ────────────────────────────────────
+   * Esta pantalla no preguntaba NADA sobre la membresía. El padrón era
+   * «todo el que tenga perfil», así que a quien se había dado de baja le
+   * seguían llegando los correos, los avisos y los comunicados igual que al
+   * primer día. No era una decisión: es que no se miraba.
+   *
+   * ── «VIGENTE» ES LA MISMA REGLA QUE LA PUERTA ───────────────────────────
+   * No se inventa aquí una segunda definición de quién es miembro. Se llama
+   * a `conAccesoActivo`, la misma que decide quién entra en la plataforma:
+   * administración, acceso dado a mano, suscripción activa, o cancelada
+   * pero con el periodo todavía por acabar —eso está pagado—.
+   *
+   * Esa última es la que hace que esto no pueda ser un simple
+   * `status != 'canceled'`: quien cancela hoy con el mes pagado hasta el 23
+   * sigue siendo miembro hasta el 23, y sacarlo de los correos antes sería
+   * quitarle algo que pagó.
+   *
+   * Ausente es «da igual»: ni un envío ya escrito cambia de destinatarios
+   * por añadirse este filtro.
+   */
+  membresia?: "vigente" | "caducada" | null
+
+  /**
+   * Por qué puerta entró: pagando, con el mes de regalo o con la prueba de
+   * tres días de los invitados.
+   *
+   * Combinado con `membresia: "caducada"` da los dos grupos que no se podían
+   * nombrar: quien probó tres días y no siguió, y quien disfrutó el mes de
+   * regalo y no llegó a pagar. Son las dos listas a las que tiene sentido
+   * insistir, y hasta ahora estaban mezcladas con todos los demás.
+   */
+  comoEntro?: Array<"pago" | "regalo" | "prueba"> | null
   /**
    * Según estén o no DENTRO del grupo de Telegram.
    *

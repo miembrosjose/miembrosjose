@@ -19,6 +19,8 @@
 // traérselas todas. `profiles` es una tabla normal: se cuenta con un count.
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { conAccesoActivo } from "@/lib/membresia"
+import { tipoDeAcceso } from "@/lib/admin/tipo-acceso"
 import { ACHIEVEMENTS } from "@/lib/achievements"
 import { nombrePais } from "@/lib/red/paises"
 import type { Audiencia, Canal, PreferenciaCorreo, TipoComunicacion } from "./tipos"
@@ -47,6 +49,9 @@ export type MotivoExclusion =
   | "no_en_telegram"
   | "ya_tiene_la_app"
   | "sin_la_app"
+  | "membresia_caducada"
+  | "sigue_siendo_miembro"
+  | "entro_por_otra_via"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -85,6 +90,9 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   no_en_telegram: "Todavía no está en el grupo de Telegram",
   ya_tiene_la_app: "Ya tiene la aplicación instalada",
   sin_la_app: "Todavía no ha abierto la aplicación instalada",
+  membresia_caducada: "Ya no es miembro",
+  sigue_siendo_miembro: "Sigue siendo miembro",
+  entro_por_otra_via: "Entró por otra vía",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -525,6 +533,37 @@ export async function resolverAudiencia(
   const ciudadesPedidas = (audiencia.ciudades || []).filter((n) => Number.isFinite(Number(n))).map(Number)
   const pideCiudad = ciudadesPedidas.length > 0
 
+  // ── LA MEMBRESÍA Y POR QUÉ PUERTA ENTRÓ ─────────────────────────────────
+  // Los dos solo se leen si alguien los pide: sin estos filtros, esto no
+  // hace ni una consulta de más.
+  const pideMembresia = audiencia.membresia === "vigente" || audiencia.membresia === "caducada"
+  const viasPedidas = (audiencia.comoEntro || []).filter(Boolean)
+  const pideVia = viasPedidas.length > 0
+
+  /** Quién sigue teniendo acceso hoy. Vacío si nadie lo preguntó. */
+  let vigentes = new Set<string>()
+  if (pideMembresia) {
+    vigentes = await conAccesoActivo(admin, filas.map((f) => ({ id: f.id, email: f.email })))
+  }
+
+  /** Por qué puerta entró cada correo. Vacío si nadie lo preguntó. */
+  const viaPorCorreo = new Map<string, "pago" | "regalo" | "prueba">()
+  if (pideVia) {
+    // Un fallo aquí DETIENE el envío, igual que el del padrón. Si esta
+    // consulta se tragara su error, «los que probaron y se fueron» saldría
+    // vacío —o peor, saldría entero— y el correo iría a quien no debía.
+    const { data, error } = await admin
+      .from("member_subscriptions")
+      .select("email, tipo_acceso, codigo_promocional")
+    if (error) throw new Error(`No se pudo leer cómo entró cada miembro: ${error.message}`)
+    for (const fila of data || []) {
+      const correoFila = String((fila as { email?: string }).email || "").trim().toLowerCase()
+      if (!correoFila) continue
+      const via = tipoDeAcceso(fila as { tipo_acceso?: string | null; codigo_promocional?: string | null })
+      if (via) viaPorCorreo.set(correoFila, via)
+    }
+  }
+
   // ── DENTRO O FUERA DEL TELEGRAM ─────────────────────────────────────────
   // «dentro» es estar EN EL GRUPO, no haber vinculado la cuenta. Son dos
   // cosas distintas: mucha gente pulsa el botón, se identifica con el bot y
@@ -663,6 +702,7 @@ export async function resolverAudiencia(
     otro_pais: 0, otra_ciudad: 0, no_en_la_lista: 0, excluida_a_mano: 0,
     ya_en_telegram: 0, no_en_telegram: 0,
     ya_tiene_la_app: 0, sin_la_app: 0,
+    membresia_caducada: 0, sigue_siendo_miembro: 0, entro_por_otra_via: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -784,6 +824,32 @@ export async function resolverAudiencia(
       }
       if (audiencia.app === "instalada" && !tiene) {
         cuenta.sin_la_app++
+        continue
+      }
+    }
+
+    // ── La membresía, antes que los filtros de contenido ────────────────
+    // Si alguien ya no es miembro, el motivo útil es ese. Puesto después,
+    // el panel diría «no ha llegado a la temporada 3» de una persona que
+    // lleva dos meses fuera, que es cierto y no explica nada.
+    if (pideMembresia) {
+      const dentro = vigentes.has(f.id)
+      if (audiencia.membresia === "vigente" && !dentro) {
+        cuenta.membresia_caducada++
+        continue
+      }
+      if (audiencia.membresia === "caducada" && dentro) {
+        cuenta.sigue_siendo_miembro++
+        continue
+      }
+    }
+
+    if (pideVia) {
+      // Sin fila de suscripción no hay vía que mirar: administración,
+      // accesos dados a mano, cuentas de antes. No se les inventa una.
+      const via = viaPorCorreo.get(correo)
+      if (!via || !viasPedidas.includes(via)) {
+        cuenta.entro_por_otra_via++
         continue
       }
     }
