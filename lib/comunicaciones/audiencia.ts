@@ -20,7 +20,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { conAccesoActivo } from "@/lib/membresia"
-import { tipoDeAcceso } from "@/lib/admin/tipo-acceso"
+import { tipoDeAcceso, DIAS_DE_PRUEBA } from "@/lib/admin/tipo-acceso"
 import { ACHIEVEMENTS } from "@/lib/achievements"
 import { nombrePais } from "@/lib/red/paises"
 import type { Audiencia, Canal, PreferenciaCorreo, TipoComunicacion } from "./tipos"
@@ -440,7 +440,9 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.membresia === "caducada") partes.push("que ya no son miembros")
   if (a.comoEntro?.length) {
     const comoSeLlama: Record<string, string> = {
-      pago: "pagando", regalo: "con el mes de regalo", prueba: "con la prueba de 3 días",
+      pago: "pagando",
+      regalo: "con el mes de regalo",
+      prueba: "con la prueba de " + DIAS_DE_PRUEBA + " días",
     }
     partes.push("que entraron " + a.comoEntro.map((v) => comoSeLlama[v] ?? v).join(" o "))
   }

@@ -6,7 +6,7 @@
 //
 // POR QUÉ ESTA PRUEBA EXISTE
 //   Hay tres formas de estar dentro: pagando, con el primer mes de regalo
-//   de los encuentros (LLAMADO144) y con los tres días de prueba de los
+//   de los encuentros (LLAMADO144) y con los días de prueba de los
 //   invitados (INVITACION). Las tres dan el mismo acceso y dos de ellas
 //   todavía no son dinero.
 //
@@ -24,7 +24,7 @@ import { dirname, join } from "node:path"
 
 const aqui = dirname(fileURLToPath(import.meta.url))
 const ruta = join(aqui, "..", "lib", "admin", "tipo-acceso.ts")
-const { tipoDeAcceso, estaEnPrueba, CODIGO_INVITACION } = await import(pathToFileURL(ruta).href)
+const { tipoDeAcceso, estaEnPrueba, CODIGO_INVITACION, DIAS_DE_PRUEBA } = await import(pathToFileURL(ruta).href)
 
 let pasadas = 0
 let fallos = 0
@@ -137,6 +137,20 @@ console.log("\n═══ 7 · EL MRR NO SE INFLA ═══\n")
   const activosDePago = filas.filter((f) => f.status === "active" && tipoDeAcceso(f) === "pago").length
   comprobar("de cinco filas, solo una suma al MRR", activosDePago === 1)
 }
+
+
+console.log("\n═══ 8 · LOS DÍAS DE PRUEBA, EN UN SOLO SITIO ═══\n")
+// El número no decide nada —quién está en prueba y hasta cuándo lo dice
+// Stripe—, pero se escribe en las pastillas de dos pantallas y en las
+// frases del motor de audiencias. Estuvo repetido a mano en seis sitios, y
+// cuando pasó de tres a siete días el 26-11-2026 hubo que buscarlos uno a uno.
+//
+// Esto no valida el número contra Stripe —no se puede desde aquí—: lo que
+// fija es que haya UN número y que sea un número de verdad. Si el embudo
+// vuelve a cambiarlo, se cambia en tipo-acceso.ts y en esta línea.
+comprobar("es el que puso el embudo", DIAS_DE_PRUEBA === 7)
+comprobar("es un entero", Number.isInteger(DIAS_DE_PRUEBA))
+comprobar("y tiene sentido como duración", DIAS_DE_PRUEBA > 0 && DIAS_DE_PRUEBA < 90)
 
 console.log(`\n═══ ${pasadas} pasadas · ${fallos} fallos ═══\n`)
 process.exit(fallos > 0 ? 1 : 0)

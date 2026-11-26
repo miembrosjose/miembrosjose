@@ -38,6 +38,9 @@ import { avisoDeHora, type AvisoDeHora } from "@/lib/comunicaciones/horas"
 // los filtros de temporada. Tenerla duplicada aquí era tener dos verdades, y
 // la del navegador se habría quedado atrás sin que se notara.
 import { temporadasDe, frasearTemporadas } from "@/lib/comunicaciones/temporadas"
+// Y de aquí solo el número de días de la prueba, para que la pastilla y la
+// pantalla de suscripciones digan lo mismo. Otro módulo sin dependencias.
+import { DIAS_DE_PRUEBA } from "@/lib/admin/tipo-acceso"
 import { DESTINOS_DE_LA_PLATAFORMA, destinoDeAvisoValido } from "@/lib/comunicaciones/destinos"
 import { useAuth } from "../../_lib/auth-context"
 import {
@@ -2636,7 +2639,7 @@ function Audiencias({
         </Campo>
 
         {/* Junto con «los que ya no están», esto da los dos grupos que no se
-            podían nombrar: quien probó tres días y no siguió, y quien
+            podían nombrar: quien probó la plataforma y no siguió, y quien
             disfrutó el mes de regalo y no llegó a pagar nunca. */}
         <Campo
           etiqueta="Cómo entró"
@@ -3097,7 +3100,7 @@ function nombreTemporadaCorta(n: number): string {
 const ETIQUETA_VIA: Record<string, string> = {
   pago: "Pagando",
   regalo: "Mes de regalo",
-  prueba: "Prueba de 3 días",
+  prueba: `Prueba de ${DIAS_DE_PRUEBA} días`,
 }
 const ETIQUETA_MEMBRESIA: Record<string, string> = {
   vigente: "Solo miembros al día",
@@ -3729,7 +3732,9 @@ function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   if (a.membresia === "caducada") partes.push("que ya no son miembros")
   if (a.comoEntro?.length) {
     const comoSeLlama: Record<string, string> = {
-      pago: "pagando", regalo: "con el mes de regalo", prueba: "con la prueba de 3 días",
+      pago: "pagando",
+      regalo: "con el mes de regalo",
+      prueba: `con la prueba de ${DIAS_DE_PRUEBA} días`,
     }
     partes.push(`que entraron ${a.comoEntro.map((v) => comoSeLlama[v] ?? v).join(" o ")}`)
   }

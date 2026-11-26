@@ -5,7 +5,7 @@
 //   pago    · paga su mensualidad.
 //   regalo  · primer mes de regalo (código LLAMADO144), de los encuentros
 //             presenciales. No paga nada todavía.
-//   prueba  · invitado a las reuniones mensuales (código INVITACION). Tres
+//   prueba  · invitado a las reuniones mensuales (código INVITACION). Unos
 //             días de prueba y después la mensualidad.
 //
 // ── ESTO NO DECIDE NINGÚN ACCESO ──────────────────────────────────────────
@@ -21,6 +21,25 @@
 
 /** El código que el embudo manda para los invitados. Valor fijo. */
 export const CODIGO_INVITACION = "INVITACION"
+
+/**
+ * Cuántos días dura la prueba de los invitados.
+ *
+ * ── ESTO NO DECIDE NADA: ES UNA ETIQUETA ──────────────────────────────────
+ * Quién está en prueba y hasta cuándo lo decide STRIPE, y la plataforma no lo
+ * calcula en ningún sitio: lee `trialing` y lee la fecha de fin de periodo. Si
+ * mañana el embudo pone diez días, la fecha que sale en el panel será la buena
+ * aunque este número se quede a siete.
+ *
+ * Lo único que este número hace es escribirse en las pastillas y en las
+ * frases. Estaba repetido a mano en seis sitios —dos pantallas, el motor de
+ * audiencias y cuatro comentarios—, y cuando pasó de tres a siete días el
+ * 26-11-2026 hubo que ir a buscarlos uno por uno. Desde aquí, cambiarlo es
+ * cambiar esta línea.
+ *
+ * Si vuelve a cambiar en Stripe: pon aquí el número nuevo y ya está.
+ */
+export const DIAS_DE_PRUEBA = 7
 
 export type TipoDeAcceso = "pago" | "regalo" | "prueba"
 
@@ -47,7 +66,7 @@ export function tipoDeAcceso(fila: {
 }
 
 /**
- * ¿Está en los tres días de prueba, según lo que dice Stripe?
+ * ¿Está en los días de prueba, según lo que dice Stripe?
  *
  * Es otra pregunta distinta de la de arriba. `tipoDeAcceso` dice por qué
  * puerta entró; esto dice en qué momento del ciclo está hoy. Casi siempre

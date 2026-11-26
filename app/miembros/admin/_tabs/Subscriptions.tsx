@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { inputCls, FilterBtn, AdminCard, StatCard, AdminBadge, AdminEmptyState } from "./_shared"
-import { tipoDeAcceso, estaEnPrueba } from "@/lib/admin/tipo-acceso"
+import { tipoDeAcceso, estaEnPrueba, DIAS_DE_PRUEBA } from "@/lib/admin/tipo-acceso"
 
 type Row = {
   /** Lo que identifica la fila. El correo no sirve: alguna no es un correo. */
@@ -32,7 +32,7 @@ type Summary = {
   activosDeRegalo: number
   /** Activos que pagan. Es la base del MRR. */
   activosDePago: number
-  /** Activos en los tres días de prueba de los invitados. */
+  /** Activos en los días de prueba de los invitados. */
   activosEnPrueba: number
   /** Todas las filas de regalo, en cualquier estado. */
   regaloTotal: number
@@ -88,7 +88,7 @@ function nombreDeMes(clave: string): string {
 }
 
 function statusBadge(r: Row) {
-  // Stripe manda «trialing» durante los tres días. Dejarlo en inglés en la
+  // Stripe manda «trialing» durante la prueba. Dejarlo en inglés en la
   // columna obligaría a traducirlo de cabeza cada vez que se mira.
   if (estaEnPrueba(r)) return <AdminBadge variant="info">En prueba</AdminBadge>
 
@@ -114,11 +114,14 @@ function accesoCelda(r: Row) {
   const tipo = tipoDeAcceso(r)
   if (tipo === null) return <span className="text-[#6a6a7a]">—</span>
 
-  // ── Invitado en sus tres días ───────────────────────────────────────────
+  // ── Invitado en sus días de prueba ──────────────────────────────────────
   if (tipo === "prueba") {
     return (
       <div className="space-y-1">
-        <AdminBadge variant="info">Prueba 3 días</AdminBadge>
+        <AdminBadge variant="info">Prueba {DIAS_DE_PRUEBA} días</AdminBadge>
+        {/* La fecha es la de Stripe, no una cuenta nuestra: si allí cambia la
+            duración, esto sigue diciendo la verdad aunque el número de la
+            pastilla se quede viejo. */}
         {r.current_period_end && (
           <p className="text-[10px] text-[#6a6a7a]">hasta el {fmtCorto(r.current_period_end)}</p>
         )}
@@ -372,7 +375,7 @@ export function Subscriptions() {
         {/* Los invitados tienen su propia tarjeta, separada del regalo de
             los encuentros: son dos campañas distintas y se miden aparte. */}
         <StatCard
-          label="Prueba de 3 días"
+          label={`Prueba de ${DIAS_DE_PRUEBA} días`}
           value={regalo ? (summary?.activosEnPrueba ?? 0) : "—"}
           variant="gold"
           trend={regalo ? `${summary?.pruebaTotal ?? 0} invitados en total` : "sin migrar"}

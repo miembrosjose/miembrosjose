@@ -59,7 +59,11 @@ export async function GET() {
       .select(CAMPOS_BASE)
       .order("updated_at", { ascending: false })
       .limit(MAX_ROWS)
-    subs = reintento.data
+    // El reintento trae las columnas base y ninguna de regalo, así que su
+    // forma no es la de `subs`. La conversión es deliberada y es justo lo que
+    // `regaloDisponible: false` le anuncia al panel: esas cuatro llegan
+    // ausentes, y `tipoDeAcceso` devuelve null en vez de inventarse «pago».
+    subs = reintento.data as typeof subs
     subsErr = reintento.error
   }
 
@@ -119,7 +123,7 @@ export async function GET() {
   const total = rows.length
   const price = Number(LEGAL.monthlyPrice)
   // El MRR cuenta SOLO a los activos que pagan. Ni el primer mes de regalo
-  // ni los tres días de prueba de los invitados suman: todavía no han
+  // ni los días de prueba de los invitados suman: todavía no han
   // pagado nada, y meterlos aquí sería inventarse ingresos.
   const mrrEstimate = Number.isFinite(price) ? +(activosDePago * price).toFixed(2) : null
 

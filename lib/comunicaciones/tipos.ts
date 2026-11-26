@@ -457,10 +457,10 @@ export type Audiencia = {
 
   /**
    * Por qué puerta entró: pagando, con el mes de regalo o con la prueba de
-   * tres días de los invitados.
+   * los invitados.
    *
    * Combinado con `membresia: "caducada"` da los dos grupos que no se podían
-   * nombrar: quien probó tres días y no siguió, y quien disfrutó el mes de
+   * nombrar: quien probó y no siguió, y quien disfrutó el mes de
    * regalo y no llegó a pagar. Son las dos listas a las que tiene sentido
    * insistir, y hasta ahora estaban mezcladas con todos los demás.
    */

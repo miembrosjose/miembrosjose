@@ -69,17 +69,27 @@ export async function POST(req: NextRequest) {
   //
   // El correo se sigue aceptando por si quedara abierta una pestaña con la
   // versión anterior, y entonces se prueba tal cual y en minúsculas.
-  let fila: { id: string; email: string; status: string; stripe_subscription_id: string | null } | null =
-    null
+  // El tipo, con nombre y no con `typeof fila`. Escrito así, TypeScript
+  // reducía `typeof fila` a `null` —el valor con el que se inicializa— y
+  // todos los `fila.id` de abajo pasaban como accesos sobre `never`: seis
+  // errores de tipo que el build no enseña, porque este proyecto tiene
+  // `ignoreBuildErrors` puesto. Funcionaba por suerte, no por estar bien.
+  type FilaSuscripcion = {
+    id: string
+    email: string
+    status: string
+    stripe_subscription_id: string | null
+  }
+  let fila: FilaSuscripcion | null = null
   let errorLectura: { code?: string } | null = null
 
   if (id) {
     const r = await admin.from("member_subscriptions").select(CAMPOS).eq("id", id).maybeSingle()
-    fila = r.data as typeof fila
+    fila = r.data as FilaSuscripcion | null
     errorLectura = r.error
   } else {
     const exacto = await admin.from("member_subscriptions").select(CAMPOS).eq("email", email).maybeSingle()
-    fila = exacto.data as typeof fila
+    fila = exacto.data as FilaSuscripcion | null
     errorLectura = exacto.error
     if (!fila && !errorLectura && email !== email.toLowerCase()) {
       const enMinusculas = await admin
@@ -87,7 +97,7 @@ export async function POST(req: NextRequest) {
         .select(CAMPOS)
         .eq("email", email.toLowerCase())
         .maybeSingle()
-      fila = enMinusculas.data as typeof fila
+      fila = enMinusculas.data as FilaSuscripcion | null
       errorLectura = enMinusculas.error
     }
   }
