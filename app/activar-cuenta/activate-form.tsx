@@ -175,13 +175,27 @@ export function ActivateForm() {
           Este enlace ha expirado
         </p>
         <p className="mt-2 text-sm text-[#a8a8c0] [font-family:var(--font-geist-sans)]">
-          {sessionError || "Solicita un nuevo acceso para continuar."}
+          {sessionError || "Pide un enlace nuevo para continuar."}
+        </p>
+
+        {/* ── POR QUÉ ESTE BOTÓN CAMBIÓ DE SITIO (25-11-2026) ─────────────
+            Decía «Solicitar nuevo acceso» y llevaba a la pantalla de login.
+            No pedía nada ni enviaba nada: solo cambiaba de página. Quien lo
+            pulsaba se quedaba esperando un correo que nunca se había
+            mandado. Pasó, y la frase fue «le di click y no me llega nada».
+
+            Ahora lleva a la pantalla donde se escribe el correo y SÍ se
+            envía el enlace, por Resend y con registro en email_send_log.
+            La etiqueta dice lo que va a pasar, no lo que nos gustaría. */}
+        <p className="mt-4 text-sm text-[#a8a8c0] [font-family:var(--font-geist-sans)]">
+          En la pantalla siguiente escribe tu correo y te mandamos uno nuevo.
+          Ábrelo en cuanto llegue: es de un solo uso.
         </p>
         <a
-          href="/miembros/login"
+          href="/miembros/recuperar-contrasena"
           className="mt-5 inline-flex w-full items-center justify-center gap-3 border border-[#6D4A9B] bg-[#6D4A9B] px-6 py-4 text-sm font-semibold uppercase tracking-[0.3em] text-[#F3F6FA] transition-colors hover:border-[#8a63b8] hover:bg-[#8a63b8] [font-family:var(--font-geist-sans)]"
         >
-          Solicitar nuevo acceso
+          Pedir un enlace nuevo
         </a>
       </div>
     )
