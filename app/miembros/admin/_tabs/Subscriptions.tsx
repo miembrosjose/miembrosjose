@@ -214,7 +214,7 @@ export function Subscriptions() {
   function acciones(r: Row) {
     const trabajando = ocupada === r.email
     return (
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center gap-2">
         {r.status !== "canceled" && (
           <button
             type="button"
@@ -530,28 +530,34 @@ export function Subscriptions() {
                 <thead>
                   <tr className="text-[9px] uppercase tracking-[0.2em] text-[#6a6a7a]">
                     <th className="py-2 pr-4">Correo</th>
+                    {/* ── POR QUÉ LAS ACCIONES VAN LAS SEGUNDAS ──────────
+                        Estaban al final, que es donde se ponen siempre. El
+                        problema es que esta tabla es más ancha que el panel
+                        y se desplaza en horizontal: los botones quedaban
+                        fuera de la pantalla y nadie los encontraba. Aquí se
+                        ven sin mover nada. */}
+                    <th className="py-2 pr-4">Acciones</th>
                     <th className="py-2 pr-4">Estado</th>
                     <th className="py-2 pr-4">Acceso</th>
                     <th className="py-2 pr-4">Stripe (sub)</th>
                     <th className="py-2 pr-4">Stripe (cliente)</th>
                     <th className="py-2 pr-4">Fin de periodo</th>
                     <th className="py-2 pr-4">Creado</th>
-                    <th className="py-2 pr-4">Actualizado</th>
-                    <th className="py-2 text-right">Acciones</th>
+                    <th className="py-2">Actualizado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((r) => (
                     <tr key={r.email} className="border-t border-[#1a1a24] text-[#c3c3d4]">
                       <td className="py-2 pr-4 text-[#F3F6FA]">{r.email}</td>
+                      <td className="py-2 pr-4">{acciones(r)}</td>
                       <td className="py-2 pr-4">{statusBadge(r.status)}</td>
                       <td className="py-2 pr-4">{accesoCelda(r)}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_subscription_id ?? "—"}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_customer_id ?? "—"}</td>
                       <td className="py-2 pr-4">{fmt(r.current_period_end)}</td>
                       <td className="py-2 pr-4">{fmt(r.created_at)}</td>
-                      <td className="py-2 pr-4">{fmt(r.updated_at)}</td>
-                      <td className="py-2 text-right">{acciones(r)}</td>
+                      <td className="py-2">{fmt(r.updated_at)}</td>
                     </tr>
                   ))}
                 </tbody>
