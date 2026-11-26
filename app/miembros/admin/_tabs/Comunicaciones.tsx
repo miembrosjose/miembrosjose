@@ -23,16 +23,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MessageSquare,
-  AlertTriangle, Archive, ArrowLeft, Bell, Calendar, Check, Clock, Copy, ImagePlus,
-  Bold, Heading2, Italic, Link2, List, Loader2, Mail, Minus, Monitor,
-  MoreVertical, Plus, Quote, Search, Send, Smartphone, Sparkles, Trash2,
-  Undo2, Users, X,
+  Activity, AlertTriangle, Archive, ArrowLeft, Award, Bell, Calendar, Check,
+  ChevronDown, Clock, Compass, Copy, ImagePlus,
+  Bold, Heading2, Italic, Link2, List, Loader2, Mail, MapPin, Minus, Monitor,
+  MoreVertical, Plus, Quote, Search, Send, ShieldCheck, Smartphone, Sparkles,
+  Trash2, Undo2, UserPlus, Users, X,
 } from "lucide-react"
 import { inputCls, labelCls } from "./_shared"
 import { EditorCodigo, PLANTILLAS } from "./EditorCodigo"
 // La única cosa del servidor que se importa aquí: no toca la base, es un mapa
 // de países y una cuenta de horas. Tener dos copias sería tener dos verdades.
 import { avisoDeHora, type AvisoDeHora } from "@/lib/comunicaciones/horas"
+// Lo mismo: un módulo sin dependencias, con la única regla de cómo se leen
+// los filtros de temporada. Tenerla duplicada aquí era tener dos verdades, y
+// la del navegador se habría quedado atrás sin que se notara.
+import { temporadasDe, frasearTemporadas } from "@/lib/comunicaciones/temporadas"
 import { DESTINOS_DE_LA_PLATAFORMA, destinoDeAvisoValido } from "@/lib/comunicaciones/destinos"
 import { useAuth } from "../../_lib/auth-context"
 import {
@@ -165,10 +170,12 @@ const ZONAS = [
 
 type Audiencia = {
   kind: "todos"
+  /** Un UMBRAL, no una lista: «al menos la 2» ya incluye la 3 y la 4. */
   temporadaMin?: number | null
-  temporadaCompletada?: number | null
+  /** Varias se cumplen con cualquiera. Un número suelto, por los borradores viejos. */
+  temporadaCompletada?: number | number[] | null
   /** Empezó esa temporada y no la terminó. El segmento de la continuidad. */
-  empezoSinTerminar?: number | null
+  empezoSinTerminar?: number | number[] | null
   roles?: string[] | null
   insignias?: string[] | null
   /** Sin señales de vida desde hace estos días o más. */
@@ -2462,15 +2469,26 @@ function Campos({
 /**
  * A quién va.
  *
+ * ── POR QUÉ ESTO ESTÁ PLEGADO Y NO TODO A LA VISTA ────────────────────────
+ * Hay trece filtros. Enseñados en fila, uno debajo de otro, con sus tiras de
+ * pastillas abiertas, lo que se ve no es una herramienta: es un muro. Y lo
+ * peor no es que sea largo —es que no se puede LEER la audiencia. Para saber
+ * a quién va había que recorrer trece bloques comprobando cuál tenía algo
+ * marcado.
+ *
+ * Así que se invierte: arriba, la frase de a quién va y las pastillas de lo
+ * que hay puesto. Debajo, siete secciones plegadas, cada una diciendo en su
+ * propia línea qué tiene elegido. Sin abrir ninguna se lee la audiencia
+ * entera; se abre solo la que se quiere cambiar.
+ *
+ * Las que ya tienen algo puesto se abren solas: si al entrar hay un filtro
+ * escondido detrás de una sección cerrada, el número del ensayo no cuadra con
+ * lo que se ve y la culpa parece de la herramienta.
+ *
  * ── LOS FILTROS SOLO ESTRECHAN ────────────────────────────────────────────
  * Nada de lo que hay aquí puede ampliar la audiencia. Sin tocar nada va a
  * todos; cada filtro que se añade, el número baja. Es lo que permite mirar el
  * ensayo de audiencia y razonar la cifra en vez de confiar en ella.
- *
- * Solo se ofrecen filtros de cosas que la base SABE. «Por ciudad» no está
- * porque apenas unas pocas personas la han puesto, y una audiencia de tres
- * personas por un filtro que parecía razonable es la forma más rápida de
- * dejar de fiarse de la herramienta.
  */
 function Audiencias({
   c, editar, editable,
@@ -2482,6 +2500,11 @@ function Audiencias({
   const a: Audiencia = c.audience || { kind: "todos" }
   const roles = a.roles || []
   const insignias = a.insignias || []
+  const paises = a.paises || []
+  const ciudades = a.ciudades || []
+  const vias = a.comoEntro || []
+  const completadas = temporadasDe(a.temporadaCompletada)
+  const aMedias = temporadasDe(a.empezoSinTerminar)
 
   // Las opciones vienen del servidor, no escritas aquí: las insignias son un
   // catálogo que crece, y una copia a mano se queda vieja sin que se note.
@@ -2497,46 +2520,30 @@ function Audiencias({
     })()
   }, [])
 
-  // Se manda la audiencia ENTERA en cada cambio, no solo lo que cambió.
-  // El guardado junta campos de distintos tecleos en una sola petición, y un
-  // parcial haría que marcar un país borrara el rol elegido medio segundo
-  // antes.
+  const temporadas = filtros?.temporadas ?? [1, 2, 3, 4]
+  const tramos = filtros?.tramos_dias ?? TRAMOS
+
+  /**
+   * Se manda la audiencia ENTERA en cada cambio, no solo lo que cambió.
+   *
+   * El guardado junta campos de distintos tecleos en una sola petición, y un
+   * parcial haría que marcar un país borrara el rol elegido medio segundo
+   * antes.
+   *
+   * ── Y SE PARTE DE `...a`, NO DE UNA LISTA DE CAMPOS ─────────────────────
+   * Esto enumeraba los campos a mano, y se le habían quedado cinco fuera
+   * —membresía, cómo entró, Telegram, la aplicación y las personas
+   * excluidas—. Como `editar` REEMPLAZA el objeto entero, marcar un país
+   * borraba en silencio los cinco. Con el reparto no hay nada que acordarse
+   * de añadir: un filtro nuevo se conserva por existir.
+   */
   const cambiar = (parcial: Partial<Audiencia>) =>
-    editar("audience", {
-      kind: "todos",
-      temporadaMin: a.temporadaMin ?? null,
-      temporadaCompletada: a.temporadaCompletada ?? null,
-      empezoSinTerminar: a.empezoSinTerminar ?? null,
-      roles: a.roles ?? null,
-      insignias: a.insignias ?? null,
-      inactivoDias: a.inactivoDias ?? null,
-      activoDias: a.activoDias ?? null,
-      paises: a.paises ?? null,
-      ciudades: a.ciudades ?? null,
-      personas: a.personas ?? null,
-      ...parcial,
-    })
+    editar("audience", { ...a, kind: "todos", ...parcial })
 
-  const alternarRol = (id: string) => {
-    const nuevos = roles.includes(id) ? roles.filter((r) => r !== id) : [...roles, id]
-    cambiar({ roles: nuevos.length > 0 ? nuevos : null })
-  }
-
-  const alternarPais = (id: string) => {
-    const ya = a.paises ?? []
-    const nuevos = ya.includes(id) ? ya.filter((x) => x !== id) : [...ya, id]
-    cambiar({ paises: nuevos.length > 0 ? nuevos : null })
-  }
-
-  const alternarCiudad = (id: number) => {
-    const ya = a.ciudades ?? []
-    const nuevas = ya.includes(id) ? ya.filter((x) => x !== id) : [...ya, id]
-    cambiar({ ciudades: nuevas.length > 0 ? nuevas : null })
-  }
-
-  const alternarInsignia = (id: string) => {
-    const nuevas = insignias.includes(id) ? insignias.filter((i) => i !== id) : [...insignias, id]
-    cambiar({ insignias: nuevas.length > 0 ? nuevas : null })
+  /** Marcar y desmarcar en una lista. Vacía se guarda como nula: «da igual». */
+  function alternar<T>(ya: T[], v: T): T[] | null {
+    const nueva = ya.includes(v) ? ya.filter((x) => x !== v) : [...ya, v]
+    return nueva.length > 0 ? nueva : null
   }
 
   const qi = buscaInsignia.trim().toLowerCase()
@@ -2544,494 +2551,791 @@ function Audiencias({
     .map((g) => ({ grupo: g.grupo, items: qi ? g.items.filter((i) => i.etiqueta.toLowerCase().includes(qi)) : g.items }))
     .filter((g) => g.items.length > 0)
 
+  // ── Lo que cada sección dice de sí misma sin abrirla ────────────────────
+  // Una línea por sección con lo que tiene elegido. Es lo que convierte siete
+  // cajas cerradas en un resumen legible de la audiencia.
+  const juntar = (ps: string[]) => (ps.length > 0 ? ps.join(" · ") : "Da igual")
+
+  const resumenMembresia = juntar([
+    ...(a.membresia ? [ETIQUETA_MEMBRESIA[a.membresia]] : []),
+    ...(vias.length > 0 ? [vias.map((v) => ETIQUETA_VIA[v]).join(", ")] : []),
+  ])
+  const resumenRecorrido = juntar([
+    ...(a.temporadaMin ? [`Al menos la ${a.temporadaMin}`] : []),
+    ...(completadas.length > 0 ? [`Terminaron ${completadas.map(nombreTemporadaCorta).join(", ")}`] : []),
+    ...(aMedias.length > 0 ? [`A medias ${aMedias.map((n) => `la ${n}`).join(", ")}`] : []),
+  ])
+  const resumenActividad = juntar([
+    ...(a.inactivoDias ? [`Sin aparecer ${a.inactivoDias} días o más`] : []),
+    ...(a.activoDias ? [`Activos en ${a.activoDias} días`] : []),
+  ])
+  const resumenLugar = juntar([
+    ...(paises.length > 0 ? [paises.map((p) => nombreDePais(p, filtros)).join(", ")] : []),
+    ...(ciudades.length > 0 ? [ciudades.length === 1 ? "1 ciudad" : `${ciudades.length} ciudades`] : []),
+  ])
+  const resumenRed = juntar([
+    ...(roles.length > 0 ? [roles.map((r) => nombreDeRol(r, filtros)).join(", ")] : []),
+    ...(insignias.length > 0 ? [insignias.length === 1 ? nombreDeInsignia(insignias[0], filtros) : `${insignias.length} insignias`] : []),
+  ])
+  const resumenCanales = juntar([
+    ...(a.telegram ? [`Telegram: ${ETIQUETA_TELEGRAM[a.telegram]}`] : []),
+    ...(a.app ? [`App: ${ETIQUETA_APP[a.app]}`] : []),
+  ])
+  const resumenPersonas = juntar([
+    ...((a.personas?.length ?? 0) > 0 ? [`Solo ${a.personas!.length}`] : []),
+    ...((a.excluidas?.length ?? 0) > 0 ? [`${a.excluidas!.length} fuera`] : []),
+  ])
+
+  const nCanales = (a.telegram ? 1 : 0) + (a.app ? 1 : 0)
+
   return (
-    <Bloque id="audiencia" titulo="A quién va" nota="Sin tocar nada, va a todos. Cada filtro que añades, a menos gente.">
-      <div>
-        <label className={labelCls}>Por avance en el camino</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Por dónde va en el recorrido.</p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla activa={!a.temporadaMin} onClick={() => cambiar({ temporadaMin: null })} desactivada={!editable}>
-            Da igual
-          </Pastilla>
-          {[1, 2, 3, 4].map((n) => (
-            <Pastilla
-              key={n}
-              activa={a.temporadaMin === n}
-              onClick={() => cambiar({ temporadaMin: n })}
-              desactivada={!editable}
-            >
-              Temporada {n}+
-            </Pastilla>
-          ))}
-        </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-          «Temporada 3+» es quien ha <strong className="text-[#8a8fa8]">llegado</strong> a la
-          tercera o más allá: basta un capítulo, o tener su acceso.
-        </p>
-      </div>
-
-      {/* ── TERMINAR NO ES LLEGAR ──────────────────────────────────────────
-          «Llegó a la 3» incluye a quien vio el primer capítulo y lo dejó.
-          «Terminó la 3» es quien la vio entera. Entre las dos cosas está toda
-          la diferencia entre «sigue, que viene la 4» y «felicidades». */}
-      <div>
-        <label className={labelCls}>Por temporada terminada</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Quién la vio <strong className="text-[#8a8fa8]">entera</strong>. Es lo que sirve para
-          felicitar, o para invitar a seguir con la siguiente.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla activa={!a.temporadaCompletada} onClick={() => cambiar({ temporadaCompletada: null })} desactivada={!editable}>
-            Da igual
-          </Pastilla>
-          {[1, 2, 3].map((n) => (
-            <Pastilla
-              key={n}
-              activa={a.temporadaCompletada === n}
-              onClick={() => cambiar({ temporadaCompletada: n })}
-              desactivada={!editable}
-            >
-              Terminó la {n}
-            </Pastilla>
-          ))}
-          <Pastilla
-            activa={a.temporadaCompletada === 4}
-            onClick={() => cambiar({ temporadaCompletada: 4 })}
-            desactivada={!editable}
-          >
-            Completó el camino
-          </Pastilla>
-        </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-          Se cuenta contra los capítulos que tiene cargados cada temporada, con el mismo
-          criterio que las insignias: si aquí contara distinto, «terminó la 3» y la insignia
-          de terminarla dirían cosas distintas de la misma persona.
-        </p>
-      </div>
-
-      {/* ── EMPEZÓ Y LO DEJÓ ───────────────────────────────────────────────
-          El segmento más útil que tiene la plataforma, y el que no se puede
-          construir con los dos de arriba: «llegó a la 3» incluye a quien la
-          terminó, y los filtros de esta pantalla solo estrechan — no hay forma
-          de decir «y que NO la haya terminado». Por eso tiene su propia fila. */}
-      <div>
-        <label className={labelCls}>Por preparación a medias</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Quien <strong className="text-[#8a8fa8]">empezó</strong> una temporada y no la ha
-          terminado. Es a quien tiene sentido decirle «continúa donde lo dejaste».
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla activa={!a.empezoSinTerminar} onClick={() => cambiar({ empezoSinTerminar: null })} desactivada={!editable}>
-            Da igual
-          </Pastilla>
-          {[1, 2, 3, 4].map((n) => (
-            <Pastilla
-              key={n}
-              activa={a.empezoSinTerminar === n}
-              onClick={() => cambiar({ empezoSinTerminar: n })}
-              desactivada={!editable}
-            >
-              Dejó la {n} a medias
-            </Pastilla>
-          ))}
-        </div>
-      </div>
-
-      {/* ── CUÁNTO LLEVA SIN APARECER ──────────────────────────────────────
-          Lo que hace posible una campaña de reactivación. Las dos direcciones
-          se excluyen a propósito: pedir «sin aparecer en 30 días» y «apareció
-          en los últimos 7» a la vez da siempre cero, y un cero sin explicación
-          parece que la herramienta está rota. */}
-      <div>
-        <label className={labelCls}>Por tiempo sin aparecer</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Cuenta como aparecer tanto entrar en la plataforma como hacer algo en ella: un
-          comentario, un capítulo, un corazón. Lo más reciente de las dos cosas.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla
-            activa={!a.inactivoDias && !a.activoDias}
-            onClick={() => cambiar({ inactivoDias: null, activoDias: null })}
-            desactivada={!editable}
-          >
-            Da igual
-          </Pastilla>
-          {(filtros?.tramos_dias ?? TRAMOS).map((t) => (
-            <Pastilla
-              key={`in-${t.dias}`}
-              activa={a.inactivoDias === t.dias}
-              onClick={() => cambiar({ inactivoDias: t.dias, activoDias: null })}
-              desactivada={!editable}
-            >
-              Sin aparecer {t.etiqueta}
-            </Pastilla>
-          ))}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(filtros?.tramos_dias ?? TRAMOS).slice(0, 3).map((t) => (
-            <Pastilla
-              key={`ac-${t.dias}`}
-              activa={a.activoDias === t.dias}
-              onClick={() => cambiar({ activoDias: t.dias, inactivoDias: null })}
-              desactivada={!editable}
-            >
-              Activos en {t.etiqueta}
-            </Pastilla>
-          ))}
-        </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[#6a6a7a]">
-          Quien no tiene ninguna señal registrada queda <strong className="text-[#8a8fa8]">fuera</strong> de
-          los dos. No sabemos cuándo apareció, y mandarle un «vuelve» a quien quizá entró
-          ayer es peor que no mandarle nada.
-        </p>
-      </div>
-
-      {/* ── DÓNDE ESTÁ ─────────────────────────────────────────────────────
-          Solo se ofrecen los sitios donde hay gente, con el recuento al lado:
-          un filtro que da cero no es un filtro, es una opción que obliga a
-          elegirla, mirar el ensayo y volver atrás. */}
-      {(filtros?.paises?.length ?? 0) > 0 && (
-        <div>
-          <label className={labelCls}>Por país</label>
-          <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-            Según lo que cada miembro puso al entrar en La Red. El número es cuánta gente
-            hay en cada sitio.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(filtros?.paises ?? []).map((p) => (
-              <Pastilla
-                key={p.id}
-                activa={(a.paises ?? []).includes(p.id)}
-                onClick={() => alternarPais(p.id)}
-                desactivada={!editable}
-              >
-                {p.etiqueta} <span className="opacity-50">{p.cuantos}</span>
-              </Pastilla>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {(filtros?.ciudades?.length ?? 0) > 0 && (
-        <div>
-          <label className={labelCls}>Por ciudad</label>
-          <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-            Solo las ciudades con dos o más miembros. La ciudad es opcional, así que este
-            filtro estrecha mucho: míralo en el ensayo antes de enviar.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(filtros?.ciudades ?? []).map((ciu) => (
-              <Pastilla
-                key={ciu.id}
-                activa={(a.ciudades ?? []).includes(ciu.id)}
-                onClick={() => alternarCiudad(ciu.id)}
-                desactivada={!editable}
-              >
-                {ciu.etiqueta} <span className="opacity-50">{ciu.cuantos}</span>
-              </Pastilla>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── CON O SIN LA APLICACIÓN ───────────────────────────────────────
-          Para no pedirle que se instale la aplicación a quien la abre cada
-          día. El aviso de abajo no es un detalle: la marca es nueva, y quien
-          instaló la aplicación antes figura como que no la tiene hasta que la
-          abra una vez. Sin decirlo, el primer envío parecería decir que casi
-          nadie la tiene. */}
-      <div>
-        <label className={labelCls}>Según la aplicación</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Se anota al abrirla desde el icono, y solo desde el 12/11/2026. Estos
-          días, «todavía no la tiene» incluye a gente que sí la tiene y aún no
-          la ha abierto.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla
-            activa={!a.app}
-            onClick={() => cambiar({ app: null })}
-            desactivada={!editable}
-          >
-            Da igual
-          </Pastilla>
-          <Pastilla
-            activa={a.app === "sin_instalar"}
-            onClick={() => cambiar({ app: a.app === "sin_instalar" ? null : "sin_instalar" })}
-            desactivada={!editable}
-          >
-            Todavía no la tiene
-          </Pastilla>
-          <Pastilla
-            activa={a.app === "instalada"}
-            onClick={() => cambiar({ app: a.app === "instalada" ? null : "instalada" })}
-            desactivada={!editable}
-          >
-            Ya la tiene
-          </Pastilla>
-        </div>
-      </div>
-
-      {/* ── LA MEMBRESÍA ──────────────────────────────────────────────────
-          Esto no existía, y su ausencia no era una decisión: el padrón era
-          «todo el que tenga perfil», así que a quien se dio de baja le
-          seguían llegando los correos y los avisos igual que el primer día.
-
-          «Vigente» usa la misma regla que la puerta de la plataforma, no una
-          copia: administración, accesos dados a mano, suscripción activa, o
-          cancelada con el periodo todavía por acabar —eso está pagado y esa
-          persona sigue siendo miembro hasta su última fecha—. */}
-      <div>
-        <label className={labelCls}>Según la membresía</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Quien canceló con el mes ya pagado sigue contando como vigente hasta que se le acabe.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla
-            activa={!a.membresia}
-            onClick={() => cambiar({ membresia: null })}
-            desactivada={!editable}
-          >
-            Da igual
-          </Pastilla>
-          <Pastilla
-            activa={a.membresia === "vigente"}
-            onClick={() => cambiar({ membresia: a.membresia === "vigente" ? null : "vigente" })}
-            desactivada={!editable}
-          >
-            Solo miembros al día
-          </Pastilla>
-          <Pastilla
-            activa={a.membresia === "caducada"}
-            onClick={() => cambiar({ membresia: a.membresia === "caducada" ? null : "caducada" })}
-            desactivada={!editable}
-          >
-            Solo los que ya no están
-          </Pastilla>
-        </div>
-      </div>
-
-      {/* ── POR QUÉ PUERTA ENTRÓ ──────────────────────────────────────────
-          Junto con «los que ya no están», esto da los dos grupos que no se
-          podían nombrar: quien probó tres días y no siguió, y quien
-          disfrutó el mes de regalo y no llegó a pagar nunca. */}
-      <div>
-        <label className={labelCls}>Según cómo entró</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Quien entró gratis y luego pagó cuenta como «pagando»: lo que vale es dónde está hoy.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {([
-            ["pago", "Pagando"],
-            ["regalo", "Mes de regalo"],
-            ["prueba", "Prueba de 3 días"],
-          ] as const).map(([via, texto]) => {
-            const puestas = a.comoEntro ?? []
-            const activa = puestas.includes(via)
-            return (
-              <Pastilla
-                key={via}
-                activa={activa}
-                onClick={() => {
-                  const siguiente = activa ? puestas.filter((v) => v !== via) : [...puestas, via]
-                  cambiar({ comoEntro: siguiente.length > 0 ? siguiente : null })
-                }}
-                desactivada={!editable}
-              >
-                {texto}
-              </Pastilla>
-            )
-          })}
-        </div>
-        {(a.comoEntro ?? []).length > 0 && a.membresia !== "caducada" && (
-          <p className="mt-2 text-[11px] text-amber-400/80">
-            Sin «Solo los que ya no están», esto incluye también a quien sigue dentro por esa vía.
-          </p>
-        )}
-      </div>
-
-      {/* ── DENTRO O FUERA DEL TELEGRAM ───────────────────────────────────
-          Para dejar de invitar al grupo a quien ya está dentro. Hasta ahora
-          la invitación salía a todos, y quien ya se había unido la recibía
-          igual — la forma más rápida de que alguien deje de leerte.
-
-          «Dentro» es estar EN EL GRUPO, no haber vinculado la cuenta con el
-          bot. Mucha gente pulsa el botón, se identifica y se queda a medio
-          camino: a esa hay que seguir invitándola. */}
-      <div>
-        <label className={labelCls}>Según el Telegram</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Estar dentro es estar en el grupo, no haber pulsado el botón.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Pastilla
-            activa={!a.telegram}
-            onClick={() => cambiar({ telegram: null })}
-            desactivada={!editable}
-          >
-            Da igual
-          </Pastilla>
-          <Pastilla
-            activa={a.telegram === "fuera"}
-            onClick={() => cambiar({ telegram: a.telegram === "fuera" ? null : "fuera" })}
-            desactivada={!editable}
-          >
-            Todavía no está dentro
-          </Pastilla>
-          <Pastilla
-            activa={a.telegram === "dentro"}
-            onClick={() => cambiar({ telegram: a.telegram === "dentro" ? null : "dentro" })}
-            desactivada={!editable}
-          >
-            Ya está dentro
-          </Pastilla>
-        </div>
-      </div>
-
-      <PersonasElegidas
-        elegidas={a.personas ?? []}
-        onCambiar={(ids) => cambiar({ personas: ids.length > 0 ? ids : null })}
-        editable={editable}
-      />
-
-      {/* ── QUITAR A ALGUIEN DE TODOS ──────────────────────────────────────
-          Lo de arriba estrecha: «solo a estas». Esto resta: «a todos menos a
-          estas». Parecen lo mismo y no lo son, y sin lo segundo no se podía
-          expresar el caso más común después de una equivocación — pedir
-          disculpas a todo el mundo menos a quien el correo sí iba dirigido. */}
-      <PersonasElegidas
-        elegidas={a.excluidas ?? []}
-        onCambiar={(ids) => cambiar({ excluidas: ids.length > 0 ? ids : null })}
-        editable={editable}
-        titulo="Quitar a estas personas"
-        nota="A quien pongas aquí NO le llega, aunque cumpla todo lo demás y aunque esté también en la lista de arriba."
-        color="#c98a8a"
-      />
-
-      <div>
-        <label className={labelCls}>Por rol en La Red</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">Qué función desempeña.</p>
-        <div className="flex flex-wrap gap-2">
-          {(filtros?.roles ?? ROLES).map((r) => (
-            <Pastilla
-              key={r.id}
-              activa={roles.includes(r.id)}
-              onClick={() => alternarRol(r.id)}
-              desactivada={!editable}
-            >
-              {r.etiqueta}
-            </Pastilla>
-          ))}
-        </div>
-      </div>
-
-      {/* ── INSIGNIAS ─────────────────────────────────────────────────────
-          Tercer concepto, y distinto de los otros dos: el avance dice por
-          dónde va, el rol qué hace, y la insignia qué ha logrado. Un Guardián
-          puede no haber pasado de la primera temporada, y quien tiene diez
-          insignias puede no tener ningún rol.
-
-          Son más de cincuenta, así que van agrupadas y con buscador: una tira
-          de cincuenta pastillas no se lee, se sufre. */}
-      <div>
-        <label className={labelCls}>Por insignia lograda</label>
-        <p className="-mt-1 mb-2 text-[11px] text-[#6a6a7a]">
-          Qué ha alcanzado. Sirve para felicitar a quien acaba de llegar a algo.
-        </p>
-
-        {insignias.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {insignias.map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => alternarInsignia(id)}
-                disabled={!editable}
-                className="inline-flex items-center gap-1.5 border border-[#6D4A9B] bg-[#6D4A9B]/20 px-3 py-1.5 text-[11px] text-[#c3b2e0] disabled:opacity-40"
-              >
-                {nombreDeInsignia(id, filtros)} <X size={11} />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {!filtros ? (
-          <p className="text-[11px] text-[#6a6a7a]">Cargando insignias…</p>
-        ) : (
-          <>
-            <div className="relative mb-2">
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a6a]" />
-              <input
-                type="search"
-                value={buscaInsignia}
-                onChange={(e) => setBuscaInsignia(e.target.value)}
-                placeholder={`Buscar entre ${filtros.total_insignias} insignias…`}
-                disabled={!editable}
-                className={`${inputCls} pl-9`}
-              />
-            </div>
-
-            <div className="max-h-64 space-y-4 overflow-y-auto border border-[#14141e] bg-[#07070f] p-3">
-              {gruposVisibles.length === 0 ? (
-                <p className="py-4 text-center text-[11px] text-[#6a6a7a]">
-                  Ninguna insignia coincide con «{buscaInsignia}».
-                </p>
-              ) : (
-                gruposVisibles.map((g) => (
-                  <div key={g.grupo}>
-                    <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-[#5a5a6a]">{g.grupo}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {g.items.map((i) => (
-                        <Pastilla
-                          key={i.id}
-                          activa={insignias.includes(i.id)}
-                          onClick={() => alternarInsignia(i.id)}
-                          desactivada={!editable}
-                        >
-                          {i.etiqueta}
-                        </Pastilla>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="border-t border-[#14141e] pt-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a]">Va a</p>
-        <p className="mt-1 text-sm text-[#F3F6FA]">{describir(a, filtros)}</p>
-
-        {/* Lo que hay puesto, junto y con su equis. Antes, para quitar un
-            filtro había que acordarse de en qué bloque estaba y bajar a
-            buscarlo entre doce opciones. */}
+    <Bloque id="audiencia" titulo="A quién va">
+      {/* ── LA RESPUESTA, ARRIBA ──────────────────────────────────────────
+          Esto estaba al final, debajo de trece bloques de pastillas. Pero es
+          justamente lo que se viene a mirar: a quién va y qué hay puesto.
+          Abajo quedaba a un scroll de distancia del sitio donde se toca. */}
+      <div className="border border-[#2e2545] bg-[#6D4A9B]/[0.07] p-4">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#a78bca]">Va a</p>
+        <p className="mt-2 text-sm leading-snug text-[#F3F6FA]">{describir(a, filtros)}</p>
         <FiltrosPuestos
           a={a}
           filtros={filtros}
           onQuitar={cambiar}
-          onQuitarTodo={() => cambiar({
-            temporadaMin: null, temporadaCompletada: null, empezoSinTerminar: null,
-            roles: null, insignias: null, inactivoDias: null, activoDias: null,
-            paises: null, ciudades: null, personas: null,
-          })}
+          onQuitarTodo={() => cambiar(SIN_FILTROS)}
           editable={editable}
         />
-        {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
-            entre mandar a doscientos y mandar a tres. */}
-        {(a.temporadaMin || a.temporadaCompletada || a.empezoSinTerminar ||
-          a.inactivoDias || a.activoDias || roles.length > 0 || insignias.length > 0 ||
-          (a.paises?.length ?? 0) > 0 || (a.ciudades?.length ?? 0) > 0) && (
-          <p className="mt-2 text-[11px] leading-relaxed text-[#8a8fa8]">
-            Entre bloques distintos se cumple <strong className="text-[#c3b2e0]">todo</strong>:
-            hay que tener el avance <em>y</em> el rol <em>y</em> la insignia. Dentro de un
-            mismo bloque basta <strong className="text-[#c3b2e0]">uno</strong>: con dos roles
-            marcados, entra quien tenga cualquiera de los dos.
-          </p>
-        )}
       </div>
+
+      {/* ── LA MEMBRESÍA, PRIMERO ─────────────────────────────────────────
+          Va antes que todo lo demás porque es la pregunta de la que cuelgan
+          las otras: no tiene sentido pensar en el avance de alguien que ya no
+          está dentro. */}
+      <Seccion
+        icono={ShieldCheck}
+        titulo="La membresía"
+        resumen={resumenMembresia}
+        cuantos={(a.membresia ? 1 : 0) + vias.length}
+        nota="Quien canceló con el mes ya pagado sigue contando como vigente hasta que se le acabe: eso está pagado."
+      >
+        <Campo etiqueta="¿Sigue siendo miembro?">
+          <Desplegable resumen={a.membresia ? ETIQUETA_MEMBRESIA[a.membresia] : "Da igual"} activo={!!a.membresia} editable={editable}>
+            {(cerrar) => (
+              <>
+                <OpcionDeLista marcada={!a.membresia} onClick={() => { cambiar({ membresia: null }); cerrar() }}>
+                  Da igual
+                </OpcionDeLista>
+                <OpcionDeLista marcada={a.membresia === "vigente"} onClick={() => { cambiar({ membresia: "vigente" }); cerrar() }}>
+                  Solo miembros al día
+                </OpcionDeLista>
+                <OpcionDeLista marcada={a.membresia === "caducada"} onClick={() => { cambiar({ membresia: "caducada" }); cerrar() }}>
+                  Solo los que ya no están
+                </OpcionDeLista>
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+
+        {/* Junto con «los que ya no están», esto da los dos grupos que no se
+            podían nombrar: quien probó tres días y no siguió, y quien
+            disfrutó el mes de regalo y no llegó a pagar nunca. */}
+        <Campo
+          etiqueta="Cómo entró"
+          ayuda="Quien entró gratis y luego pagó cuenta como «pagando»: vale dónde está hoy."
+        >
+          <Desplegable
+            resumen={vias.length > 0 ? vias.map((v) => ETIQUETA_VIA[v]).join(", ") : "Da igual"}
+            activo={vias.length > 0}
+            editable={editable}
+          >
+            {() => (
+              <>
+                <OpcionDeLista marcada={vias.length === 0} onClick={() => cambiar({ comoEntro: null })}>
+                  Da igual
+                </OpcionDeLista>
+                {(["pago", "regalo", "prueba"] as const).map((v) => (
+                  <OpcionDeLista key={v} multiple marcada={vias.includes(v)} onClick={() => cambiar({ comoEntro: alternar(vias, v) })}>
+                    {ETIQUETA_VIA[v]}
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+          {vias.length > 0 && a.membresia !== "caducada" && (
+            <p className="mt-2 text-[10px] leading-relaxed text-amber-400/80">
+              Sin «Solo los que ya no están», esto incluye también a quien sigue dentro por esa vía.
+            </p>
+          )}
+        </Campo>
+      </Seccion>
+
+      {/* ── EL RECORRIDO ──────────────────────────────────────────────────
+          Los tres filtros del avance, juntos por fin. Estaban en tres bloques
+          separados por media pantalla, y son tres preguntas sobre lo mismo
+          que casi siempre se contestan a la vez. */}
+      <Seccion
+        icono={Compass}
+        titulo="El recorrido"
+        resumen={resumenRecorrido}
+        cuantos={(a.temporadaMin ? 1 : 0) + completadas.length + aMedias.length}
+      >
+        {/* ── UN UMBRAL, NO UNA LISTA ────────────────────────────────────
+            Esta es la única de las tres que no deja marcar varias, y es a
+            propósito: «al menos la 2» ya incluye a quien va por la 3 y la 4,
+            así que «al menos la 1 o al menos la 2» es «al menos la 1». Una
+            casilla que no puede cambiar el resultado engaña más que ayuda. */}
+        <Campo
+          etiqueta="Llegó al menos a"
+          ayuda="Basta un capítulo, o tener su acceso. Incluye a quien va más allá."
+        >
+          <Desplegable
+            resumen={a.temporadaMin ? `La Temporada ${a.temporadaMin} o más allá` : "Da igual"}
+            activo={!!a.temporadaMin}
+            editable={editable}
+          >
+            {(cerrar) => (
+              <>
+                <OpcionDeLista marcada={!a.temporadaMin} onClick={() => { cambiar({ temporadaMin: null }); cerrar() }}>
+                  Da igual
+                </OpcionDeLista>
+                {temporadas.map((n) => (
+                  <OpcionDeLista key={n} marcada={a.temporadaMin === n} onClick={() => { cambiar({ temporadaMin: n }); cerrar() }}>
+                    La Temporada {n} o más allá
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+          <p className="mt-2 text-[10px] leading-relaxed text-[#6a6a7a]">
+            Es un <strong className="text-[#8a8fa8]">mínimo</strong>, así que solo admite uno: «al
+            menos la 1» ya son todos los de la 1 y los de la 2.
+          </p>
+        </Campo>
+
+        {/* Terminar no es llegar: «llegó a la 3» incluye a quien vio el primer
+            capítulo y lo dejó. Entre las dos cosas está toda la diferencia
+            entre «sigue, que viene la 4» y «felicidades, acabaste». */}
+        <Campo
+          etiqueta="Terminó"
+          ayuda="Quién la vio entera. Puedes marcar varias: entra quien haya terminado cualquiera."
+        >
+          <Desplegable
+            resumen={completadas.length > 0 ? completadas.map(nombreTemporadaCorta).join(", ") : "Da igual"}
+            activo={completadas.length > 0}
+            editable={editable}
+          >
+            {() => (
+              <>
+                <OpcionDeLista marcada={completadas.length === 0} onClick={() => cambiar({ temporadaCompletada: null })}>
+                  Da igual
+                </OpcionDeLista>
+                {temporadas.map((n) => (
+                  <OpcionDeLista
+                    key={n}
+                    multiple
+                    marcada={completadas.includes(n)}
+                    onClick={() => cambiar({ temporadaCompletada: alternar(completadas, n) })}
+                  >
+                    {n >= 4 ? "Completó el camino entero" : `Terminó la Temporada ${n}`}
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+
+        {/* El segmento más útil que tiene la plataforma, y el que no se puede
+            construir con los dos de arriba: los filtros solo estrechan, así
+            que no hay forma de decir «y que NO la haya terminado». */}
+        <Campo
+          etiqueta="Dejó a medias"
+          ayuda="Empezó y no terminó. Es a quien tiene sentido decirle «continúa donde lo dejaste»."
+        >
+          <Desplegable
+            resumen={aMedias.length > 0 ? aMedias.map((n) => `La ${n}`).join(", ") : "Da igual"}
+            activo={aMedias.length > 0}
+            editable={editable}
+          >
+            {() => (
+              <>
+                <OpcionDeLista marcada={aMedias.length === 0} onClick={() => cambiar({ empezoSinTerminar: null })}>
+                  Da igual
+                </OpcionDeLista>
+                {temporadas.map((n) => (
+                  <OpcionDeLista
+                    key={n}
+                    multiple
+                    marcada={aMedias.includes(n)}
+                    onClick={() => cambiar({ empezoSinTerminar: alternar(aMedias, n) })}
+                  >
+                    Dejó la Temporada {n} a medias
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+      </Seccion>
+
+      {/* ── LA ACTIVIDAD ──────────────────────────────────────────────────
+          Las dos direcciones estaban en dos tiras de pastillas, una debajo de
+          otra, y se excluyen entre sí: pedir «sin aparecer en 30 días» y
+          «apareció en los últimos 7» da siempre cero. Siendo excluyentes,
+          una sola lista las dice mejor que dos filas que se contradicen. */}
+      <Seccion
+        icono={Activity}
+        titulo="La actividad"
+        resumen={resumenActividad}
+        cuantos={a.inactivoDias || a.activoDias ? 1 : 0}
+        nota="Cuenta como aparecer tanto entrar como hacer algo: un comentario, un capítulo, un corazón. Lo más reciente de las dos cosas."
+      >
+        <Campo etiqueta="Última señal de vida">
+          <Desplegable resumen={resumenActividad} activo={!!(a.inactivoDias || a.activoDias)} editable={editable}>
+            {(cerrar) => (
+              <>
+                <OpcionDeLista
+                  marcada={!a.inactivoDias && !a.activoDias}
+                  onClick={() => { cambiar({ inactivoDias: null, activoDias: null }); cerrar() }}
+                >
+                  Da igual
+                </OpcionDeLista>
+                <GrupoDeOpciones>Para reactivar</GrupoDeOpciones>
+                {tramos.map((t) => (
+                  <OpcionDeLista
+                    key={`in-${t.dias}`}
+                    marcada={a.inactivoDias === t.dias}
+                    onClick={() => { cambiar({ inactivoDias: t.dias, activoDias: null }); cerrar() }}
+                  >
+                    Sin aparecer {t.etiqueta} o más
+                  </OpcionDeLista>
+                ))}
+                <GrupoDeOpciones>Para lo que es ahora</GrupoDeOpciones>
+                {tramos.slice(0, 3).map((t) => (
+                  <OpcionDeLista
+                    key={`ac-${t.dias}`}
+                    marcada={a.activoDias === t.dias}
+                    onClick={() => { cambiar({ activoDias: t.dias, inactivoDias: null }); cerrar() }}
+                  >
+                    Han aparecido en {t.etiqueta}
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+          <p className="mt-2 text-[10px] leading-relaxed text-[#6a6a7a]">
+            Quien no tiene ninguna señal registrada queda <strong className="text-[#8a8fa8]">fuera</strong> de
+            los dos: no sabemos cuándo apareció, y mandarle un «vuelve» a quien quizá entró ayer es
+            peor que no mandarle nada.
+          </p>
+        </Campo>
+      </Seccion>
+
+      {/* ── DÓNDE ESTÁ ────────────────────────────────────────────────────
+          Solo se ofrecen los sitios donde hay gente, con el recuento al lado:
+          un filtro que da cero no es un filtro, es una opción que obliga a
+          elegirla, mirar el ensayo y volver atrás. */}
+      {((filtros?.paises?.length ?? 0) > 0 || (filtros?.ciudades?.length ?? 0) > 0) && (
+        <Seccion
+          icono={MapPin}
+          titulo="Dónde está"
+          resumen={resumenLugar}
+          cuantos={paises.length + ciudades.length}
+          nota="Según lo que cada miembro puso al entrar en La Red, no deducido por su conexión. El número es cuánta gente hay en cada sitio."
+        >
+          {(filtros?.paises?.length ?? 0) > 0 && (
+            <Campo etiqueta="País" ayuda="Puedes marcar varios: entra quien esté en cualquiera.">
+              <Desplegable
+                resumen={paises.length > 0 ? paises.map((p) => nombreDePais(p, filtros)).join(", ") : "Da igual"}
+                activo={paises.length > 0}
+                editable={editable}
+                buscador="Buscar país…"
+              >
+                {(_cerrar, busca) => (
+                  <>
+                    {!busca && (
+                      <OpcionDeLista marcada={paises.length === 0} onClick={() => cambiar({ paises: null })}>
+                        Da igual
+                      </OpcionDeLista>
+                    )}
+                    {(filtros?.paises ?? [])
+                      .filter((p) => !busca || p.etiqueta.toLowerCase().includes(busca))
+                      .map((p) => (
+                        <OpcionDeLista
+                          key={p.id}
+                          multiple
+                          marcada={paises.includes(p.id)}
+                          cuantos={p.cuantos}
+                          onClick={() => cambiar({ paises: alternar(paises, p.id) })}
+                        >
+                          {p.etiqueta}
+                        </OpcionDeLista>
+                      ))}
+                  </>
+                )}
+              </Desplegable>
+            </Campo>
+          )}
+
+          {(filtros?.ciudades?.length ?? 0) > 0 && (
+            <Campo
+              etiqueta="Ciudad"
+              ayuda="La ciudad es opcional y mucha gente no la puso: este filtro estrecha mucho. Míralo en el ensayo antes de enviar."
+            >
+              <Desplegable
+                resumen={ciudades.length > 0 ? ciudades.map((n) => nombreDeCiudad(n, filtros)).join(", ") : "Da igual"}
+                activo={ciudades.length > 0}
+                editable={editable}
+                buscador="Buscar ciudad…"
+              >
+                {(_cerrar, busca) => (
+                  <>
+                    {!busca && (
+                      <OpcionDeLista marcada={ciudades.length === 0} onClick={() => cambiar({ ciudades: null })}>
+                        Da igual
+                      </OpcionDeLista>
+                    )}
+                    {(filtros?.ciudades ?? [])
+                      .filter((ciu) => !busca || ciu.etiqueta.toLowerCase().includes(busca))
+                      .map((ciu) => (
+                        <OpcionDeLista
+                          key={ciu.id}
+                          multiple
+                          marcada={ciudades.includes(ciu.id)}
+                          cuantos={ciu.cuantos}
+                          onClick={() => cambiar({ ciudades: alternar(ciudades, ciu.id) })}
+                        >
+                          {ciu.etiqueta}
+                        </OpcionDeLista>
+                      ))}
+                  </>
+                )}
+              </Desplegable>
+            </Campo>
+          )}
+        </Seccion>
+      )}
+
+      {/* ── QUIÉN ES EN LA RED ────────────────────────────────────────────
+          Dos conceptos distintos del avance, y distintos entre sí: el rol dice
+          qué función desempeña y la insignia qué ha logrado. Un Guardián puede
+          no haber pasado de la primera temporada, y quien tiene diez insignias
+          puede no tener ningún rol. Por eso son filtros aparte. */}
+      <Seccion
+        icono={Award}
+        titulo="Rol e insignias"
+        resumen={resumenRed}
+        cuantos={roles.length + insignias.length}
+      >
+        <Campo etiqueta="Rol en La Red" ayuda="Qué función desempeña. Varios: entra quien tenga cualquiera.">
+          <Desplegable
+            resumen={roles.length > 0 ? roles.map((r) => nombreDeRol(r, filtros)).join(", ") : "Da igual"}
+            activo={roles.length > 0}
+            editable={editable}
+          >
+            {() => (
+              <>
+                <OpcionDeLista marcada={roles.length === 0} onClick={() => cambiar({ roles: null })}>
+                  Da igual
+                </OpcionDeLista>
+                {(filtros?.roles ?? ROLES).map((r) => (
+                  <OpcionDeLista key={r.id} multiple marcada={roles.includes(r.id)} onClick={() => cambiar({ roles: alternar(roles, r.id) })}>
+                    {r.etiqueta}
+                  </OpcionDeLista>
+                ))}
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+
+        {/* Son más de cincuenta: van agrupadas y con buscador dentro del
+            desplegable. Una tira de cincuenta pastillas no se lee, se sufre. */}
+        <Campo etiqueta="Insignia lograda" ayuda="Qué ha alcanzado. Sirve para felicitar a quien acaba de llegar a algo.">
+          <Desplegable
+            resumen={
+              insignias.length === 0
+                ? "Da igual"
+                : insignias.length === 1
+                  ? nombreDeInsignia(insignias[0], filtros)
+                  : `${insignias.length} insignias`
+            }
+            activo={insignias.length > 0}
+            editable={editable}
+            buscador={filtros ? `Buscar entre ${filtros.total_insignias}…` : "Buscar…"}
+            onBuscar={setBuscaInsignia}
+          >
+            {() => (
+              !filtros ? (
+                <p className="px-2.5 py-3 text-[11px] text-[#6a6a7a]">Cargando insignias…</p>
+              ) : gruposVisibles.length === 0 ? (
+                <p className="px-2.5 py-3 text-[11px] text-[#6a6a7a]">Ninguna insignia coincide.</p>
+              ) : (
+                <>
+                  {!qi && (
+                    <OpcionDeLista marcada={insignias.length === 0} onClick={() => cambiar({ insignias: null })}>
+                      Da igual
+                    </OpcionDeLista>
+                  )}
+                  {gruposVisibles.map((g) => (
+                    <div key={g.grupo}>
+                      <GrupoDeOpciones>{g.grupo}</GrupoDeOpciones>
+                      {g.items.map((i) => (
+                        <OpcionDeLista
+                          key={i.id}
+                          multiple
+                          marcada={insignias.includes(i.id)}
+                          onClick={() => cambiar({ insignias: alternar(insignias, i.id) })}
+                        >
+                          {i.etiqueta}
+                        </OpcionDeLista>
+                      ))}
+                    </div>
+                  ))}
+                </>
+              )
+            )}
+          </Desplegable>
+        </Campo>
+      </Seccion>
+
+      {/* ── TELEGRAM Y LA APLICACIÓN ──────────────────────────────────────
+          Las dos sirven para lo mismo: no pedirle a alguien algo que ya hizo.
+          Invitar al Telegram a quien ya está dentro, o pedirle que instale la
+          aplicación a quien la abre cada día, es la forma más rápida de que
+          deje de leer lo que mandas. */}
+      <Seccion
+        icono={Send}
+        titulo="Telegram y la aplicación"
+        resumen={resumenCanales}
+        cuantos={nCanales}
+      >
+        <Campo etiqueta="Grupo de Telegram" ayuda="«Dentro» es estar en el grupo, no haber pulsado el botón: mucha gente se queda a medio camino.">
+          <Desplegable resumen={a.telegram ? ETIQUETA_TELEGRAM[a.telegram] : "Da igual"} activo={!!a.telegram} editable={editable}>
+            {(cerrar) => (
+              <>
+                <OpcionDeLista marcada={!a.telegram} onClick={() => { cambiar({ telegram: null }); cerrar() }}>Da igual</OpcionDeLista>
+                <OpcionDeLista marcada={a.telegram === "fuera"} onClick={() => { cambiar({ telegram: "fuera" }); cerrar() }}>
+                  Todavía no está dentro
+                </OpcionDeLista>
+                <OpcionDeLista marcada={a.telegram === "dentro"} onClick={() => { cambiar({ telegram: "dentro" }); cerrar() }}>
+                  Ya está dentro
+                </OpcionDeLista>
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+
+        <Campo
+          etiqueta="La aplicación"
+          ayuda="Se anota al abrirla desde el icono, y solo desde el 12/11/2026: «todavía no la tiene» incluye a gente que sí la tiene y aún no la ha abierto."
+        >
+          <Desplegable resumen={a.app ? ETIQUETA_APP[a.app] : "Da igual"} activo={!!a.app} editable={editable}>
+            {(cerrar) => (
+              <>
+                <OpcionDeLista marcada={!a.app} onClick={() => { cambiar({ app: null }); cerrar() }}>Da igual</OpcionDeLista>
+                <OpcionDeLista marcada={a.app === "sin_instalar"} onClick={() => { cambiar({ app: "sin_instalar" }); cerrar() }}>
+                  Todavía no la tiene
+                </OpcionDeLista>
+                <OpcionDeLista marcada={a.app === "instalada"} onClick={() => { cambiar({ app: "instalada" }); cerrar() }}>
+                  Ya la tiene
+                </OpcionDeLista>
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+      </Seccion>
+
+      {/* ── PERSONAS CONCRETAS ────────────────────────────────────────────
+          La de arriba estrecha: «solo a estas». La de abajo resta: «a todos
+          menos a estas». Parecen lo mismo y no lo son, y sin la segunda no se
+          podía expresar el caso más común después de una equivocación: pedir
+          disculpas a todo el mundo menos a quien el correo sí iba dirigido. */}
+      <Seccion
+        icono={UserPlus}
+        titulo="Personas concretas"
+        resumen={resumenPersonas}
+        cuantos={(a.personas?.length ?? 0) + (a.excluidas?.length ?? 0)}
+      >
+        <PersonasElegidas
+          elegidas={a.personas ?? []}
+          onCambiar={(ids) => cambiar({ personas: ids.length > 0 ? ids : null })}
+          editable={editable}
+        />
+        <PersonasElegidas
+          elegidas={a.excluidas ?? []}
+          onCambiar={(ids) => cambiar({ excluidas: ids.length > 0 ? ids : null })}
+          editable={editable}
+          titulo="Quitar a estas personas"
+          nota="A quien pongas aquí NO le llega, aunque cumpla todo lo demás y aunque esté también en la lista de arriba."
+          color="#c98a8a"
+        />
+      </Seccion>
+
+      {/* La semántica, escrita. Confundir «y» con «o» aquí es la diferencia
+          entre mandar a doscientos y mandar a tres. */}
+      <p className="text-[11px] leading-relaxed text-[#8a8fa8]">
+        Entre secciones distintas se cumple <strong className="text-[#c3b2e0]">todo</strong>: hay que
+        tener el recorrido <em>y</em> el rol <em>y</em> la insignia. Dentro de un mismo filtro basta{" "}
+        <strong className="text-[#c3b2e0]">uno</strong>: con México y España marcados entra quien esté
+        en cualquiera de los dos.
+      </p>
     </Bloque>
+  )
+}
+
+/** Dejar la audiencia como estaba: sin ningún filtro, a todos. */
+const SIN_FILTROS: Partial<Audiencia> = {
+  temporadaMin: null, temporadaCompletada: null, empezoSinTerminar: null,
+  roles: null, insignias: null, inactivoDias: null, activoDias: null,
+  paises: null, ciudades: null, personas: null, excluidas: null,
+  membresia: null, comoEntro: null, telegram: null, app: null,
+}
+
+/** «La 2», y «El camino» para la cuarta: nadie piensa en «la Temporada 4». */
+function nombreTemporadaCorta(n: number): string {
+  return n >= 4 ? "El camino" : `La ${n}`
+}
+
+const ETIQUETA_VIA: Record<string, string> = {
+  pago: "Pagando",
+  regalo: "Mes de regalo",
+  prueba: "Prueba de 3 días",
+}
+const ETIQUETA_MEMBRESIA: Record<string, string> = {
+  vigente: "Solo miembros al día",
+  caducada: "Solo los que ya no están",
+}
+const ETIQUETA_TELEGRAM: Record<string, string> = {
+  dentro: "Ya está dentro",
+  fuera: "Todavía no está dentro",
+}
+const ETIQUETA_APP: Record<string, string> = {
+  instalada: "Ya la tiene",
+  sin_instalar: "Todavía no la tiene",
+}
+
+/**
+ * Una sección plegable de la audiencia.
+ *
+ * ── LO QUE HACE QUE ESTO FUNCIONE ES LA LÍNEA DEL RESUMEN ─────────────────
+ * Una caja cerrada que no dice lo que guarda no simplifica nada: cambia un
+ * muro por una caja fuerte. El resumen es lo que permite leer la audiencia
+ * entera sin abrir ninguna, y el número de al lado es lo que impide que un
+ * filtro se quede olvidado dentro.
+ *
+ * Se abre sola si trae algo puesto, por lo mismo: al abrir una comunicación
+ * guardada, lo que está filtrando tiene que estar a la vista.
+ */
+function Seccion({
+  icono: Icono, titulo, resumen, cuantos, nota, children,
+}: {
+  icono: React.ComponentType<{ size?: number; className?: string }>
+  titulo: string
+  resumen: string
+  cuantos: number
+  nota?: string
+  children: React.ReactNode
+}) {
+  const [abierta, setAbierta] = useState(cuantos > 0)
+  const puesto = cuantos > 0
+
+  return (
+    <div className={`border transition-colors ${puesto ? "border-[#2e2545] bg-[#0d0d16]/70" : "border-[#1a1a24] bg-[#0a0a12]/50"}`}>
+      <button
+        type="button"
+        onClick={() => setAbierta((v) => !v)}
+        aria-expanded={abierta}
+        className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[#12121c]/60"
+      >
+        <Icono size={15} className={puesto ? "shrink-0 text-[#a78bca]" : "shrink-0 text-[#4a4a5a]"} />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12px] font-medium text-[#F3F6FA]">{titulo}</span>
+          <span className={`mt-0.5 block truncate text-[10px] ${puesto ? "text-[#a78bca]" : "text-[#6a6a7a]"}`}>
+            {resumen}
+          </span>
+        </span>
+        {puesto && (
+          <span className="shrink-0 border border-[#6D4A9B] bg-[#6D4A9B]/25 px-1.5 py-px text-[9px] font-medium text-[#d7c9ee]">
+            {cuantos}
+          </span>
+        )}
+        <ChevronDown
+          size={14}
+          className={`shrink-0 text-[#5a5a6a] transition-transform ${abierta ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {abierta && (
+        <div className="border-t border-[#14141e] px-3.5 py-4">
+          {nota && <p className="mb-4 text-[10px] leading-relaxed text-[#6a6a7a]">{nota}</p>}
+          <div className="space-y-4">{children}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Un filtro: su nombre a la izquierda, su control a la derecha.
+ *
+ * En pantalla estrecha se apila, porque un desplegable de nueve caracteres de
+ * ancho no se puede usar. Es la diferencia entre una pantalla que se puede
+ * usar desde el móvil y una que solo parece que sí.
+ */
+function Campo({ etiqueta, ayuda, children }: {
+  etiqueta: string
+  ayuda?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid gap-1.5 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-4">
+      <div className="sm:pt-2">
+        <p className="text-[11px] font-medium text-[#c3b2e0]">{etiqueta}</p>
+        {ayuda && <p className="mt-0.5 text-[10px] leading-relaxed text-[#6a6a7a]">{ayuda}</p>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Una lista desplegable.
+ *
+ * ── POR QUÉ DESPLEGABLE Y NO LA TIRA DE PASTILLAS ─────────────────────────
+ * Porque una tira de pastillas ocupa lo mismo esté elegida o no. Trece tiras
+ * abiertas a la vez es lo que hacía esta pantalla ilegible: todas las
+ * opciones de todos los filtros, al mismo tamaño, sin jerarquía. Cerrado, un
+ * desplegable ocupa una línea y esa línea dice lo que hay elegido.
+ *
+ * ── LO QUE SE CIERRA Y LO QUE NO ──────────────────────────────────────────
+ * Las de una sola opción se cierran al elegir: ya está contestada la
+ * pregunta. Las de varias se quedan abiertas, porque elegir México y cerrar
+ * para volver a abrir y elegir España es exactamente la fricción que había
+ * que quitar.
+ */
+function Desplegable({
+  resumen, activo, editable, buscador, onBuscar, children,
+}: {
+  resumen: string
+  activo: boolean
+  editable: boolean
+  /** Si lleva buscador, el texto del hueco. Para listas largas. */
+  buscador?: string
+  /** Para los filtros que filtran la lista fuera, como las insignias. */
+  onBuscar?: (q: string) => void
+  children: (cerrar: () => void, busca: string) => React.ReactNode
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const [busca, setBusca] = useState("")
+  const caja = useRef<HTMLDivElement>(null)
+
+  // Cerrar al pulsar fuera y con Escape. Sin lo primero, dos desplegables
+  // abiertos se tapan; sin lo segundo, hay que apuntar con el ratón para
+  // salir de algo en lo que se entró con el teclado.
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: MouseEvent) => {
+      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false)
+    }
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setAbierto(false) }
+    document.addEventListener("mousedown", fuera)
+    document.addEventListener("keydown", tecla)
+    return () => {
+      document.removeEventListener("mousedown", fuera)
+      document.removeEventListener("keydown", tecla)
+    }
+  }, [abierto])
+
+  const escribir = (q: string) => { setBusca(q); onBuscar?.(q) }
+
+  return (
+    <div ref={caja} className="relative">
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        disabled={!editable}
+        aria-expanded={abierto}
+        className={`flex w-full items-center justify-between gap-2 border px-3 py-2 text-left text-[11px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+          activo
+            ? "border-[#6D4A9B] bg-[#6D4A9B]/15 text-[#e4d9f5]"
+            : "border-[#2a2a3a] text-[#8a8fa8] hover:border-[#4a4a60] hover:text-[#c3b2e0]"
+        }`}
+      >
+        <span className="truncate">{resumen}</span>
+        <ChevronDown size={13} className={`shrink-0 transition-transform ${abierto ? "rotate-180" : ""}`} />
+      </button>
+
+      {abierto && (
+        <div className="absolute left-0 right-0 z-30 mt-1 min-w-[14rem] border border-[#2a2a3a] bg-[#07070f] shadow-2xl shadow-black/80">
+          {buscador && (
+            <div className="relative border-b border-[#14141e] p-1.5">
+              <Search size={12} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a5a6a]" />
+              <input
+                type="search"
+                value={busca}
+                onChange={(e) => escribir(e.target.value)}
+                placeholder={buscador}
+                autoFocus
+                className="w-full border border-[#1a1a24] bg-[#0d0d16] py-1.5 pl-7 pr-2 text-[11px] text-[#F3F6FA] placeholder:text-[#5a5a6a] focus:border-[#4a4a60] focus:outline-none"
+              />
+            </div>
+          )}
+          <div className="max-h-64 overflow-y-auto p-1">
+            {children(() => setAbierto(false), busca.trim().toLowerCase())}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Un encabezado dentro de un desplegable, para separar grupos de opciones. */
+function GrupoDeOpciones({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-2.5 pb-1 pt-3 text-[9px] uppercase tracking-[0.2em] text-[#5a5a6a] first:pt-1">
+      {children}
+    </p>
+  )
+}
+
+/**
+ * Una opción de un desplegable.
+ *
+ * La marca es cuadrada cuando se pueden elegir varias y redonda cuando solo
+ * una. Es la convención de toda la vida de los formularios, y decirlo con la
+ * forma ahorra tener que escribir «puedes marcar varias» en cada filtro.
+ */
+function OpcionDeLista({
+  marcada, multiple, cuantos, onClick, children,
+}: {
+  marcada: boolean
+  multiple?: boolean
+  /** Cuánta gente hay. Un filtro que da cero es mejor no elegirlo a ciegas. */
+  cuantos?: number
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      // `aria-pressed` y no `role="option"`: una opción de verdad exige un
+      // `listbox` alrededor y todo su manejo de teclado. Un botón que se
+      // queda pulsado es lo que esto es, y el lector de pantalla lo dice
+      // bien sin prometer lo que no hay.
+      aria-pressed={marcada}
+      className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-left text-[11px] transition-colors ${
+        marcada ? "bg-[#6D4A9B]/20 text-[#e4d9f5]" : "text-[#8a8fa8] hover:bg-[#14141e] hover:text-[#c3b2e0]"
+      }`}
+    >
+      <span
+        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border ${multiple ? "" : "rounded-full"} ${
+          marcada ? "border-[#8d6bc4] bg-[#6D4A9B]" : "border-[#3a3a4a]"
+        }`}
+      >
+        {marcada && <Check size={9} className="text-white" />}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{children}</span>
+      {cuantos != null && <span className="shrink-0 text-[10px] text-[#5a5a6a]">{cuantos}</span>}
+    </button>
   )
 }
 
@@ -3267,10 +3571,39 @@ function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
   onQuitarTodo: () => void
   editable: boolean
 }) {
-  const nombrePais = (c: string) => filtros?.paises?.find((p) => p.id === c)?.etiqueta ?? c
-  const nombreCiudad = (id: number) => filtros?.ciudades?.find((c) => c.id === id)?.etiqueta ?? `Ciudad ${id}`
-
   const puestos: Array<{ clave: string; texto: string; quitar: () => void }> = []
+
+  /** Una pastilla por cada cosa marcada en una lista, con su equis. */
+  function porCada<T>(
+    campo: keyof Audiencia,
+    valores: T[],
+    prefijo: string,
+    nombre: (v: T) => string,
+  ) {
+    for (const v of valores) {
+      puestos.push({
+        clave: `${prefijo}-${String(v)}`,
+        texto: nombre(v),
+        quitar: () => {
+          const quedan = valores.filter((x) => x !== v)
+          onQuitar({ [campo]: quedan.length > 0 ? quedan : null } as Partial<Audiencia>)
+        },
+      })
+    }
+  }
+
+  // ── LA MEMBRESÍA Y LA PUERTA POR LA QUE ENTRÓ ───────────────────────────
+  // Estos cuatro no aparecían aquí. Se podía tener puesto «solo los que ya no
+  // están» y no verlo en ninguna parte: ni en la frase, ni en las pastillas.
+  // Un filtro invisible es la forma más fácil de mandar algo a quien no toca.
+  if (a.membresia) {
+    puestos.push({
+      clave: "membresia",
+      texto: ETIQUETA_MEMBRESIA[a.membresia],
+      quitar: () => onQuitar({ membresia: null }),
+    })
+  }
+  porCada("comoEntro", a.comoEntro ?? [], "via", (v) => `Entró ${ETIQUETA_VIA[v].toLowerCase()}`)
 
   if (a.temporadaMin) {
     puestos.push({
@@ -3279,22 +3612,19 @@ function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
       quitar: () => onQuitar({ temporadaMin: null }),
     })
   }
-  if (a.temporadaCompletada) {
-    puestos.push({
-      clave: "tcomp",
-      texto: a.temporadaCompletada >= 4
-        ? "Completaron el camino"
-        : `Terminaron la Temporada ${a.temporadaCompletada}`,
-      quitar: () => onQuitar({ temporadaCompletada: null }),
-    })
-  }
-  if (a.empezoSinTerminar) {
-    puestos.push({
-      clave: "medias",
-      texto: `Dejaron la Temporada ${a.empezoSinTerminar} a medias`,
-      quitar: () => onQuitar({ empezoSinTerminar: null }),
-    })
-  }
+  porCada(
+    "temporadaCompletada",
+    temporadasDe(a.temporadaCompletada),
+    "tcomp",
+    (n) => (n >= 4 ? "Completaron el camino" : `Terminaron la Temporada ${n}`),
+  )
+  porCada(
+    "empezoSinTerminar",
+    temporadasDe(a.empezoSinTerminar),
+    "medias",
+    (n) => `Dejaron la Temporada ${n} a medias`,
+  )
+
   if (a.inactivoDias) {
     puestos.push({
       clave: "inactivo",
@@ -3309,51 +3639,39 @@ function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
       quitar: () => onQuitar({ activoDias: null }),
     })
   }
-  for (const r of a.roles ?? []) {
+
+  porCada("roles", a.roles ?? [], "rol", (r) => nombreDeRol(r, filtros))
+  porCada("insignias", a.insignias ?? [], "ins", (i) => nombreDeInsignia(i, filtros))
+  porCada("paises", a.paises ?? [], "pais", (c) => nombreDePais(c, filtros))
+  porCada("ciudades", a.ciudades ?? [], "ciu", (c) => nombreDeCiudad(c, filtros))
+
+  if (a.telegram) {
     puestos.push({
-      clave: `rol-${r}`,
-      texto: ROLES.find((x) => x.id === r)?.etiqueta ?? r,
-      quitar: () => {
-        const quedan = (a.roles ?? []).filter((x) => x !== r)
-        onQuitar({ roles: quedan.length > 0 ? quedan : null })
-      },
+      clave: "telegram",
+      texto: `Telegram: ${ETIQUETA_TELEGRAM[a.telegram].toLowerCase()}`,
+      quitar: () => onQuitar({ telegram: null }),
     })
   }
-  for (const i of a.insignias ?? []) {
+  if (a.app) {
     puestos.push({
-      clave: `ins-${i}`,
-      texto: nombreDeInsignia(i, filtros),
-      quitar: () => {
-        const quedan = (a.insignias ?? []).filter((x) => x !== i)
-        onQuitar({ insignias: quedan.length > 0 ? quedan : null })
-      },
+      clave: "app",
+      texto: `App: ${ETIQUETA_APP[a.app].toLowerCase()}`,
+      quitar: () => onQuitar({ app: null }),
     })
   }
-  for (const c of a.paises ?? []) {
-    puestos.push({
-      clave: `pais-${c}`,
-      texto: nombrePais(c),
-      quitar: () => {
-        const quedan = (a.paises ?? []).filter((x) => x !== c)
-        onQuitar({ paises: quedan.length > 0 ? quedan : null })
-      },
-    })
-  }
-  for (const c of a.ciudades ?? []) {
-    puestos.push({
-      clave: `ciu-${c}`,
-      texto: nombreCiudad(c),
-      quitar: () => {
-        const quedan = (a.ciudades ?? []).filter((x) => x !== c)
-        onQuitar({ ciudades: quedan.length > 0 ? quedan : null })
-      },
-    })
-  }
+
   if ((a.personas?.length ?? 0) > 0) {
     puestos.push({
       clave: "personas",
       texto: a.personas!.length === 1 ? "Una persona elegida" : `${a.personas!.length} personas elegidas`,
       quitar: () => onQuitar({ personas: null }),
+    })
+  }
+  if ((a.excluidas?.length ?? 0) > 0) {
+    puestos.push({
+      clave: "excluidas",
+      texto: a.excluidas!.length === 1 ? "Una persona fuera" : `${a.excluidas!.length} personas fuera`,
+      quitar: () => onQuitar({ excluidas: null }),
     })
   }
 
@@ -3396,41 +3714,73 @@ function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
   )
 }
 
-/** La misma frase que compone el servidor, para que digan lo mismo. */
+/**
+ * La misma frase que compone el servidor, para que digan lo mismo.
+ *
+ * Si las dos divergen, el panel dice una cosa y el resumen del envío otra, y
+ * entonces no se puede confiar en ninguna de las dos.
+ */
 function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   if (!a) return "Todos los miembros activos"
   const partes: string[] = []
-  if (a.temporadaMin) partes.push(`que llegaron a la Temporada ${a.temporadaMin} o más`)
-  if (a.temporadaCompletada) {
-    partes.push(
-      a.temporadaCompletada >= 4
-        ? "que completaron el camino entero"
-        : `que terminaron la Temporada ${a.temporadaCompletada}`,
-    )
+
+  // La membresía primero: es lo que más cambia el envío.
+  if (a.membresia === "vigente") partes.push("con la membresía al día")
+  if (a.membresia === "caducada") partes.push("que ya no son miembros")
+  if (a.comoEntro?.length) {
+    const comoSeLlama: Record<string, string> = {
+      pago: "pagando", regalo: "con el mes de regalo", prueba: "con la prueba de 3 días",
+    }
+    partes.push(`que entraron ${a.comoEntro.map((v) => comoSeLlama[v] ?? v).join(" o ")}`)
   }
+
+  if (a.temporadaMin) partes.push(`que llegaron a la Temporada ${a.temporadaMin} o más`)
+
+  const completadas = temporadasDe(a.temporadaCompletada)
+  if (completadas.length > 0) {
+    const camino = completadas.includes(4)
+    const resto = completadas.filter((n) => n !== 4)
+    if (camino && resto.length === 0) partes.push("que completaron el camino entero")
+    else if (camino) partes.push(`que terminaron ${frasearTemporadas(resto)} o el camino entero`)
+    else partes.push(`que terminaron ${frasearTemporadas(resto)}`)
+  }
+
   if (a.roles?.length) {
-    partes.push(`con rol de ${a.roles.map((r) => ROLES.find((x) => x.id === r)?.etiqueta ?? r).join(" o ")}`)
+    partes.push(`con rol de ${a.roles.map((r) => nombreDeRol(r, filtros)).join(" o ")}`)
   }
   if (a.insignias?.length) {
     partes.push(`con la insignia ${a.insignias.map((i) => nombreDeInsignia(i, filtros)).join(" o ")}`)
   }
-  if (a.empezoSinTerminar) {
-    partes.push(`que empezaron la Temporada ${a.empezoSinTerminar} y no la terminaron`)
-  }
+
+  const aMedias = temporadasDe(a.empezoSinTerminar)
+  if (aMedias.length > 0) partes.push(`que empezaron ${frasearTemporadas(aMedias)} y no la terminaron`)
+
   if (a.inactivoDias) partes.push(`sin aparecer desde hace ${a.inactivoDias} días o más`)
   if (a.activoDias) partes.push(`que han aparecido en los últimos ${a.activoDias} días`)
   if (a.paises?.length) {
-    const nombre = (c: string) => filtros?.paises?.find((p) => p.id === c)?.etiqueta ?? c
-    partes.push(`de ${a.paises.map(nombre).join(" o ")}`)
+    partes.push(`de ${a.paises.map((c) => nombreDePais(c, filtros)).join(" o ")}`)
   }
+  if (a.app === "sin_instalar") partes.push("sin la aplicación instalada")
+  if (a.app === "instalada") partes.push("con la aplicación instalada")
+  if (a.telegram === "fuera") partes.push("que todavía no están en el Telegram")
+  if (a.telegram === "dentro") partes.push("que ya están en el Telegram")
   if (a.ciudades?.length) {
     partes.push(a.ciudades.length === 1 ? "de una ciudad concreta" : `de ${a.ciudades.length} ciudades`)
   }
+
+  // Lo quitado a mano se dice al final y siempre: es lo que más fácil se
+  // olvida de un envío al siguiente, y lo que peor sienta descubrir tarde.
+  const menos = a.excluidas?.length
+    ? `, menos ${a.excluidas.length === 1 ? "una persona" : `${a.excluidas.length} personas`}`
+    : ""
+
+  // Las personas nombradas van al principio: si hay una lista, es el dato que
+  // manda y lo demás son matices.
   if (a.personas?.length) {
     const cuantas = a.personas.length === 1 ? "Una persona" : `${a.personas.length} personas elegidas`
-    return partes.length === 0 ? cuantas : `${cuantas}, ${partes.join(", ")}`
+    return (partes.length === 0 ? cuantas : `${cuantas}, ${partes.join(", ")}`) + menos
   }
-  return partes.length === 0 ? "Todos los miembros activos" : `Miembros ${partes.join(", ")}`
+  return (partes.length === 0 ? "Todos los miembros activos" : `Miembros ${partes.join(", ")}`) + menos
 }
 
 function nombreDeInsignia(id: string, filtros?: Filtros | null): string {
@@ -3439,6 +3789,18 @@ function nombreDeInsignia(id: string, filtros?: Filtros | null): string {
     if (encontrada) return encontrada.etiqueta
   }
   return id
+}
+
+function nombreDeRol(id: string, filtros?: Filtros | null): string {
+  return (filtros?.roles ?? ROLES).find((r) => r.id === id)?.etiqueta ?? id
+}
+
+function nombreDePais(id: string, filtros?: Filtros | null): string {
+  return filtros?.paises?.find((p) => p.id === id)?.etiqueta ?? id
+}
+
+function nombreDeCiudad(id: number, filtros?: Filtros | null): string {
+  return filtros?.ciudades?.find((c) => c.id === id)?.etiqueta ?? `Ciudad ${id}`
 }
 
 /**

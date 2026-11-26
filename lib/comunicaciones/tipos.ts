@@ -272,6 +272,17 @@ export type Audiencia = {
    * fuentes suman: quien ya estuvo dentro no puede quedarse fuera de un correo
    * por un desajuste de la tabla comercial, y quien acaba de comprar la cuarta
    * tampoco tiene que haberla empezado para que le hablen de ella.
+   *
+   * ── POR QUÉ ESTE SÍ ES UN SOLO NÚMERO ───────────────────────────────────
+   * Porque es un UMBRAL, no una lista de temporadas. «Al menos la 2» ya
+   * incluye a quien va por la 3 y por la 4, así que pedir «al menos la 1 o
+   * al menos la 2» es pedir «al menos la 1»: la unión de dos umbrales es el
+   * más bajo de los dos, y una casilla que no puede cambiar el resultado es
+   * peor que no tenerla.
+   *
+   * Quien quiera «los de la 1 y los de la 2» ya los tiene con «al menos la
+   * 1». Lo que esto no sabe expresar es un techo —«como máximo la 2»— y eso
+   * sería otro campo, no una lista aquí.
    */
   temporadaMin?: number | null
   /**
@@ -284,8 +295,16 @@ export type Audiencia = {
    *
    * Con 4 aquí se obtiene lo que hacía falta: quién ha completado el camino
    * entero y puede pasar a los Objetivos.
+   *
+   * ── VARIAS A LA VEZ, Y POR QUÉ SE PUEDE ─────────────────────────────────
+   * Una lista se cumple con CUALQUIERA: [2, 3] es quien terminó la 2 o la 3.
+   * Eso es una unión y es lo que se espera de un filtro con varias casillas
+   * marcadas, igual que con los países.
+   *
+   * Sigue aceptando un número suelto porque los borradores guardados antes
+   * del 26-11-2026 lo tienen así, y un borrador no se migra: se abre.
    */
-  temporadaCompletada?: number | null
+  temporadaCompletada?: number | number[] | null
   /**
    * Solo quien tenga alguno de estos roles de La Red.
    *
@@ -350,8 +369,12 @@ export type Audiencia = {
    * justamente el segmento más útil que tiene la plataforma — gente que
    * empezó algo y lo dejó a medias— así que merece su propia casilla en vez
    * de un truco.
+   *
+   * Varias a la vez se cumplen con cualquiera: [1, 2] es quien dejó a medias
+   * la primera o la segunda. Un número suelto se sigue aceptando, por los
+   * borradores de antes.
    */
-  empezoSinTerminar?: number | null
+  empezoSinTerminar?: number | number[] | null
 
   /**
    * Solo quien esté en estos países. Códigos ISO de dos letras.

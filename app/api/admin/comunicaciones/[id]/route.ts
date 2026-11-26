@@ -74,9 +74,20 @@ function revisarAudiencia(v: unknown): string | null {
     return Number.isInteger(n) && n >= 1 && n <= 4
   }
 
+  // ── UN NÚMERO O UNA LISTA ─────────────────────────────────────────────────
+  // «Terminó la 2» y «terminó la 3» a la vez es una lista. Los borradores
+  // guardados antes del 26-11-2026 llevan un número suelto en estos campos, y
+  // seguir aceptándolo es lo que permite abrir uno de esos sin migrar nada.
+  //
+  // Una lista vacía no es un error: es «da igual», lo mismo que el campo
+  // ausente. Lo que no pasa es una temporada que no existe, porque dejaría la
+  // comunicación imposible de enviar sin decir por qué.
+  const temporadas = (x: unknown): boolean =>
+    Array.isArray(x) ? x.every(temporada) : temporada(x)
+
   if (a.temporadaMin != null && !temporada(a.temporadaMin)) return "Esa temporada no existe"
-  if (a.temporadaCompletada != null && !temporada(a.temporadaCompletada)) return "Esa temporada no existe"
-  if (a.empezoSinTerminar != null && !temporada(a.empezoSinTerminar)) return "Esa temporada no existe"
+  if (a.temporadaCompletada != null && !temporadas(a.temporadaCompletada)) return "Esa temporada no existe"
+  if (a.empezoSinTerminar != null && !temporadas(a.empezoSinTerminar)) return "Esa temporada no existe"
 
   // ── POR QUÉ SE ACOTAN LOS DÍAS ────────────────────────────────────────────
   // Un cero sería «sin aparecer desde hace cero días», que es todo el mundo:

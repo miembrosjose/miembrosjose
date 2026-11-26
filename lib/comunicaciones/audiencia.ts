@@ -24,6 +24,7 @@ import { tipoDeAcceso } from "@/lib/admin/tipo-acceso"
 import { ACHIEVEMENTS } from "@/lib/achievements"
 import { nombrePais } from "@/lib/red/paises"
 import type { Audiencia, Canal, PreferenciaCorreo, TipoComunicacion } from "./tipos"
+import { temporadasDe, frasearTemporadas, terminoAlguna, estaAMedias } from "./temporadas"
 import { preferenciaDe } from "./tipos"
 
 export type MotivoExclusion =
@@ -430,13 +431,30 @@ async function ubicacionDeTodos(): Promise<Map<string, { pais: string; ciudad: n
 /** Cómo se lee esta audiencia en una línea. */
 export function describirAudiencia(a: Audiencia): string {
   const partes: string[] = []
+
+  // ── LA MEMBRESÍA VA PRIMERO ─────────────────────────────────────────────
+  // Porque es lo que más cambia el envío y lo que peor sienta descubrir
+  // tarde: «esto se fue a los que ya no están». La frase no lo nombraba, así
+  // que un envío filtrado y uno sin filtrar se leían igual.
+  if (a.membresia === "vigente") partes.push("con la membresía al día")
+  if (a.membresia === "caducada") partes.push("que ya no son miembros")
+  if (a.comoEntro?.length) {
+    const comoSeLlama: Record<string, string> = {
+      pago: "pagando", regalo: "con el mes de regalo", prueba: "con la prueba de 3 días",
+    }
+    partes.push("que entraron " + a.comoEntro.map((v) => comoSeLlama[v] ?? v).join(" o "))
+  }
+
   if (a.temporadaMin) partes.push("que llegaron a la Temporada " + a.temporadaMin + " o más")
-  if (a.temporadaCompletada) {
-    partes.push(
-      a.temporadaCompletada >= 4
-        ? "que completaron el camino entero"
-        : "que terminaron la Temporada " + a.temporadaCompletada,
-    )
+  const completadas = temporadasDe(a.temporadaCompletada)
+  if (completadas.length > 0) {
+    // «Completó el camino» es la cuarta, y se dice con palabras: nadie piensa
+    // en «terminó la Temporada 4», piensa en haber acabado.
+    const camino = completadas.includes(4)
+    const resto = completadas.filter((n) => n !== 4)
+    if (camino && resto.length === 0) partes.push("que completaron el camino entero")
+    else if (camino) partes.push("que terminaron " + frasearTemporadas(resto) + " o el camino entero")
+    else partes.push("que terminaron " + frasearTemporadas(resto))
   }
   if (a.roles?.length) {
     partes.push("con rol de " + a.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(" o "))
@@ -444,8 +462,9 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.insignias?.length) {
     partes.push("con la insignia " + a.insignias.map((i) => nombreInsignia(i)).join(" o "))
   }
-  if (a.empezoSinTerminar) {
-    partes.push("que empezaron la Temporada " + a.empezoSinTerminar + " y no la terminaron")
+  const aMediasFrase = temporadasDe(a.empezoSinTerminar)
+  if (aMediasFrase.length > 0) {
+    partes.push("que empezaron " + frasearTemporadas(aMediasFrase) + " y no la terminaron")
   }
   if (a.inactivoDias) {
     partes.push("sin aparecer desde hace " + a.inactivoDias + " días o más")
@@ -513,15 +532,20 @@ export async function resolverAudiencia(
   const insigniasPedidas = (audiencia.insignias || []).filter(Boolean)
   const pideInsignia = insigniasPedidas.length > 0
 
-  const completadaMin = Number(audiencia.temporadaCompletada)
-  const pideCompletada = Number.isFinite(completadaMin) && completadaMin > 0
+  // ── VARIAS TEMPORADAS, Y SE CUMPLE CON CUALQUIERA ───────────────────────
+  // Marcar «terminó la 2» y «terminó la 3» es pedir la UNIÓN de las dos, lo
+  // mismo que marcar dos países. Lo contrario —exigir las dos— no se puede
+  // pedir desde la pantalla y además ya lo dice «terminó la 3», porque para
+  // llegar ahí hay que haber pasado por la 2.
+  const completadasPedidas = temporadasDe(audiencia.temporadaCompletada)
+  const pideCompletada = completadasPedidas.length > 0
 
   // ── EMPEZÓ Y NO TERMINÓ ─────────────────────────────────────────────────
   // El segmento más útil que tiene la plataforma, y el único que necesita las
   // dos caras del avance a la vez: haber llegado a esa temporada Y no tenerla
   // completa.
-  const aMedias = Number(audiencia.empezoSinTerminar)
-  const pideAMedias = Number.isFinite(aMedias) && aMedias > 0
+  const aMediasPedidas = temporadasDe(audiencia.empezoSinTerminar)
+  const pideAMedias = aMediasPedidas.length > 0
 
   const diasInactivo = Number(audiencia.inactivoDias)
   const pideInactivo = Number.isFinite(diasInactivo) && diasInactivo > 0
@@ -539,12 +563,6 @@ export async function resolverAudiencia(
   const pideMembresia = audiencia.membresia === "vigente" || audiencia.membresia === "caducada"
   const viasPedidas = (audiencia.comoEntro || []).filter(Boolean)
   const pideVia = viasPedidas.length > 0
-
-  /** Quién sigue teniendo acceso hoy. Vacío si nadie lo preguntó. */
-  let vigentes = new Set<string>()
-  if (pideMembresia) {
-    vigentes = await conAccesoActivo(admin, filas.map((f) => ({ id: f.id, email: f.email })))
-  }
 
   /** Por qué puerta entró cada correo. Vacío si nadie lo preguntó. */
   const viaPorCorreo = new Map<string, "pago" | "regalo" | "prueba">()
@@ -619,6 +637,25 @@ export async function resolverAudiencia(
     const lote = data || []
     filas.push(...(lote as typeof filas))
     if (lote.length < PAGINA) break
+  }
+
+  /**
+   * Quién sigue teniendo acceso hoy. Vacío si nadie lo preguntó.
+   *
+   * ── POR QUÉ ESTÁ AQUÍ Y NO ARRIBA CON LOS DEMÁS PREPARATIVOS ──────────
+   * Porque necesita el padrón: pregunta por acceso a una lista concreta de
+   * personas, no a la base entera. Estaba sesenta líneas más arriba, donde
+   * `filas` todavía no existía, y eso no es un detalle de estilo: con el
+   * filtro de membresía puesto, el ensayo y el envío morían con un
+   * «Cannot access 'filas' before initialization» —un error que no dice
+   * nada de audiencias y que mandaba a mirar al sitio equivocado—.
+   *
+   * No se puede subir el padrón hasta allí: las preferencias y las demás
+   * consultas cuelgan de él en un orden que sí importa. Lo que baja es esto.
+   */
+  let vigentes = new Set<string>()
+  if (pideMembresia) {
+    vigentes = await conAccesoActivo(admin, filas.map((f) => ({ id: f.id, email: f.email })))
   }
 
   // ── Quién ha dicho que no ───────────────────────────────────────────────
@@ -751,7 +788,7 @@ export async function resolverAudiencia(
       cuenta.no_llego_a_temporada++
       continue
     }
-    if (pideCompletada && !(completadas.get(f.id)?.has(completadaMin))) {
+    if (pideCompletada && !terminoAlguna(completadasPedidas, completadas.get(f.id))) {
       cuenta.no_termino_temporada++
       continue
     }
@@ -762,12 +799,15 @@ export async function resolverAudiencia(
     // fuera, y verlas separadas en el ensayo es lo que permite entender la
     // cifra en vez de confiar en ella.
     if (pideAMedias) {
-      if ((avance.get(f.id) ?? 0) < aMedias) {
-        cuenta.no_la_empezo++
-        continue
-      }
-      if (completadas.get(f.id)?.has(aMedias)) {
-        cuenta.ya_la_termino++
+      // Basta UNA de las elegidas a medias. Con [1, 2] entra quien dejó
+      // colgando la primera o la segunda, no quien tenga las dos colgando.
+      // El motivo viene con la respuesta porque el ensayo los enseña
+      // separados: a quien no ha llegado y a quien ya acabó hay que decirles
+      // cosas opuestas.
+      const motivo = estaAMedias(aMediasPedidas, avance.get(f.id) ?? 0, completadas.get(f.id))
+      if (motivo !== "entra") {
+        if (motivo === "ya_la_termino") cuenta.ya_la_termino++
+        else cuenta.no_la_empezo++
         continue
       }
     }
