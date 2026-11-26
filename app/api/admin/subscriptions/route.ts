@@ -14,6 +14,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { LEGAL } from "@/lib/site/legal-config"
 import { esColumnaQueNoExiste } from "@/app/api/internal/member-sync/regalo"
 import { construirMeses } from "@/lib/admin/meses"
+import { tipoDeAcceso } from "@/lib/admin/tipo-acceso"
 
 const MAX_ROWS = 2000
 
@@ -93,29 +94,33 @@ export async function GET() {
   })
 
   const counts = { active: 0, past_due: 0, canceled: 0, pending: 0 }
-  // Los de regalo se cuentan aparte. Siguen siendo miembros con el mismo
-  // acceso; lo que no son es ingresos.
+  // Las tres puertas se cuentan por separado. Las tres dan el mismo acceso;
+  // lo que cambia es que dos de ellas todavía no son ingresos.
   let activosDeRegalo = 0
   let activosDePago = 0
+  let activosEnPrueba = 0
   let regaloTotal = 0
+  let pruebaTotal = 0
   for (const r of rows) {
     if (r.status === "active") counts.active++
     else if (r.status === "past_due") counts.past_due++
     else if (r.status === "canceled") counts.canceled++
     else counts.pending++
 
-    const esRegalo = r.tipo_acceso === "regalo"
-    if (esRegalo) regaloTotal++
+    const tipo = tipoDeAcceso(r)
+    if (tipo === "regalo") regaloTotal++
+    if (tipo === "prueba") pruebaTotal++
     if (r.status === "active") {
-      if (esRegalo) activosDeRegalo++
+      if (tipo === "regalo") activosDeRegalo++
+      else if (tipo === "prueba") activosEnPrueba++
       else activosDePago++
     }
   }
   const total = rows.length
   const price = Number(LEGAL.monthlyPrice)
-  // El MRR cuenta SOLO a los activos que pagan. Antes era «activos ×
-  // precio», y con el primer mes de regalo eso habría inflado los ingresos
-  // con gente que todavía no ha pagado nada.
+  // El MRR cuenta SOLO a los activos que pagan. Ni el primer mes de regalo
+  // ni los tres días de prueba de los invitados suman: todavía no han
+  // pagado nada, y meterlos aquí sería inventarse ingresos.
   const mrrEstimate = Number.isFinite(price) ? +(activosDePago * price).toFixed(2) : null
 
   const summary = {
@@ -123,7 +128,9 @@ export async function GET() {
     ...counts,
     activosDeRegalo,
     activosDePago,
+    activosEnPrueba,
     regaloTotal,
+    pruebaTotal,
     regaloDisponible,
     currency: LEGAL.currency,
     mrrEstimate, // estimación bruta = activos que pagan × precio (sin comisiones ni impuestos)

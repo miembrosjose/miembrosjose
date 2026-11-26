@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { inputCls, FilterBtn, AdminCard, StatCard, AdminBadge, AdminEmptyState } from "./_shared"
+import { tipoDeAcceso, estaEnPrueba } from "@/lib/admin/tipo-acceso"
 
 type Row = {
   /** Lo que identifica la fila. El correo no sirve: alguna no es un correo. */
@@ -31,8 +32,12 @@ type Summary = {
   activosDeRegalo: number
   /** Activos que pagan. Es la base del MRR. */
   activosDePago: number
+  /** Activos en los tres días de prueba de los invitados. */
+  activosEnPrueba: number
   /** Todas las filas de regalo, en cualquier estado. */
   regaloTotal: number
+  /** Todas las filas de invitados, en cualquier estado. */
+  pruebaTotal: number
   /** ¿Están ya las columnas en la base de datos? */
   regaloDisponible: boolean
   currency: string
@@ -58,7 +63,7 @@ type Mes = {
 }
 
 const STATUS_FILTERS = ["todos", "active", "past_due", "canceled", "pending"] as const
-const ACCESO_FILTERS = ["todos", "pago", "regalo"] as const
+const ACCESO_FILTERS = ["todos", "pago", "regalo", "prueba"] as const
 const PAGE_SIZE = 25
 
 function fmt(iso: string | null): string {
@@ -82,7 +87,12 @@ function nombreDeMes(clave: string): string {
   return d.toLocaleDateString("es", { month: "short", year: "numeric", timeZone: "UTC" })
 }
 
-function statusBadge(status: string) {
+function statusBadge(r: Row) {
+  // Stripe manda «trialing» durante los tres días. Dejarlo en inglés en la
+  // columna obligaría a traducirlo de cabeza cada vez que se mira.
+  if (estaEnPrueba(r)) return <AdminBadge variant="info">En prueba</AdminBadge>
+
+  const status = r.status
   if (status === "active") return <AdminBadge variant="success">Activo</AdminBadge>
   if (status === "past_due") return <AdminBadge variant="warning">Pago pendiente</AdminBadge>
   if (status === "canceled") return <AdminBadge variant="error">Cancelado</AdminBadge>
@@ -101,12 +111,26 @@ function statusBadge(status: string) {
  * quién se quedó después del mes gratis.
  */
 function accesoCelda(r: Row) {
-  if (r.tipo_acceso === null) return <span className="text-[#6a6a7a]">—</span>
+  const tipo = tipoDeAcceso(r)
+  if (tipo === null) return <span className="text-[#6a6a7a]">—</span>
 
-  if (r.tipo_acceso === "regalo") {
+  // ── Invitado en sus tres días ───────────────────────────────────────────
+  if (tipo === "prueba") {
     return (
       <div className="space-y-1">
-        <AdminBadge variant="info">Regalo</AdminBadge>
+        <AdminBadge variant="info">Prueba 3 días</AdminBadge>
+        {r.current_period_end && (
+          <p className="text-[10px] text-[#6a6a7a]">hasta el {fmtCorto(r.current_period_end)}</p>
+        )}
+      </div>
+    )
+  }
+
+  // ── Primer mes de regalo de los encuentros ──────────────────────────────
+  if (tipo === "regalo") {
+    return (
+      <div className="space-y-1">
+        <AdminBadge variant="warning">Regalo</AdminBadge>
         {r.codigo_promocional && (
           <p className="font-mono text-[10px] text-[#a78bca]">{r.codigo_promocional}</p>
         )}
@@ -114,6 +138,9 @@ function accesoCelda(r: Row) {
     )
   }
 
+  // ── Paga ────────────────────────────────────────────────────────────────
+  // Si venía de una prueba o de un regalo, la fecha del primer cobro es el
+  // dato que interesa: dice que aquello se convirtió.
   return (
     <div className="space-y-1">
       <AdminBadge variant="neutral">Pago</AdminBadge>
@@ -247,9 +274,7 @@ export function Subscriptions() {
       if (accesoFilter !== "todos") {
         // Sin migración no hay dato: con el filtro puesto no se finge que
         // todos pagan, simplemente no coinciden.
-        const tipo = r.tipo_acceso
-        if (accesoFilter === "regalo" && tipo !== "regalo") return false
-        if (accesoFilter === "pago" && tipo !== "pago") return false
+        if (tipoDeAcceso(r) !== accesoFilter) return false
       }
       if (q && !r.email.toLowerCase().includes(q)) return false
       return true
@@ -326,7 +351,7 @@ export function Subscriptions() {
           «Activos». Son miembros con el mismo acceso, pero son los únicos
           números que todavía no se traducen en dinero, y eso se decide
           mirando esta fila. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         <StatCard label="Total" value={summary?.total ?? 0} />
         <StatCard
           label="Activos"
@@ -334,7 +359,7 @@ export function Subscriptions() {
           variant="green"
           trend={
             regalo
-              ? `${summary?.activosDePago ?? 0} pagan · ${summary?.activosDeRegalo ?? 0} de regalo`
+              ? `${summary?.activosDePago ?? 0} pagan · ${summary?.activosDeRegalo ?? 0} de regalo · ${summary?.activosEnPrueba ?? 0} en prueba`
               : undefined
           }
         />
@@ -343,6 +368,14 @@ export function Subscriptions() {
           value={regalo ? (summary?.activosDeRegalo ?? 0) : "—"}
           variant="gold"
           trend={regalo ? `${summary?.regaloTotal ?? 0} en total` : "sin migrar"}
+        />
+        {/* Los invitados tienen su propia tarjeta, separada del regalo de
+            los encuentros: son dos campañas distintas y se miden aparte. */}
+        <StatCard
+          label="Prueba de 3 días"
+          value={regalo ? (summary?.activosEnPrueba ?? 0) : "—"}
+          variant="gold"
+          trend={regalo ? `${summary?.pruebaTotal ?? 0} invitados en total` : "sin migrar"}
         />
         <StatCard label="Pago pendiente" value={summary?.past_due ?? 0} variant="red" />
         <StatCard label="Cancelados" value={summary?.canceled ?? 0} />
@@ -510,7 +543,13 @@ export function Subscriptions() {
                   }}
                   variant="gold"
                 >
-                  {f === "todos" ? "Todo acceso" : f === "pago" ? "Pagan" : "De regalo"}
+                  {f === "todos"
+                    ? "Todo acceso"
+                    : f === "pago"
+                      ? "Pagan"
+                      : f === "regalo"
+                        ? "De regalo"
+                        : "En prueba"}
                 </FilterBtn>
               ))}
             </div>
@@ -554,7 +593,7 @@ export function Subscriptions() {
                     <tr key={r.id} className="border-t border-[#1a1a24] text-[#c3c3d4]">
                       <td className="py-2 pr-4 text-[#F3F6FA]">{r.email}</td>
                       <td className="py-2 pr-4">{acciones(r)}</td>
-                      <td className="py-2 pr-4">{statusBadge(r.status)}</td>
+                      <td className="py-2 pr-4">{statusBadge(r)}</td>
                       <td className="py-2 pr-4">{accesoCelda(r)}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_subscription_id ?? "—"}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_customer_id ?? "—"}</td>
