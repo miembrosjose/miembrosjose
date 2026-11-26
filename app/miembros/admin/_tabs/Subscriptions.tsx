@@ -47,6 +47,14 @@ type Sync = {
   available: boolean
 }
 
+/** Un mes del corte: cuánta gente entró y cuánta se fue. */
+type Mes = {
+  clave: string
+  altas: number
+  bajas: number
+  neto: number
+}
+
 const STATUS_FILTERS = ["todos", "active", "past_due", "canceled", "pending"] as const
 const ACCESO_FILTERS = ["todos", "pago", "regalo"] as const
 const PAGE_SIZE = 25
@@ -62,6 +70,14 @@ function fmtCorto(iso: string | null): string {
   if (!iso) return "—"
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es", { month: "short", day: "numeric" })
+}
+
+/** "2026-11" → "nov 2026" */
+function nombreDeMes(clave: string): string {
+  const [a, m] = clave.split("-")
+  const d = new Date(Date.UTC(Number(a), Number(m) - 1, 1))
+  if (Number.isNaN(d.getTime())) return clave
+  return d.toLocaleDateString("es", { month: "short", year: "numeric", timeZone: "UTC" })
 }
 
 function statusBadge(status: string) {
@@ -110,7 +126,10 @@ export function Subscriptions() {
   const [rows, setRows] = useState<Row[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [sync, setSync] = useState<Sync | null>(null)
+  const [meses, setMeses] = useState<Mes[]>([])
   const [loading, setLoading] = useState(true)
+  // Qué fila se está cancelando o borrando ahora mismo.
+  const [ocupada, setOcupada] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
@@ -129,6 +148,7 @@ export function Subscriptions() {
         setRows(Array.isArray(data.rows) ? data.rows : [])
         setSummary(data.summary ?? null)
         setSync(data.sync ?? null)
+        setMeses(Array.isArray(data.meses) ? data.meses : [])
       } catch {
         if (alive) setErrorMsg("No se pudieron cargar las suscripciones.")
       } finally {
@@ -139,6 +159,83 @@ export function Subscriptions() {
       alive = false
     }
   }, [])
+
+  /** Vuelve a pedir los datos después de tocar una fila. */
+  async function recargar() {
+    const res = await fetch("/api/admin/subscriptions", { credentials: "include", cache: "no-store" })
+    if (!res.ok) return
+    const data = await res.json()
+    setRows(Array.isArray(data.rows) ? data.rows : [])
+    setSummary(data.summary ?? null)
+    setSync(data.sync ?? null)
+    setMeses(Array.isArray(data.meses) ? data.meses : [])
+  }
+
+  /**
+   * Cancelar o borrar una fila.
+   *
+   * Se pregunta antes, con el correo escrito en la pregunta: estas dos
+   * acciones se parecen demasiado entre sí y las filas de la tabla son
+   * todas iguales. Equivocarse de línea es fácil.
+   */
+  async function accionarFila(email: string, accion: "cancelar" | "borrar") {
+    const pregunta =
+      accion === "borrar"
+        ? `Borrar la fila de ${email}? Desaparece de esta tabla. No cancela nada en Stripe ni borra su cuenta de acceso.`
+        : `Marcar ${email} como cancelado? Pierde el acceso. No cancela el cobro en Stripe.`
+    if (!window.confirm(pregunta)) return
+
+    setOcupada(email)
+    try {
+      const res = await fetch("/api/admin/subscriptions/fila", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, accion }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+      await recargar()
+      window.alert(data.mensaje || "Hecho.")
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "No se pudo.")
+    } finally {
+      setOcupada(null)
+    }
+  }
+
+  /**
+   * Los dos botones de cada fila.
+   *
+   * «Borrar» no se esconde cuando es peligroso: se deja, y el servidor es
+   * quien se niega y explica por qué. Un botón que desaparece sin decir
+   * nada deja a quien lo busca pensando que la pantalla está rota.
+   */
+  function acciones(r: Row) {
+    const trabajando = ocupada === r.email
+    return (
+      <div className="flex items-center justify-end gap-2">
+        {r.status !== "canceled" && (
+          <button
+            type="button"
+            disabled={trabajando}
+            onClick={() => accionarFila(r.email, "cancelar")}
+            className="border border-amber-700/50 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-400 transition-colors hover:bg-amber-900/20 disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+          >
+            Cancelar
+          </button>
+        )}
+        <button
+          type="button"
+          disabled={trabajando}
+          onClick={() => accionarFila(r.email, "borrar")}
+          className="border border-red-700/50 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-red-400 transition-colors hover:bg-red-900/20 disabled:opacity-40 [font-family:var(--font-geist-sans)]"
+        >
+          {trabajando ? "…" : "Borrar"}
+        </button>
+      </div>
+    )
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -261,6 +358,61 @@ export function Subscriptions() {
         </p>
       )}
 
+      {/* ── Corte mensual ────────────────────────────────────── */}
+      <AdminCard
+        title="Mes a mes"
+        description="Quién entró y quién se fue, los últimos 12 meses."
+      >
+        {meses.length === 0 ? (
+          <AdminEmptyState title="Todavía no hay meses que comparar" />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-left text-xs [font-family:var(--font-geist-sans)]">
+                <thead>
+                  <tr className="text-[9px] uppercase tracking-[0.2em] text-[#6a6a7a]">
+                    <th className="py-2 pr-4">Mes</th>
+                    <th className="py-2 pr-4 text-right">Altas</th>
+                    <th className="py-2 pr-4 text-right">Bajas</th>
+                    <th className="py-2 text-right">Neto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {meses.map((m) => (
+                    <tr key={m.clave} className="border-t border-[#1a1a24] text-[#c3c3d4]">
+                      <td className="py-2 pr-4 text-[#F3F6FA]">{nombreDeMes(m.clave)}</td>
+                      <td className="py-2 pr-4 text-right text-emerald-400">
+                        {m.altas > 0 ? `+${m.altas}` : "0"}
+                      </td>
+                      <td className="py-2 pr-4 text-right text-red-400">
+                        {m.bajas > 0 ? `-${m.bajas}` : "0"}
+                      </td>
+                      {/* El neto es la única columna que se lee de un
+                          vistazo: si está en rojo, ese mes se fue más
+                          gente de la que entró. */}
+                      <td
+                        className={`py-2 text-right font-semibold ${
+                          m.neto > 0 ? "text-emerald-300" : m.neto < 0 ? "text-red-300" : "text-[#6a6a7a]"
+                        }`}
+                      >
+                        {m.neto > 0 ? `+${m.neto}` : m.neto}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Decir de dónde sale cada número, porque los dos no salen
+                del mismo sitio y eso cambia cómo se lee la tabla. */}
+            <p className="mt-3 text-[10px] leading-relaxed text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
+              Las altas son la fecha en que cada persona apareció por primera vez. Las bajas son
+              eventos de cancelación recibidos del embudo: en los meses anteriores a que existiera esa
+              sincronización salen a cero aunque las hubiera.
+            </p>
+          </>
+        )}
+      </AdminCard>
+
       {/* ── Estado del sistema ───────────────────────────────── */}
       <AdminCard
         title="Estado del sistema"
@@ -374,7 +526,7 @@ export function Subscriptions() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-left text-xs [font-family:var(--font-geist-sans)]">
+              <table className="w-full min-w-[960px] text-left text-xs [font-family:var(--font-geist-sans)]">
                 <thead>
                   <tr className="text-[9px] uppercase tracking-[0.2em] text-[#6a6a7a]">
                     <th className="py-2 pr-4">Correo</th>
@@ -384,7 +536,8 @@ export function Subscriptions() {
                     <th className="py-2 pr-4">Stripe (cliente)</th>
                     <th className="py-2 pr-4">Fin de periodo</th>
                     <th className="py-2 pr-4">Creado</th>
-                    <th className="py-2">Actualizado</th>
+                    <th className="py-2 pr-4">Actualizado</th>
+                    <th className="py-2 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -397,7 +550,8 @@ export function Subscriptions() {
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_customer_id ?? "—"}</td>
                       <td className="py-2 pr-4">{fmt(r.current_period_end)}</td>
                       <td className="py-2 pr-4">{fmt(r.created_at)}</td>
-                      <td className="py-2">{fmt(r.updated_at)}</td>
+                      <td className="py-2 pr-4">{fmt(r.updated_at)}</td>
+                      <td className="py-2 text-right">{acciones(r)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -31,7 +31,8 @@
     "probar:ciudades": "node scripts/probar-ciudades.mjs",
     "probar:carta": "node scripts/probar-carta.mjs",
     "probar:regalo": "node scripts/probar-regalo.mjs",
-    "probar:errores": "node scripts/probar-errores-auth.mjs"
+    "probar:errores": "node scripts/probar-errores-auth.mjs",
+    "probar:meses": "node scripts/probar-meses.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",

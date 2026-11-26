@@ -13,6 +13,7 @@ import { requireAdmin } from "@/lib/admin-auth"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { LEGAL } from "@/lib/site/legal-config"
 import { esColumnaQueNoExiste } from "@/app/api/internal/member-sync/regalo"
+import { construirMeses } from "@/lib/admin/meses"
 
 const MAX_ROWS = 2000
 
@@ -123,6 +124,29 @@ export async function GET() {
     mrrEstimate, // estimación bruta = activos que pagan × precio (sin comisiones ni impuestos)
   }
 
+  // ── Corte mensual: quién entró y quién se fue, mes a mes ─────────────
+  //
+  // ── DE DÓNDE SALE CADA NÚMERO ────────────────────────────────────────
+  // Las ALTAS salen de `created_at` de la propia fila: el día que esa
+  // persona apareció por primera vez. Es un dato que no se mueve nunca.
+  //
+  // Las BAJAS no se pueden sacar de la fila, porque la fila solo guarda su
+  // estado de HOY: si alguien se fue en marzo, la fila dice «cancelado» sin
+  // decir cuándo. Por eso se cuentan los eventos de cancelación que mandó
+  // el embudo, que sí llevan fecha.
+  //
+  // La consecuencia, y conviene saberla al leer la tabla: en los meses
+  // anteriores a que existiera esa sincronización no hay bajas que contar,
+  // y saldrán a cero aunque las hubiera.
+  const { data: cancelaciones } = await admin
+    .from("member_sync_events")
+    .select("created_at")
+    .eq("action", "cancel")
+    .order("created_at", { ascending: false })
+    .limit(5000)
+
+  const meses = construirMeses(rows, cancelaciones || [])
+
   // ── Estado del sistema: member_sync_events ───────────────────────────
   const { data: syncRows, error: syncErr } = await admin
     .from("member_sync_events")
@@ -174,5 +198,5 @@ export async function GET() {
     sync.health = sync.failed > 0 ? "requiere_atencion" : list.length > 0 ? "operativo" : "sin_datos"
   }
 
-  return noStore(NextResponse.json({ rows, summary, sync }))
+  return noStore(NextResponse.json({ rows, summary, sync, meses }))
 }
