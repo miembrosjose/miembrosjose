@@ -10,12 +10,29 @@
 // Idempotencia: tabla public.member_sync_events (una fila por source_event_id).
 // Orden de eventos: member_subscriptions.last_status_event_created_at.
 //
+// ── CAMPOS DESCONOCIDOS: SE IGNORAN, NUNCA RECHAZAN ───────────────────────
+// La validación de abajo LEE las claves que conoce de un objeto suelto; no
+// compara el aviso contra un esquema cerrado. Así que el embudo puede añadir
+// campos nuevos y empezar a enviarlos antes de que esta plataforma los
+// entienda: lo que sobra se ignora y la persona se activa igual.
+//
+// Es a propósito y conviene no cambiarlo. Si esto validara estrictamente, un
+// campo nuevo en el embudo dejaría a todo el mundo fuera de la plataforma.
+// Lo comprueba `scripts/probar-regalo.mjs`.
+//
 // Nunca se registran emails completos, Authorization ni secretos. Errores al
 // cliente siempre genéricos.
 
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import {
+  leerCamposDeRegalo,
+  cambiosDeRegalo,
+  esColumnaQueNoExiste,
+  COLUMNAS_DE_REGALO,
+  type CamposDeRegalo,
+} from "./regalo"
 
 const MAX_BODY_BYTES = 8 * 1024 // 8 KB — el payload es pequeño
 const ACTIVATE_REDIRECT = "https://los144000.com/activar-cuenta"
@@ -111,6 +128,12 @@ export async function POST(req: NextRequest) {
     if (!Number.isNaN(d.getTime())) currentPeriodEnd = d.toISOString()
   }
 
+  // ── Cómo entró: regalo o pago ──────────────────────────────────────────
+  // Campos opcionales. Si el aviso no los trae —como hoy—, esto devuelve
+  // «el embudo no ha dicho nada» y no se escribe ninguna columna nueva.
+  // Un valor con el tipo equivocado tampoco rechaza la petición: ver regalo.ts.
+  const regalo = leerCamposDeRegalo(payload)
+
   const admin = getSupabaseAdmin()
 
   // ── 4. Idempotencia: reclamar el evento ──────────────────────────────────
@@ -172,6 +195,7 @@ export async function POST(req: NextRequest) {
       stripeCustomerId,
       stripeSubscriptionId,
       currentPeriodEnd,
+      regalo,
     })
 
     // La invitación se envía SOLO en 'activate' (aunque el evento de estado sea
@@ -214,6 +238,7 @@ async function applyMembership(
     stripeCustomerId: string | null
     stripeSubscriptionId: string | null
     currentPeriodEnd: string | null
+    regalo: CamposDeRegalo
   },
 ) {
   const desiredStatus =
@@ -225,11 +250,7 @@ async function applyMembership(
 
   // El email ya viene normalizado a minúsculas y SIEMPRE se guarda así, por lo
   // que .eq() coincide; el índice UNIQUE sobre lower(email) es la garantía final.
-  const { data: existing } = await admin
-    .from("member_subscriptions")
-    .select("id, last_status_event_created_at")
-    .eq("email", p.email)
-    .maybeSingle()
+  const { fila: existing, columnasDeRegalo } = await leerFila(admin, p.email)
 
   // ¿El evento entrante es igual o posterior al último de estado aplicado?
   const shouldApplyState = (last: number | null | undefined) =>
@@ -249,16 +270,19 @@ async function applyMembership(
       if (p.stripeCustomerId != null) u.stripe_customer_id = p.stripeCustomerId
       if (p.stripeSubscriptionId != null) u.stripe_subscription_id = p.stripeSubscriptionId
     }
+    // La etiqueta de cómo entró. Solo si la base de datos ya tiene las
+    // columnas; si no, se escribe el resto y la etiqueta se pierde.
+    if (columnasDeRegalo) Object.assign(u, cambiosDeRegalo(p.regalo, existing))
     return u
   }
 
   if (existing) {
     // Evento fuera de orden (más viejo) → no reemplazamos el estado actual.
     if (!shouldApplyState(existing.last_status_event_created_at)) return
-    const { error } = await admin
-      .from("member_subscriptions")
-      .update(buildUpdates())
-      .eq("id", existing.id)
+    const error = await escribir(
+      (fila) => admin.from("member_subscriptions").update(fila).eq("id", existing.id),
+      buildUpdates(),
+    )
     if (error) throw new Error(`update:${error.code || "err"}`)
     return
   }
@@ -274,7 +298,12 @@ async function applyMembership(
     stripe_subscription_id: p.action === "activate" ? p.stripeSubscriptionId : null,
     last_status_event_created_at: p.eventCreatedAt,
   }
-  const { error: insErr } = await admin.from("member_subscriptions").insert(insertRow)
+  if (columnasDeRegalo) Object.assign(insertRow, cambiosDeRegalo(p.regalo, null))
+
+  const insErr = await escribir(
+    (fila) => admin.from("member_subscriptions").insert(fila),
+    insertRow,
+  )
   if (!insErr) return
 
   if (insErr.code === "23505") {
@@ -286,14 +315,76 @@ async function applyMembership(
       .maybeSingle()
     if (!raced) throw new Error("race_no_row")
     if (!shouldApplyState(raced.last_status_event_created_at)) return
-    const { error } = await admin
-      .from("member_subscriptions")
-      .update(buildUpdates())
-      .eq("id", raced.id)
+    const error = await escribir(
+      (fila) => admin.from("member_subscriptions").update(fila).eq("id", raced.id),
+      buildUpdates(),
+    )
     if (error) throw new Error(`update_race:${error.code || "err"}`)
     return
   }
   throw new Error(`insert:${insErr.code || "err"}`)
+}
+
+// ── La fila del miembro, con o sin las columnas de regalo ───────────────────
+//
+// Entre que se publica el código y que se corre la migración hay una ventana
+// en la que las columnas nuevas no existen todavía. Si se pidieran a pelo, el
+// SELECT fallaría y el miembro parecería no existir.
+type FilaExistente = {
+  id: string
+  last_status_event_created_at: number | null
+  tipo_acceso?: string | null
+  pago_real_at?: string | null
+}
+
+async function leerFila(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  email: string,
+): Promise<{ fila: FilaExistente | null; columnasDeRegalo: boolean }> {
+  const { data, error } = await admin
+    .from("member_subscriptions")
+    .select("id, last_status_event_created_at, tipo_acceso, pago_real_at")
+    .eq("email", email)
+    .maybeSingle()
+
+  if (!error) return { fila: (data as FilaExistente) ?? null, columnasDeRegalo: true }
+
+  if (!esColumnaQueNoExiste(error)) {
+    // Cualquier otro error se trata como antes de todo esto: se sigue como si
+    // no hubiera fila. El INSERT de más abajo choca con 23505 y se recupera.
+    return { fila: null, columnasDeRegalo: true }
+  }
+
+  // La migración no está aplicada. Se lee sin las columnas nuevas y se avisa
+  // a quien escriba después de que no las incluya.
+  console.error("[member-sync] stage=leer code=columnas_de_regalo_sin_migrar")
+  const { data: basica } = await admin
+    .from("member_subscriptions")
+    .select("id, last_status_event_created_at")
+    .eq("email", email)
+    .maybeSingle()
+  return { fila: (basica as FilaExistente) ?? null, columnasDeRegalo: false }
+}
+
+// ── Escribir sin que una columna que falta impida entrar ────────────────────
+//
+// Última red de seguridad del mismo problema: si pese a todo la escritura
+// choca con una columna de regalo que no existe, se repite sin ellas. Se
+// pierde la etiqueta —que es decorativa— y la persona entra, que es lo que
+// no se puede perder.
+async function escribir(
+  ejecutar: (fila: Record<string, unknown>) => PromiseLike<{ error: { code?: string; message?: string } | null }>,
+  fila: Record<string, unknown>,
+): Promise<{ code?: string; message?: string } | null> {
+  const { error } = await ejecutar(fila)
+  if (!error) return null
+  if (!esColumnaQueNoExiste(error)) return error
+
+  console.error("[member-sync] stage=escribir code=columnas_de_regalo_sin_migrar")
+  const sinRegalo: Record<string, unknown> = { ...fila }
+  for (const c of COLUMNAS_DE_REGALO) delete sinRegalo[c]
+  const { error: segundo } = await ejecutar(sinRegalo)
+  return segundo ?? null
 }
 
 // ── Invitación (solo activate). Usuario ya existente = no-op correcto ───────

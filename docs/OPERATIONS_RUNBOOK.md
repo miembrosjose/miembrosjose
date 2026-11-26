@@ -43,6 +43,26 @@ Panel admin → **Suscripciones → Estado del sistema**. Estados: `processing` 
 `completed` (ok), `failed` (reintentar). Un `failed` se puede reintentar reenviando el evento de
 Stripe: el endpoint `/api/internal/member-sync` re-reclama el `source_event_id` y reintenta.
 
+## Primer mes de regalo (código LLAMADO144)
+
+El embudo regala el primer mes a quien asiste a los encuentros presenciales. Esas personas **tienen
+el mismo acceso que cualquier miembro**, Telegram incluido: el acceso depende de la suscripción, no
+de cómo entraron. La marca es solo para contarlas aparte.
+
+El aviso de `member-sync` trae cuatro campos opcionales: `acceso_regalo`, `codigo_promocional`,
+`primer_pago` (en unidades de la moneda, **no** en centavos) y `pago_real_at`. Se guardan en
+`member_subscriptions` como `tipo_acceso` (`regalo` | `pago`), `codigo_promocional`, `primer_pago`
+y `pago_real_at`. Migración: `docs/sql/acceso_regalo_01_columnas.sql`, solo aditiva.
+
+Dónde se ve: panel admin → **Suscripciones**. Tarjeta «Primer mes de regalo», filtro
+**Pagan / De regalo** y columna **Acceso**. El **MRR cuenta solo a los activos que pagan**: quien
+está en su mes de regalo no suma ingresos hasta que Stripe cobre de verdad, y entonces la columna
+pasa a `pago` y queda la fecha del cobro.
+
+Si el panel avisa de que «las columnas todavía no están en la base de datos», es que falta correr
+esa migración. Nadie pierde acceso por eso: la plataforma escribe el resto del aviso y se salta la
+etiqueta. A quien ya pagó de verdad no se le vuelve a marcar como regalo.
+
 ## Revisar stripe_webhook_events (embudo)
 
 En la base del embudo, tabla `stripe_webhook_events` (PK = `id` del evento). Si un evento no está,

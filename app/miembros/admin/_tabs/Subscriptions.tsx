@@ -12,6 +12,11 @@ type Row = {
   current_period_end: string | null
   created_at: string | null
   updated_at: string | null
+  /** 'regalo' | 'pago', o null cuando la migración aún no está aplicada. */
+  tipo_acceso: string | null
+  codigo_promocional: string | null
+  primer_pago: number | null
+  pago_real_at: string | null
 }
 
 type Summary = {
@@ -20,6 +25,14 @@ type Summary = {
   past_due: number
   canceled: number
   pending: number
+  /** Activos que entraron con código y todavía no han pagado nada. */
+  activosDeRegalo: number
+  /** Activos que pagan. Es la base del MRR. */
+  activosDePago: number
+  /** Todas las filas de regalo, en cualquier estado. */
+  regaloTotal: number
+  /** ¿Están ya las columnas en la base de datos? */
+  regaloDisponible: boolean
   currency: string
   mrrEstimate: number | null
 }
@@ -35,6 +48,7 @@ type Sync = {
 }
 
 const STATUS_FILTERS = ["todos", "active", "past_due", "canceled", "pending"] as const
+const ACCESO_FILTERS = ["todos", "pago", "regalo"] as const
 const PAGE_SIZE = 25
 
 function fmt(iso: string | null): string {
@@ -43,11 +57,53 @@ function fmt(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es", { year: "numeric", month: "short", day: "numeric" })
 }
 
+/** Un día y un mes, para la segunda línea de la columna de acceso. */
+function fmtCorto(iso: string | null): string {
+  if (!iso) return "—"
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es", { month: "short", day: "numeric" })
+}
+
 function statusBadge(status: string) {
   if (status === "active") return <AdminBadge variant="success">Activo</AdminBadge>
   if (status === "past_due") return <AdminBadge variant="warning">Pago pendiente</AdminBadge>
   if (status === "canceled") return <AdminBadge variant="error">Cancelado</AdminBadge>
   return <AdminBadge variant="neutral">Pendiente</AdminBadge>
+}
+
+/**
+ * Cómo entró esta persona.
+ *
+ * Tres estados, no dos: regalo, pago y «no se sabe» —que es lo que hay
+ * mientras la migración no esté aplicada—. Un guion es más honesto que
+ * marcar «Pago» a todo el mundo por omisión.
+ *
+ * Cuando el regalo ya se convirtió en un cobro de verdad, la etiqueta pasa a
+ * «Pago» y debajo queda la fecha en que ocurrió: así se ve de un vistazo
+ * quién se quedó después del mes gratis.
+ */
+function accesoCelda(r: Row) {
+  if (r.tipo_acceso === null) return <span className="text-[#6a6a7a]">—</span>
+
+  if (r.tipo_acceso === "regalo") {
+    return (
+      <div className="space-y-1">
+        <AdminBadge variant="info">Regalo</AdminBadge>
+        {r.codigo_promocional && (
+          <p className="font-mono text-[10px] text-[#a78bca]">{r.codigo_promocional}</p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1">
+      <AdminBadge variant="neutral">Pago</AdminBadge>
+      {r.pago_real_at && (
+        <p className="text-[10px] text-[#6a6a7a]">pagó el {fmtCorto(r.pago_real_at)}</p>
+      )}
+    </div>
+  )
 }
 
 export function Subscriptions() {
@@ -59,6 +115,7 @@ export function Subscriptions() {
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("todos")
+  const [accesoFilter, setAccesoFilter] = useState<(typeof ACCESO_FILTERS)[number]>("todos")
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -87,10 +144,17 @@ export function Subscriptions() {
     const q = search.trim().toLowerCase()
     return rows.filter((r) => {
       if (statusFilter !== "todos" && r.status !== statusFilter) return false
+      if (accesoFilter !== "todos") {
+        // Sin migración no hay dato: con el filtro puesto no se finge que
+        // todos pagan, simplemente no coinciden.
+        const tipo = r.tipo_acceso
+        if (accesoFilter === "regalo" && tipo !== "regalo") return false
+        if (accesoFilter === "pago" && tipo !== "pago") return false
+      }
       if (q && !r.email.toLowerCase().includes(q)) return false
       return true
     })
-  }, [rows, search, statusFilter])
+  }, [rows, search, statusFilter, accesoFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageClamped = Math.min(page, totalPages)
@@ -106,6 +170,10 @@ export function Subscriptions() {
       "current_period_end",
       "created_at",
       "updated_at",
+      "tipo_acceso",
+      "codigo_promocional",
+      "primer_pago",
+      "pago_real_at",
     ]
     const escape = (v: string | null) => `"${String(v ?? "").replace(/"/g, '""')}"`
     const lines = [
@@ -120,6 +188,10 @@ export function Subscriptions() {
           r.current_period_end,
           r.created_at,
           r.updated_at,
+          r.tipo_acceso,
+          r.codigo_promocional,
+          r.primer_pago != null ? String(r.primer_pago) : null,
+          r.pago_real_at,
         ]
           .map(escape)
           .join(","),
@@ -144,20 +216,50 @@ export function Subscriptions() {
   const mrr =
     summary?.mrrEstimate != null ? `${summary.currency} ${summary.mrrEstimate.toLocaleString("es")}` : "—"
 
+  // ¿Se puede distinguir regalo de pago? Solo si la migración está aplicada.
+  const regalo = summary?.regaloDisponible === true
+
   return (
     <div className="space-y-6">
       {/* ── Métricas ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Los de regalo tienen su propia tarjeta, no un paréntesis dentro de
+          «Activos». Son miembros con el mismo acceso, pero son los únicos
+          números que todavía no se traducen en dinero, y eso se decide
+          mirando esta fila. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Total" value={summary?.total ?? 0} />
-        <StatCard label="Activos" value={summary?.active ?? 0} variant="green" />
+        <StatCard
+          label="Activos"
+          value={summary?.active ?? 0}
+          variant="green"
+          trend={
+            regalo
+              ? `${summary?.activosDePago ?? 0} pagan · ${summary?.activosDeRegalo ?? 0} de regalo`
+              : undefined
+          }
+        />
+        <StatCard
+          label="Primer mes de regalo"
+          value={regalo ? (summary?.activosDeRegalo ?? 0) : "—"}
+          variant="gold"
+          trend={regalo ? `${summary?.regaloTotal ?? 0} en total` : "sin migrar"}
+        />
         <StatCard label="Pago pendiente" value={summary?.past_due ?? 0} variant="red" />
         <StatCard label="Cancelados" value={summary?.canceled ?? 0} />
-        <StatCard label="MRR estimado" value={mrr} variant="gold" trend="activos × precio" />
+        <StatCard label="MRR estimado" value={mrr} variant="gold" trend="activos que pagan × precio" />
       </div>
       <p className="text-[10px] uppercase tracking-[0.2em] text-[#6a6a7a] [font-family:var(--font-geist-sans)]">
-        MRR es una estimación bruta (activos × precio); no incluye comisiones ni impuestos. Métricas de
-        embudo (registros/pagos/conversión) viven en el proyecto del embudo.
+        MRR es una estimación bruta (activos QUE PAGAN × precio); no incluye comisiones ni impuestos ni a
+        quien está en su primer mes de regalo. Métricas de embudo (registros/pagos/conversión) viven en el
+        proyecto del embudo.
       </p>
+      {!regalo && (
+        <p className="border border-amber-700/40 bg-amber-900/10 px-3 py-2 text-[11px] text-amber-300/90 [font-family:var(--font-geist-sans)]">
+          Las columnas del acceso de regalo todavía no están en la base de datos, así que no se puede
+          distinguir quién entró con código. Nadie pierde acceso por esto y el resto del panel funciona
+          igual. Se arregla corriendo <span className="font-mono">docs/sql/acceso_regalo_01_columnas.sql</span>.
+        </p>
+      )}
 
       {/* ── Estado del sistema ───────────────────────────────── */}
       <AdminCard
@@ -240,6 +342,24 @@ export function Subscriptions() {
               </FilterBtn>
             ))}
           </div>
+          {/* Cómo entró. Solo tiene sentido si hay dato que filtrar. */}
+          {regalo && (
+            <div className="flex flex-wrap gap-2 border-l border-[#1a1a24] pl-3">
+              {ACCESO_FILTERS.map((f) => (
+                <FilterBtn
+                  key={f}
+                  active={accesoFilter === f}
+                  onClick={() => {
+                    setAccesoFilter(f)
+                    setPage(1)
+                  }}
+                  variant="gold"
+                >
+                  {f === "todos" ? "Todo acceso" : f === "pago" ? "Pagan" : "De regalo"}
+                </FilterBtn>
+              ))}
+            </div>
+          )}
           <button
             type="button"
             onClick={exportCsv}
@@ -254,11 +374,12 @@ export function Subscriptions() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-xs [font-family:var(--font-geist-sans)]">
+              <table className="w-full min-w-[820px] text-left text-xs [font-family:var(--font-geist-sans)]">
                 <thead>
                   <tr className="text-[9px] uppercase tracking-[0.2em] text-[#6a6a7a]">
                     <th className="py-2 pr-4">Correo</th>
                     <th className="py-2 pr-4">Estado</th>
+                    <th className="py-2 pr-4">Acceso</th>
                     <th className="py-2 pr-4">Stripe (sub)</th>
                     <th className="py-2 pr-4">Stripe (cliente)</th>
                     <th className="py-2 pr-4">Fin de periodo</th>
@@ -271,6 +392,7 @@ export function Subscriptions() {
                     <tr key={r.email} className="border-t border-[#1a1a24] text-[#c3c3d4]">
                       <td className="py-2 pr-4 text-[#F3F6FA]">{r.email}</td>
                       <td className="py-2 pr-4">{statusBadge(r.status)}</td>
+                      <td className="py-2 pr-4">{accesoCelda(r)}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_subscription_id ?? "—"}</td>
                       <td className="py-2 pr-4 font-mono text-[#8a8aa0]">{r.stripe_customer_id ?? "—"}</td>
                       <td className="py-2 pr-4">{fmt(r.current_period_end)}</td>

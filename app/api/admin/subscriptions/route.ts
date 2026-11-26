@@ -12,6 +12,7 @@ import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { LEGAL } from "@/lib/site/legal-config"
+import { esColumnaQueNoExiste } from "@/app/api/internal/member-sync/regalo"
 
 const MAX_ROWS = 2000
 
@@ -33,46 +34,93 @@ export async function GET() {
   const admin = getSupabaseAdmin()
 
   // ── Suscripciones ────────────────────────────────────────────────────
-  const { data: subs, error: subsErr } = await admin
+  //
+  // Las cuatro columnas de regalo pueden no existir todavía: el código se
+  // publica empujando a `main` y la migración la corre José cuando puede. Se
+  // piden; si la base de datos aún no las tiene, se lee sin ellas y el panel
+  // lo dice en vez de quedarse en blanco.
+  const CAMPOS_BASE =
+    "email, status, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, created_at, updated_at"
+  const CAMPOS_REGALO = "tipo_acceso, codigo_promocional, primer_pago, pago_real_at"
+
+  let regaloDisponible = true
+  let { data: subs, error: subsErr } = await admin
     .from("member_subscriptions")
-    .select(
-      "email, status, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, created_at, updated_at",
-    )
+    .select(`${CAMPOS_BASE}, ${CAMPOS_REGALO}`)
     .order("updated_at", { ascending: false })
     .limit(MAX_ROWS)
+
+  if (subsErr && esColumnaQueNoExiste(subsErr)) {
+    regaloDisponible = false
+    const reintento = await admin
+      .from("member_subscriptions")
+      .select(CAMPOS_BASE)
+      .order("updated_at", { ascending: false })
+      .limit(MAX_ROWS)
+    subs = reintento.data
+    subsErr = reintento.error
+  }
 
   if (subsErr) {
     console.error("[admin/subscriptions] stage=subs code=%s", subsErr.code || "db_error")
     return noStore(NextResponse.json({ error: "load_error" }, { status: 500 }))
   }
 
-  const rows = (subs || []).map((s) => ({
-    email: s.email as string,
-    status: (s.status as string) || "pending",
-    subscription_status: (s.subscription_status as string) || null,
-    stripe_customer_id: abbrev(s.stripe_customer_id as string | null),
-    stripe_subscription_id: abbrev(s.stripe_subscription_id as string | null),
-    current_period_end: (s.current_period_end as string) || null,
-    created_at: (s.created_at as string) || null,
-    updated_at: (s.updated_at as string) || null,
-  }))
+  const rows = (subs || []).map((s) => {
+    const r = s as Record<string, unknown>
+    return {
+      email: r.email as string,
+      status: (r.status as string) || "pending",
+      subscription_status: (r.subscription_status as string) || null,
+      stripe_customer_id: abbrev(r.stripe_customer_id as string | null),
+      stripe_subscription_id: abbrev(r.stripe_subscription_id as string | null),
+      current_period_end: (r.current_period_end as string) || null,
+      created_at: (r.created_at as string) || null,
+      updated_at: (r.updated_at as string) || null,
+      // Cómo entró. Sin la migración no hay dato, y eso NO es «pago»: es
+      // «no se sabe». Decirlo así evita que el panel invente certezas.
+      tipo_acceso: regaloDisponible ? ((r.tipo_acceso as string) || "pago") : null,
+      codigo_promocional: (r.codigo_promocional as string) || null,
+      primer_pago: r.primer_pago != null ? Number(r.primer_pago) : null,
+      pago_real_at: (r.pago_real_at as string) || null,
+    }
+  })
 
   const counts = { active: 0, past_due: 0, canceled: 0, pending: 0 }
+  // Los de regalo se cuentan aparte. Siguen siendo miembros con el mismo
+  // acceso; lo que no son es ingresos.
+  let activosDeRegalo = 0
+  let activosDePago = 0
+  let regaloTotal = 0
   for (const r of rows) {
     if (r.status === "active") counts.active++
     else if (r.status === "past_due") counts.past_due++
     else if (r.status === "canceled") counts.canceled++
     else counts.pending++
+
+    const esRegalo = r.tipo_acceso === "regalo"
+    if (esRegalo) regaloTotal++
+    if (r.status === "active") {
+      if (esRegalo) activosDeRegalo++
+      else activosDePago++
+    }
   }
   const total = rows.length
   const price = Number(LEGAL.monthlyPrice)
-  const mrrEstimate = Number.isFinite(price) ? +(counts.active * price).toFixed(2) : null
+  // El MRR cuenta SOLO a los activos que pagan. Antes era «activos ×
+  // precio», y con el primer mes de regalo eso habría inflado los ingresos
+  // con gente que todavía no ha pagado nada.
+  const mrrEstimate = Number.isFinite(price) ? +(activosDePago * price).toFixed(2) : null
 
   const summary = {
     total,
     ...counts,
+    activosDeRegalo,
+    activosDePago,
+    regaloTotal,
+    regaloDisponible,
     currency: LEGAL.currency,
-    mrrEstimate, // estimación bruta = activos × precio (sin comisiones ni impuestos)
+    mrrEstimate, // estimación bruta = activos que pagan × precio (sin comisiones ni impuestos)
   }
 
   // ── Estado del sistema: member_sync_events ───────────────────────────
