@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  LAS CIUDADES QUE VIENEN DE FUERA · la prueba
+//  LA UBICACIÓN DE LA RED · la prueba
 // ═══════════════════════════════════════════════════════════════════════════
 //
-//   npm run probar:osm
+//   npm run probar:red
 //
 // POR QUÉ ESTA PRUEBA EXISTE
 //   `network_cities` es una tabla COMPARTIDA: la ciudad que crea una persona
@@ -21,6 +21,8 @@ import { dirname, join } from "node:path"
 
 const aqui = dirname(fileURLToPath(import.meta.url))
 const ruta = join(aqui, "..", "lib", "red", "osm.ts")
+const rutaPaises = join(aqui, "..", "lib", "red", "paises.ts")
+const { PAIS_NOMBRE, nombrePais, banderaPais } = await import(pathToFileURL(rutaPaises).href)
 const {
   leerFicha, esUnSitioHabitado, regionDe, nombreDe, etiquetaDe,
   inicialDeTipo, esIdentificadorValido,
@@ -179,6 +181,49 @@ comprobar("node es N", inicialDeTipo("node") === "N")
 comprobar("way es W", inicialDeTipo("way") === "W")
 comprobar("cualquier otra cosa es null", inicialDeTipo("galaxia") === null)
 comprobar("y nada es null", inicialDeTipo(undefined) === null)
+
+console.log("\n═══ 10 · LA LISTA DE PAÍSES ═══\n")
+// Esta lista se GENERA con los datos de internacionalización, no se escribe a
+// mano, y por eso hay que vigilarla: ICU también conoce países que ya no
+// existen. La primera versión no los filtraba y el desplegable mostraba
+// «Alemania» dos veces —`DD` es la Alemania Oriental—. Un país duplicado no
+// es un detalle feo: es que los miembros acaban repartidos entre dos filas
+// del mismo sitio y ninguna de las dos cuadra con el mapa.
+{
+  const codigos = Object.keys(PAIS_NOMBRE)
+  comprobar("son los 250 vigentes", codigos.length === 250, `hay ${codigos.length}`)
+  comprobar("todos los códigos son dos letras mayúsculas", codigos.every((c) => /^[A-Z]{2}$/.test(c)))
+  comprobar("ninguno se quedó sin nombre", codigos.every((c) => (PAIS_NOMBRE[c] || "").trim().length > 1))
+
+  const porNombre = new Map()
+  for (const c of codigos) porNombre.set(PAIS_NOMBRE[c], [...(porNombre.get(PAIS_NOMBRE[c]) || []), c])
+  const repes = [...porNombre.entries()].filter(([, cs]) => cs.length > 1)
+  comprobar("NINGÚN nombre repetido", repes.length === 0, JSON.stringify(repes))
+}
+
+// Los que ya no son países. Si alguno vuelve, el desplegable vuelve a mentir.
+for (const viejo of ["DD", "UK", "AN", "SU", "YU", "CS", "ZR", "FX", "BU", "TP", "NT", "YD"]) {
+  comprobar(`${viejo} no está (ya no es un país)`, PAIS_NOMBRE[viejo] === undefined)
+}
+// Y los bloques o zonas que ICU mezcla con los países.
+for (const bloque of ["EU", "UN", "QO", "ZZ", "EZ"]) {
+  comprobar(`${bloque} no está (no es un país)`, PAIS_NOMBRE[bloque] === undefined)
+}
+
+// Donde de verdad hay gente de la Red. Si una regeneración se come media
+// lista, esto lo caza antes de que alguien no pueda registrarse.
+for (const [c, n] of [["MX", "México"], ["ES", "España"], ["CO", "Colombia"], ["AR", "Argentina"],
+                      ["EC", "Ecuador"], ["PE", "Perú"], ["CL", "Chile"], ["VE", "Venezuela"],
+                      ["US", "Estados Unidos"], ["BR", "Brasil"], ["UY", "Uruguay"], ["CH", "Suiza"],
+                      ["CA", "Canadá"], ["DO", "República Dominicana"], ["GT", "Guatemala"],
+                      ["PR", "Puerto Rico"]]) {
+  comprobar(`${c} es ${n}`, PAIS_NOMBRE[c] === n, `es "${PAIS_NOMBRE[c]}"`)
+}
+
+comprobar("un código que no existe devuelve el propio código", nombrePais("QQ") === "QQ")
+comprobar("y nada no revienta", nombrePais("") === "")
+comprobar("la bandera sale de las letras", banderaPais("MX") === String.fromCodePoint(0x1f1f2, 0x1f1fd))
+comprobar("y la basura no tiene bandera", banderaPais("1") === "")
 
 console.log(`\n═══ ${pasadas} pasadas · ${fallos} fallos ═══\n`)
 process.exit(fallos > 0 ? 1 : 0)

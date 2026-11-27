@@ -14,7 +14,15 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { MapPin, Search, Check, Loader2, X, Compass } from "lucide-react"
 
-type Pais = { code: string; name: string; flag: string; cities: number }
+type Pais = {
+  code: string
+  name: string
+  flag: string
+  /** Ciudades que ya están en el catálogo. */
+  cities: number
+  /** Miembros que aparecen en el mapa desde ahí. Es lo que decide el grupo. */
+  members: number
+}
 /**
  * Una ciudad de la lista.
  *
@@ -350,20 +358,25 @@ export function UbicacionRed({
         >
           <option value="">Elige tu país…</option>
           {/* ── DOS GRUPOS, NI UNO ESCONDIDO ──────────────────────────────
-              Están los 266 países: nadie se queda sin poder decir de dónde
-              es. Pero una lista de 266 en la que México está entre Mauricio
-              y Micronesia es peor para casi todo el mundo que una de 46.
-              Así que delante van los sitios donde ya hay gente de la Red,
-              y detrás todos los demás. Nada se oculta; solo se ordena. */}
-          {paises.some((p) => p.cities > 0) && (
+              Están los 250 países: nadie se queda sin poder decir de dónde
+              es. Pero una lista de 250 en la que México cae entre Mauricio y
+              Micronesia es peor para casi todo el mundo que una de 46. Así
+              que delante van los sitios donde ya hay gente de la Red, y
+              detrás todos los demás. Nada se oculta; solo se ordena.
+
+              El primer grupo se cuenta con EL MISMO criterio que el mapa de
+              La Red. Antes se contaban las ciudades del catálogo y salían 46
+              países bajo el rótulo «donde ya hay miembros» mientras el mapa
+              decía 14: la etiqueta prometía una cosa y enseñaba otra. */}
+          {paises.some((p) => p.members > 0) && (
             <optgroup label="Donde ya hay miembros">
-              {paises.filter((p) => p.cities > 0).map((p) => (
+              {paises.filter((p) => p.members > 0).map((p) => (
                 <option key={p.code} value={p.code}>{p.flag} {p.name}</option>
               ))}
             </optgroup>
           )}
           <optgroup label="Todos los países">
-            {paises.filter((p) => p.cities === 0).map((p) => (
+            {paises.filter((p) => p.members === 0).map((p) => (
               <option key={p.code} value={p.code}>{p.flag} {p.name}</option>
             ))}
           </optgroup>

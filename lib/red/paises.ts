@@ -7,12 +7,23 @@
 // de dónde era. No era una decisión de producto: era hasta donde llegó la
 // siembra inicial.
 //
-// Ahora están los 266 que conoce ICU, nombres incluidos. No se escribieron a
-// mano: se generaron con `Intl.DisplayNames(["es"], {type:"region"})` y se
+// Ahora están los 250 vigentes, nombres incluidos. No se escribieron a mano:
+// se generaron con `Intl.DisplayNames(["es"], {type:"region"})` y se
 // compararon uno a uno con los 77 que había —coincidían todos—. Se quedan
 // escritos aquí, no se calculan en caliente, para que ni el servidor ni el
 // navegador dependan de los datos de internacionalización que tengan
 // instalados.
+//
+// ── POR QUÉ NO SON LOS 266 QUE DA ICU ─────────────────────────────────────
+// Porque ICU también conoce códigos que ya no son países: bloques (EU, UN),
+// zonas de uso interno (QO, ZZ) y, sobre todo, países que dejaron de existir.
+// `DD` es la Alemania Oriental, y al no filtrarla el desplegable mostraba
+// «Alemania» DOS VECES, una encima de la otra. Lo mismo habría pasado con
+// `UK`, que ICU trata como alias de `GB`.
+//
+// El generador comprueba que no quede ningún nombre repetido y se niega a
+// escribir el archivo si lo hay: un país duplicado no es un detalle feo, es
+// que los miembros acaban repartidos entre dos filas del mismo sitio.
 //
 // Incluye territorios y dependencias (Puerto Rico, Guayana Francesa, Aruba).
 // Es a propósito: son sitios donde vive gente, y Puerto Rico ya estaba.
@@ -29,7 +40,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   AI: "Anguila",
   AL: "Albania",
   AM: "Armenia",
-  AN: "Curazao",
   AO: "Angola",
   AQ: "Antártida",
   AR: "Argentina",
@@ -56,7 +66,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   BR: "Brasil",
   BS: "Bahamas",
   BT: "Bután",
-  BU: "Myanmar (Birmania)",
   BV: "Isla Bouvet",
   BW: "Botsuana",
   BY: "Bielorrusia",
@@ -74,20 +83,17 @@ export const PAIS_NOMBRE: Record<string, string> = {
   CN: "China",
   CO: "Colombia",
   CR: "Costa Rica",
-  CS: "Serbia",
   CU: "Cuba",
   CV: "Cabo Verde",
   CW: "Curazao",
   CX: "Isla de Navidad",
   CY: "Chipre",
   CZ: "Chequia",
-  DD: "Alemania",
   DE: "Alemania",
   DJ: "Yibuti",
   DK: "Dinamarca",
   DM: "Dominica",
   DO: "República Dominicana",
-  DY: "Benín",
   DZ: "Argelia",
   EC: "Ecuador",
   EE: "Estonia",
@@ -102,7 +108,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   FM: "Micronesia",
   FO: "Islas Feroe",
   FR: "Francia",
-  FX: "Francia",
   GA: "Gabón",
   GB: "Reino Unido",
   GD: "Granada",
@@ -128,7 +133,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   HR: "Croacia",
   HT: "Haití",
   HU: "Hungría",
-  HV: "Burkina Faso",
   ID: "Indonesia",
   IE: "Irlanda",
   IL: "Israel",
@@ -193,7 +197,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   NE: "Níger",
   NF: "Isla Norfolk",
   NG: "Nigeria",
-  NH: "Vanuatu",
   NI: "Nicaragua",
   NL: "Países Bajos",
   NO: "Noruega",
@@ -218,7 +221,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   PY: "Paraguay",
   QA: "Catar",
   RE: "Reunión",
-  RH: "Zimbabue",
   RO: "Rumanía",
   RS: "Serbia",
   RU: "Rusia",
@@ -240,7 +242,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   SR: "Surinam",
   SS: "Sudán del Sur",
   ST: "Santo Tomé y Príncipe",
-  SU: "Rusia",
   SV: "El Salvador",
   SX: "Sint Maarten",
   SY: "Siria",
@@ -256,7 +257,6 @@ export const PAIS_NOMBRE: Record<string, string> = {
   TM: "Turkmenistán",
   TN: "Túnez",
   TO: "Tonga",
-  TP: "Timor-Leste",
   TR: "Turquía",
   TT: "Trinidad y Tobago",
   TV: "Tuvalu",
@@ -264,14 +264,12 @@ export const PAIS_NOMBRE: Record<string, string> = {
   TZ: "Tanzania",
   UA: "Ucrania",
   UG: "Uganda",
-  UK: "Reino Unido",
   UM: "Islas menores alejadas de EE. UU.",
   US: "Estados Unidos",
   UY: "Uruguay",
   UZ: "Uzbekistán",
   VA: "Ciudad del Vaticano",
   VC: "San Vicente y las Granadinas",
-  VD: "Vietnam",
   VE: "Venezuela",
   VG: "Islas Vírgenes Británicas",
   VI: "Islas Vírgenes de EE. UU.",
@@ -280,13 +278,10 @@ export const PAIS_NOMBRE: Record<string, string> = {
   WF: "Wallis y Futuna",
   WS: "Samoa",
   XK: "Kosovo",
-  YD: "Yemen",
   YE: "Yemen",
   YT: "Mayotte",
-  YU: "Serbia",
   ZA: "Sudáfrica",
   ZM: "Zambia",
-  ZR: "República Democrática del Congo",
   ZW: "Zimbabue",
 }
 

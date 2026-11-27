@@ -75,24 +75,50 @@ export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get("q") || "").trim()
 
   // ── Sin país: TODOS los países ──────────────────────────────────────────
-  // Antes solo salían los que tenían ciudades. Ahora salen todos, y cada uno
-  // dice cuántas ciudades hay ya en el catálogo: el selector las agrupa para
-  // poner delante los sitios donde ya hay miembros, sin esconder el resto.
+  // Antes solo salían los que tenían ciudades sembradas. Ahora salen todos, y
+  // cada uno viene con cuántos MIEMBROS hay allí, que es lo que el selector
+  // usa para poner delante los sitios donde ya hay gente sin esconder el resto.
+  //
+  // ── POR QUÉ MIEMBROS Y NO CIUDADES DEL CATÁLOGO ─────────────────────────
+  // Porque esto empezó contando ciudades y el grupo se llamaba «Donde ya hay
+  // miembros»: salían 46 países —todos los que alguien sembró alguna vez—
+  // mientras el mapa decía 14. La etiqueta prometía una cosa y los datos eran
+  // otra, y eso es peor que no agrupar: hace dudar de las dos pantallas.
+  //
+  // El criterio es EL MISMO que el del mapa —quien activó «mostrar mi
+  // ciudad»— para que los dos sitios cuenten lo mismo. Si alguien eligió país
+  // pero no quiere aparecer, su país no sale aquí: igual que no sale allí.
   if (!pais) {
-    const { data, error } = await supabase
-      .from("network_cities")
-      .select("country_code")
-      .eq("is_active", true)
+    const [catalogo, ubicaciones] = await Promise.all([
+      supabase.from("network_cities").select("country_code").eq("is_active", true),
+      supabase
+        .from("member_location")
+        .select("country_code")
+        .eq("show_city", true)
+        .not("city_id", "is", null),
+    ])
 
-    if (error) {
-      console.error("[/api/red/ciudades] paises", error.message)
+    if (catalogo.error) {
+      console.error("[/api/red/ciudades] paises", catalogo.error.message)
       return NextResponse.json({ error: "Database error" }, { status: 500 })
     }
 
-    const cuantas = new Map<string, number>()
-    for (const row of data || []) {
+    const ciudadesPorPais = new Map<string, number>()
+    for (const row of catalogo.data || []) {
       const c = (row as { country_code: string }).country_code
-      cuantas.set(c, (cuantas.get(c) || 0) + 1)
+      ciudadesPorPais.set(c, (ciudadesPorPais.get(c) || 0) + 1)
+    }
+
+    // Un fallo aquí no puede dejar sin países al formulario: se pierde el
+    // agrupado —todos caen en «todos los países»— y se puede seguir.
+    const miembrosPorPais = new Map<string, number>()
+    if (!ubicaciones.error) {
+      for (const row of ubicaciones.data || []) {
+        const c = (row as { country_code: string }).country_code
+        if (c) miembrosPorPais.set(c, (miembrosPorPais.get(c) || 0) + 1)
+      }
+    } else {
+      console.error("[/api/red/ciudades] miembros", ubicaciones.error.message)
     }
 
     const paises = Object.keys(PAIS_NOMBRE)
@@ -100,7 +126,8 @@ export async function GET(req: NextRequest) {
         code,
         name: PAIS_NOMBRE[code],
         flag: banderaPais(code),
-        cities: cuantas.get(code) || 0,
+        cities: ciudadesPorPais.get(code) || 0,
+        members: miembrosPorPais.get(code) || 0,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "es-419"))
 
