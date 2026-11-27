@@ -491,6 +491,32 @@ export type Audiencia = {
    * tiene. Se corrige sola conforme cada persona abre la suya.
    */
   app?: "instalada" | "sin_instalar" | null
+
+  /**
+   * Según hayan marcado o no su lugar en el mapa de La Red.
+   *
+   * ── POR QUÉ HACÍA FALTA (26-11-2026) ────────────────────────────────────
+   * Hasta ese día el selector de ubicación solo ofrecía 46 países y 235
+   * ciudades, porque la lista salía de un catálogo sembrado a mano. Mucha
+   * gente entró, no encontró su país —o encontró el país y no su ciudad— y
+   * lo dejó. No están en el mapa, y no es porque no quisieran.
+   *
+   * Arreglado el catálogo, hay que poder escribirles. Y no a todos por
+   * igual: quien eligió país y se quedó sin ciudad LO INTENTÓ, y merece que
+   * se le diga que vuelva a probar, no la misma invitación de siempre.
+   *
+   *   sin_poner    ni país ni nada
+   *   sin_ciudad   eligió país y no llegó a la ciudad
+   *   puesta       tiene ciudad, se muestre o no en el mapa
+   *
+   * ── LO QUE ESTE FILTRO NO DISTINGUE, A PROPÓSITO ────────────────────────
+   * Quien tiene ciudad pero con «mostrar mi ciudad» apagado cuenta como
+   * `puesta`. No aparece en el mapa, pero eso es una DECISIÓN suya, no un
+   * hueco: pedirle que actualice su ubicación es pedirle que deshaga lo que
+   * eligió. Si alguna vez hiciera falta escribirles, sería otro filtro y
+   * otro mensaje.
+   */
+  ubicacion?: "sin_poner" | "sin_ciudad" | "puesta" | null
 }
 
 /**

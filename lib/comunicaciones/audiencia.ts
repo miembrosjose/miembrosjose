@@ -53,6 +53,9 @@ export type MotivoExclusion =
   | "membresia_caducada"
   | "sigue_siendo_miembro"
   | "entro_por_otra_via"
+  | "ya_esta_en_el_mapa"
+  | "ya_eligio_pais"
+  | "no_tiene_ubicacion"
 
 export type ResumenAudiencia = {
   /** Cómo se llama esta audiencia en pantalla. */
@@ -94,6 +97,9 @@ const ETIQUETA_MOTIVO: Record<MotivoExclusion, string> = {
   membresia_caducada: "Ya no es miembro",
   sigue_siendo_miembro: "Sigue siendo miembro",
   entro_por_otra_via: "Entró por otra vía",
+  ya_esta_en_el_mapa: "Ya marcó su ciudad",
+  ya_eligio_pais: "Ya eligió país (no es de los que no pusieron nada)",
+  no_tiene_ubicacion: "Todavía no ha marcado su ubicación",
 }
 
 const ETIQUETA_PREFERENCIA: Record<PreferenciaCorreo, string> = {
@@ -477,6 +483,9 @@ export function describirAudiencia(a: Audiencia): string {
   if (a.paises?.length) {
     partes.push("de " + a.paises.map((c) => nombrePais(c)).join(" o "))
   }
+  if (a.ubicacion === "sin_poner") partes.push("que todavía no han marcado su ubicación")
+  if (a.ubicacion === "sin_ciudad") partes.push("que eligieron país pero no ciudad")
+  if (a.ubicacion === "puesta") partes.push("que ya están en el mapa")
   if (a.app === "sin_instalar") partes.push("sin la aplicación instalada")
   if (a.app === "instalada") partes.push("con la aplicación instalada")
   if (a.telegram === "fuera") partes.push("que todavía no están en el Telegram")
@@ -556,6 +565,12 @@ export async function resolverAudiencia(
 
   const paisesPedidos = (audiencia.paises || []).filter(Boolean).map((c) => c.toUpperCase())
   const pidePais = paisesPedidos.length > 0
+  // El estado de la ubicación: puesta, a medias o sin poner. Comparte la
+  // misma lectura que el país y la ciudad, así que no cuesta ni una consulta
+  // de más cuando ya se está filtrando por sitio.
+  const estadoUbicacion =
+    audiencia.ubicacion === "sin_poner" || audiencia.ubicacion === "sin_ciudad" ||
+    audiencia.ubicacion === "puesta" ? audiencia.ubicacion : null
   const ciudadesPedidas = (audiencia.ciudades || []).filter((n) => Number.isFinite(Number(n))).map(Number)
   const pideCiudad = ciudadesPedidas.length > 0
 
@@ -610,7 +625,7 @@ export async function resolverAudiencia(
   // cabe una sola.
   const [actividad, ubicacion, roles, insignias, enTelegram] = await Promise.all([
     (pideInactivo || pideActivo) ? actividadDeTodos() : Promise.resolve(new Map<string, number>()),
-    (pidePais || pideCiudad) ? ubicacionDeTodos() : Promise.resolve(new Map<string, { pais: string; ciudad: number | null }>()),
+    (pidePais || pideCiudad || estadoUbicacion) ? ubicacionDeTodos() : Promise.resolve(new Map<string, { pais: string; ciudad: number | null }>()),
     pideRol ? rolesPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
     pideInsignia ? insigniasPorMiembro() : Promise.resolve(new Map<string, Set<string>>()),
     pideTelegram ? quienesEstanEnTelegram() : Promise.resolve(new Set<string>()),
@@ -742,6 +757,7 @@ export async function resolverAudiencia(
     ya_en_telegram: 0, no_en_telegram: 0,
     ya_tiene_la_app: 0, sin_la_app: 0,
     membresia_caducada: 0, sigue_siendo_miembro: 0, entro_por_otra_via: 0,
+    ya_esta_en_el_mapa: 0, ya_eligio_pais: 0, no_tiene_ubicacion: 0,
   }
   const vistos = new Set<string>()
   const destinatarios: Destinatario[] = []
@@ -847,6 +863,31 @@ export async function resolverAudiencia(
       }
       if (pideCiudad && (!donde || donde.ciudad == null || !ciudadesPedidas.includes(donde.ciudad))) {
         cuenta.otra_ciudad++
+        continue
+      }
+    }
+
+    // ── SI YA MARCÓ SU LUGAR EN EL MAPA ─────────────────────────────────
+    // Los tres motivos de quedarse fuera son distintos y se cuentan aparte:
+    // en el ensayo, «ya marcó su ciudad» y «todavía no» son justamente el
+    // número que se quiere ver antes de mandar la campaña.
+    if (estadoUbicacion) {
+      const donde = ubicacion.get(f.id)
+      const tieneCiudad = !!donde && donde.ciudad != null
+      const tienePais = !!donde && !!donde.pais
+
+      if (estadoUbicacion === "puesta" && !tieneCiudad) {
+        cuenta.no_tiene_ubicacion++
+        continue
+      }
+      if (estadoUbicacion === "sin_ciudad" && (tieneCiudad || !tienePais)) {
+        // Fuera los que ya están en el mapa y los que no pusieron nada:
+        // aquí solo caben los que se quedaron a medio camino.
+        cuenta[tieneCiudad ? "ya_esta_en_el_mapa" : "no_tiene_ubicacion"]++
+        continue
+      }
+      if (estadoUbicacion === "sin_poner" && donde) {
+        cuenta[tieneCiudad ? "ya_esta_en_el_mapa" : "ya_eligio_pais"]++
         continue
       }
     }

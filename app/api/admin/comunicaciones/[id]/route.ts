@@ -66,6 +66,7 @@ function revisarAudiencia(v: unknown): string | null {
     personas?: unknown
     membresia?: unknown
     comoEntro?: unknown
+    ubicacion?: unknown
   } | null
   if (!a || a.kind !== "todos") return "Esa audiencia no está disponible"
 
@@ -115,6 +116,10 @@ function revisarAudiencia(v: unknown): string | null {
   // vacía que nadie explica se confunde con «no hay nadie así».
   if (a.membresia != null && a.membresia !== "vigente" && a.membresia !== "caducada") {
     return "Ese estado de membresía no existe"
+  }
+
+  if (a.ubicacion != null && !["sin_poner", "sin_ciudad", "puesta"].includes(String(a.ubicacion))) {
+    return "Ese estado de ubicación no existe"
   }
 
   if (a.comoEntro != null) {

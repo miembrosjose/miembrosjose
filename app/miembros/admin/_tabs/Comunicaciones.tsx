@@ -199,6 +199,8 @@ type Audiencia = {
   comoEntro?: Array<"pago" | "regalo" | "prueba"> | null
   /** Con o sin la aplicación instalada. Solo se anota desde el 12/11/2026. */
   app?: "instalada" | "sin_instalar" | null
+  /** Si marcaron su lugar en el mapa. «puesta» incluye a quien lo oculta. */
+  ubicacion?: "sin_poner" | "sin_ciudad" | "puesta" | null
 }
 
 /** Lo que el servidor dice que se puede ofrecer. Nunca una copia a mano. */
@@ -2573,6 +2575,7 @@ function Audiencias({
     ...(a.activoDias ? [`Activos en ${a.activoDias} días`] : []),
   ])
   const resumenLugar = juntar([
+    ...(a.ubicacion ? [ETIQUETA_UBICACION[a.ubicacion]] : []),
     ...(paises.length > 0 ? [paises.map((p) => nombreDePais(p, filtros)).join(", ")] : []),
     ...(ciudades.length > 0 ? [ciudades.length === 1 ? "1 ciudad" : `${ciudades.length} ciudades`] : []),
   ])
@@ -2836,14 +2839,60 @@ function Audiencias({
           Solo se ofrecen los sitios donde hay gente, con el recuento al lado:
           un filtro que da cero no es un filtro, es una opción que obliga a
           elegirla, mirar el ensayo y volver atrás. */}
-      {((filtros?.paises?.length ?? 0) > 0 || (filtros?.ciudades?.length ?? 0) > 0) && (
-        <Seccion
-          icono={MapPin}
-          titulo="Dónde está"
-          resumen={resumenLugar}
-          cuantos={paises.length + ciudades.length}
-          nota="Según lo que cada miembro puso al entrar en La Red, no deducido por su conexión. El número es cuánta gente hay en cada sitio."
+      {/* La sección ya no depende de que haya países en el catálogo: el
+          filtro de «todavía no ha marcado su ubicación» tiene sentido
+          precisamente cuando no hay casi nada puesto. */}
+      <Seccion
+        icono={MapPin}
+        titulo="Dónde está"
+        resumen={resumenLugar}
+        cuantos={paises.length + ciudades.length + (a.ubicacion ? 1 : 0)}
+        nota="Según lo que cada miembro puso al entrar en La Red, no deducido por su conexión. El número es cuánta gente hay en cada sitio."
+      >
+        {/* ── SI YA MARCÓ SU LUGAR ──────────────────────────────────────
+            Va el primero porque es el que más cambia la audiencia, y
+            porque los otros dos no tienen sentido sin él: filtrar por
+            país a quien no ha puesto país da siempre cero.
+
+            «Eligió país, no ciudad» es el grupo que dejó colgando el
+            fallo del catálogo: esa gente lo intentó. Merece otro texto. */}
+        <Campo
+          etiqueta="Su lugar en el mapa"
+          ayuda="Quien tiene ciudad pero la oculta cuenta como «ya está en el mapa»: eligió no aparecer, y eso es una decisión, no un hueco."
         >
+          <Desplegable
+            resumen={a.ubicacion ? ETIQUETA_UBICACION[a.ubicacion] : "Da igual"}
+            activo={!!a.ubicacion}
+            editable={editable}
+          >
+            {(cerrar) => (
+              <>
+                <OpcionDeLista marcada={!a.ubicacion} onClick={() => { cambiar({ ubicacion: null }); cerrar() }}>
+                  Da igual
+                </OpcionDeLista>
+                <OpcionDeLista
+                  marcada={a.ubicacion === "sin_ciudad"}
+                  onClick={() => { cambiar({ ubicacion: "sin_ciudad" }); cerrar() }}
+                >
+                  Eligió país, no ciudad
+                </OpcionDeLista>
+                <OpcionDeLista
+                  marcada={a.ubicacion === "sin_poner"}
+                  onClick={() => { cambiar({ ubicacion: "sin_poner" }); cerrar() }}
+                >
+                  No ha marcado nada
+                </OpcionDeLista>
+                <OpcionDeLista
+                  marcada={a.ubicacion === "puesta"}
+                  onClick={() => { cambiar({ ubicacion: "puesta" }); cerrar() }}
+                >
+                  Ya está en el mapa
+                </OpcionDeLista>
+              </>
+            )}
+          </Desplegable>
+        </Campo>
+
           {(filtros?.paises?.length ?? 0) > 0 && (
             <Campo etiqueta="País" ayuda="Puedes marcar varios: entra quien esté en cualquiera.">
               <Desplegable
@@ -2914,8 +2963,7 @@ function Audiencias({
               </Desplegable>
             </Campo>
           )}
-        </Seccion>
-      )}
+      </Seccion>
 
       {/* ── QUIÉN ES EN LA RED ────────────────────────────────────────────
           Dos conceptos distintos del avance, y distintos entre sí: el rol dice
@@ -3089,7 +3137,7 @@ const SIN_FILTROS: Partial<Audiencia> = {
   temporadaMin: null, temporadaCompletada: null, empezoSinTerminar: null,
   roles: null, insignias: null, inactivoDias: null, activoDias: null,
   paises: null, ciudades: null, personas: null, excluidas: null,
-  membresia: null, comoEntro: null, telegram: null, app: null,
+  membresia: null, comoEntro: null, telegram: null, app: null, ubicacion: null,
 }
 
 /** «La 2», y «El camino» para la cuarta: nadie piensa en «la Temporada 4». */
@@ -3109,6 +3157,11 @@ const ETIQUETA_MEMBRESIA: Record<string, string> = {
 const ETIQUETA_TELEGRAM: Record<string, string> = {
   dentro: "Ya está dentro",
   fuera: "Todavía no está dentro",
+}
+const ETIQUETA_UBICACION: Record<string, string> = {
+  sin_poner: "Sin marcar nada",
+  sin_ciudad: "Eligió país, no ciudad",
+  puesta: "Ya está en el mapa",
 }
 const ETIQUETA_APP: Record<string, string> = {
   instalada: "Ya la tiene",
@@ -3648,6 +3701,13 @@ function FiltrosPuestos({ a, filtros, onQuitar, onQuitarTodo, editable }: {
   porCada("paises", a.paises ?? [], "pais", (c) => nombreDePais(c, filtros))
   porCada("ciudades", a.ciudades ?? [], "ciu", (c) => nombreDeCiudad(c, filtros))
 
+  if (a.ubicacion) {
+    puestos.push({
+      clave: "ubicacion",
+      texto: `Mapa: ${ETIQUETA_UBICACION[a.ubicacion].toLowerCase()}`,
+      quitar: () => onQuitar({ ubicacion: null }),
+    })
+  }
   if (a.telegram) {
     puestos.push({
       clave: "telegram",
@@ -3765,6 +3825,9 @@ function describir(a?: Audiencia | null, filtros?: Filtros | null): string {
   if (a.paises?.length) {
     partes.push(`de ${a.paises.map((c) => nombreDePais(c, filtros)).join(" o ")}`)
   }
+  if (a.ubicacion === "sin_poner") partes.push("que todavía no han marcado su ubicación")
+  if (a.ubicacion === "sin_ciudad") partes.push("que eligieron país pero no ciudad")
+  if (a.ubicacion === "puesta") partes.push("que ya están en el mapa")
   if (a.app === "sin_instalar") partes.push("sin la aplicación instalada")
   if (a.app === "instalada") partes.push("con la aplicación instalada")
   if (a.telegram === "fuera") partes.push("que todavía no están en el Telegram")

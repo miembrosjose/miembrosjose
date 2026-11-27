@@ -523,8 +523,11 @@ export function ProfileForm({
         state={flameState}
       />
 
-      {/* TU LUGAR EN LA RED — país, ciudad y su privacidad */}
-      <section className={sectionCls}>
+      {/* TU LUGAR EN LA RED — país, ciudad y su privacidad.
+          El `id` es el destino de la tarjeta del inicio: sin él habría que
+          bajar buscando cuál de las siete secciones es. El `scroll-mt` deja
+          hueco para la barra de arriba, que si no tapa el título. */}
+      <section id="lugar" className={`${sectionCls} scroll-mt-24`}>
         <h2 className={sectionTitleCls}>Tu lugar en la Red</h2>
         <p className="mb-6 text-xs text-[#a0a0b0] [font-family:var(--font-geist-sans)]">
           Completa tu ubicación para descubrir miembros de 144 mil cerca de ti. Trabajamos solo a

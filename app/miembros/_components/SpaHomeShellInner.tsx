@@ -29,6 +29,10 @@ const CartaAstral = dynamic(() => import("./carta-astral/CartaAstral").then((m) 
 // `ssr: false` como todo lo de aquí: esta pantalla ya costó un 1102 por
 // dibujarse en el servidor, y además la tarjeta lee el estado del navegador
 // —permisos, suscripción, almacenamiento local— que en el servidor no existe.
+const TarjetaUbicacion = dynamic(
+  () => import("./TarjetaUbicacion").then((m) => m.TarjetaUbicacion),
+  { ssr: false },
+)
 const TarjetaNotificaciones = dynamic(
   () => import("./TarjetaNotificaciones").then((m) => m.TarjetaNotificaciones),
   { ssr: false },
@@ -685,8 +689,6 @@ function ViewInicio({
       {/* Hero é renderizado no shell (persistente, antes do viewWrap) — não
           renderizamos aqui pra não duplicar. Ele ocupa 100vh natural acima. */}
 
-      {/* LA RED — invitación a completar ubicación (solo si aún no la tiene) */}
-
       {/* MIEMBROS ONLINE — widget realtime (Supabase Presence) */}
       <OnlineMembers />
 
@@ -701,6 +703,10 @@ function ViewInicio({
               recargar nada. Va la primera porque es lo único de aquí que
               deja de verse para siempre en cuanto se atiende. */}
           <TarjetaNotificaciones />
+          {/* LA RED — el aviso de que todavía no estás en el mapa. Se dibuja
+              sola solo si falta algo, y desaparece para siempre en cuanto se
+              pone. A quien eligió no aparecer no se le enseña nunca. */}
+          <TarjetaUbicacion />
           {/* ── ARRIBA, SOLO LO QUE CADUCA ───────────────────────────────
               Una reunión que fue ayer no sirve de nada; una pregunta de la
               semana aguanta hasta el domingo. Lo que tiene hora va donde se
