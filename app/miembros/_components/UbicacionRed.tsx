@@ -15,7 +15,20 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MapPin, Search, Check, Loader2, X, Compass } from "lucide-react"
 
 type Pais = { code: string; name: string; flag: string; cities: number }
-type Ciudad = { id: number; name: string; admin1: string | null; label: string }
+/**
+ * Una ciudad de la lista.
+ *
+ * `id` es null y `osm` tiene valor cuando viene de OpenStreetMap y todavía no
+ * está en nuestro catálogo. Al elegirla se crea y pasa a tener id. Quien la
+ * elige no nota nada: ve el mismo renglón que las demás.
+ */
+type Ciudad = {
+  id: number | null
+  name: string
+  admin1: string | null
+  label: string
+  osm?: string | null
+}
 
 export type UbicacionActual = {
   country_code: string
@@ -182,6 +195,40 @@ export function UbicacionRed({
     if (pais && !ciudad) buscarCiudades(pais, busqueda)
   }, [pais, busqueda, ciudad, buscarCiudades])
 
+  /**
+   * Elegir una ciudad de la lista.
+   *
+   * Las del catálogo se eligen y ya. Las que vinieron de OpenStreetMap hay
+   * que darlas de alta primero, y de eso se encarga el servidor: aquí solo se
+   * manda el identificador, nunca el nombre. Es medio segundo de espera la
+   * primera vez que alguien nombra ese pueblo; la siguiente persona ya lo
+   * encuentra en el catálogo.
+   */
+  async function elegirCiudad(c: Ciudad) {
+    if (c.id !== null) { setCiudad(c); setCiudades([]); return }
+    setBuscando(true)
+    setMsg(null)
+    try {
+      const r = await fetch("/api/red/ciudades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ pais, osm: c.osm }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ciudad) {
+        setMsg({ ok: false, text: d.error || "No se pudo añadir esa ciudad. Inténtalo otra vez." })
+        return
+      }
+      setCiudad(d.ciudad)
+      setCiudades([])
+    } catch {
+      setMsg({ ok: false, text: "Error de conexión al añadir la ciudad." })
+    } finally {
+      setBuscando(false)
+    }
+  }
+
   function cambiarPais(code: string) {
     setPais(code)
     setCiudad(null)
@@ -302,11 +349,24 @@ export function UbicacionRed({
           className={inputCls}
         >
           <option value="">Elige tu país…</option>
-          {paises.map((p) => (
-            <option key={p.code} value={p.code}>
-              {p.flag} {p.name}
-            </option>
-          ))}
+          {/* ── DOS GRUPOS, NI UNO ESCONDIDO ──────────────────────────────
+              Están los 266 países: nadie se queda sin poder decir de dónde
+              es. Pero una lista de 266 en la que México está entre Mauricio
+              y Micronesia es peor para casi todo el mundo que una de 46.
+              Así que delante van los sitios donde ya hay gente de la Red,
+              y detrás todos los demás. Nada se oculta; solo se ordena. */}
+          {paises.some((p) => p.cities > 0) && (
+            <optgroup label="Donde ya hay miembros">
+              {paises.filter((p) => p.cities > 0).map((p) => (
+                <option key={p.code} value={p.code}>{p.flag} {p.name}</option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label="Todos los países">
+            {paises.filter((p) => p.cities === 0).map((p) => (
+              <option key={p.code} value={p.code}>{p.flag} {p.name}</option>
+            ))}
+          </optgroup>
         </select>
       </div>
 
@@ -353,10 +413,10 @@ export function UbicacionRed({
               {ciudades.length > 0 && (
                 <ul className="mt-2 max-h-56 overflow-y-auto border border-[#1a1a24] bg-[#0c0c14]">
                   {ciudades.map((c) => (
-                    <li key={c.id}>
+                    <li key={c.id ?? `osm-${c.osm}`}>
                       <button
                         type="button"
-                        onClick={() => { setCiudad(c); setCiudades([]) }}
+                        onClick={() => { void elegirCiudad(c) }}
                         className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-[#d8d3c6] transition-colors hover:bg-[#12121a] hover:text-[#F3F6FA] [font-family:var(--font-geist-sans)]"
                       >
                         <MapPin size={13} className="shrink-0 text-[#6a6a7a]" />

@@ -34,7 +34,8 @@
     "probar:errores": "node scripts/probar-errores-auth.mjs",
     "probar:meses": "node scripts/probar-meses.mjs",
     "probar:acceso": "node scripts/probar-tipo-acceso.mjs",
-    "probar:temporadas": "node scripts/probar-temporadas.mjs"
+    "probar:temporadas": "node scripts/probar-temporadas.mjs",
+    "probar:osm": "node scripts/probar-osm.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",
